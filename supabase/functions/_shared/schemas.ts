@@ -89,6 +89,9 @@ export const ModelSchemaDefinition = z.object({
 });
 
 export const GenerateContentRequestSchema = z.object({
+  // Optional: Existing generation ID to update instead of creating new
+  generationId: z.string().uuid().optional(),
+  
   // REQUIRED: Full model config from .ts registry (database eliminated)
   model_config: ModelConfigSchema,
   model_schema: ModelSchemaDefinition,

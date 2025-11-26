@@ -176,6 +176,7 @@ Deno.serve(async (req) => {
     }
     
     const {
+      generationId: existingGenerationId, // Optional: Existing generation ID to update
       model_config,  // REQUIRED: Full model config from .ts registry
       model_schema,  // REQUIRED: Model schema from .ts registry
       custom_parameters = {},
@@ -739,30 +740,98 @@ Deno.serve(async (req) => {
         throw new Error(`Invalid generation settings: ${validationResult.error}`);
       }
 
-      // Step 4: Create generation record with validated settings
+      // Step 4: Create or update generation record with validated settings
       const generationSettings = validationResult.data as Record<string, any>;
 
-      const { data: gen, error: genError } = await supabase
-        .from('generations')
-        .insert({
-          user_id: user.id,
-          model_id: model.id,
-          model_record_id: model.record_id,
-          type: normalizeContentType(model.content_type),
-          prompt: finalPrompt,
-          original_prompt: originalPrompt,
-          enhanced_prompt: enhance_prompt ? finalPrompt : null,
-          enhancement_provider: usedEnhancementProvider,
-          settings: generationSettings,
-          tokens_used: tokenCost,
-          actual_token_cost: tokenCost,
-          status: 'pending',
-          provider_task_id: null,
-          workflow_execution_id: workflow_execution_id || null,
-          workflow_step_number: workflow_step_number || null
-        })
-        .select()
-        .single();
+      let gen: any;
+      let genError: any;
+      let shouldCreateNew = true;
+
+      if (existingGenerationId) {
+        // UPDATE existing generation record
+        logger.info('Updating existing generation record', {
+          metadata: {
+            generationId: existingGenerationId,
+            user_id: user.id,
+            model_id: model.id
+          }
+        });
+
+        // First verify the generation exists and belongs to the user
+        const { data: existingGen, error: fetchError } = await supabase
+          .from('generations')
+          .select('*')
+          .eq('id', existingGenerationId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (fetchError || !existingGen) {
+          logger.warn('Existing generation not found or access denied, creating new record', fetchError || undefined, {
+            metadata: {
+              generationId: existingGenerationId,
+              user_id: user.id
+            }
+          });
+          // Will fall through to create new record
+        } else {
+          // Update the existing record
+          const { data: updatedGen, error: updateError } = await supabase
+            .from('generations')
+            .update({
+              model_id: model.id,
+              model_record_id: model.record_id,
+              type: normalizeContentType(model.content_type),
+              prompt: finalPrompt,
+              original_prompt: originalPrompt,
+              enhanced_prompt: enhance_prompt ? finalPrompt : null,
+              enhancement_provider: usedEnhancementProvider,
+              settings: generationSettings,
+              tokens_used: tokenCost,
+              actual_token_cost: tokenCost,
+              status: 'pending',
+              provider_task_id: null,
+              workflow_execution_id: workflow_execution_id || null,
+              workflow_step_number: workflow_step_number || null
+            })
+            .eq('id', existingGenerationId)
+            .select()
+            .single();
+
+          if (!updateError && updatedGen) {
+            gen = updatedGen;
+            genError = updateError;
+            shouldCreateNew = false;
+          }
+        }
+      }
+
+      // If no existingGenerationId or update failed, create new record
+      if (shouldCreateNew) {
+        const { data: newGen, error: insertError } = await supabase
+          .from('generations')
+          .insert({
+            user_id: user.id,
+            model_id: model.id,
+            model_record_id: model.record_id,
+            type: normalizeContentType(model.content_type),
+            prompt: finalPrompt,
+            original_prompt: originalPrompt,
+            enhanced_prompt: enhance_prompt ? finalPrompt : null,
+            enhancement_provider: usedEnhancementProvider,
+            settings: generationSettings,
+            tokens_used: tokenCost,
+            actual_token_cost: tokenCost,
+            status: 'pending',
+            provider_task_id: null,
+            workflow_execution_id: workflow_execution_id || null,
+            workflow_step_number: workflow_step_number || null
+          })
+          .select()
+          .single();
+
+        gen = newGen;
+        genError = insertError;
+      }
 
       if (genError || !gen) {
         const errorDetails = genError ? {
@@ -772,7 +841,7 @@ Deno.serve(async (req) => {
           code: genError.code
         } : 'No data returned';
         
-        logger.error('Generation creation failed', genError || undefined, {
+        logger.error('Generation creation/update failed', genError || undefined, {
           metadata: {
             model_id: model.id,
             user_id: user.id,

@@ -39,7 +39,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
       // Fetch parent and children
       const { data: parentData, error } = await supabase
         .from('generations')
-        .select("id, status, storage_path, type, created_at, provider_task_id, model_id, model_record_id, provider_response, is_batch_output")
+        .select("id, status, storage_path, type, created_at, provider_task_id, model_id, model_record_id, provider_response, is_batch_output, user_id")
         .eq('id', generationId)
         .single();
 
@@ -67,6 +67,81 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
         parentProvider = model.MODEL_CONFIG.provider;
       } catch (e) {
         logger.warn('Failed to load model from registry', { modelRecordId: parentData.model_record_id, error: e });
+      }
+
+      // Fallback: If parent is not completed, look for recently completed generation from same user
+      if (parentData.status !== 'completed') {
+        logger.info('Parent not completed, checking for recently completed generation', {
+          generationId,
+          parentStatus: parentData.status,
+          parentCreatedAt: parentData.created_at
+        } as any);
+
+        // Look for a recently completed generation from the same user (within 30 seconds)
+        const parentCreatedAt = new Date(parentData.created_at);
+        const searchWindowStart = new Date(parentCreatedAt.getTime() - 5000); // 5 seconds before
+        const searchWindowEnd = new Date(parentCreatedAt.getTime() + 30000); // 30 seconds after
+
+        const { data: recentCompleted, error: recentError } = await supabase
+          .from('generations')
+          .select("id, storage_path, type, created_at, provider_task_id, model_id, model_record_id, status")
+          .eq('user_id', parentData.user_id || '')
+          .eq('status', 'completed')
+          .gte('created_at', searchWindowStart.toISOString())
+          .lte('created_at', searchWindowEnd.toISOString())
+          .not('storage_path', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (recentError) {
+          logger.error('Failed to search for recently completed generations', recentError, { generationId });
+        } else if (recentCompleted && recentCompleted.length > 0) {
+          logger.info('Found recently completed generation(s) as fallback', {
+            generationId,
+            foundCount: recentCompleted.length,
+            recentIds: recentCompleted.map(g => g.id)
+          } as any);
+
+          // Use the most recent completed generation as output
+          const fallbackOutputs: GenerationOutput[] = recentCompleted
+            .filter(g => g.storage_path)
+            .map((g, index) => {
+              let fallbackProvider = '';
+              try {
+                const model = getModel(g.model_record_id);
+                fallbackProvider = model.MODEL_CONFIG.provider;
+              } catch (e) {
+                logger.warn('Failed to load model from registry for fallback', { modelRecordId: g.model_record_id, error: e });
+              }
+
+              return {
+                id: g.id,
+                storage_path: g.storage_path!,
+                type: g.type,
+                output_index: index,
+                provider_task_id: g.provider_task_id || '',
+                model_id: g.model_id || '',
+                provider: fallbackProvider,
+              };
+            });
+
+          if (fallbackOutputs.length > 0) {
+            logger.info('Using fallback outputs', {
+              generationId,
+              fallbackOutputs: fallbackOutputs.map(o => ({ id: o.id, storagePath: o.storage_path }))
+            } as any);
+            onComplete(fallbackOutputs, fallbackOutputs[0].id);
+            return;
+          }
+        } else {
+          logger.warn('No recently completed generations found for fallback', {
+            generationId,
+            searchWindow: {
+              start: searchWindowStart.toISOString(),
+              end: searchWindowEnd.toISOString()
+            }
+          } as any);
+        }
       }
 
       if (parentData.status === 'completed') {

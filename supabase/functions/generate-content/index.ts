@@ -766,10 +766,11 @@ Deno.serve(async (req) => {
           .single();
 
         if (fetchError || !existingGen) {
-          logger.warn('Existing generation not found or access denied, creating new record', fetchError || undefined, {
+          logger.warn('Existing generation not found or access denied, creating new record', {
             metadata: {
               generationId: existingGenerationId,
-              user_id: user.id
+              user_id: user.id,
+              error: fetchError?.message
             }
           });
           // Will fall through to create new record

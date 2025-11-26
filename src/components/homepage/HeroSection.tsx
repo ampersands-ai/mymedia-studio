@@ -82,26 +82,43 @@ export const HeroSection = () => {
             // Pause all videos
             swiper.slides.forEach(slide => {
               const video = slide.querySelector('video');
-              if (video) {
-                video.pause();
+              if (video && video.parentElement) {
+                try {
+                  video.pause();
+                } catch (e) {
+                  // Video might be removed, ignore
+                }
               }
             });
 
-            // Play and reset current video
-            const activeSlide = swiper.slides[swiper.activeIndex];
-            const activeVideo = activeSlide?.querySelector('video') as HTMLVideoElement;
-            
-            if (activeVideo) {
-              activeVideo.currentTime = 0;
-              activeVideo.play().catch(err => {
-                logger.warn('Hero video autoplay failed', {
-                  component: 'HeroSection',
-                  error: err.message,
-                  slideIndex: swiper.activeIndex,
-                  operation: 'onSlideChange'
-                });
-              });
-            }
+            // Play and reset current video - use setTimeout to ensure DOM is stable
+            setTimeout(() => {
+              const activeSlide = swiper.slides[swiper.activeIndex];
+              const activeVideo = activeSlide?.querySelector('video') as HTMLVideoElement;
+              
+              // Verify video exists and is still in the DOM
+              if (activeVideo && activeVideo.parentElement && activeVideo.parentElement.isConnected) {
+                try {
+                  activeVideo.currentTime = 0;
+                  const playPromise = activeVideo.play();
+                  if (playPromise !== undefined) {
+                    playPromise.catch(err => {
+                      // Only log if it's not the "removed from document" error
+                      if (!err.message.includes('removed from the document')) {
+                        logger.warn('Hero video autoplay failed', {
+                          component: 'HeroSection',
+                          error: err.message,
+                          slideIndex: swiper.activeIndex,
+                          operation: 'onSlideChange'
+                        });
+                      }
+                    });
+                  }
+                } catch (e) {
+                  // Video might be removed during transition, ignore
+                }
+              }
+            }, 100);
           }}
           autoplay={{
             delay: 7000,

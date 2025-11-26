@@ -38,7 +38,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
       // Fetch parent and children
       const { data: parentData, error } = await supabase
         .from('generations')
-        .select("id, status, storage_path, type, created_at, provider_task_id, model_id, model_record_id, provider_response")
+        .select("id, status, storage_path, type, created_at, provider_task_id, model_id, model_record_id, provider_response, is_batch_output")
         .eq('id', generationId)
         .single();
 
@@ -54,18 +54,31 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
       }
 
       if (parentData.status === 'completed') {
-        const { data: childrenData } = await supabase
+        const { data: childrenData, error: childrenError } = await supabase
           .from('generations')
-          .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id")
+          .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id, status")
           .eq('parent_generation_id', parentData.id)
+          .eq('status', 'completed')
           .order('output_index');
+
+        if (childrenError) {
+          logger.error('Failed to fetch child generations', childrenError, { generationId, parentId: parentData.id });
+        }
 
         const outputs: GenerationOutput[] = [];
 
         // Add child generations (batch outputs)
         if (childrenData && childrenData.length > 0) {
-          outputs.push(...childrenData
-            .filter((child: ChildGeneration) => child.storage_path)
+          const childrenWithStorage = childrenData.filter((child: ChildGeneration) => child.storage_path);
+          
+          logger.info('Found child generations', {
+            generationId,
+            totalChildren: childrenData.length,
+            childrenWithStorage: childrenWithStorage.length,
+            childIds: childrenData.map((c: ChildGeneration) => c.id)
+          } as any);
+
+          outputs.push(...childrenWithStorage
             .map((child: ChildGeneration) => {
               // ADR 007: Get provider from registry for each child
               let childProvider = '';
@@ -86,6 +99,67 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
                 provider: childProvider,
               };
             }));
+        } else if (parentData.is_batch_output) {
+          // For batch outputs, if no children found, wait a bit and retry once
+          logger.warn('No child generations found for batch output parent, retrying...', {
+            generationId,
+            parentId: parentData.id,
+            parentStoragePath: parentData.storage_path
+          } as any);
+          
+          // Wait 1 second and retry once
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const { data: retryChildrenData, error: retryError } = await supabase
+            .from('generations')
+            .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id, status")
+            .eq('parent_generation_id', parentData.id)
+            .eq('status', 'completed')
+            .order('output_index');
+          
+          if (retryError) {
+            logger.error('Retry failed to fetch child generations', retryError, { generationId, parentId: parentData.id });
+          } else if (retryChildrenData && retryChildrenData.length > 0) {
+            const retryChildrenWithStorage = retryChildrenData.filter((child: ChildGeneration) => child.storage_path);
+            
+            logger.info('Found child generations on retry', {
+              generationId,
+              totalChildren: retryChildrenData.length,
+              childrenWithStorage: retryChildrenWithStorage.length
+            } as any);
+            
+            outputs.push(...retryChildrenWithStorage
+              .map((child: ChildGeneration) => {
+                let childProvider = '';
+                try {
+                  const model = getModel(child.model_record_id);
+                  childProvider = model.MODEL_CONFIG.provider;
+                } catch (e) {
+                  logger.warn('Failed to load model from registry', { modelRecordId: child.model_record_id, error: e });
+                }
+                
+                return {
+                  id: child.id,
+                  storage_path: child.storage_path!,
+                  type: parentData.type,
+                  output_index: child.output_index || 0,
+                  provider_task_id: child.provider_task_id || '',
+                  model_id: child.model_id || '',
+                  provider: childProvider,
+                };
+              }));
+          } else {
+            logger.error('Still no child generations found after retry for batch output', {
+              generationId,
+              parentId: parentData.id
+            } as any);
+          }
+        } else {
+          logger.info('No child generations found (not a batch output)', {
+            generationId,
+            parentId: parentData.id,
+            parentStoragePath: parentData.storage_path
+          } as any);
         }
 
         // Also add parent if it has output (single output models)

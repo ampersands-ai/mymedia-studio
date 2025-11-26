@@ -10,7 +10,7 @@ interface RealtimePayload {
 }
 
 interface UseGenerationStateSyncOptions {
-  generationId: string;
+  getGenerationId: () => string;
   onChildActivity: () => void;
   onStallDetected: () => void;
 }
@@ -20,7 +20,7 @@ interface UseGenerationStateSyncOptions {
  * Handles debouncing child updates and detecting stalls
  */
 export const useGenerationStateSync = ({
-  generationId,
+  getGenerationId,
   onChildActivity,
   onStallDetected,
 }: UseGenerationStateSyncOptions) => {
@@ -35,6 +35,7 @@ export const useGenerationStateSync = ({
         clearTimeout(childDebounceRef.current);
       }
       childDebounceRef.current = setTimeout(() => {
+        const generationId = getGenerationId();
         logger.info('Child output detected, processing completion', { generationId } as any);
         onChildActivity();
       }, 1000);
@@ -44,19 +45,21 @@ export const useGenerationStateSync = ({
     if (stallGuardRef.current) {
       clearTimeout(stallGuardRef.current);
       stallGuardRef.current = setTimeout(() => {
+        const generationId = getGenerationId();
         logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
         onStallDetected();
       }, 20000);
     }
-  }, [generationId, onChildActivity, onStallDetected]);
+  }, [getGenerationId, onChildActivity, onStallDetected]);
 
   const startStallGuard = useCallback(() => {
     // Set up stall guard (20 seconds)
     stallGuardRef.current = setTimeout(() => {
+      const generationId = getGenerationId();
       logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
       onStallDetected();
     }, 20000);
-  }, [generationId, onStallDetected]);
+  }, [getGenerationId, onStallDetected]);
 
   const clearTimers = useCallback(() => {
     if (childDebounceRef.current) {

@@ -74,12 +74,19 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     },
   });
 
-  // State sync hook
+  // State sync hook - use a function to get current ID instead of stale closure
+  const getCurrentGenerationId = useCallback(() => pollingIdRef.current || '', []);
+  
   const { handleChildUpdate, startStallGuard, clearTimers: clearSyncTimers } = useGenerationStateSync({
-    generationId: pollingIdRef.current || '',
+    getGenerationId: getCurrentGenerationId,
     onChildActivity: () => {
       const currentId = pollingIdRef.current;
-      if (currentId) processCompletion(currentId);
+      if (currentId) {
+        logger.info('Processing completion from child activity', { generationId: currentId } as any);
+        processCompletion(currentId);
+      } else {
+        logger.warn('Child activity detected but no generation ID available', {} as any);
+      }
     },
     onStallDetected: () => {
       const currentId = pollingIdRef.current;

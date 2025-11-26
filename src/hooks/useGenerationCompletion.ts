@@ -28,6 +28,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
   const processCompletion = useCallback(async (generationId: string) => {
     // Prevent duplicate processing
     if (completedGenerationsRef.current.has(generationId)) {
+      logger.debug('Skipping duplicate completion processing', { generationId } as any);
       return;
     }
     completedGenerationsRef.current.add(generationId);
@@ -42,7 +43,22 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
         .eq('id', generationId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Failed to fetch parent generation', error, { generationId });
+        throw error;
+      }
+
+      if (!parentData) {
+        logger.error('Parent generation not found', new Error('Parent not found'), { generationId });
+        throw new Error('Parent generation not found');
+      }
+
+      logger.info('Parent generation fetched', {
+        generationId,
+        status: parentData.status,
+        hasStoragePath: !!parentData.storage_path,
+        isBatchOutput: parentData.is_batch_output
+      } as any);
 
       // ADR 007: Get provider from registry
       let parentProvider = '';
@@ -54,6 +70,12 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
       }
 
       if (parentData.status === 'completed') {
+        logger.info('Parent is completed, fetching child generations', {
+          generationId,
+          parentId: parentData.id,
+          isBatchOutput: parentData.is_batch_output
+        } as any);
+
         const { data: childrenData, error: childrenError } = await supabase
           .from('generations')
           .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id, status")
@@ -63,6 +85,13 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
 
         if (childrenError) {
           logger.error('Failed to fetch child generations', childrenError, { generationId, parentId: parentData.id });
+        } else {
+          logger.info('Child generations query result', {
+            generationId,
+            parentId: parentData.id,
+            childrenCount: childrenData?.length || 0,
+            children: childrenData?.map(c => ({ id: c.id, hasStoragePath: !!c.storage_path, outputIndex: c.output_index }))
+          } as any);
         }
 
         const outputs: GenerationOutput[] = [];

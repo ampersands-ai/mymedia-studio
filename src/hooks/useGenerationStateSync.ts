@@ -10,7 +10,7 @@ interface RealtimePayload {
 }
 
 interface UseGenerationStateSyncOptions {
-  getGenerationId: () => string;
+  pollingIdRef: React.MutableRefObject<string | null>;
   onChildActivity: () => void;
   onStallDetected: () => void;
 }
@@ -20,7 +20,7 @@ interface UseGenerationStateSyncOptions {
  * Handles debouncing child updates and detecting stalls
  */
 export const useGenerationStateSync = ({
-  getGenerationId,
+  pollingIdRef,
   onChildActivity,
   onStallDetected,
 }: UseGenerationStateSyncOptions) => {
@@ -35,7 +35,7 @@ export const useGenerationStateSync = ({
         clearTimeout(childDebounceRef.current);
       }
       childDebounceRef.current = setTimeout(() => {
-        const generationId = getGenerationId();
+        const generationId = pollingIdRef.current || '';
         logger.info('Child output detected, processing completion', { generationId } as any);
         onChildActivity();
       }, 1000);
@@ -45,21 +45,21 @@ export const useGenerationStateSync = ({
     if (stallGuardRef.current) {
       clearTimeout(stallGuardRef.current);
       stallGuardRef.current = setTimeout(() => {
-        const generationId = getGenerationId();
+        const generationId = pollingIdRef.current || '';
         logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
         onStallDetected();
       }, 20000);
     }
-  }, [getGenerationId, onChildActivity, onStallDetected]);
+  }, [pollingIdRef, onChildActivity, onStallDetected]);
 
   const startStallGuard = useCallback(() => {
     // Set up stall guard (20 seconds)
     stallGuardRef.current = setTimeout(() => {
-      const generationId = getGenerationId();
+      const generationId = pollingIdRef.current || '';
       logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
       onStallDetected();
     }, 20000);
-  }, [getGenerationId, onStallDetected]);
+  }, [pollingIdRef, onStallDetected]);
 
   const clearTimers = useCallback(() => {
     if (childDebounceRef.current) {

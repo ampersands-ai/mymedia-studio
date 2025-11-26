@@ -74,11 +74,9 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     },
   });
 
-  // State sync hook - use a function to get current ID instead of stale closure
-  const getCurrentGenerationId = useCallback(() => pollingIdRef.current || '', []);
-  
+  // State sync hook - use ref directly to avoid stale closures
   const { handleChildUpdate, startStallGuard, clearTimers: clearSyncTimers } = useGenerationStateSync({
-    getGenerationId: getCurrentGenerationId,
+    pollingIdRef,
     onChildActivity: () => {
       const currentId = pollingIdRef.current;
       if (currentId) {

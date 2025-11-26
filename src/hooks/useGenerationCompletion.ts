@@ -76,6 +76,9 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
           isBatchOutput: parentData.is_batch_output
         } as any);
 
+        // Small delay to ensure children are fully committed to database
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         const { data: childrenData, error: childrenError } = await supabase
           .from('generations')
           .select("id, storage_path, output_index, provider_task_id, model_id, model_record_id, status")
@@ -90,7 +93,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
             generationId,
             parentId: parentData.id,
             childrenCount: childrenData?.length || 0,
-            children: childrenData?.map(c => ({ id: c.id, hasStoragePath: !!c.storage_path, outputIndex: c.output_index }))
+            children: childrenData?.map(c => ({ id: c.id, hasStoragePath: !!c.storage_path, outputIndex: c.output_index, status: c.status }))
           } as any);
         }
 
@@ -207,8 +210,19 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
         logger.info('Outputs prepared for completion callback', {
           totalOutputs: outputs.length,
           outputIds: outputs.map(o => o.id),
-          hasStoragePaths: outputs.every(o => !!o.storage_path)
+          hasStoragePaths: outputs.every(o => !!o.storage_path),
+          outputs: outputs.map(o => ({ id: o.id, storagePath: o.storage_path, outputIndex: o.output_index }))
         } as any);
+
+        if (outputs.length === 0) {
+          logger.warn('No outputs found for completed generation', {
+            generationId,
+            parentId: parentData.id,
+            parentHasStoragePath: !!parentData.storage_path,
+            isBatchOutput: parentData.is_batch_output,
+            childrenCount: childrenData?.length || 0
+          } as any);
+        }
 
         onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {

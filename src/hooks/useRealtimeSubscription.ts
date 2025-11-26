@@ -97,7 +97,7 @@ export function useRealtimeSubscription<T = any>(
 
     // Configure postgres changes subscription
     let subscription = channel.on<T>(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event,
         schema,

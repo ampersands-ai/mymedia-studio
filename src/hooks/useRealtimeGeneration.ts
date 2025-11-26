@@ -43,7 +43,7 @@ export const useRealtimeGeneration = ({
     // Create user-scoped channel
     const channel = supabase.channel(`user-${userId}-${genId}`)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: 'UPDATE',
           schema: 'public',
@@ -63,7 +63,7 @@ export const useRealtimeGeneration = ({
         }
       )
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',

@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/lib/logger';
+import { getMemoryUsage } from '@/types/performance';
 
 export interface PerformanceReport {
   timestamp: string;
@@ -98,8 +99,9 @@ export async function runPerformanceAudit(): Promise<PerformanceReport> {
   }
 
   // Check memory (if available)
-  if (performance.memory) {
-    report.performance.memory = Math.round(performance.memory.usedJSHeapSize / 1048576);
+  const memoryMB = getMemoryUsage(performance);
+  if (memoryMB !== null) {
+    report.performance.memory = memoryMB;
   }
 
   // Check will-change usage

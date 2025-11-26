@@ -31,6 +31,7 @@ import { useCinematicPrompts, getSurpriseMePromptFromDb } from "@/hooks/useCinem
 import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
 import { initializeParameters } from "@/types/model-schema";
+import type { ModelConfiguration } from "@/types/schema";
 
 const CustomCreation = () => {
   const { execute } = useErrorHandler();
@@ -75,7 +76,7 @@ const CustomCreation = () => {
       Object.fromEntries(
         Object.entries(currentModel.cost_multipliers).map(([k, v]) => [k, typeof v === 'number' ? v : 1])
       ) as Record<string, number> : null
-  } : null;
+  } as ModelConfiguration : null;
 
   // Get model schema (locked models load from file, unlocked from database)
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);

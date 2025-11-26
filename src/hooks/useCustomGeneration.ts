@@ -9,7 +9,8 @@ import type { CustomCreationState } from "@/types/custom-creation";
 import { executeGeneration } from "@/lib/generation/executeGeneration";
 import { logger, generateRequestId } from '@/lib/logger';
 import { handleError } from "@/lib/errors";
-import { FilteredModel, UserTokens, OnboardingProgress } from "@/types/generation";
+import { UserTokens, OnboardingProgress } from "@/types/generation";
+import type { AIModel } from "@/hooks/useModels";
 
 const customGenerationLogger = logger.child({ component: 'useCustomGeneration' });
 
@@ -20,7 +21,7 @@ interface UseCustomGenerationOptions {
   uploadedImages: File[];
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   imageFieldInfo: { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number };
-  filteredModels: FilteredModel[];
+  filteredModels: AIModel[];
   onboardingProgress: OnboardingProgress | null;
   updateProgress: (progress: Partial<OnboardingProgress['checklist']>) => void;
   setFirstGeneration: (id: string) => void;

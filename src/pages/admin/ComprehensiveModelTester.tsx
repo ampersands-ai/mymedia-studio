@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { Layers, Upload, History } from "lucide-react";
 import { initializeParameters } from "@/types/model-schema";
+import type { ModelConfiguration } from "@/types/schema";
 import { loadModelSourceCode, getModelFilePath } from "@/lib/admin/codeAnalysis";
 import {
   EXECUTION_CONTEXT,
@@ -69,7 +70,7 @@ const ComprehensiveModelTester = () => {
       Object.fromEntries(
         Object.entries(selectedModel.cost_multipliers).map(([k, v]) => [k, typeof v === 'number' ? v : 1])
       ) as Record<string, number> : null
-  } : null;
+  } as ModelConfiguration : null;
 
   // Get model schema
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);
@@ -355,7 +356,8 @@ const ComprehensiveModelTester = () => {
       newTracker.startStep(step7.id, { inputs });
       let payload: Record<string, unknown> = {};
       if (modelModule.preparePayload) {
-        payload = modelModule.preparePayload(inputs);
+        const result = modelModule.preparePayload(inputs);
+        payload = Array.isArray(result) ? {} : (result as Record<string, unknown>);
       } else {
         payload = inputs;
       }

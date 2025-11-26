@@ -34,13 +34,14 @@ export const useRealtimeGeneration = ({
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const subscribe = useCallback(() => {
-    if (!userId) return;
+  const subscribe = useCallback((targetGenerationId?: string) => {
+    const genId = targetGenerationId || generationId;
+    if (!userId || !genId) return;
 
-    logger.info('Setting up Realtime subscription', { userId, generationId } as any);
+    logger.info('Setting up Realtime subscription', { userId, generationId: genId } as any);
 
     // Create user-scoped channel
-    const channel = supabase.channel(`user-${userId}`)
+    const channel = supabase.channel(`user-${userId}-${genId}`)
       .on(
         'postgres_changes',
         {
@@ -55,7 +56,7 @@ export const useRealtimeGeneration = ({
             status: payload.new.status
           } as any);
 
-          if (payload.new.id === generationId &&
+          if (payload.new.id === genId &&
             (payload.new.status === 'completed' || payload.new.status === 'failed' || payload.new.status === 'error')) {
             onUpdate(payload);
           }
@@ -67,7 +68,7 @@ export const useRealtimeGeneration = ({
           event: '*',
           schema: 'public',
           table: 'generations',
-          filter: `parent_generation_id=eq.${generationId}`
+          filter: `parent_generation_id=eq.${genId}`
         },
         (payload: RealtimePayload) => {
           logger.info('Child generation event', {

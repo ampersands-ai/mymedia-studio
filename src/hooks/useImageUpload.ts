@@ -103,7 +103,6 @@ export const useImageUpload = (currentModel: AIModel | null) => {
           logger.info(`Persisted ${storable.length} images to sessionStorage`);
         } catch (err) {
           logger.error('Failed to persist images', err as Error);
-          toast.error('Failed to save images. They will be lost on page refresh.');
         }
       };
 
@@ -170,7 +169,6 @@ export const useImageUpload = (currentModel: AIModel | null) => {
       } else {
         setUploadedImages([...uploadedImages, ...validFiles]);
       }
-      toast.success(`${validFiles.length} image(s) uploaded successfully`);
     }
   }, [uploadedImages, currentModel, imageFieldInfo]);
 

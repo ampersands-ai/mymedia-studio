@@ -25,11 +25,6 @@ export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOp
     logger.info('Starting fallback polling', { generationId } as any);
     setIsPolling(true);
 
-    toast.info('Using slower updates mode', {
-      description: 'Real-time updates unavailable, polling for status',
-      duration: 3000,
-    });
-
     // More responsive intervals: 2s → 3s → 5s → 8s (max)
     const intervals = [2000, 3000, 5000, 8000];
     let attempt = 0;

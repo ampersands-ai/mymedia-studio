@@ -148,12 +148,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
                               <WifiOff className="h-3 w-3" />
                               Slow
                             </>
-                          ) : (
-                            <>
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Connecting
-                            </>
-                          )}
+                          ) : null}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>

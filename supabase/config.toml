@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.store-vault-secret]
 verify_jwt = true
+
+[functions.kie-ai-webhook]
+verify_jwt = false

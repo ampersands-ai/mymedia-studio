@@ -26,8 +26,6 @@ fi
 # Validate edge functions for deprecated patterns
 echo "🔍 Validating edge functions..."
 npm run validate:edge-functions
-
-# If validation fails, prevent commit
 if [ $? -ne 0 ]; then
   echo ""
   echo "❌ Commit blocked: Fix deprecated patterns before committing"

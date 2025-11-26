@@ -48,7 +48,8 @@ export default function MigrateStoryboards() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('storyboards')
-        .select('id, video_url, video_storage_path', { count: 'exact', head: false } as any)
+        // @ts-expect-error Supabase types don't include count option overload
+        .select('id, video_url, video_storage_path', { count: 'exact', head: false })
         .eq('status', 'complete')
         .not('video_url', 'is', null);
 

@@ -18,10 +18,14 @@ export default function Analytics() {
       const monthStart = startOfMonth(now);
 
       const [totalRes, todayRes, weekRes, monthRes] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true } as any),
-        supabase.from("profiles").select("id", { count: "exact", head: true } as any).gte("created_at", todayStart.toISOString()),
-        supabase.from("profiles").select("id", { count: "exact", head: true } as any).gte("created_at", weekStart.toISOString()),
-        supabase.from("profiles").select("id", { count: "exact", head: true } as any).gte("created_at", monthStart.toISOString()),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekStart.toISOString()),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", monthStart.toISOString()),
       ]);
 
       return {
@@ -38,8 +42,10 @@ export default function Analytics() {
     queryKey: ["analytics-generations"],
     queryFn: async () => {
       const [totalRes, completedRes] = await Promise.all([
-        supabase.from("generations").select("id", { count: "exact", head: true } as any),
-        supabase.from("generations").select("id", { count: "exact", head: true } as any).eq("status", "completed"),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("generations").select("id", { count: "exact", head: true }),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("generations").select("id", { count: "exact", head: true }).eq("status", "completed"),
       ]);
 
       return {
@@ -54,8 +60,10 @@ export default function Analytics() {
     queryKey: ["analytics-conversion"],
     queryFn: async () => {
       const [totalRes, paidRes] = await Promise.all([
-        supabase.from("user_subscriptions").select("id", { count: "exact", head: true } as any),
-        supabase.from("user_subscriptions").select("id", { count: "exact", head: true } as any).neq("plan", "freemium"),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("user_subscriptions").select("id", { count: "exact", head: true }),
+        // @ts-expect-error Supabase types don't include count option overload
+        supabase.from("user_subscriptions").select("id", { count: "exact", head: true }).neq("plan", "freemium"),
       ]);
 
       const total = totalRes.count || 0;

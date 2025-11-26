@@ -38,7 +38,8 @@ export const useGenerationTracking = () => {
             // Update user properties with total generation count
             const { count } = await supabase
               .from('generations')
-              .select('id', { count: 'exact', head: true } as any)
+              // @ts-expect-error Supabase types don't include count option overload
+              .select('id', { count: 'exact', head: true })
               .eq('user_id', user.id)
               .eq('status', 'completed');
 

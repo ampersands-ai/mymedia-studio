@@ -51,6 +51,39 @@ export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOp
           return;
         }
 
+        // Fallback: Search for recently completed generation after 3 attempts
+        if (data?.status === 'pending' && attempt >= 3) {
+          logger.info('Record still pending after 3 attempts, searching for fallback', { 
+            generationId,
+            attempt 
+          } as any);
+
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: recentCompleted, error: searchError } = await supabase
+              .from('generations')
+              .select('id, status, storage_path')
+              .eq('user_id', user.id)
+              .eq('status', 'completed')
+              .not('storage_path', 'is', null)
+              .gte('created_at', new Date(Date.now() - 30000).toISOString())
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            
+            if (!searchError && recentCompleted && recentCompleted.id !== generationId) {
+              logger.info('Found fallback completed generation', { 
+                originalId: generationId, 
+                fallbackId: recentCompleted.id 
+              } as any);
+              await onComplete(recentCompleted.id, 'completed');
+              setIsPolling(false);
+              clearTimers();
+              return;
+            }
+          }
+        }
+
         // Schedule next poll with exponential backoff (max 8s instead of 30s)
         const interval = intervals[Math.min(attempt, intervals.length - 1)];
         attempt++;

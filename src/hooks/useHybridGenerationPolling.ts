@@ -145,7 +145,7 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     }, 5000);
 
     // Try Realtime first
-    subscribe();
+    subscribe(generationId);
   }, [user?.id, checkCompletion, processCompletion, startStallGuard, subscribe, isConnected, startFallbackPolling, clearCompletedCache]);
 
   /**

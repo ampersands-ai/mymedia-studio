@@ -42,6 +42,14 @@ export function validateSignature(
 
   const secret = Deno.env.get('KIE_WEBHOOK_SECRET');
 
+  // If no secret configured AND no signature provided, skip HMAC validation
+  // This allows providers like Kie.ai that don't send HMAC signatures
+  // (Other security layers still protect the webhook: URL token, verify token, timing, idempotency)
+  if (!secret && !receivedSignature) {
+    logger.info('Layer 5 skipped: HMAC validation not configured');
+    return { success: true };
+  }
+
   // Check if secret is configured
   if (!secret) {
     logger.error('SECURITY CRITICAL: KIE_WEBHOOK_SECRET not configured');

@@ -1,6 +1,28 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Run type check
+echo "🔍 Running TypeScript check..."
+npm run typecheck
+
+# If type check fails, prevent commit
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Commit blocked: Fix TypeScript errors before committing"
+  exit 1
+fi
+
+# Run ESLint
+echo "🔍 Running ESLint..."
+npm run lint
+
+# If linting fails, prevent commit
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Commit blocked: Fix ESLint errors before committing"
+  exit 1
+fi
+
 # Validate edge functions for deprecated patterns
 echo "🔍 Validating edge functions..."
 npm run validate:edge-functions
@@ -12,4 +34,4 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "✅ Edge functions validation passed"
+echo "✅ All checks passed!"

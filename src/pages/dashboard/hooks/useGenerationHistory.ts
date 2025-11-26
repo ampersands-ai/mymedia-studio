@@ -55,7 +55,7 @@ export const useGenerationHistory = ({
     queryFn: async () => {
       let query = supabase
         .from("user_content_history")
-        .select("id", { count: 'exact', head: true })
+        .select("id", { count: 'exact', head: true } as any)
         .eq("user_id", userId!);
 
       if (statusFilter === 'completed') {

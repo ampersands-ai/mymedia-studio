@@ -23,8 +23,8 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/plum.png",
-  modelFamily: "Runware",
+  logoUrl: "/logos/artifio.png",
+  modelFamily: "Artifio",
   variantName: "Remove Background",
   displayOrderInFamily: 2,
 
@@ -125,18 +125,18 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+  const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: prompt || "Remove background",
-      custom_parameters: preparePayload(inputs)
-    }
+      custom_parameters: preparePayload(inputs),
+    },
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
+    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

@@ -34,10 +34,12 @@ export type AnimationPosition =
  */
 export interface MusicSettingsUpdate {
   music_settings: MusicSettings;
+  [key: string]: unknown;
 }
 
 export interface ImageAnimationSettingsUpdate {
   image_animation_settings: ImageAnimationSettings;
+  [key: string]: unknown;
 }
 
 /**

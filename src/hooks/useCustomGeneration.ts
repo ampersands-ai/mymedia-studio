@@ -156,7 +156,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       // Use shared generation pipeline
       // TypeScript note: currentModel is guaranteed to be defined after null check above
       const genId = await executeGeneration({
-        model: currentModel as { record_id: string; base_token_cost?: number; cost_multipliers?: Record<string, unknown>; provider: string; content_type: string },
+        model: {
+          ...currentModel,
+          record_id: currentModel.record_id,
+          provider: currentModel.provider || 'unknown',
+          content_type: currentModel.content_type || 'image'
+        },
         prompt: state.prompt,
         modelParameters: state.modelParameters,
         uploadedImages,

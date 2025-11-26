@@ -321,41 +321,18 @@ export class EnhancedExecutionTracker {
 
   /**
    * Save step snapshot to database
+   * NOTE: test_execution_snapshots table does not exist in current schema
    */
   private async saveStepSnapshot(step: ExecutionStep): Promise<void> {
-    try {
-      await supabase.from('test_execution_snapshots').insert({
-        test_run_id: this.flow.testRunId!,
-        step_number: step.stepNumber,
-        snapshot_type: 'after' as const,
-        state_data: {
-          step_name: step.stepName,
-          description: step.description,
-          state_before: step.stateBeforeStep,
-          state_after: step.stateAfterStep,
-          inputs: step.inputs,
-          outputs: step.outputs,
-          function_name: step.functionName,
-          file_path: step.functionPath,
-          source_code: step.sourceCode,
-          status: step.status,
-          can_edit: step.canEdit,
-          can_rerun: step.canRerun,
-          is_edited: step.isEdited,
-          started_at: step.startTime ? new Date(step.startTime).toISOString() : null,
-          completed_at: step.endTime ? new Date(step.endTime).toISOString() : null,
-          duration_ms: step.duration,
-        },
-      });
-    } catch (error) {
-      logger.error('Failed to save step snapshot', error);
-    }
+    // TODO: Create test_execution_snapshots table or remove this functionality
+    // Disabled until table exists in schema
+    return;
   }
 
   /**
    * Start executing a step
    */
-  startStep(stepId: string, stateBeforeStep?: Record<string, any>): void {
+  startStep(stepId: string, stateBeforeStep?: Record<string, unknown>): void {
     const step = this.flow.steps.find(s => s.id === stepId);
     if (!step) return;
 
@@ -570,28 +547,12 @@ export class EnhancedExecutionTracker {
 
   /**
    * Save log to database
+   * NOTE: test_execution_logs table does not exist in current schema
    */
   private async saveLog(log: ExecutionLog): Promise<void> {
-    try {
-      await supabase.from('test_execution_logs').insert({
-        test_run_id: log.testRunId,
-        step_name: this.flow.steps.find(s => s.stepNumber === log.stepNumber)?.stepName || 'Unknown',
-        step_number: log.stepNumber,
-        parent_step_number: log.parentStepNumber,
-        step_type: log.stepType,
-        log_level: log.logLevel,
-        message: log.message,
-        data: log.data,
-        metadata: log.metadata,
-        function_name: log.functionName,
-        file_path: log.filePath,
-        line_number: log.lineNumber,
-        execution_context: log.executionContext,
-        timestamp: new Date(log.timestamp).toISOString(),
-      });
-    } catch (error) {
-      logger.error('Failed to save log', error);
-    }
+    // TODO: Create test_execution_logs table or remove this functionality
+    // Disabled until table exists in schema
+    return;
   }
 
   /**

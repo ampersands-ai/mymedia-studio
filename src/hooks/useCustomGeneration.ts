@@ -157,10 +157,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       // TypeScript note: currentModel is guaranteed to be defined after null check above
       const genId = await executeGeneration({
         model: {
-          ...currentModel,
           record_id: currentModel.record_id,
-          provider: currentModel.provider || 'unknown',
-          content_type: currentModel.content_type || 'image'
         },
         prompt: state.prompt,
         modelParameters: state.modelParameters,

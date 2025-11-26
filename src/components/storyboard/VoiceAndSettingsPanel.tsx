@@ -20,12 +20,22 @@ import { SubtitleSettingsSection } from './SubtitleSettingsSection';
 import { AudioSettingsSection } from './AudioSettingsSection';
 import { ImageAnimationSection } from './ImageAnimationSection';
 import type { Storyboard } from '@/types/storyboard';
-import type { ImageAnimationSettings } from '@/types/media-settings';
+import type { 
+  ImageAnimationSettings,
+  MusicSettingsUpdate,
+  ImageAnimationSettingsUpdate 
+} from '@/types/media-settings';
 
 interface VoiceAndSettingsPanelProps {
   storyboard: Storyboard;
   isRendering: boolean;
-  onUpdateSettings: (settings: Record<string, unknown>) => void;
+  onUpdateSettings: (settings: 
+    | MusicSettingsUpdate 
+    | ImageAnimationSettingsUpdate 
+    | { subtitle_settings?: unknown }
+    | { voice_id?: string; voice_name?: string }
+    | { video_quality?: string }
+  ) => void;
   onOpenSubtitleCustomizer: () => void;
 }
 

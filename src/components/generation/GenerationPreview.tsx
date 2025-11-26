@@ -100,7 +100,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
         operation: 'download',
         storagePath: storagePath || undefined
       });
-      logger.error('Download failed', error as Error, metadata);
+      logger.error('Download failed', error as Error, metadata as Record<string, unknown>);
       toast.error('Download failed');
     }
   };

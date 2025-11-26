@@ -106,6 +106,8 @@ export const FilteredModelSchema = z.object({
   record_id: z.string(),
   base_token_cost: z.number(),
   cost_multipliers: z.record(z.unknown()).optional(),
+  provider: z.string(),
+  content_type: z.string(),
 });
 
 export type FilteredModel = z.infer<typeof FilteredModelSchema>;

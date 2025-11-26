@@ -16,6 +16,7 @@
  */
 
 import { logger } from "@/lib/logger";
+import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 
 /**
  * Helper function: Convert contentType to database generation type
@@ -125,13 +126,9 @@ import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 
 /**
  * Generation execution parameters
+ * Re-exported from executeGeneration.ts for consistency
+ * Note: The actual ExecuteGenerationParams is defined in @/lib/generation/executeGeneration
  */
-export interface ExecuteGenerationParams {
-  prompt: string;
-  modelParameters: Record<string, unknown>;
-  userId: string;
-  startPolling: (generationId: string) => void;
-}
 
 /**
  * Validation result from model validation
@@ -194,7 +191,7 @@ export interface ModelModule {
   validate: (inputs: Record<string, unknown>) => ValidationResult;
   preparePayload: (inputs: Record<string, unknown>) => Record<string, unknown> | unknown[];
   calculateCost: (inputs: Record<string, unknown>) => number;
-  execute: (params: Record<string, unknown>) => Promise<string>;
+  execute: (params: ExecuteGenerationParams) => Promise<string>;
 }
 
 /**

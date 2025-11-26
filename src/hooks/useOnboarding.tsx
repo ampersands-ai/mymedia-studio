@@ -52,7 +52,7 @@ export const useOnboarding = () => {
       // Check if user has any generations to determine if they're new
       const { count } = await supabase
         .from('generations')
-        .select('*', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true } as { count: 'exact'; head: true })
         .eq('user_id', user.id);
 
       const isNewUser = (count || 0) === 0;

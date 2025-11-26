@@ -38,11 +38,17 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIdRef = useRef<string | null>(null);
   const optionsRef = useRef(options);
 
   useEffect(() => {
     optionsRef.current = options;
   }, [options]);
+
+  // Sync ref with state
+  useEffect(() => {
+    pollingIdRef.current = pollingId;
+  }, [pollingId]);
 
   // Completion hook
   const { processCompletion, checkCompletion, clearCompletedCache } = useGenerationCompletion({
@@ -70,12 +76,16 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
 
   // State sync hook
   const { handleChildUpdate, startStallGuard, clearTimers: clearSyncTimers } = useGenerationStateSync({
-    generationId: pollingId || '',
-    onChildActivity: () => pollingId && processCompletion(pollingId),
+    generationId: pollingIdRef.current || '',
+    onChildActivity: () => {
+      const currentId = pollingIdRef.current;
+      if (currentId) processCompletion(currentId);
+    },
     onStallDetected: () => {
-      if (pollingId) {
+      const currentId = pollingIdRef.current;
+      if (currentId) {
         setConnectionTier('polling');
-        startFallbackPolling(pollingId);
+        startFallbackPolling(currentId);
       }
     },
   });
@@ -83,9 +93,10 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
   // Realtime hook
   const { isConnected, subscribe, unsubscribe } = useRealtimeGeneration({
     userId: user?.id || '',
-    generationId: pollingId || '',
+    generationId: pollingIdRef.current || '',
     onUpdate: (payload: RealtimePayload) => {
-      if (payload.new.id === pollingId &&
+      const currentId = pollingIdRef.current;
+      if (payload.new.id === currentId &&
         (payload.new.status === 'completed' || payload.new.status === 'failed' || payload.new.status === 'error')) {
         processCompletion(payload.new.id);
       }
@@ -116,6 +127,9 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
     }
 
     logger.info('Starting hybrid polling', { generationId, userId: user.id } as any);
+
+    // Set ref immediately (synchronous) for callbacks
+    pollingIdRef.current = generationId;
 
     clearCompletedCache();
     setIsPolling(true);

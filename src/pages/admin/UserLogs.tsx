@@ -132,10 +132,10 @@ export default function UserLogs() {
                       </div>
                       <p className="text-sm font-medium">{(log as any).error_message || log.message}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>User: {log.profiles?.email || 'Unknown'}</span>
+                        <span>User: {(log as any).profiles?.email || 'Unknown'}</span>
                         <span>•</span>
                         <span>{format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}</span>
-                        {log.is_resolved && (
+                        {(log as any).is_resolved && (
                           <>
                             <span>•</span>
                             <span className="text-green-600">Resolved</span>
@@ -144,13 +144,13 @@ export default function UserLogs() {
                       </div>
                     </div>
                   </div>
-                  {log.error_stack && (
+                  {(log as any).error_stack && (
                     <details className="text-xs">
                       <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                         View stack trace
                       </summary>
                       <pre className="mt-2 p-2 bg-muted rounded overflow-auto max-h-32">
-                        {log.error_stack}
+                        {(log as any).error_stack}
                       </pre>
                     </details>
                   )}

@@ -81,7 +81,7 @@ export interface ModelConfiguration {
   content_type: string;
   base_token_cost: number;
   cost_multipliers: Record<string, number> | null;
-  input_schema: JsonSchema;
+  input_schema: JsonSchema | Record<string, unknown> | null;
   api_endpoint: string | null;
   is_active: boolean;
   groups?: string[];

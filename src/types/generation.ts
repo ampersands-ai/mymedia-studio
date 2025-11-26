@@ -108,6 +108,8 @@ export const FilteredModelSchema = z.object({
   cost_multipliers: z.record(z.unknown()).optional(),
   provider: z.string(),
   content_type: z.string(),
+  input_schema: z.record(z.unknown()).optional(),
+  max_images: z.number().optional(),
 });
 
 export type FilteredModel = z.infer<typeof FilteredModelSchema>;

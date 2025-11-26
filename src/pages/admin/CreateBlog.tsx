@@ -36,8 +36,8 @@ interface TopicSuggestion {
 interface SuggestedImage {
   url: string;
   alt_text: string;
-  prompt?: string;
-  position?: number;
+  prompt: string;
+  position: number;
 }
 
 export default function CreateBlog() {
@@ -160,7 +160,13 @@ export default function CreateBlog() {
             schema_data: data.schema_data,
           });
           setTags(data.tags || []);
-          setSuggestedImages(data.suggested_images || []);
+          // Ensure suggested images have required fields
+          setSuggestedImages((data.suggested_images || []).map((img: any, idx: number) => ({
+            url: img.url || '',
+            alt_text: img.alt_text || '',
+            prompt: img.prompt || img.url || '',
+            position: img.position ?? idx,
+          })));
         },
         {
           successMessage: 'Blog post generated successfully! Review and edit as needed.',

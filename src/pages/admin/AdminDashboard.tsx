@@ -38,28 +38,28 @@ export default function AdminDashboard() {
           // Fetch templates count (workflow_templates only - content_templates deleted)
           const { count: totalTemplates } = await supabase
             .from("workflow_templates")
-            .select("*", { count: "exact", head: true });
+            .select("*", { count: "exact", head: true } as any);
 
           const { count: activeTemplates } = await supabase
             .from("workflow_templates")
-            .select("*", { count: "exact", head: true })
+            .select("*", { count: "exact", head: true } as any)
             .eq("is_active", true);
 
           // Fetch generations count
           const { count: totalGenerations } = await supabase
             .from("generations")
-            .select("*", { count: "exact", head: true });
+            .select("*", { count: "exact", head: true } as any);
 
           const today = new Date().toISOString().split("T")[0];
           const { count: todayGenerations } = await supabase
             .from("generations")
-            .select("*", { count: "exact", head: true })
+            .select("*", { count: "exact", head: true } as any)
             .gte("created_at", today);
 
           // Fetch storyboards count
           const { count: totalStoryboards } = await supabase
             .from("storyboards")
-            .select("*", { count: "exact", head: true });
+            .select("*", { count: "exact", head: true } as any);
 
           // Fetch latest API quota remaining
           const { data: latestStoryboard } = await supabase

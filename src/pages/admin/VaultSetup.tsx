@@ -137,7 +137,11 @@ export default function VaultSetup() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => window.open(`https://lovable.dev/projects/${supabase.supabaseUrl.split('.')[0].split('//')[1]}/backend`, '_blank')}
+              onClick={() => {
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+                const projectId = supabaseUrl.split('.')[0].split('//')[1] || '';
+                window.open(`https://lovable.dev/projects/${projectId}/backend`, '_blank');
+              }}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               View Backend
@@ -208,7 +212,11 @@ export default function VaultSetup() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => window.open(`https://lovable.dev/projects/${supabase.supabaseUrl.split('.')[0].split('//')[1]}/backend/functions`, '_blank')}
+              onClick={() => {
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+                const projectId = supabaseUrl.split('.')[0].split('//')[1] || '';
+                window.open(`https://lovable.dev/projects/${projectId}/backend/functions`, '_blank');
+              }}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               View Edge Functions Logs

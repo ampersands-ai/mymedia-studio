@@ -75,7 +75,9 @@ export const ModelConfigSchema = z.object({
   payloadStructure: z.string().optional(),
   baseCreditCost: z.number(),
   estimatedTimeSeconds: z.number().optional(),
-  costMultipliers: z.record(z.number()).optional(),
+  // Support both flat (Record<string, number>) and nested (Record<string, Record<string, number>>) structures
+  // Using z.any() to allow flexible nested structures that token-calculator.ts handles
+  costMultipliers: z.record(z.any()).optional(),
   maxImages: z.number().nullable().optional(),
   defaultOutputs: z.number().optional(),
   isActive: z.boolean().optional(),

@@ -324,31 +324,36 @@ export function VideoJobVoiceover({
             </div>
           </div>
 
-          {job.error_details && (
-            <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-2">
-              <AlertCircle className="h-5 w-5" />
-              <AlertTitle className="text-base font-semibold">Video Rendering Failed</AlertTitle>
-              <AlertDescription className="space-y-3 mt-2">
-                <p className="text-sm leading-relaxed">{job.error_details.message}</p>
+          {job.error_details && (() => {
+            const errorDetails = job.error_details as { message?: string; step?: string; timestamp?: string } | null;
+            if (!errorDetails) return null;
+            
+            return (
+              <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="h-5 w-5" />
+                <AlertTitle className="text-base font-semibold">Video Rendering Failed</AlertTitle>
+                <AlertDescription className="space-y-3 mt-2">
+                  <p className="text-sm leading-relaxed">{errorDetails.message || 'An unknown error occurred'}</p>
 
-                {job.error_details.step && (
-                  <p className="text-xs text-muted-foreground">
-                    Failed during: <span className="font-medium">{job.error_details.step}</span>
+                  {errorDetails.step && (
+                    <p className="text-xs text-muted-foreground">
+                      Failed during: <span className="font-medium">{errorDetails.step}</span>
+                    </p>
+                  )}
+
+                  {errorDetails.timestamp && (
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(errorDetails.timestamp).toLocaleString()}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 If the issue persists, try editing the script or selecting a different background.
                   </p>
-                )}
-
-                {job.error_details.timestamp && (
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(job.error_details.timestamp).toLocaleString()}
-                  </p>
-                )}
-
-                <p className="text-xs text-muted-foreground mt-2">
-                  💡 If the issue persists, try editing the script or selecting a different background.
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
+                </AlertDescription>
+              </Alert>
+            );
+          })()}
 
           <div className="flex gap-2 pt-2">
             <Button

@@ -104,11 +104,17 @@ export const useTestModelGroup = () => {
           const noOpUploadImages = async (): Promise<string[]> => [];
           
           // Get max prompt length for this model (SAME logic as production)
-          const maxPromptLength = getMaxPromptLength(model, undefined);
+          const maxPromptLength = getMaxPromptLength({ 
+            ...model, 
+            input_schema: {
+              ...model.input_schema,
+              required: [...(model.input_schema.required || [])]
+            }
+          }, undefined);
 
           // Use EXACT SAME generation pipeline as CustomCreation.tsx
           const generationId = await executeGeneration({
-            model: model as { record_id: string; [key: string]: unknown },
+            model: model as { record_id: string; provider: string; content_type: string },
             prompt: "", // Empty by default - will trigger validation errors same as production
             modelParameters: {}, // No default parameters - will trigger validation errors same as production
             uploadedImages: [],

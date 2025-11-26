@@ -59,18 +59,19 @@ export function StepEditor({ step, onSave, onCancel }: StepEditorProps) {
       return (
         <Input
           type="number"
-          value={value}
+          value={typeof value === 'number' ? value : 0}
           onChange={(e) => handleInputChange(key, parseFloat(e.target.value))}
         />
       );
     }
 
     if (type === 'string') {
+      const strValue = String(value);
       // Use textarea for long strings
-      if (value.length > 100) {
+      if (strValue.length > 100) {
         return (
           <Textarea
-            value={value}
+            value={strValue}
             onChange={(e) => handleInputChange(key, e.target.value)}
             rows={4}
             className="font-mono text-xs"
@@ -80,7 +81,7 @@ export function StepEditor({ step, onSave, onCancel }: StepEditorProps) {
       return (
         <Input
           type="text"
-          value={value}
+          value={strValue}
           onChange={(e) => handleInputChange(key, e.target.value)}
         />
       );

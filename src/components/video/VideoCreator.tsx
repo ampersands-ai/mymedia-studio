@@ -262,7 +262,7 @@ export function VideoCreator() {
           <Label htmlFor="aspectRatio" className="text-sm font-bold">
             Aspect Ratio
           </Label>
-          <Select value={aspectRatio} onValueChange={(value: string) => setAspectRatio(value)} disabled={isDisabled}>
+          <Select value={aspectRatio} onValueChange={(value) => setAspectRatio(value as '16:9' | '1:1' | '4:5' | '9:16')} disabled={isDisabled}>
             <SelectTrigger id="aspectRatio">
               <SelectValue />
             </SelectTrigger>

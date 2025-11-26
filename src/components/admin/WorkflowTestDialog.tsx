@@ -15,7 +15,8 @@ import { logger, generateRequestId } from "@/lib/logger";
 import type {
   WorkflowTestInputs,
   WorkflowStepModels,
-  FieldSchemaInfo
+  FieldSchemaInfo,
+  WorkflowParameterValue
 } from "@/types/workflow-parameters";
 import { jsonToSchema } from "@/types/schema";
 import type { ContentType } from "@/types/workflow-execution-display";

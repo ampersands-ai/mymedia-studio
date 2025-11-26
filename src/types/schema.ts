@@ -93,6 +93,7 @@ export interface ModelConfiguration {
   model_family?: string;
   variant_name?: string;
   display_order_in_family?: number;
+  use_api_key?: string | null;
   created_at?: string;
   updated_at?: string;
   // Lock system fields

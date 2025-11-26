@@ -25,7 +25,7 @@ export function useAdminTemplates() {
     mutationFn: async (template: Partial<TemplateLandingPage>) => {
       const { data, error } = await supabase
         .from("template_landing_pages")
-        .insert([template])
+        .insert([template as any])
         .select()
         .single();
 
@@ -45,7 +45,7 @@ export function useAdminTemplates() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<TemplateLandingPage> }) => {
       const { data, error } = await supabase
         .from("template_landing_pages")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -130,7 +130,7 @@ export function useAdminCategories() {
     mutationFn: async (category: Partial<TemplateCategory>) => {
       const { data, error } = await supabase
         .from("template_categories")
-        .insert([category])
+        .insert([category as any])
         .select()
         .single();
 

@@ -180,7 +180,7 @@ export default function AllGenerations() {
             phone_number
           )
         `,
-          { count: 'exact' }
+          { count: 'exact' } as any
         )
         .in('status', ['completed', 'processing', 'pending'])
         .order('created_at', { ascending: false })

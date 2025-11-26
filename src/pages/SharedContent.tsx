@@ -82,7 +82,6 @@ export default function SharedContent() {
       {
         successMessage: 'Download started!',
         errorMessage: 'Download failed',
-        toastId: 'download',
         context: {
           component: 'SharedContent',
           operation: 'handleDownload',

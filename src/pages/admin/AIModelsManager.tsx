@@ -102,7 +102,7 @@ export default function AIModelsManager() {
 
   const fetchModels = () => {
     execute(
-      () => {
+      async () => {
         const modules = getAllModels();
         const modelConfigs = modules.map(moduleToModel);
         setModels(modelConfigs);
@@ -121,7 +121,7 @@ export default function AIModelsManager() {
 
   const fetchLockStatuses = () => {
     execute(
-      () => {
+      async () => {
         const statuses = getLockStatuses();
         setLockStatuses(statuses);
       },

@@ -248,8 +248,8 @@ const Templates = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
-        t.name.toLowerCase().includes(query) || 
-        (t.description || '').toLowerCase().includes(query)
+        t.name.toLowerCase().includes(query) ||
+        ((t as any).description || '').toLowerCase().includes(query)
       );
     }
     

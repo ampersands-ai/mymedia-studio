@@ -68,8 +68,17 @@ const CustomCreation = () => {
   // Get current model
   const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
 
+  // Convert AIModel to ModelConfiguration for useModelSchema
+  const modelConfig = currentModel ? {
+    ...currentModel,
+    cost_multipliers: currentModel.cost_multipliers ? 
+      Object.fromEntries(
+        Object.entries(currentModel.cost_multipliers).map(([k, v]) => [k, typeof v === 'number' ? v : 1])
+      ) as Record<string, number> : null
+  } : null;
+
   // Get model schema (locked models load from file, unlocked from database)
-  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(currentModel || null);
+  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);
 
   // Initialize model parameters with schema defaults when model changes
   useEffect(() => {

@@ -36,6 +36,8 @@ interface TopicSuggestion {
 interface SuggestedImage {
   url: string;
   alt_text: string;
+  prompt?: string;
+  position?: number;
 }
 
 export default function CreateBlog() {

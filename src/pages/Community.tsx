@@ -91,14 +91,28 @@ const Community = () => {
 
           // Fetch signed URLs for all creations using storage_path from generations
           const creationsWithUrls = await Promise.all(
-            (data || []).map(async (creation: { id: string; name: string; description: string; created_at: string; category: string; view_count: number; generations?: { storage_path?: string; workflow_execution_id?: string } }) => {
+            (data || []).map(async (creation: any) => {
               const storagePath = creation.generations?.storage_path;
               const workflowExecutionId = creation.generations?.workflow_execution_id;
+              const creationData: CommunityCreation = {
+                id: creation.id,
+                prompt: creation.prompt || '',
+                output_url: null,
+                storage_path: storagePath || null,
+                content_type: creation.content_type || 'image',
+                model_id: creation.model_id || '',
+                likes_count: creation.likes_count || 0,
+                views_count: creation.views_count || 0,
+                is_featured: creation.is_featured || false,
+                shared_at: creation.shared_at || creation.created_at || new Date().toISOString(),
+                user_id: creation.user_id || '',
+                workflow_execution_id: workflowExecutionId || null,
+              };
               if (storagePath) {
                 const signedUrl = await createSignedUrl("generated-content", storagePath);
-                return { ...creation, storage_path: storagePath, output_url: signedUrl, workflow_execution_id: workflowExecutionId };
+                creationData.output_url = signedUrl;
               }
-              return { ...creation, storage_path: null, output_url: null, workflow_execution_id: workflowExecutionId };
+              return creationData;
             })
           );
 

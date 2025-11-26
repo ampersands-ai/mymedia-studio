@@ -195,7 +195,7 @@ const Create = () => {
           isGenerating={isGenerating}
           isPolling={isPolling}
           userTokens={userTokens}
-          onboardingProgress={onboardingFlow.progress}
+          onboardingProgress={onboardingFlow.progress ? onboardingFlow.progress as unknown as Record<string, unknown> : undefined}
           updateOnboardingProgress={onboardingFlow.updateProgress}
           generationState={state}
           onDownload={handleDownload}

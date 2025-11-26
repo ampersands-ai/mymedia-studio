@@ -55,7 +55,6 @@ export default function StoryboardPage() {
       {
         successMessage: 'Storyboard deleted',
         errorMessage: 'Failed to delete storyboard',
-        toastId: 'storyboard-reset',
         context: {
           component: 'StoryboardPage',
           operation: 'confirmReset',

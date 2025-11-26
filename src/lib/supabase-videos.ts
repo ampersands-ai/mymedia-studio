@@ -233,8 +233,9 @@ export type ConnectionSpeed = 'slow' | 'medium' | 'fast';
  */
 export function detectConnectionSpeed(): ConnectionSpeed {
   // Check if Network Information API is available
-  if (navigator.connection) {
-    const connection = navigator.connection;
+  const nav = navigator as Navigator & { connection?: { effectiveType?: string } };
+  if (nav.connection) {
+    const connection = nav.connection;
     // effectiveType: 'slow-2g', '2g', '3g', '4g'
     const effectiveType = connection.effectiveType;
 

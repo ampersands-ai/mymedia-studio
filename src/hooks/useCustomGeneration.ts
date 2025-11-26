@@ -143,7 +143,14 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     if (!currentModel.provider || !currentModel.content_type) {
       throw new Error('Model missing required provider or content_type');
     }
-    const maxPromptLength = getMaxPromptLength(currentModel, state.modelParameters.customMode);
+    // Ensure provider and content_type are present for ModelSchema type
+    const modelSchema: { provider: string; content_type: string; input_schema?: unknown; max_images?: number } = {
+      provider: currentModel.provider,
+      content_type: currentModel.content_type,
+      input_schema: currentModel.input_schema,
+      max_images: currentModel.max_images ?? undefined,
+    };
+    const maxPromptLength = getMaxPromptLength(modelSchema, state.modelParameters.customMode);
 
     // Start generation
     updateState({ 

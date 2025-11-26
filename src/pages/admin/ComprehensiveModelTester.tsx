@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { Layers, Upload, History } from "lucide-react";
 import { initializeParameters } from "@/types/model-schema";
-import { loadModelSourceCode } from "@/lib/admin/codeAnalysis";
+import { loadModelSourceCode, getModelFilePath } from "@/lib/admin/codeAnalysis";
 import {
   EXECUTION_CONTEXT,
   STEP_TYPE,
@@ -62,10 +62,17 @@ const ComprehensiveModelTester = () => {
     [allModels, showInactiveModels]
   );
 
+  // Convert AIModel to ModelConfiguration for useModelSchema
+  const modelConfig = selectedModel ? {
+    ...selectedModel,
+    cost_multipliers: selectedModel.cost_multipliers ? 
+      Object.fromEntries(
+        Object.entries(selectedModel.cost_multipliers).map(([k, v]) => [k, typeof v === 'number' ? v : 1])
+      ) as Record<string, number> : null
+  } : null;
+
   // Get model schema
-  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(
-    selectedModel || null
-  );
+  const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);
 
   // Initialize parameters when model changes
   const handleModelChange = useCallback(
@@ -115,7 +122,7 @@ const ComprehensiveModelTester = () => {
     });
 
     const unsubscribeLogs = newTracker.subscribeToLogs((log) => {
-      logger.debug('New log received', log);
+      logger.debug('New log received', log as unknown as Record<string, unknown>);
     });
 
     try {
@@ -325,7 +332,7 @@ const ComprehensiveModelTester = () => {
         {
           tableName: 'generations',
           recordId: gen.id,
-          insertedAt: gen.created_at,
+          insertedAt: typeof gen.created_at === 'string' ? gen.created_at : new Date().toISOString(),
         }
       );
 

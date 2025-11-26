@@ -130,7 +130,7 @@ export default function UserLogs() {
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="font-mono text-sm">{log.route_name}</span>
                       </div>
-                      <p className="text-sm font-medium">{log.error_message}</p>
+                      <p className="text-sm font-medium">{(log as any).error_message || log.message}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>User: {log.profiles?.email || 'Unknown'}</span>
                         <span>•</span>

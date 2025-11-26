@@ -34,16 +34,18 @@ export interface FileValidationOptions {
 /**
  * Common file type groups
  */
-export const FILE_TYPES = {
-  IMAGES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-  VIDEOS: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
-  AUDIO: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'],
-  DOCUMENTS: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  ALL_MEDIA: [] as string[], // Will be populated below
-} as const;
+const IMAGES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'] as const;
+const VIDEOS = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'] as const;
+const AUDIO = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'] as const;
+const DOCUMENTS = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'] as const;
 
-// Populate ALL_MEDIA
-FILE_TYPES.ALL_MEDIA = [...FILE_TYPES.IMAGES, ...FILE_TYPES.VIDEOS, ...FILE_TYPES.AUDIO];
+export const FILE_TYPES = {
+  IMAGES: [...IMAGES],
+  VIDEOS: [...VIDEOS],
+  AUDIO: [...AUDIO],
+  DOCUMENTS: [...DOCUMENTS],
+  ALL_MEDIA: [...IMAGES, ...VIDEOS, ...AUDIO],
+} as const;
 
 /**
  * Common file size limits

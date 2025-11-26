@@ -169,7 +169,7 @@ export default function TemplatesManager() {
   };
   
   // Extract unique categories with counts
-  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();
+  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort() as string[];
   const categoryCounts = uniqueCategories.reduce((acc, cat) => {
     acc[cat] = templates.filter(t => t.category === cat).length;
     return acc;
@@ -308,7 +308,7 @@ export default function TemplatesManager() {
             >
               {ALL_CATEGORIES} ({templates.length})
             </Button>
-            {uniqueCategories.map(category => (
+            {uniqueCategories.map((category: string) => (
               <Button
                 key={category}
                 variant={selectedCategories.includes(category) ? 'default' : 'outline'}

@@ -28,6 +28,9 @@ export const useGenerationStateSync = ({
   const stallGuardRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleChildUpdate = useCallback((payload: RealtimePayload) => {
+    // Capture current generationId when handling child update
+    const currentGenerationId = pollingIdRef.current;
+    
     // If child has output, parent might be complete soon
     if (payload.new?.storage_path) {
       // Debounce to allow parent to flip to completed
@@ -35,29 +38,59 @@ export const useGenerationStateSync = ({
         clearTimeout(childDebounceRef.current);
       }
       childDebounceRef.current = setTimeout(() => {
-        const generationId = pollingIdRef.current || '';
-        logger.info('Child output detected, processing completion', { generationId } as any);
-        onChildActivity();
+        // Verify generationId is still active
+        if (pollingIdRef.current === currentGenerationId && currentGenerationId) {
+          logger.info('Child output detected, processing completion', { generationId: currentGenerationId } as any);
+          onChildActivity();
+        }
       }, 1000);
     }
 
     // Reset stall guard on any child activity
-    if (stallGuardRef.current) {
+    if (stallGuardRef.current && currentGenerationId) {
       clearTimeout(stallGuardRef.current);
+      // Capture generationId for the timeout
+      const capturedId = currentGenerationId;
       stallGuardRef.current = setTimeout(() => {
-        const generationId = pollingIdRef.current || '';
-        logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
-        onStallDetected();
+        // Verify generationId is still active before triggering
+        if (pollingIdRef.current === capturedId) {
+          logger.warn('Stall guard triggered, switching to polling', { generationId: capturedId } as any);
+          onStallDetected();
+        } else {
+          logger.debug('Stall guard fired but generation ID changed, ignoring', {
+            originalId: capturedId,
+            currentId: pollingIdRef.current
+          } as any);
+        }
       }, 20000);
     }
   }, [pollingIdRef, onChildActivity, onStallDetected]);
 
   const startStallGuard = useCallback(() => {
-    // Set up stall guard (20 seconds)
+    // Capture the current generationId when setting up the guard
+    const currentGenerationId = pollingIdRef.current;
+    if (!currentGenerationId) {
+      logger.warn('Cannot start stall guard: no generation ID', {} as any);
+      return;
+    }
+
+    // Clear any existing stall guard
+    if (stallGuardRef.current) {
+      clearTimeout(stallGuardRef.current);
+    }
+
+    // Set up stall guard (20 seconds) - use captured ID
     stallGuardRef.current = setTimeout(() => {
-      const generationId = pollingIdRef.current || '';
-      logger.warn('Stall guard triggered, switching to polling', { generationId } as any);
-      onStallDetected();
+      // Verify generationId is still active before triggering
+      if (pollingIdRef.current === currentGenerationId) {
+        logger.warn('Stall guard triggered, switching to polling', { generationId: currentGenerationId } as any);
+        onStallDetected();
+      } else {
+        logger.debug('Stall guard fired but generation ID changed, ignoring', {
+          originalId: currentGenerationId,
+          currentId: pollingIdRef.current
+        } as any);
+      }
     }, 20000);
   }, [pollingIdRef, onStallDetected]);
 

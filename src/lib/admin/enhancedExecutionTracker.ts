@@ -599,20 +599,20 @@ export class EnhancedExecutionTracker {
    */
   private convertDbLogToExecutionLog(dbLog: Record<string, unknown>): ExecutionLog {
     return {
-      id: dbLog.id,
-      testRunId: dbLog.test_run_id,
-      stepNumber: dbLog.step_number,
-      parentStepNumber: dbLog.parent_step_number,
-      stepType: dbLog.step_type,
-      logLevel: dbLog.log_level,
-      message: dbLog.message,
-      data: dbLog.data,
-      metadata: dbLog.metadata,
-      functionName: dbLog.function_name,
-      filePath: dbLog.file_path,
-      lineNumber: dbLog.line_number,
-      timestamp: new Date(dbLog.timestamp).getTime(),
-      executionContext: dbLog.execution_context,
+      id: String(dbLog.id),
+      testRunId: String(dbLog.test_run_id),
+      stepNumber: Number(dbLog.step_number),
+      parentStepNumber: dbLog.parent_step_number as number | undefined,
+      stepType: dbLog.step_type as ExecutionStepType,
+      logLevel: dbLog.log_level as LogLevel,
+      message: String(dbLog.message),
+      data: dbLog.data as Record<string, unknown> | undefined,
+      metadata: dbLog.metadata as Record<string, unknown> | undefined,
+      functionName: dbLog.function_name as string | undefined,
+      filePath: dbLog.file_path as string | undefined,
+      lineNumber: dbLog.line_number as number | undefined,
+      timestamp: new Date(String(dbLog.timestamp)).getTime(),
+      executionContext: dbLog.execution_context as ExecutionContext,
     };
   }
 
@@ -946,7 +946,7 @@ export function createStepConfig(
     description,
     functionPath,
     functionName,
-    inputs: maskSensitiveData(inputs),
+    inputs: maskSensitiveData(inputs) as Record<string, unknown>,
     canEdit: options.canEdit ?? false,
     canRerun: options.canRerun ?? false,
     stepType: options.stepType ?? 'main',

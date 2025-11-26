@@ -88,7 +88,7 @@ export function ImportReplayDialog({
 
   // Validate imported run structure
   const validateImportedRun = (
-    data: Record<string, unknown>
+    data: ImportedTestRun
   ): { isValid: boolean; warnings: string[] } => {
     const warnings: string[] = [];
 

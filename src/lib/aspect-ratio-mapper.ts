@@ -74,7 +74,7 @@ export function mapAspectRatioToModelParameters(
   });
 
   // Get schema properties
-  const properties = modelInputSchema?.properties || {};
+  const properties = (modelInputSchema?.properties || {}) as Record<string, { type?: string }>;
 
   // Check for aspectRatio parameter (Midjourney, FLUX, etc.)
   if (properties.aspectRatio || properties.aspect_ratio) {

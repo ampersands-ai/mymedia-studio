@@ -171,6 +171,7 @@ export const useCustomCreationState = () => {
     setState(prev => ({
       ...INITIAL_STATE,
       selectedGroup: prev.selectedGroup, // Keep selected group
+      selectedModel: prev.selectedModel, // Keep selected model
     }));
   }, []);
 

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, Send, ArrowLeft, Plus, X, Image as ImageIcon } from "lucide-react";
 import { BlogEditor } from "@/components/blog/BlogEditor";
 import { SEOFields } from "@/components/blog/SEOFields";
-import { ImageGenerationPanel } from "@/components/blog/ImageGenerationPanel";
+import { ImageGenerationPanel, type SuggestedImage } from "@/components/blog/ImageGenerationPanel";
 import { BlogPost, SEOMetadata } from "@/types/blog";
 import {
   AlertDialog,
@@ -33,11 +33,9 @@ interface TopicSuggestion {
   seoScore: number;
 }
 
-interface SuggestedImage {
+// Extended interface for local use (includes url from API)
+interface SuggestedImageWithUrl extends SuggestedImage {
   url: string;
-  alt_text: string;
-  prompt: string;
-  position: number;
 }
 
 export default function CreateBlog() {
@@ -69,7 +67,7 @@ export default function CreateBlog() {
   const [seoMetadata, setSeoMetadata] = useState<SEOMetadata>({});
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [suggestedImages, setSuggestedImages] = useState<SuggestedImage[]>([]);
+  const [suggestedImages, setSuggestedImages] = useState<SuggestedImageWithUrl[]>([]);
 
   // Backlinks state
   const [backlinks, setBacklinks] = useState<Array<{ url: string; anchor_text: string; is_internal: boolean }>>([]);

@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAllModels } from "@/lib/models/registry";
 import { logger } from "@/lib/logger";
 
-interface SuggestedImage {
+export interface SuggestedImage {
   prompt: string;
   alt_text: string;
   position: number;

@@ -120,10 +120,14 @@ export async function callKieAI(
       cleanedParameters[cleanKey] = value;
     }
     
+    // For wrapper structure, callBackUrl must be INSIDE the input object
+    // This is required by Kie.ai API for webhook callbacks to work
     payload = {
       model: request.model,
-      callBackUrl: callbackUrl,
-      input: cleanedParameters // cleanedParameters already includes prompt if schema defines it
+      input: {
+        ...cleanedParameters,
+        callBackUrl: callbackUrl // System field - must be inside input for wrapper structure
+      }
     };
   }
   

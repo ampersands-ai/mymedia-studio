@@ -60,8 +60,6 @@ export async function executeGeneration({
     navigate,
   });
 
-  // Start polling for generation status
-  startPolling(generationId);
-
+  // Model's execute() already calls startPolling internally
   return generationId;
 }

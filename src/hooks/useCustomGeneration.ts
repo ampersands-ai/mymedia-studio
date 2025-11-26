@@ -139,6 +139,10 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     }
 
     // Get max prompt length for current model/config
+    // currentModel comes from AIModel[] which has required provider and content_type
+    if (!currentModel.provider || !currentModel.content_type) {
+      throw new Error('Model missing required provider or content_type');
+    }
     const maxPromptLength = getMaxPromptLength(currentModel, state.modelParameters.customMode);
 
     // Start generation

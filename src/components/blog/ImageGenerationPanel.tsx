@@ -99,13 +99,20 @@ export const ImageGenerationPanel = ({
 
       // Execute generation using the model's execute function
       const generationId = await modelModule.execute({
+        model: {
+          record_id: selectedModel,
+        },
         userId: user.id,
         prompt: customPrompt,
         modelParameters: {
           width: 1024,
           height: 1024,
         },
+        uploadedImages: [],
+        uploadImagesToStorage: async () => [],
+        generate: async () => ({}),
         startPolling: () => {},
+        navigate: () => {},
       });
 
       // Poll for completion

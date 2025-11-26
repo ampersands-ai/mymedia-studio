@@ -28,7 +28,7 @@ export interface ModelConfig {
  */
 export interface ModelSchema {
   properties: Record<string, unknown>;
-  required?: string[];
+  required?: string[] | readonly string[];
   type: string;
   [key: string]: unknown;
 }

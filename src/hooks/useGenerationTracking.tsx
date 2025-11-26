@@ -36,9 +36,9 @@ export const useGenerationTracking = () => {
             });
 
             // Update user properties with total generation count
-            const { count } = await supabase
+            const { count } = await (supabase
               .from('generations')
-              .select('id', { count: 'exact', head: true } as { count: 'exact'; head: true })
+              .select('id', { count: 'exact', head: true }) as any)
               .eq('user_id', user.id)
               .eq('status', 'completed');
 

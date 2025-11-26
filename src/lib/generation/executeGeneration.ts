@@ -49,6 +49,7 @@ export async function executeGeneration({
 
   // Execute model directly using its execute() function
   const generationId = await modelModule.execute({
+    model,
     prompt,
     modelParameters,
     uploadedImages,

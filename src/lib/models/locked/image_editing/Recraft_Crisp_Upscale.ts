@@ -61,11 +61,9 @@ export function validate(inputs: Record<string, any>): { valid: boolean; error?:
 }
 
 export function preparePayload(inputs: Record<string, any>): Record<string, any> {
+  // Return only schema parameters - the provider will wrap them in 'input' structure
   return {
-    modelId: MODEL_CONFIG.modelId,
-    input: {
-      image: inputs.image,
-    },
+    image: inputs.image,
   };
 }
 

@@ -116,7 +116,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   // Create generation record with pending status (edge function will process)
   const { data: gen, error } = await supabase
     .from("generations")
-    .insert({
+    .insert(assertGenerationInsert({
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,

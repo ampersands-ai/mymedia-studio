@@ -49,6 +49,7 @@ export interface PreviewDisplayProps {
 export interface PreviewLoggerMetadata {
   component: string;
   file?: string;
+  [key: string]: unknown;
   storagePath?: string;
   operation?: 'download' | 'share' | 'playback' | 'thumbnail';
   error?: string;

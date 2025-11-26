@@ -86,7 +86,7 @@ export interface ModelConfiguration {
   is_active: boolean;
   groups?: string[];
   estimated_time_seconds?: number | null;
-  payload_structure?: 'wrapper' | 'flat';
+  payload_structure?: 'wrapper' | 'flat' | string;
   max_images?: number | null;
   logo_url?: string | null;
   default_outputs?: number | null;

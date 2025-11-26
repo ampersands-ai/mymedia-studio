@@ -15,8 +15,9 @@ export const useSchemaHelpers = () => {
    * Get required fields from model schema
    */
   const getSchemaRequiredFields = useCallback((model: AIModel | null): string[] => {
-    if (!model?.input_schema || typeof model.input_schema !== 'object') return [];
-    return model.input_schema.required || [];
+    if (!model?.input_schema || typeof model.input_schema !== 'object' || model.input_schema === null) return [];
+    const schema = model.input_schema as { required?: string[] };
+    return schema.required || [];
   }, []);
 
   /**
@@ -32,14 +33,15 @@ export const useSchemaHelpers = () => {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
 
-    const imageFieldName = model.input_schema.imageInputField;
+    const schema = model.input_schema as { imageInputField?: string; properties?: Record<string, { type?: string; maxItems?: number }>; required?: string[] };
+    const imageFieldName = schema.imageInputField;
 
     // No image input field defined in schema
     if (!imageFieldName) {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
 
-    const properties = model.input_schema.properties || {};
+    const properties = schema.properties || {};
     const fieldSchema = properties[imageFieldName];
 
     if (!fieldSchema) {
@@ -47,7 +49,7 @@ export const useSchemaHelpers = () => {
       return { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
     }
 
-    const required = model.input_schema.required || [];
+    const required = schema.required || [];
     const isRequired = required.includes(imageFieldName);
     const isArray = fieldSchema.type === 'array';
     const maxImages = isArray 

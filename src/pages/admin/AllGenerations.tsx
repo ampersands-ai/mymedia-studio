@@ -180,7 +180,8 @@ export default function AllGenerations() {
             phone_number
           )
         `,
-          { count: 'exact' } as any
+          // @ts-expect-error Supabase types don't include count option overload
+          { count: 'exact' }
         )
         .in('status', ['completed', 'processing', 'pending'])
         .order('created_at', { ascending: false })

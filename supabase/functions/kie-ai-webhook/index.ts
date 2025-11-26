@@ -370,9 +370,20 @@ Deno.serve(async (req) => {
           );
         }
         
-        storagePath = uploadResult.storagePath!;
+        if (!uploadResult.storagePath) {
+          logger.error('Upload succeeded but storagePath is missing', undefined, {
+            metadata: { generationId: generation.id, uploadResult }
+          });
+          throw new Error('Upload succeeded but storagePath is missing');
+        }
+        
+        storagePath = uploadResult.storagePath;
         publicUrl = uploadResult.publicUrl || null;
         fileSize = downloadResult.data.length;
+        
+        logger.info('Content uploaded successfully', {
+          metadata: { generationId: generation.id, storagePath, fileSize }
+        });
       }
 
       // === AUDIT LOG ===
@@ -494,15 +505,44 @@ Deno.serve(async (req) => {
           timestamp: new Date().toISOString()
         },
         output_index: 0,
-        is_batch_output: isMultiOutput
+        is_batch_output: isMultiOutput,
+        completed_at: new Date().toISOString()
       };
       
       if (!isMultiOutput && storagePath) {
         updateData.storage_path = storagePath;
         updateData.output_url = publicUrl || undefined;
+        logger.info('Setting storage_path for single output', {
+          metadata: { generationId: generation.id, storagePath, publicUrl }
+        });
+      } else if (!isMultiOutput && !storagePath) {
+        logger.warn('Single output but no storagePath available', {
+          metadata: { generationId: generation.id, isMultiOutput, storagePath }
+        });
       }
       
-      await supabase.from('generations').update(updateData).eq('id', generation.id);
+      logger.info('Updating generation record', {
+        metadata: {
+          generationId: generation.id,
+          hasStoragePath: !!updateData.storage_path,
+          hasOutputUrl: !!updateData.output_url,
+          isBatchOutput: updateData.is_batch_output,
+          status: updateData.status
+        }
+      });
+      
+      const { error: updateError } = await supabase.from('generations').update(updateData).eq('id', generation.id);
+      
+      if (updateError) {
+        logger.error('Failed to update generation record', updateError, {
+          metadata: { generationId: generation.id, updateData }
+        });
+        throw new Error(`Failed to update generation: ${updateError.message}`);
+      }
+      
+      logger.info('Generation record updated successfully', {
+        metadata: { generationId: generation.id, hasStoragePath: !!updateData.storage_path }
+      });
       logger.info('Parent generation completed', { 
         userId: generation.user_id,
         metadata: { generationId: generation.id, childCount: resultUrls.length } 

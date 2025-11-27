@@ -3172,16 +3172,10 @@ export type Database = {
       }
       webhook_analytics_summary: {
         Row: {
-          avg_duration_ms: number | null
-          failure_count: number | null
-          first_event: string | null
+          event_type: string | null
           hour: string | null
-          last_event: string | null
-          max_duration_ms: number | null
-          p95_duration_ms: number | null
-          provider: string | null
-          success_count: number | null
-          timeout_count: number | null
+          pending_count: number | null
+          processed_count: number | null
           total_events: number | null
         }
         Relationships: []

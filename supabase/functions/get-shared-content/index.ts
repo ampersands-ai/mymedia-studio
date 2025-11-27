@@ -1,8 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-
-
+import { checkRateLimit, getClientIP, createRateLimitResponse } from "../_shared/rate-limiter.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -23,13 +22,37 @@ Deno.serve(async (req) => {
       logger.warn('Missing token parameter');
       throw new Error('Missing token parameter');
     }
-    
-    logger.info('Fetching shared content', { metadata: { token } });
 
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // === RATE LIMITING ===
+    // Use client IP + token as identifier to prevent enumeration attacks
+    const clientIP = getClientIP(req);
+    const rateLimitIdentifier = `${clientIP}:${token.substring(0, 8)}`; // Partial token for privacy
+    
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      rateLimitIdentifier,
+      'share_token_access'
+    );
+
+    if (!rateLimitResult.allowed) {
+      logger.warn('Rate limit exceeded for shared content access', { 
+        metadata: { clientIP, tokenPrefix: token.substring(0, 8) } 
+      });
+      return createRateLimitResponse(rateLimitResult, responseHeaders);
+    }
+    
+    logger.info('Fetching shared content', { 
+      metadata: { 
+        tokenPrefix: token.substring(0, 8),
+        remainingRequests: rateLimitResult.remaining 
+      } 
+    });
 
     // Fetch share token
     const { data: shareToken, error: tokenError } = await supabase
@@ -82,7 +105,13 @@ Deno.serve(async (req) => {
         content_type: shareToken.content_type,
         expires_in: 3600 // seconds
       }),
-      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...responseHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString()
+        } 
+      }
     );
 
   } catch (error) {

@@ -20,8 +20,8 @@ export const VideoPlayer = ({
   playOnHover = false
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [videoError, setVideoError] = useState(false);
+  const [, setIsPlaying] = useState(false);
+  const [, setVideoError] = useState(false);
 
   // Build a source and get video URL using new architecture
   const sourceForSigning = generation.storage_path

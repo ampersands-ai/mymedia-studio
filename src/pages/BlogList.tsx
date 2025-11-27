@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { logger } from "@/lib/logger";
 import { Badge } from "@/components/ui/badge";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Input } from "@/components/ui/input";

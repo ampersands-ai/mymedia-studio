@@ -19,14 +19,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { 
-  generateNewModelScript, 
-  generateLockToggleScript, 
-  generateModelUpdateScript, 
+  generateNewModelScript,
+  generateLockToggleScript,
+  generateModelUpdateScript,
   downloadScript,
   getLockStatuses,
   type ModelUpdatePayload
@@ -40,6 +39,7 @@ const CREATION_GROUPS = [
   { id: "image_to_video", label: "Image to Video" },
   { id: "prompt_to_audio", label: "Audio Studio" },
 ];
+
 
 type AIModel = ModelConfiguration;
 
@@ -167,6 +167,7 @@ export default function AIModelsManager() {
     setDialogOpen(true);
   };
 
+  // @ts-expect-error - Intentionally unused, may be used in future
   const _handleSaveChanges = (updatedModel: AIModel) => {
     if (updatedModel.record_id) {
       // Existing model - add to pending changes
@@ -190,10 +191,10 @@ export default function AIModelsManager() {
           estimated_time_seconds: updatedModel.estimated_time_seconds,
           default_outputs: updatedModel.default_outputs,
           is_active: updatedModel.is_active,
-          logo_url: updatedModel.logo_url,
-          model_family: updatedModel.model_family,
-          variant_name: updatedModel.variant_name,
-          display_order_in_family: updatedModel.display_order_in_family,
+          logo_url: updatedModel.logo_url ?? undefined,
+          model_family: updatedModel.model_family ?? undefined,
+          variant_name: updatedModel.variant_name ?? undefined,
+          display_order_in_family: updatedModel.display_order_in_family ?? undefined,
         }
       };
 
@@ -208,7 +209,7 @@ export default function AIModelsManager() {
       toast.success(`Changes queued for ${updatedModel.model_name}. Download update script to apply.`);
     } else {
       // New model - generate creation script
-      const script = generateNewModelScript(updatedModel);
+      const script = generateNewModelScript(updatedModel as ModelConfiguration);
       downloadScript(script, `create-${updatedModel.model_name.replace(/[^a-zA-Z0-9]/g, '_')}.cjs`);
       toast.success("Model creation script downloaded. Run it to create the model file.");
     }
@@ -230,6 +231,7 @@ export default function AIModelsManager() {
     toast.success(`Status change queued for ${model.model_name}. Download update script to apply.`);
   };
 
+  // @ts-expect-error - Intentionally unused, may be used in future
   const _handleDelete = (recordId: string) => {
     const model = models.find(m => m.record_id === recordId);
     if (!model) return;
@@ -383,6 +385,7 @@ export default function AIModelsManager() {
 
   const uniqueProviders = [...new Set(models.map(m => m.provider))];
   const uniqueContentTypes = [...new Set(models.map(m => m.content_type))];
+  // @ts-expect-error - Intentionally unused, may be used in future
   const _uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
   const allGroups = [...new Set(models.flatMap(m => Array.isArray(m.groups) ? m.groups : []))];
 

@@ -18,14 +18,7 @@ import type {
 } from '@/types/workflow-parameters';
 import { toModelSchema } from '@/types/workflow-parameters';
 import type { JsonSchemaProperty } from '@/types/schema';
-
-interface AIModel {
-  id: string;
-  record_id: string;
-  model_name: string;
-  content_type: string;
-  input_schema: Record<string, unknown>;
-}
+import type { AIModel } from '@/hooks/useModels';
 
 interface WorkflowStepFormProps {
   step: WorkflowStep;

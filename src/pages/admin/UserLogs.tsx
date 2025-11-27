@@ -46,7 +46,7 @@ export default function UserLogs() {
     },
   });
 
-  const filteredLogs = errorLogs?.filter(log => {
+  const filteredLogs = errorLogs?.filter((log: Record<string, unknown>) => {
     if (!searchEmail) return true;
     const email = (log as any).profiles?.email?.toLowerCase() || "";
     return email.includes(searchEmail.toLowerCase());

@@ -56,10 +56,12 @@ export default function TemplateAnalytics() {
 
   const totalViews = templates?.reduce((sum: number, t: TemplateLandingPage) => sum + t.view_count, 0) || 0;
   const totalUses = templates?.reduce((sum: number, t: TemplateLandingPage) => sum + t.use_count, 0) || 0;
-  const avgConversion = templates?.reduce((sum: number, t: TemplateLandingPage) => {
-    const rate = t.view_count > 0 ? (t.use_count / t.view_count) * 100 : 0;
-    return sum + rate;
-  }, 0) / (templates?.length || 1);
+  const avgConversion = templates && templates.length > 0
+    ? templates.reduce((sum: number, t: TemplateLandingPage) => {
+        const rate = t.view_count > 0 ? (t.use_count / t.view_count) * 100 : 0;
+        return sum + rate;
+      }, 0) / templates.length
+    : 0;
 
   const topTemplates = templates?.slice(0, 5) || [];
 

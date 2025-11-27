@@ -119,7 +119,7 @@ const Create = () => {
   // Actions
   const { handleGenerate, handleRetry, handleDownload, handleDownloadAll, isGenerating } = useGenerationActions({
     generationState: state,
-    updateGenerationState: updateState,
+    updateGenerationState: updateState as (partial: Partial<import("@/types/generation").GenerationState>) => void,
     startPolling,
     onboardingProgress: onboardingFlow.progress,
     updateOnboardingProgress: onboardingFlow.updateProgress,

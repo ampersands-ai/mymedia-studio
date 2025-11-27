@@ -14,7 +14,6 @@ import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { logger } from "@/lib/logger";
 import { downloadFromStorage } from "@/lib/downloads/downloadManager";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 

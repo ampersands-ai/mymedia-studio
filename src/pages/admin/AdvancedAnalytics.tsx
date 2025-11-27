@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import type { Database } from '@/integrations/supabase/types';
 
-type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
 type TemplateLandingPageRow = Database['public']['Tables']['template_landing_pages']['Row'];
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

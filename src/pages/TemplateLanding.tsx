@@ -25,7 +25,7 @@ export default function TemplateLanding() {
   const incrementUse = useIncrementTemplateUse();
 
   const { data: template, isLoading, error } = useTemplateLanding(category!, slug!);
-  const { data: relatedTemplates } = useRelatedTemplates(template?.related_template_ids);
+  const { data: relatedTemplates } = useRelatedTemplates(template?.related_template_ids ?? null);
 
   // Sanitize long description to prevent XSS attacks
   const sanitizedLongDescription = useMemo(() => {
@@ -128,7 +128,15 @@ export default function TemplateLanding() {
 
         <TemplateFAQ faqs={(template.faqs as unknown as Array<{question: string; answer: string}>) || []} />
 
-        <TemplateRelatedCards templates={relatedTemplates || []} />
+        <TemplateRelatedCards templates={(relatedTemplates || []).map(t => ({
+          id: t.id || '',
+          slug: t.slug || '',
+          category_slug: t.category_slug || '',
+          title: t.title || '',
+          subtitle: t.subtitle,
+          thumbnail_url: t.thumbnail_url,
+          token_cost: t.token_cost,
+        }))} />
 
         <TemplateBottomCTA
           title={template.title}

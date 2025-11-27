@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselViewport, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAllTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { getAllModels } from "@/lib/models/registry";
 import { Sparkles, Package, Users, TrendingUp, Layers, Wand2, Coins, Shirt, Plane, Search, Image as ImageIcon, Video } from "lucide-react";
 import { OptimizedBeforeAfterSlider } from "@/components/OptimizedBeforeAfterSlider";
@@ -68,7 +67,7 @@ const Templates = () => {
       // Collect all unique model_record_ids from all templates
       const allModelRecordIds = new Set<string>();
       
-      allTemplates.forEach(template => {
+      allTemplates.forEach((template: WorkflowTemplate) => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
           const steps = template.workflow_steps as WorkflowStep[];
           steps.forEach((step: WorkflowStep) => {
@@ -99,8 +98,8 @@ const Templates = () => {
       
       // Calculate costs for each template
       const costs: Record<string, number> = {};
-      
-      allTemplates.forEach(template => {
+
+      allTemplates.forEach((template: WorkflowTemplate) => {
         if (template.template_type === 'workflow' && template.workflow_steps) {
           const steps = template.workflow_steps as WorkflowStep[];
           const totalCost = steps.reduce((sum: number, step: WorkflowStep) => {
@@ -155,8 +154,8 @@ const Templates = () => {
       await execute(
         async () => {
           const urlPromises = allTemplates
-            .filter(template => template.before_image_url || template.after_image_url || template.thumbnail_url)
-            .map(async (template) => {
+            .filter((template: WorkflowTemplate) => template.before_image_url || template.after_image_url || template.thumbnail_url)
+            .map(async (template: WorkflowTemplate) => {
               const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
                 getSignedUrl(template.before_image_url || null),
                 getSignedUrl(template.after_image_url || null),
@@ -238,7 +237,7 @@ const Templates = () => {
   };
 
   // Sort templates by display order
-  const templates = (allTemplates || []).sort((a, b) => a.display_order - b.display_order);
+  const templates = (allTemplates || []).sort((a: WorkflowTemplate, b: WorkflowTemplate) => a.display_order - b.display_order);
   
   // Filter templates by search query and content type
   const filterTemplates = (templates: WorkflowTemplate[]) => {
@@ -255,7 +254,7 @@ const Templates = () => {
     
     // Apply content type filter
     if (contentTypeFilter !== 'all') {
-      filtered = filtered.filter(t => {
+      filtered = filtered.filter((t: WorkflowTemplate) => {
         const type = getWorkflowContentType(t);
         return contentTypeFilter === 'image' 
           ? type === 'Image' 
@@ -269,18 +268,18 @@ const Templates = () => {
   const filteredTemplates = filterTemplates(templates);
   
   // Filter by category
-  const productTemplates = filteredTemplates.filter(t => t.category === "Product");
-  const marketingTemplates = filteredTemplates.filter(t => t.category === "Marketing");
-  const fantasyTemplates = filteredTemplates.filter(t => t.category === "Fantasy");
-  const portraitsTemplates = filteredTemplates.filter(t => t.category === "Portraits");
-  const abstractTemplates = filteredTemplates.filter(t => t.category === "Abstract");
-  const fashionTemplates = filteredTemplates.filter(t => t.category === "Fashion");
-  const travelTemplates = filteredTemplates.filter(t => t.category === "Travel");
-  const babyMilestonesTemplates = filteredTemplates.filter(t => t.category === "Baby Milestones");
+  const productTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Product");
+  const marketingTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Marketing");
+  const fantasyTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Fantasy");
+  const portraitsTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Portraits");
+  const abstractTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Abstract");
+  const fashionTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Fashion");
+  const travelTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Travel");
+  const babyMilestonesTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Baby Milestones");
   
   // Count content types
-  const imageCount = templates.filter(t => getWorkflowContentType(t) === 'Image').length;
-  const videoCount = templates.filter(t => getWorkflowContentType(t) === 'Video').length;
+  const imageCount = templates.filter((t: WorkflowTemplate) => getWorkflowContentType(t) === 'Image').length;
+  const videoCount = templates.filter((t: WorkflowTemplate) => getWorkflowContentType(t) === 'Video').length;
 
   // Extract image URLs for ONLY the first visible carousel
   const imageUrls = useMemo(() => {

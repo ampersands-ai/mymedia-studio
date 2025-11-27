@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Heart, User, Calendar, Sparkles } from "lucide-react";
-import { toast } from "sonner";
 import { format } from "date-fns";
 import { GlobalHeader } from "@/components/GlobalHeader";
-import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface CommunityCreation {

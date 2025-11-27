@@ -121,7 +121,7 @@ export const useGenerationHistory = ({
         .eq("user_id", userId!)
         .in("generation_id", generationIds);
 
-      const disputeMap = new Map(disputes?.map(d => [d.generation_id, d.status]) || []);
+      const disputeMap = new Map(disputes?.map((d: { generation_id: string; status: string }) => [d.generation_id, d.status]) || []);
 
       // Enrich with dispute info and source markers
       const enriched = (data || []).map(item => ({

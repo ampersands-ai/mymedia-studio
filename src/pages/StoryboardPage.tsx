@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import {
   AlertDialog,

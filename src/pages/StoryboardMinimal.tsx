@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { logger } from '@/lib/logger';
 import { MinimalSidebar } from '@/components/MinimalSidebar';
 import { GlassCard } from '@/components/glass/GlassCard';
 import { GlassButton } from '@/components/glass/GlassButton';

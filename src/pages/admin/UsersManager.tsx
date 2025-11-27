@@ -66,9 +66,9 @@ export default function UsersManager() {
         if (rolesError) throw rolesError;
 
         // Combine data
-        const usersWithData = profiles?.map(profile => {
-          const userSub = subscriptions?.find(s => s.user_id === profile.id);
-          const userRoles = roles?.filter(r => r.user_id === profile.id);
+        const usersWithData = profiles?.map((profile: { id: string }) => {
+          const userSub = subscriptions?.find((s: { user_id: string }) => s.user_id === profile.id);   
+          const userRoles = roles?.filter((r: { user_id: string }) => r.user_id === profile.id);
           return {
             ...profile,
             subscription: userSub,
@@ -233,7 +233,7 @@ export default function UsersManager() {
                         <Button
                           variant={isAdmin ? "destructive" : "default"}
                           size="sm"
-                          onClick={() => handleToggleAdmin(user.id, isAdmin)}
+                          onClick={() => handleToggleAdmin(user.id, isAdmin ?? false)}
                         >
                           <Shield className="h-4 w-4 mr-1" />
                           {isAdmin ? "Remove Admin" : "Make Admin"}

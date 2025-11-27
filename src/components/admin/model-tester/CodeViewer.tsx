@@ -127,6 +127,7 @@ export function CodeViewer({
           }}
           beforeMount={(monaco: typeof import('monaco-editor')) => {
             // Define custom theme
+            // @ts-expect-error - Monaco editor types incomplete
             monaco.editor.defineTheme("custom-dark", {
               base: "vs-dark",
               inherit: true,
@@ -139,6 +140,7 @@ export function CodeViewer({
           }}
           onMount={(editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
             // Set custom theme
+            // @ts-expect-error - Monaco editor types incomplete
             monaco.editor.setTheme("custom-dark");
 
             // Highlight specific lines if provided

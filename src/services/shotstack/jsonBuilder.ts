@@ -154,10 +154,7 @@ interface SkewAnimation {
 
 export class ShotstackJsonBuilder {
   private edit: ShotstackEdit;
-  private aspectRatio: string;
-
   constructor(aspectRatio: string = '4:5') {
-    this.aspectRatio = aspectRatio;
     const config = aspectRatioConfig[aspectRatio as keyof typeof aspectRatioConfig];
     
     this.edit = {

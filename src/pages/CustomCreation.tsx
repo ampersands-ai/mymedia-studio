@@ -18,15 +18,12 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
-import { useQueryClient } from "@tanstack/react-query";
-import type { GenerationOutput } from "@/hooks/useGenerationState";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
 import { OutputPanel } from "@/components/custom-creation/OutputPanel";
 import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
-import { supabase } from "@/integrations/supabase/client";
-import { createSignedUrl, extractStoragePath } from "@/lib/storage-utils";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
+import { supabase } from "@/integrations/supabase/client";
 import { useCinematicPrompts, getSurpriseMePromptFromDb } from "@/hooks/useCinematicPrompts";
 import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
@@ -38,7 +35,6 @@ const CustomCreation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const outputSectionRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
 
   // State management
   const { 
@@ -95,7 +91,7 @@ const CustomCreation = () => {
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
-  const imageFieldInfo = schemaHelpers.getImageFieldInfo(currentModel || null);
+  const imageFieldInfo = schemaHelpers.getImageFieldInfo(modelConfig);
 
   // Generation polling
   const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
@@ -191,7 +187,7 @@ const CustomCreation = () => {
     handleNativeCameraPick,
     cameraLoading,
     isNative
-  } = useImageUpload(currentModel || null);
+  } = useImageUpload(modelConfig);
 
   // Caption generation
   const {
@@ -440,7 +436,7 @@ const CustomCreation = () => {
             }}
             hasPromptField={hasPromptField}
             isPromptRequired={isPromptRequired}
-            maxPromptLength={maxPromptLength}
+            maxPromptLength={maxPromptLength ?? 5000}
             onSurpriseMe={onSurpriseMe}
             generatingSurprise={state.generatingSurprise}
             generateCaption={state.generateCaption}

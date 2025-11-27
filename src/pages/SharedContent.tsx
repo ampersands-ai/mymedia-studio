@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { logger } from '@/lib/logger';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function SharedContent() {

@@ -151,7 +151,7 @@ export const TokenDisputes = () => {
         if (error) throw error;
         
         // Transform history data to match TokenDispute interface
-        return (data || []).map(item => ({
+        return (data || []).map((item: Record<string, unknown>) => ({
           ...item,
           generation: item.generation_snapshot,
           profile: item.profile_snapshot,
@@ -435,8 +435,8 @@ export const TokenDisputes = () => {
 
       if (historyDisputes && historyDisputes.length > 0) {
         const refundedGenIds = historyDisputes
-          .filter(h => h.refund_amount && h.refund_amount > 0)
-          .map(h => h.generation_id);
+          .filter((h: { refund_amount?: number; generation_id?: string }) => h.refund_amount && h.refund_amount > 0)
+          .map((h: { generation_id?: string }) => h.generation_id);
         
         // Filter out disputes with already-refunded generations
         validDisputes = validDisputes.filter(d => !refundedGenIds.includes(d.generation_id));

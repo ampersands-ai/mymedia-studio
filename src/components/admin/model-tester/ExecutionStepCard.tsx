@@ -32,6 +32,10 @@ interface ExecutionStepCardProps {
 export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Extract inputs check to help TypeScript inference
+  const inputs: Record<string, unknown> = step.inputs;
+  const hasInputs = !isEditing && Object.keys(inputs).length > 0;
 
   const getStatusIcon = () => {
     switch (step.status) {
@@ -72,6 +76,25 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
       onEdit(step.id, newInputs);
       setIsEditing(false);
     }
+  };
+
+  const renderInputs = (): JSX.Element | null => {
+    if (!hasInputs) return null;
+    return (
+      <div>
+        <h5 className="text-xs font-semibold mb-2 flex items-center gap-2">
+          <span>Input Parameters</span>
+          <Badge variant="secondary" className="text-xs">
+            {String(Object.keys(inputs).length)}
+          </Badge>
+        </h5>
+        <PayloadViewer
+          data={inputs}
+          title="Inputs"
+          className="max-h-[300px]"
+        />
+      </div>
+    );
   };
 
   return (
@@ -176,24 +199,7 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
               />
             )}
 
-            {!isEditing && Boolean(Object.keys(step.inputs as Record<string, unknown>).length) && (
-              <>
-                {/* Inputs */}
-              <div>
-                <h5 className="text-xs font-semibold mb-2 flex items-center gap-2">
-                  <span>Input Parameters</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {String(Object.keys(step.inputs).length)}
-                  </Badge>
-                </h5>
-                <PayloadViewer
-                  data={step.inputs}
-                  title="Inputs"
-                  className="max-h-[300px]"
-                />
-              </div>
-              </>
-            )}
+            {renderInputs() as JSX.Element | null}
 
             {/* Outputs */}
             {step.outputs && step.status === 'completed' && (

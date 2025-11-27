@@ -45,7 +45,11 @@ export default function TemplatesManager() {
   const { data: templates = [] } = useAllTemplatesAdmin();
 
   // State management
-  const [workflowDialog, setWorkflowDialog] = useState({
+  const [workflowDialog, setWorkflowDialog] = useState<{
+    open: boolean;
+    workflow: WorkflowTemplate | null;
+    isNew: boolean;
+  }>({
     open: false,
     workflow: null,
     isNew: false
@@ -144,7 +148,7 @@ export default function TemplatesManager() {
   const handleEdit = (template: WorkflowTemplate) => {
     setWorkflowDialog({
       open: true,
-      workflow: template,
+      workflow: template as WorkflowTemplate | null,
       isNew: false
     });
   };
@@ -197,7 +201,7 @@ export default function TemplatesManager() {
 
   const handleCreateWorkflow = () => {
     setWorkflowDialog({ 
-      open: true, 
+      open: true,
       workflow: {
         id: '',
         name: '',
@@ -207,7 +211,7 @@ export default function TemplatesManager() {
         display_order: templates.length,
         workflow_steps: [],
         user_input_fields: [],
-      },
+      } as unknown as WorkflowTemplate | null,
       isNew: true
     });
   };
@@ -216,7 +220,7 @@ export default function TemplatesManager() {
   const showAllCategories = selectedCategories.includes(ALL_CATEGORIES);
   const filteredTemplates = showAllCategories
     ? templates
-    : templates.filter(t => selectedCategories.includes(t.category));
+    : templates.filter((t: MergedTemplate) => t.category && selectedCategories.includes(t.category));
   
   const sortedTemplates = [...filteredTemplates].sort((a, b) => {
     switch (sortBy) {

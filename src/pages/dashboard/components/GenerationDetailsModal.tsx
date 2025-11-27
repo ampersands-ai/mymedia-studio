@@ -30,7 +30,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-const getStatusBadge = (status: string, createdAt?: string) => {
+const getStatusBadge = (status: string) => {
   switch (status) {
     case "completed":
       return <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">Done</Badge>;
@@ -90,7 +90,7 @@ export const GenerationDetailsModal = ({
                 </Badge>
               )}
             </div>
-            {getStatusBadge(generation.status, generation.created_at)}
+            {getStatusBadge(generation.status)}
           </DialogTitle>
         </DialogHeader>
 

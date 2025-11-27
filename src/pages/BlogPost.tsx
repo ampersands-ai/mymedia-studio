@@ -9,7 +9,6 @@ import { Helmet } from "react-helmet-async";
 import type { BlogPost as BlogPostType } from "@/types/blog";
 import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { logger } from "@/lib/logger";
 import DOMPurify from "dompurify";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 

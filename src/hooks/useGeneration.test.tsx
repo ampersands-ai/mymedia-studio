@@ -83,7 +83,7 @@ describe('useGeneration', () => {
         wrapper: createWrapper(),
       });
 
-      let response: Record<string, unknown>;
+      let response: Record<string, unknown> | undefined;
       await act(async () => {
         response = await result.current.generate({
           model_id: 'dall-e-3',
@@ -92,6 +92,7 @@ describe('useGeneration', () => {
         });
       });
 
+      expect(response).toBeDefined();
       expect(response).toEqual(mockResponse.data);
       expect(supabase.functions.invoke).toHaveBeenCalledWith('generate-content', {
         body: expect.objectContaining({

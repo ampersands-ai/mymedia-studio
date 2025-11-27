@@ -10,6 +10,9 @@ import type {
   ProviderStat,
   StuckGeneration
 } from '@/types/admin/webhook-monitoring';
+import type { Database } from '@/integrations/supabase/types';
+
+type GenerationRow = Database['public']['Tables']['generations']['Row'];
 
 // Re-export types for backward compatibility
 export type {
@@ -29,9 +32,9 @@ const fetchWebhookStats = async (): Promise<WebhookStats> => {
 
   if (error) throw error;
 
-  const completedCount = data.filter(g => g.status === 'completed').length;
-  const failedCount = data.filter(g => g.status === 'failed').length;
-  const processingCount = data.filter(g => g.status === 'processing').length;
+  const completedCount = data.filter((g: GenerationRow) => g.status === 'completed').length;
+  const failedCount = data.filter((g: GenerationRow) => g.status === 'failed').length;
+  const processingCount = data.filter((g: GenerationRow) => g.status === 'processing').length;
   const totalWebhooks = data.length;
   const successRate = totalWebhooks > 0 ? (completedCount / totalWebhooks) * 100 : 0;
 
@@ -85,7 +88,7 @@ const fetchStorageFailures = async (): Promise<StorageFailure[]> => {
 
   if (error) throw error;
 
-  return (data || []).map(item => {
+  return (data || []).map((item: GenerationRow) => {
     const response = item.provider_response as Record<string, unknown> | null;
     const errorMsg = response?.error as string | undefined;
     const storageErr = response?.storage_error as string | undefined;
@@ -124,7 +127,8 @@ const fetchProviderStats = async (): Promise<ProviderStat[]> => {
 
   const stats: Record<string, { success: number; fail: number }> = {};
   
-  data.forEach(gen => {
+  data.forEach((gen: GenerationRow) => {
+    if (!gen.model_id) return;
     if (!stats[gen.model_id]) {
       stats[gen.model_id] = { success: 0, fail: 0 };
     }

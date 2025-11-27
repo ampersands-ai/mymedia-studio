@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useGenerationPolling } from '@/hooks/useGenerationPolling';
@@ -107,10 +106,10 @@ export const useTestModelGroup = () => {
           const maxPromptLength = getMaxPromptLength({ 
             ...model, 
             input_schema: {
-              ...model.input_schema,
-              required: [...(model.input_schema.required || [])]
+              required: model.input_schema?.required || [],
+              properties: model.input_schema?.properties || {}
             }
-          }, undefined);
+          } as unknown as Parameters<typeof getMaxPromptLength>[0], undefined);
 
           // Use EXACT SAME generation pipeline as CustomCreation.tsx
           const generationId = await executeGeneration({
@@ -160,7 +159,7 @@ export const useTestModelGroup = () => {
             model_name: model.model_name,
             status: 'error',
             latency_ms: latency,
-            error_message: error.message || 'Unknown error',
+            error_message: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }

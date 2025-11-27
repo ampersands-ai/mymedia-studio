@@ -302,7 +302,7 @@ export function WorkflowStepForm({
             </p>
             <div className="space-y-3">
               {Object.entries(modelSchema?.properties || {}).map(([paramName, paramSchema]: [string, any]) => {
-                const isRequired = modelSchema?.required?.includes(paramName);
+                const isRequired = modelSchema?.required?.includes(paramName) ?? false;
                 return renderModelParameter(paramName, paramSchema, isRequired);
               })}
             </div>

@@ -61,7 +61,7 @@ export function useVideoUrl(
           setUrl(publicUrl);
         }
       } catch (err) {
-        componentLogger.error('Video URL fetch failed', err, {
+        componentLogger.error('Video URL fetch failed', err instanceof Error ? err : new Error(String(err)), {
           operation: 'fetchUrl',
           storagePath,
           strategy,

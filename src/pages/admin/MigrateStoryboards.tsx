@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type StoryboardRow = Database['public']['Tables']['storyboards']['Row'];
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -55,12 +58,12 @@ export default function MigrateStoryboards() {
 
       if (error) throw error;
 
-      const needsMigration = data?.filter(s => 
+      const needsMigration = data?.filter((s: StoryboardRow) => 
         s.video_url?.includes('json2video') && 
         (!s.video_storage_path || !s.video_storage_path.startsWith('storyboard-videos/'))
       ).length || 0;
 
-      const alreadyMigrated = data?.filter(s => 
+      const alreadyMigrated = data?.filter((s: StoryboardRow) => 
         s.video_storage_path?.startsWith('storyboard-videos/')
       ).length || 0;
 

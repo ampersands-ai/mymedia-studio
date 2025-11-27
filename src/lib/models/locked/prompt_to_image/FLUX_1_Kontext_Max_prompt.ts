@@ -22,7 +22,7 @@ export const SCHEMA = { imageInputField: "inputImage", properties: { aspectRatio
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { prompt: inputs.prompt, inputImage: inputs.inputImage, aspectRatio: inputs.aspectRatio || "16:9", outputFormat: inputs.outputFormat || "jpeg", enableTranslation: true }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

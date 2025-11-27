@@ -338,8 +338,8 @@ export async function validateSquareImage(
  * ```
  */
 export function getOptimalDimensions(
-  originalWidth: number,
-  originalHeight: number,
+  _originalWidth: number,
+  _originalHeight: number,
   targetRatio: string,
   maxWidth: number,
   maxHeight: number

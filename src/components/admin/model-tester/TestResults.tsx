@@ -22,7 +22,7 @@ export function TestResults({
   executionFlow,
   activeTab,
   onTabChange,
-  tracker,
+  tracker: _tracker,
   selectedModel,
   onUpdateStepInputs,
   onRerunFromStep

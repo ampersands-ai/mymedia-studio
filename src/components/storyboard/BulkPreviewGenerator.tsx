@@ -89,15 +89,14 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
         });
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('cancelled'))) {
         logger.debug('Bulk generation cancelled', {
           component: 'BulkPreviewGenerator',
           operation: 'handleGenerate',
           storyboardId: storyboard.id
         });
       } else {
-        logger.error('Bulk generation failed', error, {
+        logger.error('Bulk generation failed', error instanceof Error ? error : new Error(String(error)), {
           component: 'BulkPreviewGenerator',
           operation: 'handleGenerate',
           storyboardId: storyboard.id,

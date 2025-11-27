@@ -217,12 +217,12 @@ export const useStoryboardScenes = (
     // 1. Identify scenes needing previews
     const scenesToGenerate = [
       // Intro scene
-      ...(storyboard?.intro_image_preview_url ? [] : [{
+      ...(storyboard && !storyboard.intro_image_preview_url ? [{
         id: storyboard.id,
         imagePrompt: storyboard.intro_image_prompt,
         sceneNumber: 1,
         isIntro: true
-      }]),
+      }] : []),
       // Regular scenes without previews
       ...scenes
         .filter(scene => !scene.image_preview_url && scene.image_prompt)
@@ -341,7 +341,7 @@ export const useStoryboardScenes = (
         results.push({
           sceneNumber: scene.sceneNumber,
           success: false,
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         });
       }
     }

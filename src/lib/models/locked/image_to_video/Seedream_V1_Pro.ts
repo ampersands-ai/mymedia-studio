@@ -22,7 +22,7 @@ export const SCHEMA = { properties: { aspect_ratio: { default: "3:4", enum: ["1:
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, image_url: inputs.image_url, duration: inputs.duration || "3", aspect_ratio: inputs.aspect_ratio || "3:4" } }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost * (MODEL_CONFIG.costMultipliers.duration[parseInt(inputs.duration || "3")] || 1); }
+export function calculateCost(inputs: Record<string, any>) { const durKey = String(parseInt(inputs.duration || "3")) as keyof typeof MODEL_CONFIG.costMultipliers.duration; return MODEL_CONFIG.baseCreditCost * (MODEL_CONFIG.costMultipliers.duration[durKey] || 1); }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

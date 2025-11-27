@@ -14,11 +14,11 @@ export function sortTemplates(
   return [...templates].sort((a, b) => {
     switch (sortBy) {
       case "name":
-        return a.name.localeCompare(b.name);
+        return (a.name ?? '').localeCompare(b.name ?? '');
       case "category":
-        return a.category.localeCompare(b.category);
+        return (a.category ?? '').localeCompare(b.category ?? '');
       case "display_order":
-        return a.display_order - b.display_order;
+        return (a.display_order ?? 0) - (b.display_order ?? 0);
       case "status":
         return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
       case "type":

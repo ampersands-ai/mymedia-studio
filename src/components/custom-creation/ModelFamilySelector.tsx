@@ -16,18 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Coins, Image as ImageIcon, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface AIModel {
-  record_id: string;
-  model_name: string;
-  variant_name?: string;
-  model_family?: string;
-  display_order_in_family?: number;
-  base_token_cost: number;
-  default_outputs?: number;
-  logo_url?: string;
-  estimated_time_seconds?: number;
-}
+import type { AIModel } from "@/hooks/useModels";
 
 interface ModelFamilySelectorProps {
   models: AIModel[];

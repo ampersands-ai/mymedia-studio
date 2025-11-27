@@ -23,7 +23,7 @@ export const SCHEMA = { properties: { CFGScale: { default: 3.5, showToUser: fals
 
 export function validate(inputs: Record<string, any>) { return inputs.positivePrompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageInference", positivePrompt: inputs.positivePrompt, numberResults: inputs.numberResults || 1, outputFormat: inputs.outputFormat || "WEBP", width: 896, height: 1152, steps: 28, CFGScale: 3.5, scheduler: "FlowMatchEulerDiscreteScheduler", includeCost: true, checkNSFW: true, outputType: ["URL"], outputQuality: 85 }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;

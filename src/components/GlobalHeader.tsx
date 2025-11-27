@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Shield, Layout, Loader2 } from "lucide-react";
+import { Coins, Shield, Layout } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
@@ -15,7 +15,7 @@ export const GlobalHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
-  const { availableCredits, reservedCredits, isLoading } = useUserCredits();
+  const { availableCredits, isLoading } = useUserCredits();
   const { updateProgress } = useOnboarding();
   const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);

@@ -130,7 +130,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   // Read explicit renderer toggles from schema (with backward-compatible defaults)
   const usePromptRenderer = modelSchema?.usePromptRenderer ?? true;
   const useImageRenderer = modelSchema?.useImageRenderer ?? true;
-  const useVoiceRenderer = modelSchema?.useVoiceRenderer ?? false;
   const useDurationRenderer = modelSchema?.useDurationRenderer ?? false;
   const useIncrementRenderer = modelSchema?.useIncrementRenderer ?? true;
   const useOutputFormatRenderer = modelSchema?.useOutputFormatRenderer ?? false;

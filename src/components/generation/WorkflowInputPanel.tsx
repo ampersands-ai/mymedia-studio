@@ -216,7 +216,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
   };
 
   const renderInputField = (field: WorkflowInputFieldConfig) => {
-    const isMultiple = field.max_files && field.max_files > 1;
+    const isMultiple = Boolean(field.max_files && field.max_files > 1);
 
     switch (field.type) {
       case 'textarea':

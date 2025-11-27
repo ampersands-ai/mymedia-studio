@@ -86,7 +86,7 @@ export function replaceTemplateVariablesWithOptions(
     transformValue,
   } = options;
 
-  return template.replace(pattern, (match, key) => {
+  return template.replace(pattern, (_match, key) => {
     // Transform key if function provided
     const actualKey = transformKey ? transformKey(key) : key;
 
@@ -397,7 +397,7 @@ export function formatConditionalTemplate(
   // Replace conditional blocks
   let result = template.replace(
     /\{\{#if (\w+)\}\}(.*?)\{\{\/if\}\}/gs,
-    (match, condition, content) => {
+    (_match, condition, content) => {
       return variables[condition] ? content : '';
     }
   );

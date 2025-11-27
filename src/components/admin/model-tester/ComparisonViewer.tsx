@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import {
   GitCompare,
   Check,
@@ -13,9 +12,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  ChevronRight,
 } from "lucide-react";
-import type { ExecutionFlow, ExecutionStep } from "@/lib/admin/enhancedExecutionTracker";
+import type { ExecutionFlow } from "@/lib/admin/enhancedExecutionTracker";
 import { cn } from "@/lib/utils";
 
 interface ComparisonViewerProps {

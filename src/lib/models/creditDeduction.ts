@@ -35,8 +35,9 @@ export async function reserveCredits(userId: string, cost: number): Promise<void
     }
   } else {
     // Check available credits (total - reserved)
-    if (availableCredits.available_credits < cost) {
-      throw new Error(`Insufficient available credits. Required: ${cost}, Available: ${availableCredits.available_credits}`);
+    const available = availableCredits.available_credits ?? 0;
+    if (available < cost) {
+      throw new Error(`Insufficient available credits. Required: ${cost}, Available: ${available}`);
     }
   }
 }

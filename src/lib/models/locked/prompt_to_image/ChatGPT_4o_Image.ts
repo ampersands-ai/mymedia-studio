@@ -12,7 +12,6 @@
 import { getGenerationType } from '@/lib/models/registry';
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/lib/logger";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 
@@ -87,7 +86,7 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
 export function calculateCost(inputs: Record<string, any>): number {
   let cost = MODEL_CONFIG.baseCreditCost;
   const nVariants = inputs.nVariants || 1;
-  const multiplier = MODEL_CONFIG.costMultipliers.nVariants[String(nVariants)] || 1;
+  const multiplier = MODEL_CONFIG.costMultipliers.nVariants[String(nVariants) as keyof typeof MODEL_CONFIG.costMultipliers.nVariants] || 1;
   cost *= multiplier;
   return Math.round(cost * 100) / 100;
 }

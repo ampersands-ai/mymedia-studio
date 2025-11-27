@@ -34,6 +34,7 @@ export function LoadingTransition({
     } else {
       setShowSkeleton(false);
     }
+    return undefined;
   }, [isLoading, minDisplayTime, hasShownSkeleton]);
   
   const transitionClasses = {

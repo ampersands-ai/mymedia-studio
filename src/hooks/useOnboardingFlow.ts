@@ -9,7 +9,7 @@ import type { TemplatePreview } from "@/types/templates";
  * @param onTemplateSelect - Callback when template is selected
  */
 export const useOnboardingFlow = (
-  selectedTemplate: TemplatePreview | null,
+  _selectedTemplate: TemplatePreview | null,
   prompt: string,
   onTemplateSelect: (template: TemplatePreview, prompt: string) => void
 ) => {

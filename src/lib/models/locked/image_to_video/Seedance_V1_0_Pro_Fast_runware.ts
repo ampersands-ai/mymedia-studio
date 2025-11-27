@@ -23,7 +23,7 @@ export const SCHEMA = { properties: { duration: { default: 5, maximum: 12, minim
 
 export function validate(inputs: Record<string, any>) { return inputs.positivePrompt && inputs.inputImage ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageToVideo", positivePrompt: inputs.positivePrompt, inputImage: inputs.inputImage, duration: inputs.duration || 5, fps: inputs.fps || 24, width: 1280, height: 736, outputFormat: inputs.outputFormat || "MP4", outputType: ["URL"], includeCost: true }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

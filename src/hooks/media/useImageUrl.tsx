@@ -74,7 +74,7 @@ export function useImageUrl(
           setUrl(publicUrl);
         }
       } catch (err) {
-        componentLogger.error('Image URL fetch failed', err, {
+        componentLogger.error('Image URL fetch failed', err instanceof Error ? err : new Error(String(err)), {
           operation: 'fetchUrl',
           storagePath,
           strategy,

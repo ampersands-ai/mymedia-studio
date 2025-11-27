@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Label } from '@/components/ui/label';
@@ -7,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { Mail, Save, Send, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 

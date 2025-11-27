@@ -13,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { Shield, Coins, Crown } from "lucide-react";
 import { useErrorHandler } from "@/hooks/useErrorHandler";

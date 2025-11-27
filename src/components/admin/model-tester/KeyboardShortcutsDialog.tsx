@@ -19,7 +19,7 @@ interface KeyboardShortcutsDialogProps {
 }
 
 export function KeyboardShortcutsDialog({
-  shortcuts,
+  shortcuts: _shortcuts,
   children,
 }: KeyboardShortcutsDialogProps) {
   // Group shortcuts by category

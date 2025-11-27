@@ -32,6 +32,7 @@ const BeforeAfterSliderComponent = ({
       const timer = setTimeout(() => setShowHintText(false), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [showHint]);
 
   useEffect(() => {

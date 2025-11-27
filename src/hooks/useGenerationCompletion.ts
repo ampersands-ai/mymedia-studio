@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { getModel } from "@/lib/models/registry";
 import type { GenerationOutput } from "./useGenerationState";
+import type { Database } from "@/integrations/supabase/types";
+
+type GenerationRow = Database['public']['Tables']['generations']['Row'];
+type ChildGenerationRow = Pick<GenerationRow, 'id' | 'storage_path' | 'output_index' | 'provider_task_id' | 'model_id' | 'model_record_id'>;
 
 interface ChildGeneration {
   id: string;
@@ -99,16 +103,16 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
           logger.info('Found recently completed generation(s) as fallback', {
             generationId,
             foundCount: recentCompleted.length,
-            recentIds: recentCompleted.map(g => g.id)
+            recentIds: recentCompleted.map((g: GenerationRow) => g.id)
           } as any);
 
           // Use the most recent completed generation as output
           const fallbackOutputs: GenerationOutput[] = recentCompleted
-            .filter(g => g.storage_path)
-            .map((g, index) => {
+            .filter((g: GenerationRow) => g.storage_path && g.model_record_id)
+            .map((g: GenerationRow, index: number) => {
               let fallbackProvider = '';
               try {
-                const model = getModel(g.model_record_id);
+                const model = getModel(g.model_record_id!);
                 fallbackProvider = model.MODEL_CONFIG.provider;
               } catch (e) {
                 logger.warn('Failed to load model from registry for fallback', { modelRecordId: g.model_record_id, error: e });
@@ -168,7 +172,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
             generationId,
             parentId: parentData.id,
             childrenCount: childrenData?.length || 0,
-            children: childrenData?.map(c => ({ id: c.id, hasStoragePath: !!c.storage_path, outputIndex: c.output_index, status: c.status }))
+            children: childrenData?.map((c: ChildGenerationRow) => ({ id: c.id, hasStoragePath: !!c.storage_path, outputIndex: c.output_index, status: 'completed' }))
           } as any);
         }
 
@@ -182,15 +186,16 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
             generationId,
             totalChildren: childrenData.length,
             childrenWithStorage: childrenWithStorage.length,
-            childIds: childrenData.map((c: ChildGeneration) => c.id)
+            childIds: childrenData.map((c: ChildGenerationRow) => c.id)
           } as any);
 
           outputs.push(...childrenWithStorage
+            .filter((child: ChildGeneration) => child.model_record_id)
             .map((child: ChildGeneration) => {
               // ADR 007: Get provider from registry for each child
               let childProvider = '';
               try {
-                const model = getModel(child.model_record_id);
+                const model = getModel(child.model_record_id!);
                 childProvider = model.MODEL_CONFIG.provider;
               } catch (e) {
                 logger.warn('Failed to load model from registry', { modelRecordId: child.model_record_id, error: e });
@@ -236,10 +241,11 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
             } as any);
             
             outputs.push(...retryChildrenWithStorage
+              .filter((child: ChildGeneration) => child.model_record_id)
               .map((child: ChildGeneration) => {
                 let childProvider = '';
                 try {
-                  const model = getModel(child.model_record_id);
+                  const model = getModel(child.model_record_id!);
                   childProvider = model.MODEL_CONFIG.provider;
                 } catch (e) {
                   logger.warn('Failed to load model from registry', { modelRecordId: child.model_record_id, error: e });
@@ -308,7 +314,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
         onError?.(errorMsg);
       }
     } catch (error) {
-      logger.error('Error processing completion', error, { generationId });
+      logger.error('Error processing completion', error instanceof Error ? error : new Error(String(error)), { generationId });
       onError?.('Failed to fetch generation results');
     }
   }, [onComplete, onError]);

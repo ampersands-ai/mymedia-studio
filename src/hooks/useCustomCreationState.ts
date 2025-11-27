@@ -45,7 +45,7 @@ function loadFromStorage(): Partial<CustomCreationState> {
       selectedModel: parsed.selectedModel,
     };
   } catch (e) {
-    logger.error('Failed to load state from storage', e);
+    logger.error('Failed to load state from storage', e instanceof Error ? e : new Error(String(e)));
     localStorage.removeItem('customCreation_state');
     return {};
   }
@@ -153,7 +153,7 @@ export const useCustomCreationState = () => {
       };
       localStorage.setItem('customCreation_state', JSON.stringify(storedState));
     } catch (e) {
-      logger.error('Failed to persist state to storage', e);
+      logger.error('Failed to persist state to storage', e instanceof Error ? e : new Error(String(e)));
     }
   }, [state.selectedGroup, state.selectedModel]);
 

@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Database } from "@/integrations/supabase/types";
+
+type GenerationRow = Database['public']['Tables']['generations']['Row'];
+type CommunityCreationRow = Database['public']['Tables']['community_creations']['Row'];
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Share2, CheckCircle, Image, Video, Music, Type } from "lucide-react";
@@ -195,15 +199,15 @@ export default function AllGenerations() {
       }
 
       // Check which generations are already shared (only for current page)
-      const generationIds = (data || []).map((g) => g.id);
+      const generationIds = (data || []).map((g: GenerationRow) => g.id);
       const { data: sharedData } = await supabase
         .from('community_creations')
         .select('generation_id')
         .in('generation_id', generationIds);
 
-      const sharedIds = new Set(sharedData?.map((s) => s.generation_id) || []);
+      const sharedIds = new Set(sharedData?.map((s: CommunityCreationRow) => s.generation_id) || []);
 
-      const generations = (data || []).map((gen) => ({
+      const generations = (data || []).map((gen: GenerationRow) => ({
         ...gen,
         is_shared: sharedIds.has(gen.id),
       }));
@@ -372,7 +376,7 @@ export default function AllGenerations() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {generations.map((gen) => (
+                {generations.map((gen: Generation) => (
                   <TableRow key={gen.id}>
                     <TableCell>
                       <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />

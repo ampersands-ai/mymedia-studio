@@ -10,7 +10,7 @@ import {
   TrendingDown,
   AlertTriangle,
 } from "lucide-react";
-import type { ExecutionFlow, ExecutionStep } from "@/lib/admin/enhancedExecutionTracker";
+import type { ExecutionFlow } from "@/lib/admin/enhancedExecutionTracker";
 import { cn } from "@/lib/utils";
 
 interface PerformanceMetricsDashboardProps {

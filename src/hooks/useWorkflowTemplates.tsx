@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
 
 export interface WorkflowStep {
   step_number: number;
@@ -49,7 +52,7 @@ export const useWorkflowTemplates = () => {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      return (data || []).map((item: WorkflowTemplateRow) => ({
         ...item,
         workflow_steps: item.workflow_steps as unknown as WorkflowStep[],
         user_input_fields: item.user_input_fields as unknown as UserInputField[],

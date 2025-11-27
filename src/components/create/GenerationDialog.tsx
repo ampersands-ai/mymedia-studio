@@ -45,11 +45,11 @@ export const GenerationDialog = ({
   userTokens,
   generationState,
   onDownload,
-  onDownloadAll,
+  onDownloadAll: _onDownloadAll,
   onViewHistory,
-  onRetry,
-  onboardingProgress,
-  updateOnboardingProgress,
+  onRetry: _onRetry,
+  onboardingProgress: _onboardingProgress,
+  updateOnboardingProgress: _updateOnboardingProgress,
 }: GenerationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

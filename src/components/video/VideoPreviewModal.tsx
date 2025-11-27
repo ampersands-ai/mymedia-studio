@@ -37,7 +37,7 @@ interface VideoPreviewModalProps {
 }
 
 // Helper to extract storage path from public URL
-const getStoragePathFromUrl = (url: string | null): string | null => {
+const getStoragePathFromUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   
   // If it's already a storage path, return it
@@ -59,7 +59,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   // Extract storage path and fetch video URL using new architecture
   const videoStoragePath = getStoragePathFromUrl(job.final_video_url);
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
-    videoStoragePath,
+    videoStoragePath ?? null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
 
@@ -163,7 +163,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       document.body.removeChild(a);
       toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
-      componentLogger.error('Video download failed', error, {
+      componentLogger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'handleDownload',
         jobId: job.id,
         videoUrl: job.final_video_url

@@ -45,7 +45,7 @@ export function VideoJobVoiceover({
   const canAffordRegeneration = availableCredits >= voiceoverRegenerationCost;
 
   const { url: voiceoverSignedUrl, isLoading: isLoadingVoiceUrl, error: voiceUrlError } = useAudioUrl(
-    job.voiceover_url,
+    job.voiceover_url ?? null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
 

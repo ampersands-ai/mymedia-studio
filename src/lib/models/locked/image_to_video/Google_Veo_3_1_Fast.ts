@@ -22,7 +22,7 @@ export const SCHEMA = { properties: { aspectRatio: { default: "16:9", enum: ["16
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.startFrame ? { valid: true } : { valid: false, error: "Prompt and start frame required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { prompt: inputs.prompt, startFrame: inputs.startFrame, endFrame: inputs.endFrame, aspectRatio: inputs.aspectRatio || "16:9", model: "veo3_fast", generationType: "FIRST_AND_LAST_FRAMES_2_VIDEO", seeds: inputs.seeds }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

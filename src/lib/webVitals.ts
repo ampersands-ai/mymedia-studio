@@ -10,7 +10,7 @@ interface WebVitalMetric {
   delta: number;
 }
 
-interface PostHogWindow extends Window {
+interface PostHogWindow {
   posthog?: {
     capture: (event: string, properties: Record<string, unknown>) => void;
   };
@@ -18,8 +18,8 @@ interface PostHogWindow extends Window {
 
 function sendToAnalytics(metric: WebVitalMetric) {
   // Send to analytics service (PostHog, etc.)
-  if (typeof window !== 'undefined' && (window as PostHogWindow).posthog) {
-    (window as PostHogWindow).posthog?.capture('web_vital', {
+  if (typeof window !== 'undefined' && (window as unknown as PostHogWindow).posthog) {
+    (window as unknown as PostHogWindow).posthog?.capture('web_vital', {
       name: metric.name,
       value: metric.value,
       rating: metric.rating

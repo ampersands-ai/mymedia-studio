@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
-export const MobileMenu = ({ creditBalance }: { creditBalance?: number }) => {
+export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: number }) => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const navigate = useNavigate();

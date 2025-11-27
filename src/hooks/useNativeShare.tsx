@@ -34,8 +34,9 @@ export const useNativeShare = (): UseNativeShareResult => {
         });
         await triggerHaptic('light');
       } catch (error) {
-        if ((error as Error).message !== 'Share canceled') {
-          componentLogger.error('Native share URL failed', error, {
+        const appError = error instanceof Error ? error : new Error(String(error));
+        if (appError.message !== 'Share canceled') {
+          componentLogger.error('Native share URL failed', appError, {
             operation: 'shareUrl',
             url,
             title
@@ -59,7 +60,7 @@ export const useNativeShare = (): UseNativeShareResult => {
           componentLogger.warn('Web share failed, falling back to clipboard', {
             operation: 'shareUrl',
             url,
-            errorName: error.name
+            errorName: error instanceof Error ? error.name : 'Unknown'
           });
           // Fallback to clipboard
           await copyToClipboard(url);
@@ -84,8 +85,9 @@ export const useNativeShare = (): UseNativeShareResult => {
         });
         await triggerHaptic('light');
       } catch (error) {
-        if ((error as Error).message !== 'Share canceled') {
-          componentLogger.error('Native share file failed', error, {
+        const appError = error instanceof Error ? error : new Error(String(error));
+        if (appError.message !== 'Share canceled') {
+          componentLogger.error('Native share file failed', appError, {
             operation: 'shareFile',
             url,
             title
@@ -131,7 +133,7 @@ export const useNativeShare = (): UseNativeShareResult => {
       await navigator.clipboard.writeText(text);
       toast.success('Link copied to clipboard!');
     } catch (error) {
-      componentLogger.error('Clipboard copy failed', error, {
+      componentLogger.error('Clipboard copy failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'copyToClipboard',
         textLength: text.length
       });

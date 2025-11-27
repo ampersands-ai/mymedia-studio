@@ -21,7 +21,7 @@ export const SCHEMA = { properties: { audioWeight: { default: 0.5, description: 
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { prompt: inputs.prompt, tags: inputs.tags, title: inputs.title, model: inputs.model || "V5", customMode: inputs.customMode || false, instrumental: inputs.instrumental || false, audioWeight: inputs.audioWeight || 0.5, negativeTags: inputs.negativeTags }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;

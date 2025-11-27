@@ -18,7 +18,7 @@ export function filterTemplatesByCategory(
   const showAllCategories = selectedCategories.includes(ALL_CATEGORIES);
   return showAllCategories
     ? templates
-    : templates.filter(t => selectedCategories.includes(t.category));
+    : templates.filter(t => t.category && selectedCategories.includes(t.category));
 }
 
 /**
@@ -32,7 +32,7 @@ export function getUniqueCategories(
   categories: string[]; 
   counts: Record<string, number>;
 } {
-  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort();
+  const uniqueCategories = Array.from(new Set(templates.map(t => t.category).filter((cat): cat is string => Boolean(cat)))).sort();
   const counts = uniqueCategories.reduce((acc, cat) => {
     acc[cat] = templates.filter(t => t.category === cat).length;
     return acc;

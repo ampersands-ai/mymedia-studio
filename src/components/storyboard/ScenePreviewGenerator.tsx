@@ -350,10 +350,12 @@ export const ScenePreviewGenerator = ({
     const selectedModelData = availableModels.find(m => m.record_id === selectedModelId);
     
     // Map aspect ratio to model-specific parameters
-    const aspectRatioParams = mapAspectRatioToModelParameters(
-      aspectRatio,
-      selectedModelData?.input_schema
-    );
+    const aspectRatioParams = selectedModelData?.input_schema 
+      ? mapAspectRatioToModelParameters(
+          aspectRatio,
+          selectedModelData.input_schema as Record<string, unknown>
+        )
+      : {};
 
     logger.debug('Scene generation initiated', {
       component: 'ScenePreviewGenerator',

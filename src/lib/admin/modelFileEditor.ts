@@ -4,7 +4,7 @@
  */
 
 import type { ModelConfiguration } from '@/types/schema';
-import { getAllModels, type ModelModule } from '@/lib/models/registry';
+import { getAllModels } from '@/lib/models/registry';
 
 export interface ModelUpdatePayload {
   recordId: string;

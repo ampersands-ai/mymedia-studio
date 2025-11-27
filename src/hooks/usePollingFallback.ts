@@ -1,7 +1,6 @@
 import { useRef, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
-import { toast } from "sonner";
 
 interface UsePollingFallbackOptions {
   onComplete: (generationId: string, status: string) => Promise<void>;
@@ -86,7 +85,7 @@ export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOp
         const timeout = setTimeout(poll, interval);
         timeoutsRef.current.push(timeout);
       } catch (error) {
-        logger.error('Polling error', error, { generationId });
+        logger.error('Polling error', error instanceof Error ? error : new Error(String(error)), { generationId });
         onError('Failed to check generation status');
         setIsPolling(false);
         clearTimers();

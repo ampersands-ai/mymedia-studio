@@ -33,7 +33,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
   
   // Lovable AI Sync - direct generation via edge function
-  const { data, error: funcError } = await supabase.functions.invoke('generate-content-sync', {
+  const { error: funcError } = await supabase.functions.invoke('generate-content-sync', {
     body: {
       generationId: gen.id,
       model: MODEL_CONFIG.modelId,

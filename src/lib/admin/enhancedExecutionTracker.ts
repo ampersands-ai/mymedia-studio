@@ -212,7 +212,7 @@ export class EnhancedExecutionTracker {
         this.persistenceEnabled = false;
       }
     } catch (error) {
-      logger.error('Failed to initialize persistence', error);
+      logger.error('Failed to initialize persistence', error instanceof Error ? error : new Error(String(error)));
       this.persistenceEnabled = false;
     }
   }
@@ -284,7 +284,7 @@ export class EnhancedExecutionTracker {
         })
         .eq('test_run_id', this.flow.testRunId);
     } catch (error) {
-      logger.error('Failed to save to database', error);
+      logger.error('Failed to save to database', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -323,7 +323,7 @@ export class EnhancedExecutionTracker {
    * Save step snapshot to database
    * NOTE: test_execution_snapshots table does not exist in current schema
    */
-  private async saveStepSnapshot(step: ExecutionStep): Promise<void> {
+  private async saveStepSnapshot(_step: ExecutionStep): Promise<void> {
     // TODO: Create test_execution_snapshots table or remove this functionality
     // Disabled until table exists in schema
     return;
@@ -549,7 +549,7 @@ export class EnhancedExecutionTracker {
    * Save log to database
    * NOTE: test_execution_logs table does not exist in current schema
    */
-  private async saveLog(log: ExecutionLog): Promise<void> {
+  private async saveLog(_log: ExecutionLog): Promise<void> {
     // TODO: Create test_execution_logs table or remove this functionality
     // Disabled until table exists in schema
     return;
@@ -805,7 +805,7 @@ export class EnhancedExecutionTracker {
         .order('step_number');
 
       if (snapshots) {
-        tracker.flow.steps = snapshots.map(s => {
+        tracker.flow.steps = snapshots.map((s: Record<string, unknown>) => {
           const stateData = typeof s.state_data === 'string' 
             ? JSON.parse(s.state_data) 
             : s.state_data as any;
@@ -843,12 +843,12 @@ export class EnhancedExecutionTracker {
         .order('timestamp');
 
       if (logs) {
-        tracker.flow.logs = logs.map(log => tracker.convertDbLogToExecutionLog(log));
+        tracker.flow.logs = logs.map((log: Record<string, unknown>) => tracker.convertDbLogToExecutionLog(log));
       }
 
       return tracker;
     } catch (error) {
-      logger.error('Failed to load from database', error);
+      logger.error('Failed to load from database', error instanceof Error ? error : new Error(String(error)));
       return null;
     }
   }

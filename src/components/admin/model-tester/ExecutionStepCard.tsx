@@ -45,6 +45,8 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'edited':
         return <Edit className="h-4 w-4 text-orange-500" />;
+      default:
+        return null;
     }
   };
 
@@ -60,6 +62,8 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
         return 'bg-red-100 text-red-800 border-red-300';
       case 'edited':
         return 'bg-orange-100 text-orange-800 border-orange-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
@@ -172,13 +176,14 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
               />
             )}
 
-            {/* Inputs */}
-            {!isEditing && Object.keys(step.inputs).length > 0 && (
+            {!isEditing && Boolean(Object.keys(step.inputs as Record<string, unknown>).length) && (
+              <>
+                {/* Inputs */}
               <div>
                 <h5 className="text-xs font-semibold mb-2 flex items-center gap-2">
                   <span>Input Parameters</span>
                   <Badge variant="secondary" className="text-xs">
-                    {Object.keys(step.inputs).length}
+                    {String(Object.keys(step.inputs).length)}
                   </Badge>
                 </h5>
                 <PayloadViewer
@@ -187,6 +192,7 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
                   className="max-h-[300px]"
                 />
               </div>
+              </>
             )}
 
             {/* Outputs */}

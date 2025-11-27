@@ -88,14 +88,13 @@ export async function deleteTemplate(
 
     toast.success("Template deleted successfully");
   } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('Template deletion failed', error, {
+    logger.error('Template deletion failed', error instanceof Error ? error : new Error(String(error)), {
       utility: 'template-operations',
       templateId: template.id,
       templateType: template.template_type,
       operation: 'deleteTemplate'
     });
-    toast.error(`Failed to delete template: ${error.message || 'Unknown error'}`);
+    toast.error(`Failed to delete template: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
 }

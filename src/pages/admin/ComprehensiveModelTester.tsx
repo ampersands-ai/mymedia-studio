@@ -474,7 +474,7 @@ const ComprehensiveModelTester = () => {
         },
       });
     } catch (error) {
-      logger.error("Execution failed", error);
+      logger.error("Execution failed", error instanceof Error ? error : new Error(String(error)));
       toast.error(error instanceof Error ? error.message : "Execution failed");
     } finally {
       setIsExecuting(false);
@@ -560,7 +560,7 @@ const ComprehensiveModelTester = () => {
       }
     } catch (error) {
       toast.error("Failed to load test run");
-      logger.error("Failed to load test run", error);
+      logger.error("Failed to load test run", error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -603,7 +603,7 @@ const ComprehensiveModelTester = () => {
       toast.success(`Comparing ${flows.length} test runs`);
     } catch (error) {
       toast.error("Failed to load runs for comparison");
-      logger.error("Failed to load runs for comparison", error);
+      logger.error("Failed to load runs for comparison", error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -780,7 +780,7 @@ const ComprehensiveModelTester = () => {
                 toast.success("Step inputs updated");
               }
             }}
-            onRerunFromStep={(stepId) => {
+            onRerunFromStep={(_stepId) => {
               toast.info("Rerun from step coming soon");
             }}
           />

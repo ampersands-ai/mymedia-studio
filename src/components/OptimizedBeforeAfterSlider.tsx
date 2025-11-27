@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, memo, useMemo } from "react";
+import type React from "react";
 import { useInView } from 'react-intersection-observer';
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,6 +55,7 @@ const OptimizedBeforeAfterSliderComponent = ({
       const timer = setTimeout(() => setShowHintText(false), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [showHint]);
 
   useEffect(() => {
@@ -125,12 +127,15 @@ const OptimizedBeforeAfterSliderComponent = ({
 
   const shouldLoad = priority || isVisible;
 
+  // Use callback ref pattern to handle both refs
+  const setRefs = (node: HTMLDivElement | null) => {
+    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    inViewRef(node);
+  };
+
   return (
     <div
-      ref={(node) => {
-        containerRef.current = node;
-        inViewRef(node);
-      }}
+      ref={setRefs}
       className={cn("relative w-auto h-auto overflow-hidden select-none", className)}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}

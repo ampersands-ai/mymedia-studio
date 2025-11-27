@@ -23,21 +23,21 @@ export const MODEL_CONFIG = ${JSON.stringify(model.MODEL_CONFIG, null, 2)};
 
 export const SCHEMA = ${JSON.stringify(model.SCHEMA, null, 2)};
 
-${model.validate ? `export function validate(inputs: Record<string, any>) {
+${typeof model.validate === 'function' ? `export function validate(inputs: Record<string, any>) {
   // Validation logic
   return { valid: true };
 }` : ''}
 
-${model.calculateCost ? `export function calculateCost(inputs: Record<string, any>): number {
+${typeof model.calculateCost === 'function' ? `export function calculateCost(inputs: Record<string, any>): number {
   return ${model.MODEL_CONFIG.baseCreditCost};
 }` : ''}
 
-${model.preparePayload ? `export function preparePayload(inputs: Record<string, any>) {
+${typeof model.preparePayload === 'function' ? `export function preparePayload(inputs: Record<string, any>) {
   // Payload preparation logic
   return inputs;
 }` : ''}
 
-${model.execute ? `export async function execute(params: ExecuteGenerationParams): Promise<string> {
+${typeof model.execute === 'function' ? `export async function execute(params: ExecuteGenerationParams): Promise<string> {
   // Model execution logic
   return generationId;
 }` : ''}
@@ -159,7 +159,7 @@ export function analyzeCode(code: string): CodeMetrics {
 /**
  * Format code with basic prettification
  */
-export function formatCode(code: string, language: string = 'typescript'): string {
+export function formatCode(code: string, _language: string = 'typescript'): string {
   // Basic formatting - in production, use prettier
   return code;
 }

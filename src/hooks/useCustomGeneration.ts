@@ -7,7 +7,7 @@ import { getMaxPromptLength } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import type { CustomCreationState } from "@/types/custom-creation";
 import { executeGeneration } from "@/lib/generation/executeGeneration";
-import { logger, generateRequestId } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { handleError } from "@/lib/errors";
 import { UserTokens, OnboardingProgress } from "@/types/generation";
 import type { AIModel } from "@/hooks/useModels";
@@ -112,7 +112,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
    * Handle generation - now uses shared executeGeneration pipeline
    */
   const handleGenerate = useCallback(async () => {
-    const requestId = generateRequestId();
     const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
     
     if (!currentModel) {
@@ -145,13 +144,13 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       throw new Error('Model missing required provider or content_type');
     }
     // Ensure provider and content_type are present for ModelSchema type
-    const modelSchema: { provider: string; content_type: string; input_schema?: unknown; max_images?: number } = {
+    const modelSchema = {
       provider: currentModel.provider,
       content_type: currentModel.content_type,
       input_schema: currentModel.input_schema,
       max_images: currentModel.max_images ?? undefined,
     };
-    const maxPromptLength = getMaxPromptLength(modelSchema, state.modelParameters.customMode);
+    const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
 
     // Start generation
     updateState({ 
@@ -296,7 +295,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         });
       }
     } catch (error) {
-      logger.error('Error cancelling generation', error, {
+      logger.error('Error cancelling generation', error instanceof Error ? error : new Error(String(error)), {
         component: 'useCustomGeneration',
         operation: 'handleCancelGeneration',
         generationId

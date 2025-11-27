@@ -46,7 +46,6 @@ function extractPrimaryGroup(model: AIModel): string {
  */
 export function generateModelFile(model: AIModel, lockedBy: string): string {
   const timestamp = new Date().toISOString();
-  const fileName = `${sanitizeModelName(model.model_name)}.ts`;
   const primaryGroup = extractPrimaryGroup(model);
   
   return `/**
@@ -115,14 +114,14 @@ export const MODEL_CONFIG = {
 // ============================================================================
 
 export const SCHEMA = ${JSON.stringify({
-  ...model.input_schema,
-  usePromptRenderer: model.input_schema.usePromptRenderer ?? true,
-  useImageRenderer: model.input_schema.useImageRenderer ?? true,
-  useVoiceRenderer: model.input_schema.useVoiceRenderer ?? false,
-  useDurationRenderer: model.input_schema.useDurationRenderer ?? false,
-  useIncrementRenderer: model.input_schema.useIncrementRenderer ?? true,
-  useOutputFormatRenderer: model.input_schema.useOutputFormatRenderer ?? false,
-  imageInputField: model.input_schema.imageInputField ?? null,
+  ...(model.input_schema || {}),
+  usePromptRenderer: model.input_schema?.usePromptRenderer ?? true,
+  useImageRenderer: model.input_schema?.useImageRenderer ?? true,
+  useVoiceRenderer: model.input_schema?.useVoiceRenderer ?? false,
+  useDurationRenderer: model.input_schema?.useDurationRenderer ?? false,
+  useIncrementRenderer: model.input_schema?.useIncrementRenderer ?? true,
+  useOutputFormatRenderer: model.input_schema?.useOutputFormatRenderer ?? false,
+  imageInputField: model.input_schema?.imageInputField ?? null,
 }, null, 2)} as const;
 
 // ============================================================================

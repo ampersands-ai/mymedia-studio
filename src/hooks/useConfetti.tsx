@@ -1,8 +1,9 @@
 import confetti from 'canvas-confetti';
+import type { Options as ConfettiOptions } from 'canvas-confetti';
 
 export const useConfetti = () => {
-  const fireConfetti = (options?: confetti.Options) => {
-    const defaults: confetti.Options = {
+  const fireConfetti = (options?: ConfettiOptions) => {
+    const defaults: ConfettiOptions = {
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },

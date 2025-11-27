@@ -10,7 +10,7 @@ import type { JsonSchema, JsonSchemaProperty, ParameterValue } from "./schema";
 /**
  * Workflow step parameter value (can be any valid parameter value)
  */
-export type WorkflowParameterValue = ParameterValue | File | string[];
+export type WorkflowParameterValue = ParameterValue | File | string[] | undefined;
 
 /**
  * Workflow step parameters map

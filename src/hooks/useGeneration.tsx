@@ -83,6 +83,9 @@ export const useGeneration = () => {
 
       // STEP 2: Load model from .ts registry and prepare request
       // NEW: Send full model config to edge function (eliminates database lookup)
+      if (!validatedParams.model_record_id) {
+        throw new Error('model_record_id is required');
+      }
       const modelModule = getModel(validatedParams.model_record_id);
 
       const bodyToSend = {

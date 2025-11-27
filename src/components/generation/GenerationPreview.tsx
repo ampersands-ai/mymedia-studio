@@ -50,7 +50,7 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
   );
 
   // Combine states for backward compatibility, with fallback to storagePath if it's a full URL
-  const signedUrl = isFullUrl && storagePath ? storagePath : (contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl);
+  const signedUrl = isFullUrl && storagePath ? storagePath : (contentType === 'image' ? imageUrl : contentType === 'video' ? videoUrl : audioUrl) ?? undefined;
   const isLoading = !isFullUrl && (imageLoading || videoLoading || audioLoading);
   const error = !isFullUrl && (imageError || videoError || audioError);
 

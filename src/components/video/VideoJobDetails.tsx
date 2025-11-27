@@ -23,7 +23,7 @@ export function VideoJobDetails({ job, onPreview, onGenerateCaption, isGeneratin
   const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
 
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useVideoUrl(
-    job.final_video_url,
+    job.final_video_url ?? null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
 

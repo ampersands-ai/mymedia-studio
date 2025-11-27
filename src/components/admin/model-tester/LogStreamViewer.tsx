@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Terminal, Download, X, Search, Filter } from "lucide-react";
+import { Terminal, Download, X, Search } from "lucide-react";
 import type { ExecutionLog, LogLevel } from "@/lib/admin/enhancedExecutionTracker";
 import { cn } from "@/lib/utils";
 

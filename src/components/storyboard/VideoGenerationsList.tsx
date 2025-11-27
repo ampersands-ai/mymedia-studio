@@ -64,7 +64,7 @@ const VideoGenerationItem = ({
   onDownload?: (generation: VideoGeneration) => void;
 }) => {
   const { url: signedUrl, isLoading } = useVideoUrl(
-    generation.status === 'completed' ? generation.storage_path : null,
+    generation.status === 'completed' ? (generation.storage_path ?? null) : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
 

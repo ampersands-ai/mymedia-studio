@@ -32,7 +32,7 @@ export const useStoryboardSettings = (currentStoryboardId: string | null) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
 
       // Track activity

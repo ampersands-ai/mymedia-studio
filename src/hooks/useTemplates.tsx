@@ -3,6 +3,9 @@ import type { WorkflowTemplate } from "./useWorkflowTemplates";
 import type { AIModel } from "./useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import type { Database } from "@/integrations/supabase/types";
+
+type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
 
 // Re-export AIModel for backward compatibility
 export type { AIModel };
@@ -66,7 +69,7 @@ export const useAllTemplates = () => {
 
       if (error) throw error;
 
-      return (workflowTemplates || []).map(w => ({ 
+      return (workflowTemplates || []).map((w: WorkflowTemplateRow) => ({ 
         ...w, 
         template_type: 'workflow' as const,
       }));
@@ -87,7 +90,7 @@ export const useAllTemplatesAdmin = () => {
 
       if (error) throw error;
 
-      return (workflowTemplates || []).map(w => ({ 
+      return (workflowTemplates || []).map((w: WorkflowTemplateRow) => ({ 
         ...w, 
         template_type: 'workflow' as const,
       }));

@@ -26,10 +26,8 @@ import {
   Bookmark,
   BookmarkCheck,
   Search,
-  Filter,
   Eye,
   RefreshCw,
-  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,7 +109,7 @@ export function TestRunHistoryBrowser({
       if (error) throw error;
 
       // Parse execution_data from JSON and filter by search term
-      let filteredData = (data || []).map(run => ({
+      let filteredData = (data || []).map((run: TestRunRecord) => ({
         ...run,
         execution_data: typeof run.execution_data === 'string' 
           ? JSON.parse(run.execution_data) 
@@ -131,7 +129,7 @@ export function TestRunHistoryBrowser({
 
       setRuns(filteredData);
     } catch (error) {
-      logger.error("Error loading test runs", error);
+      logger.error("Error loading test runs", error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -172,7 +170,7 @@ export function TestRunHistoryBrowser({
         )
       );
     } catch (error) {
-      logger.error("Error toggling bookmark", error);
+      logger.error("Error toggling bookmark", error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -206,7 +204,7 @@ export function TestRunHistoryBrowser({
       selectedRuns.delete(testRunId);
       setSelectedRuns(new Set(selectedRuns));
     } catch (error) {
-      logger.error("Error deleting test run", error);
+      logger.error("Error deleting test run", error instanceof Error ? error : new Error(String(error)));
     }
   };
 

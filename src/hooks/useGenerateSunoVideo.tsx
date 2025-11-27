@@ -81,7 +81,7 @@ export function useGenerateSunoVideo() {
       
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       toast.success('🎬 Video generation started!', {
         description: 'Your music video will be ready in ~30 seconds',
         duration: 5000

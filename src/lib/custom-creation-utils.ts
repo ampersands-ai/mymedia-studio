@@ -123,11 +123,11 @@ export const buildCustomParameters = (
  * Image validation is now handled by schema-driven validation in executeGeneration
  */
 export const validateGenerationInputs = (
-  model: ModelSchema,
+  _model: ModelSchema,
   prompt: string,
-  uploadedImages: File[],
+  _uploadedImages: File[],
   isPromptRequired: boolean,
-  isImageRequired: boolean,
+  _isImageRequired: boolean,
   maxPromptLength: number
 ): { valid: boolean; error?: string } => {
   if (isPromptRequired && !prompt.trim()) {

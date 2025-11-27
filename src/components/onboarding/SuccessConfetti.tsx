@@ -26,6 +26,7 @@ export const SuccessConfetti = ({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [trigger, onComplete, fireCelebration]);
 
   if (!trigger) return null;

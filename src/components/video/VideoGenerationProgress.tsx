@@ -50,7 +50,7 @@ export function VideoGenerationProgress({
           onStatusChange?.();
         }
       } catch (error) {
-        componentLogger.error('Auto-polling error', error, {
+        componentLogger.error('Auto-polling error', error instanceof Error ? error : new Error(String(error)), {
           operation: 'autoPolling',
           generationId
         });
@@ -88,8 +88,7 @@ export function VideoGenerationProgress({
         toast.info('Video is still being generated. Please wait...');
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      componentLogger.error('Status check failed', error, {
+      componentLogger.error('Status check failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'handleCheckStatus',
         generationId
       });

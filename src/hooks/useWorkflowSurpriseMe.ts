@@ -14,7 +14,7 @@ export const useWorkflowSurpriseMe = (category: string) => {
       toast.success("Random prompt loaded!");
       return surprisePrompt;
     } catch (error) {
-      logger.error('Surprise prompt generation failed', error, {
+      logger.error('Surprise prompt generation failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'useWorkflowSurpriseMe',
         operation: 'getSurprisePrompt',
         category

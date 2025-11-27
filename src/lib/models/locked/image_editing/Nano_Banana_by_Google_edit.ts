@@ -43,7 +43,7 @@ export function preparePayload(inputs: Record<string, any>) {
 export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost * (inputs.number_of_images || 1); }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, userId, uploadedImages, uploadImagesToStorage, startPolling } = params;
+  const { prompt, modelParameters, userId, uploadedImages: _uploadedImages, uploadImagesToStorage, startPolling } = params;
 
   // Upload images to storage first
   const imageUrls = await uploadImagesToStorage(userId);

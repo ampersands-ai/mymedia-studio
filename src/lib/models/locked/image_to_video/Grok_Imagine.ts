@@ -22,7 +22,7 @@ export const SCHEMA = { properties: { image_urls: { type: "string" }, mode: { de
 
 export function validate(inputs: Record<string, any>) { return inputs.image_urls && inputs.prompt ? { valid: true } : { valid: false, error: "Image and prompt required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { image_urls: inputs.image_urls, prompt: inputs.prompt, mode: inputs.mode || "normal" } }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

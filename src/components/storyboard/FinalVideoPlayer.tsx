@@ -43,7 +43,7 @@ export const FinalVideoPlayer = ({
       
       toast.success('Video downloaded!', { id: 'download-video' });
     } catch (error) {
-      logger.error('Video download failed', error, {
+      logger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'FinalVideoPlayer',
         operation: 'handleDownload',
         storyboardId,

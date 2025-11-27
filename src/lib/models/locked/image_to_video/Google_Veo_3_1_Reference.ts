@@ -22,7 +22,7 @@ export const SCHEMA = { imageInputField: "", properties: { aspectRatio: { defaul
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.imageUrls ? { valid: true } : { valid: false, error: "Prompt and images required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { prompt: inputs.prompt, imageUrls: inputs.imageUrls, aspectRatio: inputs.aspectRatio || "16:9", generationType: "REFERENCE_2_VIDEO", seeds: inputs.seeds }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

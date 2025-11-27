@@ -40,10 +40,10 @@ interface ImageGenerationPanelProps {
 export const ImageGenerationPanel = ({
   suggestedImages,
   onImageGenerated,
-  blogTitle,
+  blogTitle: _blogTitle,
 }: ImageGenerationPanelProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState("");
+  const [_selectedPrompt, setSelectedPrompt] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
   const [altText, setAltText] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -163,9 +163,8 @@ export const ImageGenerationPanel = ({
       setCustomPrompt("");
       setAltText("");
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error("Error generating image", error);
-      toast.error(error.message || "Failed to generate image");
+      logger.error("Error generating image", error instanceof Error ? error : new Error(String(error)));
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
     } finally {
       setIsGenerating(false);
     }

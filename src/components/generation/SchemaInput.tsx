@@ -32,7 +32,7 @@ interface SchemaInputProps {
   provider?: string;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId, provider }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId: _modelId, provider: _provider }: SchemaInputProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
@@ -43,9 +43,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   
   // Check if this field should be visible based on conditional dependencies
   const shouldShowField = () => {
-    if (!modelSchema?.conditionalFields?.[name]) return true;
+    const conditionalFields = modelSchema?.conditionalFields as Record<string, { dependsOn?: Record<string, unknown> }> | undefined;
+    if (!conditionalFields?.[name]) return true;
     
-    const dependency = modelSchema.conditionalFields[name].dependsOn;
+    const dependency = conditionalFields[name].dependsOn;
     if (!dependency) return true;
     
     // Check if all dependency conditions are met
@@ -60,9 +61,10 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   
   // Check if this field is conditionally required
   const isConditionallyRequired = () => {
-    if (!modelSchema?.conditionalFields?.[name]) return required;
+    const conditionalFields = modelSchema?.conditionalFields as Record<string, { required?: boolean }> | undefined;
+    if (!conditionalFields?.[name]) return required;
     
-    const fieldConfig = modelSchema.conditionalFields[name];
+    const fieldConfig = conditionalFields[name];
     if (!shouldShowField()) return false; // Hidden fields can't be required
     
     return fieldConfig.required !== undefined ? fieldConfig.required : required;
@@ -548,7 +550,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             </DialogHeader>
             <VoiceSelector 
               selectedValue={String(value || schema.default || 'nPczCjzI2devNBz1zQrb')}
-              onSelectVoice={(voiceId, voiceName) => onChange(voiceName)}
+              onSelectVoice={(_voiceId, voiceName) => onChange(voiceName)}
             />
           </DialogContent>
         </Dialog>

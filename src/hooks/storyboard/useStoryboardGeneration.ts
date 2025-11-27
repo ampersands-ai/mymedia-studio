@@ -121,7 +121,7 @@ export const useStoryboardGeneration = (
         component: 'useStoryboardGeneration',
         operation: 'generateMutation'
       });
-      const errorMessage = error?.message || 'Failed to generate storyboard';
+      const errorMessage = error.message || 'Failed to generate storyboard';
       toast.error(errorMessage, {
         description: 'Please check your credits and try again',
         duration: 5000
@@ -141,14 +141,15 @@ export const useStoryboardGeneration = (
       await generateMutation.mutateAsync(input);
       toast.success('Storyboard generated successfully!', { id: 'generate-storyboard' });
     } catch (error) {
-      logger.error('Storyboard generation error', error as Error, {
+      const appError = error instanceof Error ? error : new Error(String(error));
+      logger.error('Storyboard generation error', appError, {
         component: 'useStoryboardGeneration',
         operation: 'generateStoryboard',
         topic: input.topic,
         duration: input.duration
       });
       toast.error(
-        error?.message || 'Failed to generate storyboard', 
+        appError.message || 'Failed to generate storyboard', 
         { 
           id: 'generate-storyboard',
           description: 'Please check your credits and try again'

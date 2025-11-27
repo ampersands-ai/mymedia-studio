@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,7 +125,7 @@ export function CodeViewer({
             lineDecorationsWidth: 10,
             lineNumbersMinChars: 3,
           }}
-          beforeMount={(monaco) => {
+          beforeMount={(monaco: typeof import('monaco-editor')) => {
             // Define custom theme
             monaco.editor.defineTheme("custom-dark", {
               base: "vs-dark",
@@ -136,23 +137,27 @@ export function CodeViewer({
               },
             });
           }}
-          onMount={(editor, monaco) => {
+          onMount={(editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
             // Set custom theme
             monaco.editor.setTheme("custom-dark");
 
             // Highlight specific lines if provided
-            if (highlightLines.length > 0) {
-              editor.deltaDecorations(
-                [],
-                highlightLines.map((lineNumber) => ({
-                  range: new monaco.Range(lineNumber, 1, lineNumber, 1),
-                  options: {
-                    isWholeLine: true,
-                    className: "highlight-line",
-                    glyphMarginClassName: "highlight-glyph",
-                  },
-                }))
-              );
+            if (highlightLines.length > 0 && 'deltaDecorations' in editor && typeof editor.deltaDecorations === 'function') {
+              try {
+                editor.deltaDecorations(
+                  [],
+                  highlightLines.map((lineNumber) => ({
+                    range: new (monaco as typeof import('monaco-editor')).editor.Range(lineNumber, 1, lineNumber, 1),
+                    options: {
+                      isWholeLine: true,
+                      className: "highlight-line",
+                      glyphMarginClassName: "highlight-glyph",
+                    },
+                  }))
+                );
+              } catch {
+                // Ignore decoration errors
+              }
             }
           }}
         />

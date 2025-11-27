@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
+
+type GenerationRow = Database['public']['Tables']['generations']['Row'];
 
 interface MonthlyStats {
   totalCreations: number;
@@ -59,7 +62,7 @@ export const useTokenUsage = () => {
 
       const modelCounts: Record<string, number> = {};
 
-      generations?.forEach((gen) => {
+      generations?.forEach((gen: GenerationRow) => {
         stats.totalTokens += gen.tokens_used || 0;
         
         const type = gen.type as keyof typeof stats.byType;
@@ -115,7 +118,7 @@ export const useTokenUsage = () => {
       const modelCounts: Record<string, number> = {};
       const monthlyData: Record<string, { count: number; tokens: number }> = {};
 
-      generations?.forEach((gen) => {
+      generations?.forEach((gen: GenerationRow) => {
         stats.totalTokens += gen.tokens_used || 0;
         
         const type = gen.type as keyof typeof stats.byType;

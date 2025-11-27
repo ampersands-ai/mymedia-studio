@@ -65,6 +65,7 @@ export function useTemplateLanding(category: string, slug: string) {
         .single();
 
       if (error) throw error;
+      if (!data?.id) throw new Error('Template not found');
 
       // Fire-and-forget view increment
       supabase.rpc("increment_template_view_count", {

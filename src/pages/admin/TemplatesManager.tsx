@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ALL_CATEGORIES } from "@/lib/admin/template-filtering";
+import type { MergedTemplate } from "@/hooks/useTemplates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -149,7 +150,7 @@ export default function TemplatesManager() {
   };
 
   const handleEnableAll = async () => {
-    const updates = templates.map(t => ({
+    const updates = templates.map((t: MergedTemplate) => ({
       id: t.id,
       isActive: true
     }));
@@ -159,7 +160,7 @@ export default function TemplatesManager() {
   };
 
   const handleDisableAll = async () => {
-    const updates = templates.map(t => ({
+    const updates = templates.map((t: MergedTemplate) => ({
       id: t.id,
       isActive: false
     }));
@@ -169,9 +170,9 @@ export default function TemplatesManager() {
   };
   
   // Extract unique categories with counts
-  const uniqueCategories = Array.from(new Set(templates.map(t => t.category))).sort() as string[];
-  const categoryCounts = uniqueCategories.reduce((acc, cat) => {
-    acc[cat] = templates.filter(t => t.category === cat).length;
+  const uniqueCategories = Array.from(new Set(templates.map((t: MergedTemplate) => t.category))).sort() as string[];
+  const categoryCounts = uniqueCategories.reduce((acc: Record<string, number>, cat: string) => {
+    acc[cat] = templates.filter((t: MergedTemplate) => t.category === cat).length;
     return acc;
   }, {} as Record<string, number>);
   

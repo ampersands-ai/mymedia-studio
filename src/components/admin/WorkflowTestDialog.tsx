@@ -8,7 +8,6 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { getAllModels } from "@/lib/models/registry";
 import { GenerationPreview } from "@/components/generation/GenerationPreview";
 import { logger, generateRequestId } from "@/lib/logger";
@@ -18,7 +17,6 @@ import type {
   FieldSchemaInfo,
   WorkflowParameterValue
 } from "@/types/workflow-parameters";
-import { jsonToSchema } from "@/types/schema";
 import type { ContentType } from "@/types/workflow-execution-display";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import type { ModelParameterValue } from "@/types/model-schema";
@@ -101,7 +99,7 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
       const models: WorkflowStepModels = {};
       const allModels = getAllModels();
 
-      for (const step of workflow.workflow_steps) {
+      for (const step of workflow.workflow_steps ?? []) {
         const model = allModels.find(m => m.MODEL_CONFIG.recordId === step.model_record_id);
 
         if (model) {

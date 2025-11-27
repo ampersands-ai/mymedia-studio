@@ -60,7 +60,7 @@ export const useCaptionGeneration = (
         generated_at: captionResult.generated_at
       });
     } catch (err) {
-      logger.error('Caption generation failed', err, {
+      logger.error('Caption generation failed', err instanceof Error ? err : new Error(String(err)), {
         component: 'useCaptionGeneration',
         operation: 'generateCaption',
         generationId: outputsToUse[0]?.id

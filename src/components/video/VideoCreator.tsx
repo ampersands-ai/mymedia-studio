@@ -21,6 +21,9 @@ import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/c
 import { logger } from '@/lib/logger';
 import { CaptionStyle } from '@/types/video';
 import type { VideoJobInput } from '@/types/video';
+import type { Database } from '@/integrations/supabase/types';
+
+type SavedCaptionPreset = Database['public']['Tables']['saved_caption_presets']['Row'];
 
 export function VideoCreator() {
   const [topic, setTopic] = useState('');
@@ -330,7 +333,7 @@ export function VideoCreator() {
             <div className="space-y-2">
               <Label className="text-xs font-bold">Your Saved Presets</Label>
               <div className="grid gap-2">
-                {presets.map((preset) => (
+                {presets.map((preset: SavedCaptionPreset) => (
                   <div key={preset.id} className="flex items-center gap-2">
                     <Button
                       variant="outline"

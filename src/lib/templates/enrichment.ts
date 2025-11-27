@@ -9,9 +9,7 @@ import type {
   WorkflowTemplate, 
   EnrichedTemplate, 
   TemplatePreview, 
-  ModelMetadata,
-  hasModelInFirstStep,
-  inferContentTypeFromModelId 
+  ModelMetadata
 } from '@/types/templates';
 
 /**

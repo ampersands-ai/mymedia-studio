@@ -135,23 +135,23 @@ const ConfigForm = ({ config, onSave, onCancel, isEditing, onEdit, isNew }: Conf
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Success Rate</p>
-            <p className="font-bold">&ge; {(config.success_rate_threshold * 100).toFixed(1)}%</p>
+            <p className="font-bold">&ge; {((config?.success_rate_threshold ?? 0) * 100).toFixed(1)}%</p>
           </div>
           <div>
             <p className="text-muted-foreground">Failure Threshold</p>
-            <p className="font-bold">{config.failure_threshold} failures</p>
+            <p className="font-bold">{config?.failure_threshold ?? 0} failures</p>
           </div>
           <div>
             <p className="text-muted-foreground">Timeout Threshold</p>
-            <p className="font-bold">{config.timeout_threshold_ms}ms</p>
+            <p className="font-bold">{config?.timeout_threshold_ms ?? 0}ms</p>
           </div>
           <div>
             <p className="text-muted-foreground">Alert Cooldown</p>
-            <p className="font-bold">{config.alert_cooldown_minutes}m</p>
+            <p className="font-bold">{config?.alert_cooldown_minutes ?? 0}m</p>
           </div>
           <div>
             <p className="text-muted-foreground">Status</p>
-            <p className="font-bold">{config.enabled ? '✓ Enabled' : '✗ Disabled'}</p>
+            <p className="font-bold">{config?.enabled ? '✓ Enabled' : '✗ Disabled'}</p>
           </div>
         </div>
         <Button onClick={onEdit} variant="outline" size="sm" className="gap-2">

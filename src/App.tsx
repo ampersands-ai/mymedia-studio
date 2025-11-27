@@ -36,7 +36,6 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Community = lazy(() => import("./pages/Community"));
 const About = lazy(() => import("./pages/About"));
-const Blog = lazy(() => import("./pages/Blog"));
 const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));

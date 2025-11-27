@@ -24,7 +24,7 @@ export const ShareModal = ({
   caption,
   hashtags,
   generationId,
-  onDownload
+  onDownload: _onDownload
 }: ShareModalProps) => {
   const handleCopyLink = async () => {
     // Determine content type upfront

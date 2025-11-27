@@ -48,7 +48,7 @@ export const OptimizedVideoPreview = ({
 
   // Use video URL hook for Supabase storage
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl } = useVideoUrl(
-    !isExternalUrl ? sourceForSigning : null,
+    !isExternalUrl ? (sourceForSigning ?? null) : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
 

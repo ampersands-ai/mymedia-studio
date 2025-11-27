@@ -22,7 +22,7 @@ export const SCHEMA = { imageInputField: "image_url", properties: { aspect_ratio
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, image_url: inputs.image_url, aspect_ratio: inputs.aspect_ratio || "1:1" } }; }
-export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const imageSizeMult = MODEL_CONFIG.costMultipliers.image_size?.[inputs.image_size || "square"] || 1; const numImagesMult = MODEL_CONFIG.costMultipliers.num_images?.[inputs.num_images || "1"] || 1; return base * imageSizeMult * numImagesMult; }
+export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const imageSizeKey = (inputs.image_size || "square") as keyof typeof MODEL_CONFIG.costMultipliers.image_size; const imageSizeMult = MODEL_CONFIG.costMultipliers.image_size?.[imageSizeKey] || 1; const numImagesKey = (inputs.num_images || "1") as keyof typeof MODEL_CONFIG.costMultipliers.num_images; const numImagesMult = MODEL_CONFIG.costMultipliers.num_images?.[numImagesKey] || 1; return base * imageSizeMult * numImagesMult; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

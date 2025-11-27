@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/integrations/supabase/types';
+
+type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
+type TemplateLandingPageRow = Database['public']['Tables']['template_landing_pages']['Row'];
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -85,7 +89,7 @@ export const AdvancedAnalytics = () => {
       .order('use_count', { ascending: false })
       .limit(10);
 
-    setTemplateData((data || []).map(t => ({
+    setTemplateData((data || []).map((t: TemplateLandingPageRow) => ({
       name: t.title?.substring(0, 20) || 'Unknown',
       uses: t.use_count || 0,
       views: t.view_count || 0,
@@ -305,7 +309,7 @@ export const AdvancedAnalytics = () => {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {(tokenData || []).map((entry, index) => (
+                      {(tokenData || []).map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

@@ -113,7 +113,7 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
 /**
  * Calculate credit cost for this generation
  */
-export function calculateCost(inputs: Record<string, any>): number {
+export function calculateCost(_inputs: Record<string, any>): number {
   return MODEL_CONFIG.baseCreditCost;
 }
 

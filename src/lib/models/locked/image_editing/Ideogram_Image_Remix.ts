@@ -22,7 +22,7 @@ export const SCHEMA = { imageInputField: "image_url", properties: { expand_promp
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Missing required fields" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, image_url: inputs.image_url, image_weight: inputs.image_weight || 50, style: inputs.style || "AUTO", rendering_speed: inputs.rendering_speed || "TURBO", image_size: inputs.image_size || "square", num_images: inputs.num_images || "1" } }; }
-export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const numImagesMult = MODEL_CONFIG.costMultipliers.num_images?.[parseInt(inputs.num_images || "1")] || 1; const speedMult = MODEL_CONFIG.costMultipliers.rendering_speed?.[inputs.rendering_speed || "TURBO"] || 1; return base * numImagesMult * speedMult; }
+export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const numImagesKey = String(parseInt(inputs.num_images || "1")) as keyof typeof MODEL_CONFIG.costMultipliers.num_images; const numImagesMult = MODEL_CONFIG.costMultipliers.num_images?.[numImagesKey] || 1; const speedKey = (inputs.rendering_speed || "TURBO") as keyof typeof MODEL_CONFIG.costMultipliers.rendering_speed; const speedMult = MODEL_CONFIG.costMultipliers.rendering_speed?.[speedKey] || 1; return base * numImagesMult * speedMult; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

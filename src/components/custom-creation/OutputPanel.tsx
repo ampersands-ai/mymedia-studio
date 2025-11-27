@@ -93,10 +93,10 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       onDownloadSuccess,
       templateBeforeImage,
       templateAfterImage,
-      modelProvider,
-      modelName,
+      modelProvider: _modelProvider,
+      modelName: _modelName,
       connectionTier = 'disconnected',
-      realtimeConnected = false,
+      realtimeConnected: _realtimeConnected = false,
       failedGenerationError,
       onClearError,
     },
@@ -118,7 +118,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       !generationState.generatedOutput && 
       generationState.generatedOutputs.length === 0;
 
-    const showProgress = showStatusBanner;
+    const showProgress = Boolean(showStatusBanner);
 
     const handleNavigateToHistory = () => {
       navigate('/dashboard/my-creations?status=pending');

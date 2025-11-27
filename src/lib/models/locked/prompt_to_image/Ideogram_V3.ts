@@ -19,7 +19,7 @@ export const SCHEMA = { properties: { aspect_ratio: { default: "1:1", enum: ["1:
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, aspect_ratio: inputs.aspect_ratio || "1:1", magic_prompt_option: inputs.magic_prompt_option || "AUTO", style_type: inputs.style_type || "AUTO", ...(inputs.seed && { seed: inputs.seed }) } }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   return executeModelGeneration({

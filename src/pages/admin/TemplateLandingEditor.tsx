@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { ImageUploader } from "@/components/admin/template-landing/ImageUploader";
 import { ArrowLeft, Save, Eye } from "lucide-react";
-import type { TemplateLandingPage } from "@/hooks/useTemplateLanding";
+import type { TemplateLandingPage, TemplateCategory } from "@/hooks/useTemplateLanding";
 
 export default function TemplateLandingEditor() {
   const { id } = useParams<{ id: string }>();
@@ -152,7 +152,7 @@ export default function TemplateLandingEditor() {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((cat) => (
+                      {categories?.map((cat: TemplateCategory) => (
                         <SelectItem key={cat.id} value={cat.slug}>
                           {cat.name}
                         </SelectItem>

@@ -35,7 +35,7 @@ import { logger } from '@/lib/logger';
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
-export interface UseRealtimeSubscriptionOptions<T = any> {
+export interface UseRealtimeSubscriptionOptions<T extends Record<string, any> = Record<string, any>> {
   /** Database table to subscribe to */
   table: string;
   /** React Query key to invalidate on changes */
@@ -59,7 +59,7 @@ export interface UseRealtimeSubscriptionOptions<T = any> {
 /**
  * Subscribe to real-time database changes and update React Query cache
  */
-export function useRealtimeSubscription<T = any>(
+export function useRealtimeSubscription<T extends Record<string, any> = Record<string, any>>(
   options: UseRealtimeSubscriptionOptions<T>
 ) {
   const {
@@ -190,13 +190,13 @@ export function useRealtimeSubscription<T = any>(
 /**
  * Subscribe to user-specific table changes
  */
-export function useUserRealtimeSubscription<T = any>(
+export function useUserRealtimeSubscription<T extends Record<string, any> = Record<string, any>>(
   table: string,
   userId: string | undefined,
   queryKey: any[],
   options: Omit<UseRealtimeSubscriptionOptions<T>, 'table' | 'queryKey' | 'filter'> = {}
 ) {
-  return useRealtimeSubscription({
+  return useRealtimeSubscription<T>({
     table,
     queryKey,
     filter: userId ? `user_id=eq.${userId}` : undefined,

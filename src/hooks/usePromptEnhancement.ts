@@ -38,7 +38,7 @@ export const usePromptEnhancement = () => {
         category,
         promptLength: prompt.length
       });
-      toast.error(error.message || 'Failed to enhance prompt', { duration: 2000 });
+      toast.error(error instanceof Error ? error.message : 'Failed to enhance prompt', { duration: 2000 });
       return null;
     } finally {
       setIsEnhancing(false);

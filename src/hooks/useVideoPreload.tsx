@@ -43,6 +43,7 @@ export function useVideoPreload({
       connection.addEventListener('change', handleChange);
       return () => connection.removeEventListener('change', handleChange);
     }
+    return undefined;
   }, []);
   
   // Get adaptive preload settings

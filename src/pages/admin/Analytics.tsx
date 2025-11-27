@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type GenerationRow = Database['public']['Tables']['generations']['Row'];
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
@@ -83,7 +87,7 @@ export default function Analytics() {
 
       if (error) throw error;
 
-      const modelCounts = data.reduce((acc, gen) => {
+      const modelCounts = data.reduce((acc: Record<string, number>, gen: GenerationRow) => {
         const model = gen.model_id || "Unknown";
         acc[model] = (acc[model] || 0) + 1;
         return acc;
@@ -115,13 +119,13 @@ export default function Analytics() {
         supabase.from("generations").select("created_at").eq("status", "completed"),
       ]);
 
-      const signupsByDate = (signupsRes.data || []).reduce((acc, profile) => {
+      const signupsByDate = (signupsRes.data || []).reduce((acc: Record<string, number>, profile: ProfileRow) => {
         const date = format(new Date(profile.created_at), "yyyy-MM-dd");
         acc[date] = (acc[date] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      const gensByDate = (generationsRes.data || []).reduce((acc, gen) => {
+      const gensByDate = (generationsRes.data || []).reduce((acc: Record<string, number>, gen: GenerationRow) => {
         const date = format(new Date(gen.created_at), "yyyy-MM-dd");
         acc[date] = (acc[date] || 0) + 1;
         return acc;

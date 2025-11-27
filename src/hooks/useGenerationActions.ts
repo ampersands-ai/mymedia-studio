@@ -109,7 +109,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
         toast.success('Generation complete!', { id: TOAST_IDS.GENERATION_PROGRESS });
         
         // Update onboarding progress
-        if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration && updateOnboardingProgress && setFirstGeneration && setShowConfetti) {
+        if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration && updateOnboardingProgress && setFirstGeneration && setShowConfetti && genId) {
           updateOnboardingProgress({ completedFirstGeneration: true });
           setFirstGeneration(genId);
           setShowConfetti(true);
@@ -117,7 +117,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
       }
     } catch (error) {
       // Handle SESSION_EXPIRED error
-      if (error.message === "SESSION_EXPIRED") {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
         toast.error("Session expired", {
           description: "Please log in again. Your work has been saved.",
           duration: 5000
@@ -185,7 +185,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
         updateOnboardingProgress({ downloadedResult: true });
       }
     } catch (error) {
-      logger.error('Download failed', error, {
+      logger.error('Download failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'useGenerationActions',
         operation: 'handleDownload',
         storagePath
@@ -212,7 +212,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
           );
         }
       } catch (error) {
-        logger.error('Batch download error', error, {
+        logger.error('Batch download error', error instanceof Error ? error : new Error(String(error)), {
           component: 'useGenerationActions',
           operation: 'handleDownloadAll',
           fileIndex: i,

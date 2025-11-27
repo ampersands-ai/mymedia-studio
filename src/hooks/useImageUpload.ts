@@ -7,6 +7,25 @@ import { getImageFieldInfo } from "@/lib/custom-creation-utils";
 import type { ModelConfiguration } from "@/types/schema";
 import { logger } from "@/lib/logger";
 
+// ModelSchema type from custom-creation-utils
+type ModelSchema = {
+  input_schema?: {
+    required?: string[];
+    imageInputField?: string;
+    properties?: Record<string, {
+      type?: string;
+      maxItems?: number;
+    }>;
+    conditionalFields?: Record<string, {
+      dependsOn?: string;
+      value?: unknown;
+    }>;
+  };
+  max_images?: number;
+  provider: string;
+  content_type: string;
+};
+
 // Type stub for backward compatibility - models now loaded from registry
 type AIModel = ModelConfiguration;
 
@@ -40,7 +59,6 @@ const fileToDataUrl = (file: File): Promise<string> => {
  */
 const storableToFile = (stored: { dataUrl: string; type: string; name: string; lastModified?: number }): File => {
   const arr = stored.dataUrl.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || stored.type;
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
@@ -68,7 +86,12 @@ export const useImageUpload = (currentModel: AIModel | null) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { pickImage, pickMultipleImages, isLoading: cameraLoading, isNative } = useNativeCamera();
   
-  const imageFieldInfo = getImageFieldInfo(currentModel);
+  const imageFieldInfo = currentModel ? getImageFieldInfo({
+    provider: currentModel.provider,
+    content_type: currentModel.content_type,
+    input_schema: currentModel.input_schema as ModelSchema['input_schema'] | undefined,
+    max_images: currentModel.max_images ?? undefined,
+  } as ModelSchema) : { fieldName: null, isRequired: false, isArray: false, maxImages: 0 };
 
   // Load persisted images from sessionStorage on mount or model change
   useEffect(() => {
@@ -82,7 +105,7 @@ export const useImageUpload = (currentModel: AIModel | null) => {
         setUploadedImages(files);
         logger.info(`Restored ${files.length} images from sessionStorage`);
       } catch (err) {
-        logger.error('Failed to restore images', err);
+        logger.error('Failed to restore images', err instanceof Error ? err : new Error(String(err)));
         sessionStorage.removeItem(storageKey);
       }
     } else {

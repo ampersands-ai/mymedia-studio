@@ -165,7 +165,7 @@ export const useStoryboardRendering = (
           }
         }
       } catch (error) {
-        logger.error('Poll render status error', error, {
+        logger.error('Poll render status error', error instanceof Error ? error : new Error(String(error)), {
           component: 'useStoryboardRendering',
           operation: 'pollRenderStatus',
           storyboardId: currentStoryboardId

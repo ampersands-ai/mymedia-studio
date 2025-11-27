@@ -77,8 +77,9 @@ export const useNativeCamera = (): UseNativeCameraResult => {
       await triggerHaptic('light');
       return file;
     } catch (error) {
-      if ((error as Error).message !== 'User cancelled photos app') {
-        componentLogger.error('Image pick failed', error, {
+      const appError = error instanceof Error ? error : new Error(String(error));
+      if (appError.message !== 'User cancelled photos app') {
+        componentLogger.error('Image pick failed', appError, {
           operation: 'pickImage',
           source,
           isNative
@@ -149,8 +150,9 @@ export const useNativeCamera = (): UseNativeCameraResult => {
       
       return files;
     } catch (error) {
-      if ((error as Error).message !== 'User cancelled photos app') {
-        componentLogger.error('Multiple image pick failed', error, {
+      const appError = error instanceof Error ? error : new Error(String(error));
+      if (appError.message !== 'User cancelled photos app') {
+        componentLogger.error('Multiple image pick failed', appError, {
           operation: 'pickMultipleImages',
           maxImages,
           selectedCount: files.length,

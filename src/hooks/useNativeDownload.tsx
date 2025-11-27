@@ -85,7 +85,7 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
         
         toast.success('Download started!');
       } catch (error) {
-        componentLogger.error('Web download failed', error, {
+        componentLogger.error('Web download failed', error instanceof Error ? error : new Error(String(error)), {
           operation: 'downloadFile',
           url,
           filename: name
@@ -147,7 +147,7 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
         isIOS: isIOS()
       });
     } catch (error) {
-      componentLogger.error('Native download failed', error, {
+      componentLogger.error('Native download failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'downloadFile',
         url,
         filename: name

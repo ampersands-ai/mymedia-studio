@@ -61,7 +61,7 @@ export const useWorkflowExecution = () => {
       });
 
       // Subscribe to Realtime updates on workflow_executions
-      return new Promise((resolve, reject) => {
+      return new Promise<WorkflowExecutionResult | null>((resolve, reject) => {
         const channel = supabase
           .channel(`workflow-execution-${executionId}`)
           .on(
@@ -232,7 +232,7 @@ export const useWorkflowExecution = () => {
         }, 20 * 60 * 1000);
 
         // Store cleanup function
-        const originalResolve = resolve;
+        const originalResolve = resolve as (value: WorkflowExecutionResult | null) => void;
         const originalReject = reject;
         resolve = (value: WorkflowExecutionResult | null) => {
           clearTimeout(timeout);

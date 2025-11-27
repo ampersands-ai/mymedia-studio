@@ -107,15 +107,15 @@ export function BackgroundMediaSelector({
         toast.info(`No ${type}s found matching your criteria. Try a different search.`);
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Error searching Pixabay', error instanceof Error ? error : new Error(String(error)), {
+      const appError = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error searching Pixabay', appError, {
         component: 'BackgroundMediaSelector',
         operation: 'handleSearch',
         type,
         query,
-        errorMessage: error?.message
+        errorMessage: appError.message
       });
-      toast.error(error.message || `Failed to search ${type}s`);
+      toast.error(error instanceof Error ? error.message : `Failed to search ${type}s`);
     } finally {
       setLoading(false);
     }

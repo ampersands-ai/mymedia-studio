@@ -71,8 +71,8 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
         description: "Image uploaded successfully",
       });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Template landing image upload failed', error, {
+      const appError = error instanceof Error ? error : new Error(String(error));
+      logger.error('Template landing image upload failed', appError, {
         component: 'ImageUploader',
         bucket,
         fileName: file?.name,
@@ -81,7 +81,7 @@ export function ImageUploader({ value, onChange, label, bucket = "generated-cont
       });
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: appError.message,
         variant: "destructive",
       });
     } finally {

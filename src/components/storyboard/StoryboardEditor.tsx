@@ -60,22 +60,22 @@ export const StoryboardEditor = () => {
   
   // Video URL
   const { url: videoSignedUrl, isLoading: isLoadingVideo } = useVideoUrl(
-    storyboard?.status === 'complete' ? storyboard.video_storage_path : null,
+    storyboard?.status === 'complete' ? (storyboard.video_storage_path ?? null) : null,
     { strategy: 'public-direct', bucket: 'generated-content' }
   );
   
   // Modular hooks
   const { state, updateState, setShowScenes, setShowSubtitleCustomizer } = 
-    useStoryboardLocalState(storyboard);
+    useStoryboardLocalState(storyboard ?? null);
   
   const { initialEstimate, actualRenderCost, costDifference } = 
-    useStoryboardCostCalculator(storyboard, scenes);
+    useStoryboardCostCalculator(storyboard ?? null, scenes);
   
   const { renderStatusMessage } = 
     useStoryboardRenderStatus({ isRendering, renderingStartTime });
   
   const { introVoiceOverText, setIntroVoiceOverText, introImagePrompt, setIntroImagePrompt } = 
-    useIntroSceneSync({ storyboard, updateIntroScene });
+    useIntroSceneSync({ storyboard: storyboard ?? null, updateIntroScene });
   
   // Side effect hooks
   useStoryboardKeyboardNav({ navigateScene });
@@ -108,14 +108,13 @@ export const StoryboardEditor = () => {
       
       toast.success('Video rendering started!');
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Video rendering failed to start', error, {
+      logger.error('Video rendering failed to start', error instanceof Error ? error : new Error(String(error)), {
         component: 'StoryboardEditor',
         operation: 'handleRender',
         storyboardId: storyboard?.id,
         sceneCount: scenes.length
       });
-      toast.error(error.message || 'Failed to start rendering');
+      toast.error(error instanceof Error ? error.message : 'Failed to start rendering');
     }
   };
   
@@ -125,13 +124,12 @@ export const StoryboardEditor = () => {
       await renderVideo(true);
       toast.success('Video re-rendering started!');
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Video re-rendering failed to start', error, {
+      logger.error('Video re-rendering failed to start', error instanceof Error ? error : new Error(String(error)), {
         component: 'StoryboardEditor',
         operation: 'handleConfirmRerender',
         storyboardId: storyboard?.id
       });
-      toast.error(error.message || 'Failed to start re-rendering');
+      toast.error(error instanceof Error ? error.message : 'Failed to start re-rendering');
     }
   };
   
@@ -230,7 +228,9 @@ export const StoryboardEditor = () => {
       <VoiceAndSettingsPanel
         storyboard={storyboard}
         isRendering={isRendering}
-        onUpdateSettings={updateRenderSettings}
+        onUpdateSettings={(settings) => {
+          updateRenderSettings(settings as Parameters<typeof updateRenderSettings>[0]);
+        }}
         onOpenSubtitleCustomizer={() => setShowSubtitleCustomizer(true)}
       />
       

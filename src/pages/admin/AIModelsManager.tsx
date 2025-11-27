@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Edit, Power, PowerOff, ArrowUpDown, Copy, Filter, X,
-  FileText, Download, Lock, Unlock, AlertCircle, RefreshCw
+  Download, Lock, Unlock, AlertCircle, RefreshCw
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,9 +79,9 @@ function moduleToModel(module: ModelModule): AIModel {
 export default function AIModelsManager() {
   const { execute } = useErrorHandler();
   const [models, setModels] = useState<AIModel[]>([]);
-  const [lockStatuses, setLockStatuses] = useState<Record<string, boolean>>({});
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingModel, setEditingModel] = useState<AIModel | null>(null);
+  const [_lockStatuses, setLockStatuses] = useState<Record<string, boolean>>({});
+  const [_dialogOpen, setDialogOpen] = useState(false);
+  const [_editingModel, setEditingModel] = useState<AIModel | null>(null);
   const [pendingChanges, setPendingChanges] = useState<ModelUpdatePayload[]>([]);
   const [sortBy, setSortBy] = useState<string>("cost");
   const [showFilters, setShowFilters] = useState(false);
@@ -167,7 +167,7 @@ export default function AIModelsManager() {
     setDialogOpen(true);
   };
 
-  const handleSaveChanges = (updatedModel: AIModel) => {
+  const _handleSaveChanges = (updatedModel: AIModel) => {
     if (updatedModel.record_id) {
       // Existing model - add to pending changes
       const existingIndex = pendingChanges.findIndex(
@@ -230,7 +230,7 @@ export default function AIModelsManager() {
     toast.success(`Status change queued for ${model.model_name}. Download update script to apply.`);
   };
 
-  const handleDelete = (recordId: string) => {
+  const _handleDelete = (recordId: string) => {
     const model = models.find(m => m.record_id === recordId);
     if (!model) return;
 
@@ -383,7 +383,7 @@ export default function AIModelsManager() {
 
   const uniqueProviders = [...new Set(models.map(m => m.provider))];
   const uniqueContentTypes = [...new Set(models.map(m => m.content_type))];
-  const uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
+  const _uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
   const allGroups = [...new Set(models.flatMap(m => Array.isArray(m.groups) ? m.groups : []))];
 
   return (
@@ -702,7 +702,7 @@ export default function AIModelsManager() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleToggleLock(model.record_id, model.is_locked)}
+                          onClick={() => handleToggleLock(model.record_id, model.is_locked ?? false)}
                           title={model.is_locked ? "Download unlock script" : "Download lock script"}
                         >
                           {model.is_locked ? (

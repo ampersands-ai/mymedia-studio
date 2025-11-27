@@ -83,7 +83,7 @@ export function preparePayload(inputs: Record<string, any>) {
   };
 }
 
-export function calculateCost(inputs: Record<string, any>) {
+export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }
 

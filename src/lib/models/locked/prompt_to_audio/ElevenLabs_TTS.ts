@@ -19,7 +19,7 @@ export const SCHEMA = { properties: { similarity_boost: { default: 0.75, maximum
 
 export function validate(inputs: Record<string, any>) { return inputs.text ? { valid: true } : { valid: false, error: "Text required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { text: inputs.text, voice: inputs.voice || "Rachel", stability: inputs.stability || 0.5, similarity_boost: inputs.similarity_boost || 0.75, style: inputs.style || 0, speed: inputs.speed || 1, timestamps: inputs.timestamps || false } }; }
-export function calculateCost(inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   return executeModelGeneration({

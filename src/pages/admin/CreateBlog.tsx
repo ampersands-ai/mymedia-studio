@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Send, ArrowLeft, Plus, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Sparkles, Send, ArrowLeft, Plus, X } from "lucide-react";
 import { BlogEditor } from "@/components/blog/BlogEditor";
 import { SEOFields } from "@/components/blog/SEOFields";
 import { ImageGenerationPanel, type SuggestedImage } from "@/components/blog/ImageGenerationPanel";
-import { BlogPost, SEOMetadata } from "@/types/blog";
+import { SEOMetadata } from "@/types/blog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,7 +61,7 @@ export default function CreateBlog() {
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [_status, _setStatus] = useState<"draft" | "published">("draft");
   const [isFeatured, setIsFeatured] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [seoMetadata, setSeoMetadata] = useState<SEOMetadata>({});
@@ -520,7 +520,7 @@ export default function CreateBlog() {
         <div className="mb-6">
           <ImageGenerationPanel
             suggestedImages={suggestedImages}
-            onImageGenerated={(image) => {
+            onImageGenerated={(_image) => {
               toast.success('Image generated! HTML copied - paste into editor.');
               // Optionally auto-insert into content
               // setContent(content + `\n<img src="${image.url}" alt="${image.alt_text}" class="rounded-lg shadow-lg my-4" />\n`);

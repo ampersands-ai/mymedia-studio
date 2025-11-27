@@ -22,7 +22,7 @@ export const SCHEMA = { properties: { aspect_ratio: { default: "3:4", enum: ["1:
 
 export function validate(inputs: Record<string, any>) { return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, image_url: inputs.image_url, duration: inputs.duration || "3", resolution: inputs.resolution || "480p", aspect_ratio: inputs.aspect_ratio || "3:4" } }; }
-export function calculateCost(inputs: Record<string, any>) { const dur = parseInt(inputs.duration || "3"); const durMult = MODEL_CONFIG.costMultipliers.duration[dur] || 1; const resMult = MODEL_CONFIG.costMultipliers.resolution[inputs.resolution || "480p"] || 1; return MODEL_CONFIG.baseCreditCost * durMult * resMult; }
+export function calculateCost(inputs: Record<string, any>) { const dur = String(parseInt(inputs.duration || "3")) as keyof typeof MODEL_CONFIG.costMultipliers.duration; const durMult = MODEL_CONFIG.costMultipliers.duration[dur] || 1; const resKey = (inputs.resolution || "480p") as keyof typeof MODEL_CONFIG.costMultipliers.resolution; const resMult = MODEL_CONFIG.costMultipliers.resolution[resKey] || 1; return MODEL_CONFIG.baseCreditCost * durMult * resMult; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

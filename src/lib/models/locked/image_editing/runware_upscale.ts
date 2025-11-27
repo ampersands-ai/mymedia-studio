@@ -23,7 +23,7 @@ export const SCHEMA = { imageInputField: "inputImage", properties: { includeCost
 
 export function validate(inputs: Record<string, any>) { return inputs.inputImage ? { valid: true } : { valid: false, error: "Image required" }; }
 export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageUpscale", inputImage: inputs.inputImage, upscaleFactor: inputs.upscaleFactor || 4, outputFormat: inputs.outputFormat || "PNG", outputType: ["URL"], includeCost: true }; }
-export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const upscaleMult = MODEL_CONFIG.costMultipliers.upscaleFactor?.[String(inputs.upscaleFactor || 4)] || 1; return base * upscaleMult; }
+export function calculateCost(inputs: Record<string, any>) { const base = MODEL_CONFIG.baseCreditCost; const upscaleKey = String(inputs.upscaleFactor || 4) as keyof typeof MODEL_CONFIG.costMultipliers.upscaleFactor; const upscaleMult = MODEL_CONFIG.costMultipliers.upscaleFactor?.[upscaleKey] || 1; return base * upscaleMult; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;

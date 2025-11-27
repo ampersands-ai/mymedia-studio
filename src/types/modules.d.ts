@@ -48,6 +48,7 @@ declare module 'canvas-confetti' {
   }
 
   function confetti(options?: Options): Promise<null>;
-  export = confetti;
+  
+  export default confetti;
 }
 

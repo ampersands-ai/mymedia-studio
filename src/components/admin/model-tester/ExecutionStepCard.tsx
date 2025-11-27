@@ -78,25 +78,6 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
     }
   };
 
-  const renderInputs = (): JSX.Element | null => {
-    if (!hasInputs) return null;
-    return (
-      <div>
-        <h5 className="text-xs font-semibold mb-2 flex items-center gap-2">
-          <span>Input Parameters</span>
-          <Badge variant="secondary" className="text-xs">
-            {String(Object.keys(inputs).length)}
-          </Badge>
-        </h5>
-        <PayloadViewer
-          data={inputs}
-          title="Inputs"
-          className="max-h-[300px]"
-        />
-      </div>
-    );
-  };
-
   return (
     <Card className="relative">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -199,10 +180,24 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
               />
             )}
 
-            {renderInputs() as JSX.Element | null}
+            {hasInputs ? (
+              <div>
+                <h5 className="text-xs font-semibold mb-2 flex items-center gap-2">
+                  <span>Input Parameters</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {String(Object.keys(inputs).length)}
+                  </Badge>
+                </h5>
+                <PayloadViewer
+                  data={inputs}
+                  title="Inputs"
+                  className="max-h-[300px]"
+                />
+              </div>
+            ) : null}
 
             {/* Outputs */}
-            {step.outputs && step.status === 'completed' && (
+            {step.outputs !== undefined && step.outputs !== null && step.status === 'completed' ? (
               <div>
                 <h5 className="text-xs font-semibold mb-2">Output</h5>
                 <PayloadViewer
@@ -211,7 +206,7 @@ export function ExecutionStepCard({ step, onEdit, onRerun }: ExecutionStepCardPr
                   className="max-h-[300px]"
                 />
               </div>
-            )}
+            ) : null}
 
             {/* Metadata */}
             {step.metadata && Object.keys(step.metadata).length > 0 && (

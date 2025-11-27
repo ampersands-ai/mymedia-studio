@@ -3187,7 +3187,18 @@ export type Database = {
         Args: { _generation_id: string }
         Returns: boolean
       }
+      cleanup_all_old_logs: {
+        Args: never
+        Returns: {
+          deleted_count: number
+          table_name: string
+        }[]
+      }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_old_audit_logs: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
       cleanup_old_function_logs: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
@@ -3213,6 +3224,19 @@ export type Database = {
         }[]
       }
       get_auth_headers: { Args: never; Returns: Json }
+      get_sanitized_error_logs: {
+        Args: { p_limit?: number; p_user_id?: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          resolved: boolean
+          severity: string
+          user_facing: boolean
+          user_message: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

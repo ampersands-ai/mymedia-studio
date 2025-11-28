@@ -19,6 +19,7 @@ import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
 import { queryClient } from "@/lib/queryClient";
 import { useRoutePreload } from "./hooks/useRoutePreload";
 import { logger } from "@/lib/logger";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -147,7 +148,7 @@ const AppContent = () => {
           <Route path="/create-minimal" element={<RouteErrorBoundary routeName="Create Minimal"><CreateMinimal /></RouteErrorBoundary>} />
           <Route path="/storyboard-minimal" element={<RouteErrorBoundary routeName="Storyboard Minimal"><StoryboardMinimal /></RouteErrorBoundary>} />
                 <Route path="/auth" element={<RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary>} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route path="create" element={<RouteErrorBoundary routeName="Dashboard > Create"><Create /></RouteErrorBoundary>} />
               <Route path="create-workflow" element={<RouteErrorBoundary routeName="Dashboard > Create Workflow"><CreateWorkflow /></RouteErrorBoundary>} />
               <Route path="custom-creation" element={<RouteErrorBoundary routeName="Dashboard > Custom Creation"><CustomCreation /></RouteErrorBoundary>} />
@@ -157,7 +158,7 @@ const AppContent = () => {
               <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
             </Route>
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
               <Route path="models" element={<RouteErrorBoundary routeName="Admin > AI Models"><AIModelsDashboard /></RouteErrorBoundary>} />
               <Route path="templates" element={<RouteErrorBoundary routeName="Admin > Templates"><TemplatesManager /></RouteErrorBoundary>} />

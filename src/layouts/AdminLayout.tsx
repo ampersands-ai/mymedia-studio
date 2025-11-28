@@ -1,20 +1,20 @@
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 
+/**
+ * AdminLayout - Layout component for admin pages.
+ * Auth protection is handled by ProtectedRoute wrapper in App.tsx.
+ * This component only checks for admin role access.
+ */
 export const AdminLayout = () => {
   const location = useLocation();
-  const { loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useAdminRole();
 
-  // Combined loading state
-  const loading = authLoading || roleLoading;
-
-  // Show loading spinner while checking
-  if (loading) {
+  // Show loading spinner while checking admin role
+  if (roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -22,7 +22,7 @@ export const AdminLayout = () => {
     );
   }
 
-  // Only redirect after all checks complete
+  // Redirect non-admins to dashboard
   if (!isAdmin) {
     return <Navigate to="/dashboard/custom-creation" replace />;
   }

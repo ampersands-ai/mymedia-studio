@@ -1,51 +1,21 @@
-import { useEffect } from "react";
-import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, Coins, History, Video } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/lib/logger";
 
+/**
+ * DashboardLayout - Layout component for authenticated dashboard pages.
+ * Auth protection is handled by ProtectedRoute wrapper in App.tsx.
+ */
 export const DashboardLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading } = useAuth();
   const { data: tokenData } = useUserTokens();
 
-  useEffect(() => {
-    if (!loading && !session) {
-      navigate("/auth");
-    }
-  }, [session, loading, navigate]);
-
-  // Check session validity on route changes
-  useEffect(() => {
-    const checkSession = async () => {
-      if (loading) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        logger.debug('No valid session, redirecting to auth', {
-          component: 'DashboardLayout',
-          operation: 'checkSession',
-          pathname: location.pathname
-        });
-        navigate("/auth");
-      }
-    };
-    
-    checkSession();
-  }, [location.pathname, loading, navigate]);
-
   const isActive = (path: string) => location.pathname === path;
-
-  // Instant render - no loading state
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

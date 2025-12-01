@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -29,13 +29,19 @@ export const ProtectedRoute = ({
     }
   }, [user, loading, navigate, redirectTo]);
 
-  // Show loading spinner while checking auth
+  // Show branded loading screen while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className="flex items-center gap-3 animate-pulse">
+          <img 
+            src={logo} 
+            alt="artifio.ai logo" 
+            className="h-10 md:h-12 object-contain"
+          />
+          <span className="font-black text-2xl md:text-3xl text-foreground">
+            artifio.ai
+          </span>
         </div>
       </div>
     );

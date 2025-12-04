@@ -56,6 +56,7 @@ export const SCHEMA = {
       minimum: 2,
       maximum: 250,
       default: 30,
+      isAdvanced: true,
       description: "The number of inference steps to perform",
     },
     guidance_scale: {
@@ -64,6 +65,7 @@ export const SCHEMA = {
       maximum: 20,
       step: 0.1,
       default: 2.5,
+      isAdvanced: true,
       description: "The CFG (Classifier Free Guidance) scale - how closely to follow the prompt",
     },
 
@@ -72,6 +74,7 @@ export const SCHEMA = {
       type: "string",
       enum: ["png", "jpeg"],
       default: "png",
+      isAdvanced: true,
       description: "The format of the generated image",
     },
 
@@ -80,6 +83,7 @@ export const SCHEMA = {
       type: "string",
       enum: ["none", "regular", "high"],
       default: "none",
+      isAdvanced: true,
       description: "Acceleration level. 'regular' balances speed/quality. 'high' recommended for images without text",
     },
 
@@ -87,10 +91,12 @@ export const SCHEMA = {
     negative_prompt: {
       type: "string",
       maxLength: 500,
+      isAdvanced: true,
       description: "The negative prompt for the generation",
     },
     seed: {
       type: "integer",
+      isAdvanced: true,
       description: "The same seed and prompt will output the same image every time",
     },
 
@@ -98,6 +104,7 @@ export const SCHEMA = {
     enable_safety_checker: {
       type: "boolean",
       default: true,
+      showToUser: false,
       description: "Enable safety checker. Can only be disabled through API.",
     },
   },

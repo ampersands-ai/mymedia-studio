@@ -442,8 +442,8 @@ const CustomCreation = () => {
             generateCaption={state.generateCaption}
             onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
             uploadedImages={uploadedImages}
-            onFileUpload={handleFileUpload}
-            onRemoveImage={removeImage}
+            onFileUpload={(e) => { handleFileUpload(e); updateState({ generateCaption: false }); }}
+            onRemoveImage={(idx) => { removeImage(idx); updateState({ generateCaption: false }); }}
             imageFieldName={imageFieldInfo.fieldName}
             isImageRequired={imageFieldInfo.isRequired}
             maxImages={imageFieldInfo.maxImages}

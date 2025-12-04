@@ -194,10 +194,10 @@ export const useCustomCreationState = () => {
   }, []);
 
   /**
-   * Convenience setter: Update prompt
+   * Convenience setter: Update prompt (resets generateCaption)
    */
   const setPrompt = useCallback((prompt: string) => {
-    setState(prev => ({ ...prev, prompt }));
+    setState(prev => ({ ...prev, prompt, generateCaption: false }));
   }, []);
 
   /**
@@ -221,6 +221,7 @@ export const useCustomCreationState = () => {
         generatedOutputs: [],
         selectedOutputIndex: 0,
         failedGenerationError: null,
+        generateCaption: false,
       };
     });
   }, []);

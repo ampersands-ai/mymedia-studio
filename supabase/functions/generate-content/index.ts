@@ -277,19 +277,7 @@ Deno.serve(async (req) => {
       payload_structure: model_config.payloadStructure || 'wrapper',
     };
 
-    // Extract parameters from custom_parameters
-    // preparePayload() wraps parameters in { model, input: {...} }, so extract input if present
     let parameters: Record<string, unknown> = custom_parameters;
-    if (custom_parameters?.input && typeof custom_parameters.input === 'object') {
-      parameters = custom_parameters.input as Record<string, unknown>;
-      logger.debug('Extracted parameters from input wrapper', {
-        userId: authenticatedUser.id,
-        metadata: { 
-          wrapper_keys: Object.keys(custom_parameters),
-          extracted_keys: Object.keys(parameters)
-        }
-      });
-    }
     const enhancementInstruction: string | null = null;
 
     logger.debug('.ts registry model config applied', {

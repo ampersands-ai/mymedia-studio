@@ -15,11 +15,12 @@ export const MODEL_CONFIG = {
   baseCreditCost: 2,
   estimatedTimeSeconds: 25,
   costMultipliers: {
-    image_size: { landscape_16_9: 1, landscape_4_3: 1, portrait_16_9: 1, portrait_4_3: 1, square: 1, square_hd: 1 },
+    // Cost multipliers based on acceleration level if needed
+    acceleration: { none: 1, regular: 1, high: 1 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
-  maxImages: 0,
+  maxImages: 1,
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
@@ -27,7 +28,6 @@ export const MODEL_CONFIG = {
   modelFamily: "Qwen",
   variantName: "Image to Image",
   displayOrderInFamily: 2,
-
   // Lock system
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/image_editing/Qwen_Image_to_Image.ts",
@@ -36,35 +36,156 @@ export const MODEL_CONFIG = {
 export const SCHEMA = {
   imageInputField: "image_url",
   properties: {
-    aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" },
-    image_url: { renderer: "image", type: "string" },
-    negative_prompt: { maxLength: 5000, type: "string" },
-    prompt: { maxLength: 5000, type: "string" },
-    seed: { type: "integer" },
+    // Required parameters
+    prompt: {
+      type: "string",
+      maxLength: 5000,
+      description: "The prompt to generate the image with",
+    },
+    image_url: {
+      type: "string",
+      renderer: "image",
+      description:
+        "The reference image to guide the generation. Accepted types: image/jpeg, image/png, image/webp. Max size: 10MB",
+    },
+
+    // Critical image-to-image parameter
+    strength: {
+      type: "number",
+      minimum: 0,
+      maximum: 1,
+      step: 0.01,
+      default: 0.8,
+      description: "Denoising strength. 1.0 = fully remake; 0.0 = preserve original",
+    },
+
+    // Generation control parameters
+    num_inference_steps: {
+      type: "integer",
+      minimum: 2,
+      maximum: 250,
+      default: 30,
+      description: "The number of inference steps to perform",
+    },
+    guidance_scale: {
+      type: "number",
+      minimum: 0,
+      maximum: 20,
+      step: 0.1,
+      default: 2.5,
+      description: "The CFG (Classifier Free Guidance) scale - how closely to follow the prompt",
+    },
+
+    // Output parameters
+    output_format: {
+      type: "string",
+      enum: ["png", "jpeg"],
+      default: "png",
+      description: "The format of the generated image",
+    },
+
+    // Performance parameters
+    acceleration: {
+      type: "string",
+      enum: ["none", "regular", "high"],
+      default: "none",
+      description: "Acceleration level. 'regular' balances speed/quality. 'high' recommended for images without text",
+    },
+
+    // Optional parameters
+    negative_prompt: {
+      type: "string",
+      maxLength: 500,
+      description: "The negative prompt for the generation",
+    },
+    seed: {
+      type: "integer",
+      description: "The same seed and prompt will output the same image every time",
+    },
+
+    // Safety parameter
+    enable_safety_checker: {
+      type: "boolean",
+      default: true,
+      description: "Enable safety checker. Can only be disabled through API.",
+    },
   },
   required: ["prompt", "image_url"],
   type: "object",
 } as const;
 
 export function validate(inputs: Record<string, any>) {
-  return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" };
+  if (!inputs.prompt) {
+    return { valid: false, error: "Prompt is required" };
+  }
+  if (!inputs.image_url) {
+    return { valid: false, error: "Image URL is required" };
+  }
+  if (inputs.strength !== undefined && (inputs.strength < 0 || inputs.strength > 1)) {
+    return { valid: false, error: "Strength must be between 0 and 1" };
+  }
+  if (
+    inputs.num_inference_steps !== undefined &&
+    (inputs.num_inference_steps < 2 || inputs.num_inference_steps > 250)
+  ) {
+    return { valid: false, error: "Inference steps must be between 2 and 250" };
+  }
+  if (inputs.guidance_scale !== undefined && (inputs.guidance_scale < 0 || inputs.guidance_scale > 20)) {
+    return { valid: false, error: "Guidance scale must be between 0 and 20" };
+  }
+  if (inputs.negative_prompt && inputs.negative_prompt.length > 500) {
+    return { valid: false, error: "Negative prompt must be 500 characters or less" };
+  }
+  return { valid: true };
 }
+
 export function preparePayload(inputs: Record<string, any>) {
-  return {
-    modelId: MODEL_CONFIG.modelId,
-    input: { prompt: inputs.prompt, image_url: inputs.image_url, aspect_ratio: inputs.aspect_ratio || "1:1" },
+  const payload: Record<string, any> = {
+    model: MODEL_CONFIG.modelId,
+    input: {
+      prompt: inputs.prompt,
+      image_url: inputs.image_url,
+      strength: inputs.strength ?? 0.8,
+      num_inference_steps: inputs.num_inference_steps ?? 30,
+      guidance_scale: inputs.guidance_scale ?? 2.5,
+      output_format: inputs.output_format ?? "png",
+      acceleration: inputs.acceleration ?? "none",
+      enable_safety_checker: inputs.enable_safety_checker ?? true,
+    },
   };
+
+  // Add optional parameters only if provided
+  if (inputs.negative_prompt) {
+    payload.input.negative_prompt = inputs.negative_prompt;
+  }
+  if (inputs.seed !== undefined && inputs.seed !== null) {
+    payload.input.seed = inputs.seed;
+  }
+
+  return payload;
 }
+
 export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;
+
   const inputs: Record<string, any> = { prompt, ...modelParameters };
-  if (uploadedImages.length > 0) inputs.image_url = (await uploadImagesToStorage(userId))[0];
+
+  // Upload image and get URL if provided
+  if (uploadedImages.length > 0) {
+    inputs.image_url = (await uploadImagesToStorage(userId))[0];
+  }
+
+  // Validate inputs
   const validation = validate(inputs);
-  if (!validation.valid) throw new Error(validation.error);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  // Calculate and reserve credits
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
 
@@ -83,7 +204,10 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     })
     .select()
     .single();
-  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
+
+  if (error || !gen) {
+    throw new Error(`Failed: ${error?.message}`);
+  }
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues

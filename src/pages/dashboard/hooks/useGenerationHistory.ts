@@ -38,7 +38,7 @@ interface UseGenerationHistoryOptions {
   userId: string | undefined;
   currentPage: number;
   itemsPerPage: number;
-  statusFilter: 'all' | 'completed' | 'failed';
+  statusFilter: 'all' | 'completed' | 'failed' | 'pending';
   contentTypeFilter: 'all' | 'image' | 'video' | 'audio' | 'storyboard';
 }
 
@@ -62,6 +62,8 @@ export const useGenerationHistory = ({
         query = query.eq('status', 'completed');
       } else if (statusFilter === 'failed') {
         query = query.eq('status', 'failed');
+      } else if (statusFilter === 'pending') {
+        query = query.in('status', ['pending', 'processing']);
       }
 
       if (contentTypeFilter === 'storyboard') {
@@ -95,6 +97,8 @@ export const useGenerationHistory = ({
         query = query.eq('status', 'completed');
       } else if (statusFilter === 'failed') {
         query = query.eq('status', 'failed');
+      } else if (statusFilter === 'pending') {
+        query = query.in('status', ['pending', 'processing']);
       }
 
       // Apply content type filter

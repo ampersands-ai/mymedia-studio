@@ -7,7 +7,7 @@ import type { Generation } from "../hooks/useGenerationHistory";
 
 interface GenerationListProps {
   generations: Generation[];
-  statusFilter: 'all' | 'completed' | 'failed';
+  statusFilter: 'all' | 'completed' | 'failed' | 'pending';
   onView: (generation: Generation) => void;
   onDownload: (storagePath: string | null, type: string, outputUrl?: string | null) => void;
 }

@@ -12,7 +12,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 1,
+  baseCreditCost: 0.5,
   estimatedTimeSeconds: 25,
   costMultipliers: {
     image_size: { square: 1, square_hd: 5, portrait_4_3: 3, portrait_16_9: 2, landscape_4_3: 3, landscape_16_9: 2 },

@@ -94,6 +94,7 @@ export const SCHEMA = {
       type: "string",
       enum: ["none", "regular", "high"],
       default: "none",
+      isAdvanced: true,
       description: "Acceleration level. 'regular' balances speed/quality. 'high' recommended for images without text",
     },
 

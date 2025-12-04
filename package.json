@@ -91,7 +91,6 @@
     "vaul": "^0.9.9",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-image-optimizer": "^2.0.2",
-    "vite-plugin-imagemin": "^0.6.1",
     "vitest": "^4.0.8",
     "web-vitals": "^5.1.0",
     "zod": "^3.25.76"

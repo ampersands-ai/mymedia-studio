@@ -43,11 +43,15 @@ export const useCaptionGeneration = (
     setIsGeneratingCaption(true);
     try {
       const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
+      // Map content_type to simple 'image' or 'video' for caption generation
+      const rawContentType = selectedModelData?.content_type || 'image';
+      const mappedContentType = rawContentType.includes('video') ? 'video' : 'image';
+      
       const { data: captionResult, error } = await supabase.functions.invoke('generate-caption', {
         body: {
           generation_id: outputsToUse[0].id,
           prompt: prompt,
-          content_type: selectedModelData?.content_type || 'image',
+          content_type: mappedContentType,
           model_name: selectedModelData?.model_name || 'AI Model'
         }
       });

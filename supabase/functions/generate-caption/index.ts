@@ -72,32 +72,29 @@ Deno.serve(async (req) => {
       throw new Error(`Insufficient credits. ${CAPTION_COST} credits required for caption generation.`);
     }
 
-    // Deduct credits atomically with row count verification
-    const { data: updateResult, error: deductError } = await supabase
-      .from('user_subscriptions')
-      .update({ tokens_remaining: subscription.tokens_remaining - CAPTION_COST })
-      .eq('user_id', user.id)
-      .eq('tokens_remaining', subscription.tokens_remaining)
-      .select('tokens_remaining');
+    // Deduct credits using atomic RPC function to avoid race conditions
+    const { data: deductResult, error: deductError } = await supabase
+      .rpc('deduct_user_tokens', { p_user_id: user.id, p_cost: CAPTION_COST });
 
     if (deductError) {
       logger.error('Credit deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), { userId: user.id });
       throw new Error('Failed to deduct credits - database error');
     }
 
-    if (!updateResult || updateResult.length === 0) {
-      logger.error('Optimistic lock failed - concurrent update', undefined, {
+    const result = deductResult?.[0];
+    if (!result?.success) {
+      logger.error('Credit deduction rejected', undefined, {
         userId: user.id,
-        metadata: { expected_tokens: subscription.tokens_remaining, cost: CAPTION_COST }
+        metadata: { error: result?.error_message, cost: CAPTION_COST }
       });
-      throw new Error('Failed to deduct credits - concurrent update detected. Please retry.');
+      throw new Error(result?.error_message || 'Failed to deduct credits');
     }
 
     logger.info('Credits deducted for caption', {
       userId: user.id,
       metadata: { 
         tokens_deducted: CAPTION_COST,
-        new_balance: updateResult[0]?.tokens_remaining 
+        new_balance: result?.tokens_remaining 
       }
     });
 
@@ -107,7 +104,7 @@ Deno.serve(async (req) => {
       action: 'tokens_deducted',
       metadata: {
         tokens_deducted: CAPTION_COST,
-        tokens_remaining: updateResult[0]?.tokens_remaining,
+        tokens_remaining: result?.tokens_remaining,
         generation_id,
         video_job_id,
         operation: 'caption_generation'

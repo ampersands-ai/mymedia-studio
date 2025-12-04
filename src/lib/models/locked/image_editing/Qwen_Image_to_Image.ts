@@ -220,13 +220,18 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues
+  const payload = preparePayload(inputs);
   const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt,
-      custom_parameters: preparePayload(inputs),
+      custom_parameters: {
+        ...payload,
+        // Pass image_url at top level for edge function validation
+        image_url: inputs.image_url,
+      },
     },
   });
 

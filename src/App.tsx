@@ -137,7 +137,11 @@ const AppContent = () => {
         <ScrollProgress />
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="animate-pulse text-foreground">Loading...</div>
+            <div className="flex items-center gap-3 animate-pulse">
+              <span className="font-black text-2xl md:text-3xl text-foreground">
+                artifio.ai
+              </span>
+            </div>
           </div>
         }>
           <Analytics />

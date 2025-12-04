@@ -43,11 +43,12 @@ export async function reserveCredits(userId: string, cost: number): Promise<void
 }
 
 /**
- * Settle credits - Deduct credits after successful generation
+ * Settle credits - Mark generation as charged after successful completion
+ * Credits were already deducted upfront in generate-content edge function
  * Called by webhooks when generation status becomes 'completed'
  */
-export async function settleCredits(userId: string, generationId: string, cost: number): Promise<void> {
-  // Mark generation as charged
+export async function settleCredits(_userId: string, generationId: string, cost: number): Promise<void> {
+  // Only mark generation as charged - credits were already deducted upfront
   const { error: genError } = await supabase
     .from("generations")
     .update({ 
@@ -60,39 +61,29 @@ export async function settleCredits(userId: string, generationId: string, cost: 
     logger.error("Failed to mark generation as charged", genError);
     throw new Error("Failed to update generation charge status");
   }
-
-  // Deduct from user balance
-  const { data: subscription, error: subError } = await supabase
-    .from("user_subscriptions")
-    .select("tokens_remaining")
-    .eq("user_id", userId)
-    .single();
-
-  if (subError || !subscription) {
-    throw new Error("Subscription not found");
-  }
-
-  const { error: updateError } = await supabase
-    .from("user_subscriptions")
-    .update({ 
-      tokens_remaining: Math.max(0, subscription.tokens_remaining - cost),
-      updated_at: new Date().toISOString()
-    })
-    .eq("user_id", userId);
-
-  if (updateError) {
-    logger.error("Failed to deduct credits", updateError);
-    throw new Error("Failed to deduct credits");
-  }
+  // DO NOT deduct from tokens_remaining here - already done in generate-content
 }
 
 
 /**
- * Release reserved credits - Called when generation fails
- * Sets tokens_charged = 0 so credits remain available
+ * Release credits - Called when generation fails
+ * Refunds the credits back to user since they were deducted upfront
  */
 export async function releaseCredits(generationId: string): Promise<void> {
-  const { error } = await supabase
+  // Get the generation to find user and cost for refund
+  const { data: generation, error: fetchError } = await supabase
+    .from("generations")
+    .select("user_id, tokens_used")
+    .eq("id", generationId)
+    .single();
+
+  if (fetchError || !generation) {
+    logger.error("Failed to fetch generation for credit release", fetchError);
+    return;
+  }
+
+  // Mark generation as not charged
+  const { error: updateError } = await supabase
     .from("generations")
     .update({ 
       tokens_charged: 0,
@@ -100,7 +91,31 @@ export async function releaseCredits(generationId: string): Promise<void> {
     })
     .eq("id", generationId);
 
-  if (error) {
-    logger.error("Failed to release reserved credits", error);
+  if (updateError) {
+    logger.error("Failed to mark generation as not charged", updateError);
+  }
+
+  // Refund the credits back to user since generation failed
+  const { data: subscription, error: subError } = await supabase
+    .from("user_subscriptions")
+    .select("tokens_remaining")
+    .eq("user_id", generation.user_id)
+    .single();
+
+  if (subError || !subscription) {
+    logger.error("Failed to fetch subscription for refund", subError);
+    return;
+  }
+
+  const { error: refundError } = await supabase
+    .from("user_subscriptions")
+    .update({ 
+      tokens_remaining: subscription.tokens_remaining + generation.tokens_used,
+      updated_at: new Date().toISOString()
+    })
+    .eq("user_id", generation.user_id);
+
+  if (refundError) {
+    logger.error("Failed to refund credits", refundError);
   }
 }

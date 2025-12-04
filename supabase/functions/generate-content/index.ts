@@ -280,6 +280,24 @@ Deno.serve(async (req) => {
     let parameters: Record<string, unknown> = custom_parameters;
     const enhancementInstruction: string | null = null;
 
+    // Flatten nested input structure if present (from preparePayload in locked models)
+    // Some models send { model: "...", input: { image_size: "...", ... } }
+    // We need to extract the input object for parameter validation
+    if (parameters.input && typeof parameters.input === 'object' && !Array.isArray(parameters.input)) {
+      const inputParams = parameters.input as Record<string, unknown>;
+      // Merge input parameters to top level, preserving any top-level params that aren't 'model' or 'input'
+      const { model: _model, input: _input, ...otherTopLevel } = parameters;
+      parameters = { ...inputParams, ...otherTopLevel };
+      
+      logger.debug('Flattened nested input parameters', {
+        userId: authenticatedUser.id,
+        metadata: {
+          original_keys: Object.keys(custom_parameters),
+          flattened_keys: Object.keys(parameters)
+        }
+      });
+    }
+
     logger.debug('.ts registry model config applied', {
       userId: authenticatedUser.id,
       metadata: {

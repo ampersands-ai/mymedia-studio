@@ -39,6 +39,7 @@ export const SCHEMA = {
     // Required parameters
     prompt: {
       type: "string",
+      renderer: "prompt",
       maxLength: 5000,
       description: "The prompt to generate the image with",
     },

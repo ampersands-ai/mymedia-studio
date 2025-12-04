@@ -296,10 +296,27 @@ Deno.serve(async (req) => {
       return filtered;
     }
 
-    const parameters = validateAndFilterParameters(
+    let parameters = validateAndFilterParameters(
       custom_parameters, 
       (model.input_schema || { properties: {} }) as InputSchema
     );
+    
+    // Flatten nested input structure ONLY for Qwen model which uses wrapper payload structure
+    const isQwenModel = model.id === 'qwen/text-to-image' || 
+                        model.record_id === '36246bd4-f2e5-472b-bcf8-3dd99bc313d8';
+
+    if (isQwenModel && parameters.input && typeof parameters.input === 'object' && !Array.isArray(parameters.input)) {
+      const inputParams = parameters.input as Record<string, unknown>;
+      const { model: _model, input: _input, ...otherTopLevel } = parameters;
+      parameters = { ...inputParams, ...otherTopLevel };
+      
+      logger.debug('Flattened nested input parameters for Qwen model', {
+        userId: user.id,
+        metadata: {
+          flattened_keys: Object.keys(parameters)
+        }
+      });
+    }
     
     logger.debug('Parameters validated', {
       userId: user.id,

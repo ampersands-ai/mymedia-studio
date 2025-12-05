@@ -16,7 +16,7 @@ export const MODEL_CONFIG = {
   estimatedTimeSeconds: 15,
   costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
-  payloadStructure: "flat",
+  payloadStructure: "wrapper",
   maxImages: 0,
   defaultOutputs: 1,
   // UI metadata

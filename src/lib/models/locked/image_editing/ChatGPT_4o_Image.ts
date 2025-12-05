@@ -79,6 +79,7 @@ export const SCHEMA = {
     // Optional UI parameters
     maskUrl: {
       type: "string",
+      showToUser: false,
       format: "uri",
       title: "Mask Image URL",
       description:
@@ -87,6 +88,7 @@ export const SCHEMA = {
     },
     isEnhance: {
       type: "boolean",
+      showToUser: false,
       title: "Enhance Prompt",
       description: "Enable prompt enhancement for more refined outputs in specialised scenarios (e.g., 3D renders)",
       default: false,
@@ -95,25 +97,25 @@ export const SCHEMA = {
     // Hidden/Advanced parameters (not shown in UI by default)
     enableFallback: {
       type: "boolean",
+      showToUser: false,
       title: "Enable Fallback",
       description: "Activate automatic fallback to backup models if GPT-4o image generation is unavailable",
       default: false,
-      hidden: true,
     },
     fallbackModel: {
       type: "string",
+      showToUser: false,
       title: "Fallback Model",
       description: "Specify which backup model to use when the main model is unavailable",
       enum: ["GPT_IMAGE_1", "FLUX_MAX"],
       default: "FLUX_MAX",
-      hidden: true,
     },
     uploadCn: {
       type: "boolean",
       title: "Upload via China Servers",
       description: "Choose the upload region. true routes uploads via China servers; false via non-China servers.",
       default: false,
-      hidden: true,
+      showToUser: false,
     },
   },
   required: ["size"],

@@ -12,7 +12,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
-  baseCreditCost: 2,
+  baseCreditCost: 4, // 4 credits per image (~$0.02)
   estimatedTimeSeconds: 25,
   costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -23,49 +23,80 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/google.png",
   modelFamily: "Google",
-  variantName: "Nano Banana",
+  variantName: "Nano Banana Edit",
   displayOrderInFamily: 2,
-
   // Lock system
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/image_editing/Nano_Banana_by_Google_edit.ts",
 } as const;
 
 export const SCHEMA = {
+  imageInputField: "image_urls",
   properties: {
-    aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" },
-    image_url: { renderer: "image", type: "string" },
-    mask_url: { renderer: "image", type: "string" },
-    number_of_images: { default: 1, maximum: 4, minimum: 1, type: "integer" },
-    prompt: { maxLength: 5000, renderer: "prompt", type: "string" },
-    seed: { type: "integer" },
+    // ============ MAIN UI PARAMETERS ============
+    prompt: {
+      type: "string",
+      maxLength: 5000,
+      renderer: "prompt",
+      description: "The prompt for image editing",
+    },
+    image_urls: {
+      type: "array",
+      renderer: "image",
+      maxItems: 10,
+      description:
+        "List of URLs of input images for editing, up to 10 images. Accepted types: image/jpeg, image/png, image/webp. Max size: 10MB",
+    },
+    image_size: {
+      type: "string",
+      enum: ["1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"],
+      default: "1:1",
+      description: "Aspect ratio for the generated image",
+    },
+    output_format: {
+      type: "string",
+      enum: ["png", "jpeg"],
+      default: "png",
+      description: "Output format for the images",
+    },
   },
-  required: ["prompt", "image_url"],
+  required: ["prompt", "image_urls"],
   type: "object",
 } as const;
 
 export function validate(inputs: Record<string, any>) {
-  if (!inputs.prompt) return { valid: false, error: "Prompt required" };
-  if (!inputs.image_url) return { valid: false, error: "Image required" };
+  if (!inputs.prompt) {
+    return { valid: false, error: "Prompt is required" };
+  }
+  if (!inputs.image_urls || (Array.isArray(inputs.image_urls) && inputs.image_urls.length === 0)) {
+    return { valid: false, error: "At least one image is required" };
+  }
+  if (inputs.prompt.length > 5000) {
+    return { valid: false, error: "Prompt must be 5000 characters or less" };
+  }
+  if (Array.isArray(inputs.image_urls) && inputs.image_urls.length > 10) {
+    return { valid: false, error: "Maximum 10 images allowed" };
+  }
   return { valid: true };
 }
 
 export function preparePayload(inputs: Record<string, any>) {
+  // Ensure image_urls is an array
+  const imageUrls = Array.isArray(inputs.image_urls) ? inputs.image_urls : [inputs.image_urls];
+
   return {
-    modelId: MODEL_CONFIG.modelId,
+    model: MODEL_CONFIG.modelId,
     input: {
       prompt: inputs.prompt,
-      image_url: inputs.image_url,
-      aspect_ratio: inputs.aspect_ratio || "1:1",
-      number_of_images: inputs.number_of_images || 1,
-      ...(inputs.mask_url && { mask_url: inputs.mask_url }),
-      ...(inputs.seed && { seed: inputs.seed }),
+      image_urls: imageUrls,
+      image_size: inputs.image_size ?? "1:1",
+      output_format: inputs.output_format ?? "png",
     },
   };
 }
 
-export function calculateCost(inputs: Record<string, any>) {
-  return MODEL_CONFIG.baseCreditCost * (inputs.number_of_images || 1);
+export function calculateCost(_inputs: Record<string, any>) {
+  return MODEL_CONFIG.baseCreditCost;
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
@@ -80,18 +111,23 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   // Upload images to storage first
   const imageUrls = await uploadImagesToStorage(userId);
-  if (!imageUrls || imageUrls.length === 0) throw new Error("Failed to upload images");
+  if (!imageUrls || imageUrls.length === 0) {
+    throw new Error("Failed to upload images");
+  }
 
   const inputs: Record<string, any> = {
     prompt,
-    image_url: imageUrls[0],
-    ...(imageUrls[1] && { mask_url: imageUrls[1] }),
+    image_urls: imageUrls, // Array of image URLs
     ...modelParameters,
   };
 
+  // Validate inputs
   const validation = validate(inputs);
-  if (!validation.valid) throw new Error(validation.error);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
 
+  // Calculate and reserve credits
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
 
@@ -111,7 +147,9 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     .select()
     .single();
 
-  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
+  if (error || !gen) {
+    throw new Error(`Failed: ${error?.message}`);
+  }
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues

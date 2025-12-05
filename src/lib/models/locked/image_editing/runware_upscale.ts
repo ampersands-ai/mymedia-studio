@@ -5,6 +5,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = { modelId: "runware:105@1", recordId: "de96f11c-bc91-4cdd-ae71-0308e7584f8a", modelName: "runware upscale", provider: "runware", contentType: "image_editing",
   use_api_key: "RUNWARE_API_KEY_IMAGE_EDITING", baseCreditCost: 20, estimatedTimeSeconds: 90, costMultipliers: { upscaleFactor: { "2": 1, "3": 1.5, "4": 2 } }, apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl, payloadStructure: "flat", maxImages: 1, defaultOutputs: 1, 
@@ -32,7 +33,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt: prompt || "Upscale image", tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: modelParameters }).select().single();
+  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt: prompt || "Upscale image", tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: sanitizeForStorage(modelParameters) }).select().single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side

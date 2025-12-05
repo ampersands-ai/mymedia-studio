@@ -5,6 +5,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = {
   modelId: "runware:110@1",
@@ -114,7 +115,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       prompt: prompt || "Remove background",
       tokens_used: cost,
       status: GENERATION_STATUS.PENDING,
-      settings: modelParameters,
+      settings: sanitizeForStorage(modelParameters),
     })
     .select()
     .single();

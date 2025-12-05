@@ -13,6 +13,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { supabase } from "@/integrations/supabase/client";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = {
   modelId: "recraft/crisp-upscale",
@@ -98,7 +99,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       type: getGenerationType(MODEL_CONFIG.contentType),
       status: GENERATION_STATUS.PENDING,
       tokens_used: cost,
-      settings: modelParameters,
+      settings: sanitizeForStorage(modelParameters),
     })
     .select()
     .single();

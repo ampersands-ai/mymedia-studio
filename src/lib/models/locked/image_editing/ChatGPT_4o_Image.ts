@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
@@ -243,7 +244,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       prompt,
       tokens_used: cost,
       status: GENERATION_STATUS.PENDING,
-      settings: modelParameters,
+      settings: sanitizeForStorage(modelParameters),
     })
     .select()
     .single();

@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 /**
  * Model configuration for execution
@@ -134,7 +135,7 @@ export async function executeModelGeneration(options: ExecuteOptions): Promise<s
       prompt,
       tokens_used: cost,
       status: GENERATION_STATUS.PENDING, // Edge function will process
-      settings: modelParameters
+      settings: sanitizeForStorage(modelParameters)
     })
     .select()
     .single();

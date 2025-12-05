@@ -1,38 +1,6 @@
 import type { NavigateFunction } from "react-router-dom";
 import { getModel } from "@/lib/models/registry";
 
-/**
- * Recursively sanitize model parameters to remove base64 image data.
- * Images are uploaded separately via uploadImagesToStorage(), so storing
- * them in the settings JSONB column is redundant and violates the 50KB size constraint.
- */
-function sanitizeModelParameters(params: Record<string, unknown>): Record<string, unknown> {
-  const sanitized: Record<string, unknown> = {};
-  
-  for (const [key, value] of Object.entries(params)) {
-    if (typeof value === 'string' && value.startsWith('data:image/')) {
-      // Replace base64 image with placeholder - actual image is in storage
-      sanitized[key] = '[IMAGE_DATA_REMOVED]';
-    } else if (Array.isArray(value)) {
-      sanitized[key] = value.map(item => {
-        if (typeof item === 'string' && item.startsWith('data:image/')) {
-          return '[IMAGE_DATA_REMOVED]';
-        }
-        if (typeof item === 'object' && item !== null) {
-          return sanitizeModelParameters(item as Record<string, unknown>);
-        }
-        return item;
-      });
-    } else if (typeof value === 'object' && value !== null) {
-      sanitized[key] = sanitizeModelParameters(value as Record<string, unknown>);
-    } else {
-      sanitized[key] = value;
-    }
-  }
-  
-  return sanitized;
-}
-
 export interface ExecuteGenerationParams {
   model: {
     record_id: string;
@@ -53,6 +21,11 @@ export interface ExecuteGenerationParams {
 /**
  * Server-side model execution via edge function
  * Secure API key handling, no client-side secrets
+ * 
+ * Note: Sanitization of modelParameters for database storage is handled
+ * at the point of database insert in each model's execute() function,
+ * NOT here. This ensures API calls receive original data (including base64)
+ * while the database only stores sanitized parameters.
  * 
  * @returns generation ID if successful, throws error otherwise
  */
@@ -79,15 +52,12 @@ export async function executeGeneration({
     uploadedImageUrls = await uploadImagesToStorage(userId);
   }
 
-  // Sanitize parameters to remove base64 image data before storage
-  // Images are uploaded separately and passed via uploadedImageUrls
-  const sanitizedParameters = sanitizeModelParameters(modelParameters);
-
-  // Execute model directly using its execute() function
+  // Pass ORIGINAL modelParameters to model's execute()
+  // Each model handles sanitization at its own database insert point
   const generationId = await modelModule.execute({
     model,
     prompt,
-    modelParameters: sanitizedParameters,
+    modelParameters,
     uploadedImages,
     uploadedImageUrls,
     userId,

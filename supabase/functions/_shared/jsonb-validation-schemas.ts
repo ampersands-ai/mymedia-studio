@@ -86,17 +86,9 @@ export const generationSettingsSchema = z.object({
   endFrame: z.string().url().max(1000).optional(),
 
   // Allow additional fields (models define their own parameters)
-  // but validate they don't contain malicious patterns
-}).passthrough().refine(
-  (data) => {
-    // Check for potential SQL injection patterns in string values
-    const stringValues = Object.values(data).filter(v => typeof v === 'string');
-    return !stringValues.some(v =>
-      /(\b(union|select|insert|update|delete|drop|create|alter)\b)/i.test(v as string)
-    );
-  },
-  { message: 'Invalid characters detected in settings' }
-);
+  // Note: SQL injection protection is handled by parameterized queries in Supabase
+  // JSONB values are stored as data, not executed as SQL
+}).passthrough();
 
 // ============================================================================
 // WORKFLOW USER INPUTS VALIDATION

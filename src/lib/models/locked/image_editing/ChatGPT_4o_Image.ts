@@ -118,7 +118,7 @@ export const SCHEMA = {
       showToUser: false,
     },
   },
-  required: ["size"],
+  required: ["prompt", "filesUrl", "size"],
 };
 
 // VALIDATION

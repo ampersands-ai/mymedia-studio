@@ -121,7 +121,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
     const showProgress = Boolean(showStatusBanner);
 
     const handleNavigateToHistory = () => {
-      navigate('/dashboard/my-creations?status=pending');
+      navigate('/dashboard/history?status=pending');
     };
 
     return (

@@ -131,12 +131,13 @@ const CustomCreation = () => {
       }
     },
     onError: (message?: string) => {
-      updateState({ localGenerating: false, pollingGenerationId: null });
-      toast.error(message || 'Generation failed', {
-        description: 'The provider reported an error. Your credits will be refunded automatically if nothing is produced.',
-        action: {
-          label: 'View History',
-          onClick: () => navigate('/dashboard/history')
+      updateState({ 
+        localGenerating: false, 
+        pollingGenerationId: null,
+        failedGenerationError: {
+          message: message || 'Generation failed',
+          generationId: state.pollingGenerationId || 'unknown',
+          timestamp: Date.now(),
         }
       });
     },
@@ -157,7 +158,13 @@ const CustomCreation = () => {
             if (error) throw error;
 
             if (data?.status === 'failed') {
-              toast.error('Generation failed on provider side. Credits refunded.');
+              updateState({
+                failedGenerationError: {
+                  message: 'Generation failed on provider side',
+                  generationId: state.pollingGenerationId || 'unknown',
+                  timestamp: Date.now(),
+                }
+              });
             } else if (data?.status === 'completed') {
               toast.success('Generation completed in background. Check History.');
             }

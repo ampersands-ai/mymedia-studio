@@ -47,58 +47,165 @@ export const MODEL_CONFIG = {
 export const SCHEMA = {
   type: "object",
   properties: {
+    // Required/Primary parameters (shown in UI)
+    prompt: {
+      type: "string",
+      description: "Text prompt that conveys the creative idea you want the 4o model to render",
+      renderer: "prompt",
+    },
     filesUrl: {
       type: "array",
-      description: "URLs of images to edit",
+      description:
+        "Up to 5 image URLs to serve as reference or source material. Supported formats: .jfif, .pjpeg, .jpeg, .pjp, .jpg, .png, .webp",
       renderer: "image",
       items: { type: "string", format: "uri" },
+      maxItems: 5,
+    },
+    size: {
+      type: "string",
+      title: "Aspect Ratio",
+      description: "Aspect ratio of the generated image",
+      default: "1:1",
+      enum: ["1:1", "3:2", "2:3"],
     },
     nVariants: {
       type: "integer",
       title: "Number of Outputs",
+      description: "How many image variations to produce. Each option has a different credit cost.",
       default: 1,
       enum: [1, 2, 4],
     },
-    prompt: {
+
+    // Optional UI parameters
+    maskUrl: {
       type: "string",
-      description: "Editing instruction",
-      renderer: "prompt",
+      format: "uri",
+      title: "Mask Image URL",
+      description:
+        "Mask image URL indicating areas to modify (black) versus preserve (white). Must match reference image dimensions. Ignored when multiple images supplied.",
+      renderer: "image",
     },
-    size: {
+    isEnhance: {
+      type: "boolean",
+      title: "Enhance Prompt",
+      description: "Enable prompt enhancement for more refined outputs in specialised scenarios (e.g., 3D renders)",
+      default: false,
+    },
+
+    // Hidden/Advanced parameters (not shown in UI by default)
+    enableFallback: {
+      type: "boolean",
+      title: "Enable Fallback",
+      description: "Activate automatic fallback to backup models if GPT-4o image generation is unavailable",
+      default: false,
+      hidden: true,
+    },
+    fallbackModel: {
       type: "string",
-      default: "1:1",
-      enum: ["1:1", "2:3", "3:2"],
+      title: "Fallback Model",
+      description: "Specify which backup model to use when the main model is unavailable",
+      enum: ["GPT_IMAGE_1", "FLUX_MAX"],
+      default: "FLUX_MAX",
+      hidden: true,
+    },
+    uploadCn: {
+      type: "boolean",
+      title: "Upload via China Servers",
+      description: "Choose the upload region. true routes uploads via China servers; false via non-China servers.",
+      default: false,
+      hidden: true,
     },
   },
-  required: ["size", "prompt", "filesUrl"],
+  required: ["size"],
 };
 
 // VALIDATION
 export function validate(inputs: Record<string, any>): { valid: boolean; error?: string } {
-  if (!inputs.size) return { valid: false, error: "Size is required" };
-  if (!inputs.prompt || inputs.prompt.length < 3)
-    return { valid: false, error: "Prompt must be at least 3 characters" };
-  if (!inputs.filesUrl || !Array.isArray(inputs.filesUrl) || inputs.filesUrl.length === 0) {
-    return { valid: false, error: "At least one image URL is required" };
+  if (!inputs.size) {
+    return { valid: false, error: "Size is required" };
   }
+  if (!["1:1", "3:2", "2:3"].includes(inputs.size)) {
+    return { valid: false, error: "Size must be one of: 1:1, 3:2, 2:3" };
+  }
+
+  // At least one of prompt or filesUrl must be provided
+  const hasPrompt = inputs.prompt && inputs.prompt.length >= 1;
+  const hasFiles = inputs.filesUrl && Array.isArray(inputs.filesUrl) && inputs.filesUrl.length > 0;
+
+  if (!hasPrompt && !hasFiles) {
+    return { valid: false, error: "At least one of prompt or image(s) must be provided" };
+  }
+
+  // Validate filesUrl if provided
+  if (inputs.filesUrl && Array.isArray(inputs.filesUrl)) {
+    if (inputs.filesUrl.length > 5) {
+      return { valid: false, error: "Maximum 5 images allowed" };
+    }
+  }
+
+  // Validate nVariants if provided
+  if (inputs.nVariants !== undefined && ![1, 2, 4].includes(inputs.nVariants)) {
+    return { valid: false, error: "nVariants must be 1, 2, or 4" };
+  }
+
+  // Validate fallbackModel if provided
+  if (inputs.fallbackModel !== undefined && !["GPT_IMAGE_1", "FLUX_MAX"].includes(inputs.fallbackModel)) {
+    return { valid: false, error: "fallbackModel must be GPT_IMAGE_1 or FLUX_MAX" };
+  }
+
   return { valid: true };
 }
 
 // PAYLOAD PREPARATION
 export function preparePayload(inputs: Record<string, any>): Record<string, any> {
-  return {
-    prompt: inputs.prompt,
+  const payload: Record<string, any> = {
     size: inputs.size,
-    filesUrl: inputs.filesUrl,
     nVariants: inputs.nVariants || 1,
   };
+
+  // Add prompt if provided
+  if (inputs.prompt) {
+    payload.prompt = inputs.prompt;
+  }
+
+  // Add filesUrl if provided
+  if (inputs.filesUrl && Array.isArray(inputs.filesUrl) && inputs.filesUrl.length > 0) {
+    payload.filesUrl = inputs.filesUrl;
+  }
+
+  // Add optional parameters only if provided
+  if (inputs.maskUrl) {
+    payload.maskUrl = inputs.maskUrl;
+  }
+
+  if (inputs.isEnhance !== undefined) {
+    payload.isEnhance = inputs.isEnhance;
+  }
+
+  if (inputs.enableFallback !== undefined) {
+    payload.enableFallback = inputs.enableFallback;
+  }
+
+  if (inputs.fallbackModel) {
+    payload.fallbackModel = inputs.fallbackModel;
+  }
+
+  if (inputs.uploadCn !== undefined) {
+    payload.uploadCn = inputs.uploadCn;
+  }
+
+  // Note: callBackUrl is typically handled by the edge function, not passed from client
+
+  return payload;
 }
 
 // COST CALCULATION
 export function calculateCost(inputs: Record<string, any>): number {
   let cost = MODEL_CONFIG.baseCreditCost;
   const nVariants = inputs.nVariants || 1;
-  const multiplier = MODEL_CONFIG.costMultipliers.nVariants[String(nVariants) as keyof typeof MODEL_CONFIG.costMultipliers.nVariants] || 1;
+  const multiplier =
+    MODEL_CONFIG.costMultipliers.nVariants[String(nVariants) as keyof typeof MODEL_CONFIG.costMultipliers.nVariants] ||
+    1;
   cost *= multiplier;
   return Math.round(cost * 100) / 100;
 }
@@ -107,9 +214,19 @@ export function calculateCost(inputs: Record<string, any>): number {
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;
   const inputs: Record<string, any> = { ...modelParameters, prompt };
-  if (uploadedImages.length > 0) inputs.filesUrl = await uploadImagesToStorage(userId);
+
+  // Upload images and get URLs if provided
+  if (uploadedImages.length > 0) {
+    inputs.filesUrl = await uploadImagesToStorage(userId);
+  }
+
+  // Validate inputs
   const validation = validate(inputs);
-  if (!validation.valid) throw new Error(validation.error);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  // Calculate and reserve credits
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
 
@@ -128,22 +245,25 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     })
     .select()
     .single();
-  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
+
+  if (error || !gen) {
+    throw new Error(`Failed: ${error?.message}`);
+  }
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+  const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt,
-      custom_parameters: preparePayload(inputs)
-    }
+      custom_parameters: preparePayload(inputs),
+    },
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
+    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 

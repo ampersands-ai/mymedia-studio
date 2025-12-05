@@ -172,7 +172,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
                 >
                   <Loader2 className="h-3 w-3 animate-spin" />
                   <span className="text-xs font-medium">
-                    {activeGenerations.length}/{maxConcurrent}
+                    {activeGenerations.length}/{maxConcurrent === 999 ? '∞' : maxConcurrent}
                   </span>
                 </Badge>
               )}

@@ -12,7 +12,7 @@ import { useModels } from "@/hooks/useModels";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useModelSchema } from "@/hooks/useModelSchema";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
-import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { useOutputProcessor } from "@/hooks/useOutputProcessor";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
@@ -93,10 +93,16 @@ const CustomCreation = () => {
   const schemaHelpers = useSchemaHelpers();
   const imageFieldInfo = schemaHelpers.getImageFieldInfo(modelConfig);
 
-  // Generation polling
-  const { startPolling, stopPolling, isPolling, connectionTier, realtimeConnected } = useGenerationPolling({
+  // Output processor (independent module for handling generation outputs)
+  const { 
+    isProcessing: isPolling, 
+    status: processorStatus, 
+    error: processorError,
+    startProcessing: startPolling, 
+    stopProcessing: stopPolling 
+  } = useOutputProcessor({
     onComplete: (outputs, parentId) => {
-      logger.info('Polling onComplete called', { outputCount: outputs.length, parentId });
+      logger.info('OutputProcessor onComplete called', { outputCount: outputs.length, parentId });
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -141,47 +147,52 @@ const CustomCreation = () => {
         }
       });
     },
-    onTimeout: async () => {
-      updateState({ localGenerating: false, pollingGenerationId: null });
+  });
+
+  // Derive connection status from processor status
+  const connectionTier = processorStatus === 'realtime' ? 'realtime' : processorStatus === 'polling' ? 'polling' : 'disconnected';
+  const realtimeConnected = processorStatus === 'realtime';
+
+  // Handle processor error as timeout scenario
+  useEffect(() => {
+    if (processorError && state.pollingGenerationId) {
       toast.warning('This is taking longer than usual', {
         description: 'We will check the provider and refund credits if it failed. You can navigate away; results will appear in History.',
       });
 
       // Proactively check provider status and recover/refund if needed
-      if (state.pollingGenerationId) {
-        await execute(
-          async () => {
-            const { data, error } = await supabase.functions.invoke('poll-kie-status', {
-              body: { generation_id: state.pollingGenerationId }
+      execute(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+            body: { generation_id: state.pollingGenerationId }
+          });
+
+          if (error) throw error;
+
+          if (data?.status === 'failed') {
+            updateState({
+              failedGenerationError: {
+                message: 'Generation failed on provider side',
+                generationId: state.pollingGenerationId || 'unknown',
+                timestamp: Date.now(),
+              }
             });
-
-            if (error) throw error;
-
-            if (data?.status === 'failed') {
-              updateState({
-                failedGenerationError: {
-                  message: 'Generation failed on provider side',
-                  generationId: state.pollingGenerationId || 'unknown',
-                  timestamp: Date.now(),
-                }
-              });
-            } else if (data?.status === 'completed') {
-              toast.success('Generation completed in background. Check History.');
-            }
-          },
-          {
-            showSuccessToast: false,
-            showErrorToast: false,
-            context: {
-              component: 'CustomCreation',
-              operation: 'pollKieStatus',
-              generationId: state.pollingGenerationId
-            }
+          } else if (data?.status === 'completed') {
+            toast.success('Generation completed in background. Check History.');
           }
-        );
-      }
+        },
+        {
+          showSuccessToast: false,
+          showErrorToast: false,
+          context: {
+            component: 'CustomCreation',
+            operation: 'pollKieStatus',
+            generationId: state.pollingGenerationId
+          }
+        }
+      );
     }
-  });
+  }, [processorError, state.pollingGenerationId, execute, updateState]);
 
   // Image upload
   const {

@@ -5,6 +5,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = {
   modelId: "runware:flux-schnell",
@@ -89,7 +90,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     prompt,
     tokens_used: cost,
     status: GENERATION_STATUS.PENDING, // (edge function will process)
-    settings: modelParameters
+    settings: sanitizeForStorage(modelParameters)
   }).select().single();
 
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);

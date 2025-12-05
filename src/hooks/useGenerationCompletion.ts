@@ -35,7 +35,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
       logger.debug('Skipping duplicate completion processing', { generationId } as any);
       return;
     }
-    completedGenerationsRef.current.add(generationId);
+    // Don't add to cache yet - wait until we actually complete successfully
 
     try {
       logger.info('Processing completed generation', { generationId } as any);
@@ -134,6 +134,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
               generationId,
               fallbackOutputs: fallbackOutputs.map(o => ({ id: o.id, storagePath: o.storage_path }))
             } as any);
+            completedGenerationsRef.current.add(generationId);
             onComplete(fallbackOutputs, fallbackOutputs[0].id);
             return;
           }
@@ -145,6 +146,26 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
               end: searchWindowEnd.toISOString()
             }
           } as any);
+        }
+
+        // Check if children with storage_path exist even though parent is not completed
+        // This handles race conditions where webhook updated children but parent status not yet synced
+        if (parentData.status === 'processing') {
+          const { data: existingChildren } = await supabase
+            .from('generations')
+            .select('id, storage_path')
+            .eq('parent_generation_id', generationId)
+            .not('storage_path', 'is', null)
+            .limit(1);
+
+          if (existingChildren && existingChildren.length > 0) {
+            logger.info('Children exist but parent not completed yet, will retry on next poll', { 
+              generationId,
+              childId: existingChildren[0].id 
+            } as any);
+            // Don't cache - allow retry when parent status updates
+            return;
+          }
         }
       }
 
@@ -305,6 +326,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
           } as any);
         }
 
+        completedGenerationsRef.current.add(generationId);
         onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {
         const pr = (parentData.provider_response || {}) as Record<string, unknown>;

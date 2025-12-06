@@ -729,16 +729,38 @@ Deno.serve(async (req) => {
       logger.debug('Generated webhook verification token', { userId: user.id });
 
       // Step 2: Detect base64 images in parameters (prevent DoS via oversized JSONB)
+      // FAIL-SAFE: This is the final guard against base64 images reaching providers
       const paramString = JSON.stringify(parameters);
       if (paramString.includes('data:image/') || paramString.includes(';base64,')) {
-        logger.error('Base64 image detected in parameters', undefined, {
+        // Find which fields contain base64 data for debugging
+        const affectedFields = Object.keys(parameters).filter(key => {
+          const value = parameters[key];
+          if (typeof value === 'string') {
+            return value.includes('data:image/') || value.includes(';base64,');
+          }
+          if (Array.isArray(value)) {
+            return value.some(item => 
+              typeof item === 'string' && (item.includes('data:image/') || item.includes(';base64,'))
+            );
+          }
+          return false;
+        });
+
+        logger.error('Base64 image detected in parameters - FAIL-SAFE TRIGGERED', undefined, {
           userId: user.id,
-          metadata: { paramSize: paramString.length }
+          metadata: { 
+            affectedFields,
+            fieldCount: affectedFields.length,
+            paramSize: paramString.length,
+            model_id: model.id,
+            provider: model.provider
+          }
         });
         
         throw new Error(
-          'Base64-encoded images are not allowed in parameters. ' +
-          'Please upload images to storage first and pass the URL instead.'
+          `Base64-encoded images are not allowed in parameters. ` +
+          `Affected field(s): ${affectedFields.join(', ')}. ` +
+          `Please upload images to storage first and pass the URL instead.`
         );
       }
 

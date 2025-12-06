@@ -11,12 +11,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import type {
   JsonSchemaProperty,
   ModelJsonSchema,
   ModelParameters,
   ModelParameterValue
 } from "@/types/model-schema";
+
+// Maximum file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+// Allowed image types
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 interface SchemaInputProps {
   name: string;
@@ -33,8 +42,10 @@ interface SchemaInputProps {
 }
 
 export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId: _modelId, provider: _provider }: SchemaInputProps) => {
+  const { user } = useAuth();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [_isUploading, setIsUploading] = useState(false);
   
   // Check if showToUser flag should hide this field
   if (schema.showToUser === false) {
@@ -96,37 +107,90 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   // Only use explicit renderer property
   const isImageUpload = schema.renderer === 'image' && !isArrayOfImages && !isImageArray;
 
+  /**
+   * Upload image to Supabase storage and return signed URL
+   * This prevents base64 images from being stored in parameters
+   */
+  const uploadImageToStorage = async (file: File): Promise<string> => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+    }
+
+    // Validate file type
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      throw new Error('Invalid file type. Allowed: JPEG, PNG, WebP, GIF');
+    }
+
+    const timestamp = Date.now();
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const filePath = `${user.id}/uploads/${timestamp}/param-${name}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('generated-content')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      logger.error('Failed to upload image to storage', undefined, { errorMessage: uploadError.message, field: name });
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    // Create signed URL (24 hour expiry)
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from('generated-content')
+      .createSignedUrl(filePath, 3600 * 24);
+
+    if (signedError || !signedData) {
+      throw new Error('Failed to create signed URL');
+    }
+
+    logger.info('Image uploaded to storage', { field: name, path: filePath });
+    return signedData.signedUrl;
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
+    setIsUploading(true);
+    
+    try {
+      const signedUrl = await uploadImageToStorage(file);
       
-      // If this is an array of image objects, store as [{ inputImage: "base64" }]
+      // If this is an array of image objects, store as [{ inputImage: "url" }]
       if (isArrayOfImages) {
-        onChange([{ inputImage: base64String }] as unknown as ModelParameterValue);
-        setImagePreview(null);
+        onChange([{ inputImage: signedUrl }] as unknown as ModelParameterValue);
+        setImagePreview(signedUrl);
       } else if (isImageArray) {
         // Handle array of strings (Veo Reference model)
         const currentArray = Array.isArray(value) ? value : [];
         const maxItems = schema.maxItems || 10;
 
         if (currentArray.length >= maxItems) {
-          // Use toast if available
-          logger.warn(`Maximum ${maxItems} images allowed`);
+          toast.error(`Maximum ${maxItems} images allowed`);
           return;
         }
         
-        onChange([...currentArray, base64String] as ModelParameterValue);
+        onChange([...currentArray, signedUrl] as ModelParameterValue);
         setImagePreview(null);
       } else {
-        setImagePreview(base64String);
-        onChange(base64String);
+        setImagePreview(signedUrl);
+        onChange(signedUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Upload failed';
+      toast.error(message);
+      logger.error('Image upload failed', error instanceof Error ? error : undefined, { field: name });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -154,24 +218,33 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error('Please drop an image file');
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
+    setIsUploading(true);
+    
+    try {
+      const signedUrl = await uploadImageToStorage(file);
       
       if (isArrayOfImages) {
-        onChange([{ inputImage: base64String }] as unknown as ModelParameterValue);
-        setImagePreview(null);
+        onChange([{ inputImage: signedUrl }] as unknown as ModelParameterValue);
+        setImagePreview(signedUrl);
       } else if (isImageArray) {
         const currentImages = Array.isArray(value) ? value : [];
-        onChange([...currentImages, base64String] as ModelParameterValue);
+        onChange([...currentImages, signedUrl] as ModelParameterValue);
       } else {
-        onChange(base64String as ModelParameterValue);
-        setImagePreview(base64String);
+        onChange(signedUrl as ModelParameterValue);
+        setImagePreview(signedUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Upload failed';
+      toast.error(message);
+      logger.error('Image drop upload failed', error instanceof Error ? error : undefined, { field: name });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const clearImage = () => {

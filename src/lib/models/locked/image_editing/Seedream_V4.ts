@@ -85,17 +85,16 @@ export const SCHEMA = {
     image_resolution: {
       type: "string",
       title: "Resolution",
-      description:
-        "Final image resolution. Combined with image_size to determine pixel dimensions (e.g., 4:3 + 4K = 4096×3072px)",
-      default: "1K",
+      description: "Final image resolution.",
+      default: "4K",
       enum: ["1K", "2K", "4K"],
     },
     max_images: {
       type: "integer",
       title: "Number of Outputs",
-      description: "Number of images to generate (1-6). State the exact number in your prompt for best results.",
+      description: "Number of images to generate (1-4). State the exact number in your prompt for best results.",
       minimum: 1,
-      maximum: 6,
+      maximum: 4,
       default: 1,
     },
 

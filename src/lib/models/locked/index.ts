@@ -243,7 +243,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "99532b69-d951-4431-87e3-1d88a9c8ee73": QwenImageToImage as ModelModule,                  // Qwen Image to Image | image_editing | kie_ai
   "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": RemoveBackgroundKie as ModelModule,               // Remove Background | image_editing | kie_ai
   "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background | image_editing | runware
-  "dcd3329b-fafa-4689-b2e4-a08f7832c7ac": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
+  "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
 
   // ═══════════════════════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
-import { getModel } from "../_shared/registry/index.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 import { validateWorkflowInputs } from "../_shared/jsonb-validation-schemas.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import {
@@ -148,18 +148,9 @@ Deno.serve(async (req) => {
     // Merge static parameters with resolved mappings
     const allParameters = { ...firstStep.parameters, ...resolvedMappings };
 
-    // ADR 007: Load model input schema from registry to coerce parameters
-    let coercedParameters = allParameters;
-    try {
-      if (firstStep.model_record_id) {
-        const model = await getModel(firstStep.model_record_id);
-        if (model.SCHEMA) {
-          coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA as any);
-        }
-      }
-    } catch (e) {
-      logger.warn('Schema coercion skipped', { metadata: { error: e instanceof Error ? e.message : String(e) } });
-    }
+    // Note: Schema coercion skipped - static metadata doesn't include full schema
+    // Parameters will be validated by the generate-content edge function
+    const coercedParameters = allParameters;
 
     // Sanitize parameters to convert base64 images
     const sanitizedParameters = await sanitizeParametersForProviders(coercedParameters, user.id, supabase);

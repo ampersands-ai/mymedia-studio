@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getModel } from "../_shared/registry/index.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
@@ -65,15 +65,13 @@ serve(async (req) => {
     steps.push(inputValidationStep);
 
     // ADR 007: Get model details from registry
-    let modelModule;
     let modelId;
     let baseCost;
     let modelConfig;
     try {
-      modelModule = await getModel(modelRecordId);
-      modelConfig = modelModule.MODEL_CONFIG;
-      modelId = modelConfig.id;
-      baseCost = modelConfig.baseCost;
+      modelConfig = getModelConfig(modelRecordId);
+      modelId = modelConfig.modelId;
+      baseCost = modelConfig.baseCreditCost;
     } catch (e) {
       throw new Error(`Model not found: ${e instanceof Error ? e.message : String(e)}`);
     }

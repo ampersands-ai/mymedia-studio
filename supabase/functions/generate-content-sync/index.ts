@@ -5,7 +5,7 @@ import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { getModel } from "../_shared/registry/index.ts";
+import { getModelConfig } from "../_shared/registry/index.ts";
 import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
@@ -156,8 +156,7 @@ Deno.serve(async (req) => {
     if (model_record_id) {
       // Use record_id - guaranteed unique
       try {
-        const modelModule = await getModel(model_record_id);
-        const config = modelModule.MODEL_CONFIG;
+        const config = getModelConfig(model_record_id);
 
         // Check if model is active
         if (!config.isActive) {
@@ -166,13 +165,13 @@ Deno.serve(async (req) => {
 
         // Convert registry format to expected Model format
         model = {
-          id: config.id,
+          id: config.modelId,
           record_id: config.recordId,
           provider: config.provider,
           content_type: config.contentType,
-          base_token_cost: config.baseCost,
+          base_token_cost: config.baseCreditCost,
           cost_multipliers: undefined, // Cost multipliers moved to model files
-          input_schema: modelModule.SCHEMA
+          input_schema: undefined // Schema not available in static metadata
         };
       } catch (e) {
         throw new Error(`Model not found or inactive: ${e instanceof Error ? e.message : String(e)}`);

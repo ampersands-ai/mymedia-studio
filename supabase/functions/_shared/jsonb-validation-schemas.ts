@@ -22,6 +22,26 @@ export const MAX_STRING_LENGTH = 10000; // Individual string field limit
 export const MAX_ARRAY_LENGTH = 100; // Max items in arrays
 export const MAX_PROMPT_LENGTH = 5000; // Max prompt text length
 
+// ============================================================================
+// SCHEMA PROPERTY TYPES (for dynamic validation)
+// ============================================================================
+
+export interface SchemaProperty {
+  type?: string;
+  enum?: string[];
+  default?: unknown;
+  minimum?: number;
+  maximum?: number;
+  required?: boolean;
+  title?: string;
+  description?: string;
+}
+
+export interface ModelSchema {
+  properties?: Record<string, SchemaProperty>;
+  required?: string[];
+}
+
 /**
  * Validates JSONB size to prevent DoS attacks
  *
@@ -137,6 +157,7 @@ export interface ValidationResult {
  *
  * @param settings - Settings object to validate
  * @returns ValidationResult with success status and error details
+ * @deprecated Use validateGenerationSettingsWithSchema for dynamic validation
  */
 export function validateGenerationSettings(settings: unknown): ValidationResult {
   // Check size first (DoS prevention)
@@ -159,6 +180,108 @@ export function validateGenerationSettings(settings: unknown): ValidationResult 
       return {
         success: false,
         error: `Invalid settings format: ${error.errors[0].message}`,
+      };
+    }
+    return {
+      success: false,
+      error: 'Invalid settings format',
+    };
+  }
+}
+
+/**
+ * Validates generation settings using the model's schema dynamically
+ * 
+ * This function builds validation rules from the model_schema at runtime,
+ * ensuring enum values match exactly what the model file defines.
+ *
+ * @param settings - Settings object to validate
+ * @param modelSchema - The model's input_schema defining valid parameter values
+ * @returns ValidationResult with success status and error details
+ */
+export function validateGenerationSettingsWithSchema(
+  settings: unknown,
+  modelSchema: { properties?: Record<string, unknown>; required?: string[] } | null | undefined
+): ValidationResult {
+  // Check size first (DoS prevention)
+  if (!validateJsonbSize(settings)) {
+    return {
+      success: false,
+      error: 'Settings object exceeds maximum size limit (50KB)',
+    };
+  }
+
+  // If no schema provided, use basic validation (passthrough)
+  if (!modelSchema?.properties) {
+    // Just validate size and basic structure
+    if (typeof settings !== 'object' || settings === null) {
+      return {
+        success: false,
+        error: 'Settings must be an object',
+      };
+    }
+    return {
+      success: true,
+      data: settings,
+    };
+  }
+
+  // Build dynamic Zod schema from model_schema properties
+  const schemaShape: Record<string, z.ZodTypeAny> = {
+    // Always allow webhook token (internal security field)
+    _webhook_token: z.string().min(16).max(128).optional(),
+    // Always allow prompt fields
+    prompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
+    positivePrompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
+    negativePrompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
+    enhance_prompt: z.boolean().optional(),
+  };
+
+  // Build validators from model schema properties
+  for (const [key, propUnknown] of Object.entries(modelSchema.properties)) {
+    // Skip if already defined above
+    if (key in schemaShape) continue;
+
+    // Cast to SchemaProperty for type safety
+    const prop = propUnknown as SchemaProperty;
+
+    if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0) {
+      // Use exact enum values from model schema (case-sensitive)
+      schemaShape[key] = z.enum(prop.enum as [string, ...string[]]).optional();
+    } else if (prop.type === 'string') {
+      schemaShape[key] = z.string().max(MAX_STRING_LENGTH).optional();
+    } else if (prop.type === 'number' || prop.type === 'integer') {
+      let numSchema = z.number();
+      if (prop.minimum !== undefined) numSchema = numSchema.min(prop.minimum);
+      if (prop.maximum !== undefined) numSchema = numSchema.max(prop.maximum);
+      schemaShape[key] = numSchema.optional();
+    } else if (prop.type === 'boolean') {
+      schemaShape[key] = z.boolean().optional();
+    } else if (prop.type === 'array') {
+      schemaShape[key] = z.array(z.any()).max(MAX_ARRAY_LENGTH).optional();
+    } else {
+      // Unknown type - allow any value (passthrough)
+      schemaShape[key] = z.any().optional();
+    }
+  }
+
+  // Create schema with passthrough for additional fields not in schema
+  const dynamicSchema = z.object(schemaShape).passthrough();
+
+  try {
+    const validated = dynamicSchema.parse(settings);
+    return {
+      success: true,
+      data: validated,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const firstError = error.errors[0];
+      // Provide helpful error message including the field path
+      const fieldPath = firstError.path.join('.');
+      return {
+        success: false,
+        error: `Invalid settings format: ${fieldPath ? `Field '${fieldPath}': ` : ''}${firstError.message}`,
       };
     }
     return {

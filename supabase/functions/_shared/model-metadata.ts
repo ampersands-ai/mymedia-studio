@@ -1,0 +1,715 @@
+/**
+ * Shared Model Metadata for Edge Functions
+ * 
+ * This is a STATIC, Deno-compatible module containing only the metadata
+ * edge functions need. It has ZERO frontend imports.
+ * 
+ * This is the single source of truth for model metadata used by:
+ * - kie-ai-webhook (timing validation, model name for notifications)
+ * - generate-content (model lookup)
+ * - settle-generation-credits (credit calculation)
+ * 
+ * When adding new models, update this file alongside the model file in
+ * src/lib/models/locked/
+ */
+
+export interface ModelMetadata {
+  recordId: string;
+  modelId: string;
+  modelName: string;
+  provider: string;
+  contentType: string;
+  baseCreditCost: number;
+  estimatedTimeSeconds: number;
+}
+
+/**
+ * Static model metadata - extracted from model files
+ * Total: 71 models across 5 categories
+ */
+export const MODEL_METADATA: Record<string, ModelMetadata> = {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMPT TO AUDIO MODELS (3 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "379f8945-bd7f-48f3-a1bb-9d2e2413234c": {
+    recordId: "379f8945-bd7f-48f3-a1bb-9d2e2413234c",
+    modelId: "elevenlabs/text-to-speech-turbo-2-5",
+    modelName: "Eleven Labs Fast",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 1.25,
+    estimatedTimeSeconds: 90,
+  },
+  "45fc7e71-0174-48eb-998d-547e8d2476db": {
+    recordId: "45fc7e71-0174-48eb-998d-547e8d2476db",
+    modelId: "elevenlabs/text-to-speech-multilingual-v2",
+    modelName: "Eleven Labs TTS",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 90,
+  },
+  "5c544c90-9344-4acb-9129-0acb9a6a915a": {
+    recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a",
+    modelId: "V5",
+    modelName: "Suno",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 6,
+    estimatedTimeSeconds: 180,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IMAGE EDITING MODELS (15 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "4b68811b-28be-45cb-bcae-9db721ba4547": {
+    recordId: "4b68811b-28be-45cb-bcae-9db721ba4547",
+    modelId: "4o-image-api",
+    modelName: "ChatGPT 4o Image",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 120,
+  },
+  "00ef3f28-4fab-4244-b93f-0ba48641fcbd": {
+    recordId: "00ef3f28-4fab-4244-b93f-0ba48641fcbd",
+    modelId: "recraft/crisp-upscale",
+    modelName: "Crisp Image Upscale",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 0.25,
+    estimatedTimeSeconds: 20,
+  },
+  "ab0ae096-f0ef-4197-b186-f38d69e72dd3": {
+    recordId: "ab0ae096-f0ef-4197-b186-f38d69e72dd3",
+    modelId: "flux-kontext-max",
+    modelName: "FLUX.1 Kontext Max",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 5,
+    estimatedTimeSeconds: 50,
+  },
+  "d0ef1f83-a613-47d4-82f8-10e41da3e2a0": {
+    recordId: "d0ef1f83-a613-47d4-82f8-10e41da3e2a0",
+    modelId: "flux-kontext-pro",
+    modelName: "FLUX.1 Kontext Pro",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2.5,
+    estimatedTimeSeconds: 50,
+  },
+  "2959b083-2177-4b8c-ae56-31170c2eb9dc": {
+    recordId: "2959b083-2177-4b8c-ae56-31170c2eb9dc",
+    modelId: "nano-banana-upscale",
+    modelName: "Google Image Upscale",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 0.25,
+    estimatedTimeSeconds: 18,
+  },
+  "4a421ed9-ed0c-40bf-b06d-892871506124": {
+    recordId: "4a421ed9-ed0c-40bf-b06d-892871506124",
+    modelId: "ideogram/character",
+    modelName: "Ideogram Character",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 6,
+    estimatedTimeSeconds: 25,
+  },
+  "922ca567-5aa1-4fd3-86ba-587b723a5dbf": {
+    recordId: "922ca567-5aa1-4fd3-86ba-587b723a5dbf",
+    modelId: "ideogram/v3-remix",
+    modelName: "Ideogram Image Remix",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 1.75,
+    estimatedTimeSeconds: 60,
+  },
+  "2c4802d0-f805-4c31-bab1-a07675e003eb": {
+    recordId: "2c4802d0-f805-4c31-bab1-a07675e003eb",
+    modelId: "ideogram/v3-reframe",
+    modelName: "Ideogram V3 Reframe",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 1.75,
+    estimatedTimeSeconds: 60,
+  },
+  "a70d01a3-05de-4918-b934-55a7e5e5d407": {
+    recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407",
+    modelId: "google/nano-banana-edit",
+    modelName: "Nano Banana by Google",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 25,
+  },
+  "b6d430f1-e823-4192-bf72-0dba29079931": {
+    recordId: "b6d430f1-e823-4192-bf72-0dba29079931",
+    modelId: "qwen/image-edit",
+    modelName: "Qwen Image Editor",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 1,
+    estimatedTimeSeconds: 25,
+  },
+  "99532b69-d951-4431-87e3-1d88a9c8ee73": {
+    recordId: "99532b69-d951-4431-87e3-1d88a9c8ee73",
+    modelId: "qwen/image-to-image",
+    modelName: "Qwen Image to Image",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 25,
+  },
+  "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": {
+    recordId: "58b8b09f-57fd-42e3-ae2d-689e9ea3064d",
+    modelId: "recraft/remove-background",
+    modelName: "Remove Background",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 0.5,
+    estimatedTimeSeconds: 20,
+  },
+  "d1d8b152-e123-4375-8f55-c0d0a699009b": {
+    recordId: "d1d8b152-e123-4375-8f55-c0d0a699009b",
+    modelId: "runware:110@1",
+    modelName: "Remove Background",
+    provider: "runware",
+    contentType: "image_editing",
+    baseCreditCost: 0.06,
+    estimatedTimeSeconds: 15,
+  },
+  "dcd3329b-fafa-4689-b2e4-a08f7832c7ac": {
+    recordId: "dcd3329b-fafa-4689-b2e4-a08f7832c7ac",
+    modelId: "bytedance/seedream-v4-edit",
+    modelName: "Seedream V4",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2.5,
+    estimatedTimeSeconds: 40,
+  },
+  "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": {
+    recordId: "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c",
+    modelId: "runware:105@1",
+    modelName: "runware upscale",
+    provider: "runware",
+    contentType: "image_editing",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 90,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMPT TO IMAGE MODELS (28 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": {
+    recordId: "3b83cee8-6164-4d98-aebe-f4eadcb3da1d",
+    modelId: "4o-image-api",
+    modelName: "ChatGPT 4o-Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 120,
+  },
+  "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": {
+    recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c",
+    modelId: "runware:101@1",
+    modelName: "Flux.1 Dev",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.4,
+    estimatedTimeSeconds: 15,
+  },
+  "100@1": {
+    recordId: "100@1",
+    modelId: "runware:100@1",
+    modelName: "FLUX.1 Pro",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.2,
+    estimatedTimeSeconds: 15,
+  },
+  "c1bd50df-1c27-48a3-8630-0970eedd21f6": {
+    recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6",
+    modelId: "flux-kontext-max",
+    modelName: "FLUX.1 Kontext Max",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 5,
+    estimatedTimeSeconds: 50,
+  },
+  "94b43382-bf4b-490d-82b5-265d14473f9b": {
+    recordId: "94b43382-bf4b-490d-82b5-265d14473f9b",
+    modelId: "flux-kontext-pro",
+    modelName: "FLUX.1 Kontext Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2.5,
+    estimatedTimeSeconds: 50,
+  },
+  "schnell": {
+    recordId: "schnell",
+    modelId: "runware:flux-schnell",
+    modelName: "FLUX.1 Schnell",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.1,
+    estimatedTimeSeconds: 10,
+  },
+  "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": {
+    recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f",
+    modelId: "runware:100@1",
+    modelName: "Flux.1 Schnell",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.2,
+    estimatedTimeSeconds: 8,
+  },
+  "5290ad50-ebeb-4fc0-97fb-bff7db6784b5": {
+    recordId: "5290ad50-ebeb-4fc0-97fb-bff7db6784b5",
+    modelId: "google/imagen4",
+    modelName: "Google Imagen 4",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 4,
+    estimatedTimeSeconds: 25,
+  },
+  "0ff9bb96-041e-4c24-90c5-543064b642ca": {
+    recordId: "0ff9bb96-041e-4c24-90c5-543064b642ca",
+    modelId: "google/imagen4-fast",
+    modelName: "Google Imagen 4 Fast",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 25,
+  },
+  "23e81043-5e53-400b-bc1a-2a1ed9f30ce0": {
+    recordId: "23e81043-5e53-400b-bc1a-2a1ed9f30ce0",
+    modelId: "google/imagen4-ultra",
+    modelName: "Google Imagen 4 Ultra",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 6,
+    estimatedTimeSeconds: 25,
+  },
+  "49a79e90-830d-40ff-ad05-447cf0232592": {
+    recordId: "49a79e90-830d-40ff-ad05-447cf0232592",
+    modelId: "grok-imagine/text-to-image",
+    modelName: "Grok Imagine",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 30,
+  },
+  "79ce627d-f90c-47b2-ae3f-9437d93f4529": {
+    recordId: "79ce627d-f90c-47b2-ae3f-9437d93f4529",
+    modelId: "runware:97@2",
+    modelName: "HiDream Dev",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.5,
+    estimatedTimeSeconds: 15,
+  },
+  "7fe80ee8-701c-49b9-a21e-79f8c82489c8": {
+    recordId: "7fe80ee8-701c-49b9-a21e-79f8c82489c8",
+    modelId: "runware:97@1",
+    modelName: "HiDream Fast",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.3,
+    estimatedTimeSeconds: 10,
+  },
+  "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e": {
+    recordId: "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e",
+    modelId: "ideogram/character",
+    modelName: "Ideogram Character",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 25,
+  },
+  "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e": {
+    recordId: "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e",
+    modelId: "ideogram/v2-plus",
+    modelName: "Ideogram V2+",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2.5,
+    estimatedTimeSeconds: 30,
+  },
+  "94c0e508-226a-4e3d-8229-3820a61faa88": {
+    recordId: "94c0e508-226a-4e3d-8229-3820a61faa88",
+    modelId: "ideogram/v3-text-to-image",
+    modelName: "Ideogram V3",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 1.75,
+    estimatedTimeSeconds: 35,
+  },
+  "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e": {
+    recordId: "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e",
+    modelId: "jasper/text-to-image",
+    modelName: "Jasper Text to Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 20,
+  },
+  "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": {
+    recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529",
+    modelId: "midjourney/text-to-image",
+    modelName: "Midjourney",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 45,
+  },
+  "4c680009-d3fe-436f-85a7-467c76e85f9e": {
+    recordId: "4c680009-d3fe-436f-85a7-467c76e85f9e",
+    modelId: "gpt-image-1",
+    modelName: "GPT-5 Image (Lovable AI)",
+    provider: "lovable_ai_sync",
+    contentType: "prompt_to_image",
+    baseCreditCost: 1,
+    estimatedTimeSeconds: 15,
+  },
+  "09b03fa3-e648-4d42-8494-b91bd2e609b8": {
+    recordId: "09b03fa3-e648-4d42-8494-b91bd2e609b8",
+    modelId: "google/nano-banana",
+    modelName: "Nano Banana by Google",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 15,
+  },
+  "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": {
+    recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8",
+    modelId: "qwen/text-to-image",
+    modelName: "Qwen Text to Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.5,
+    estimatedTimeSeconds: 25,
+  },
+  "edc7a24b-b9da-46a7-8155-635626c0f9a3": {
+    recordId: "edc7a24b-b9da-46a7-8155-635626c0f9a3",
+    modelId: "runware:flux-1.1-pro",
+    modelName: "runware flux 1.1 pro",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.25,
+    estimatedTimeSeconds: 18,
+  },
+  "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": {
+    recordId: "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a",
+    modelId: "runware:stable-diffusion-v3",
+    modelName: "runware stable diffusion v3",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.15,
+    estimatedTimeSeconds: 12,
+  },
+  "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": {
+    recordId: "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a",
+    modelId: "runware:stable-diffusion-xl",
+    modelName: "runware stable diffusion xl",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.12,
+    estimatedTimeSeconds: 10,
+  },
+  "ac90c626-ab01-4bc0-a000-9b952ddbde0e": {
+    recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e",
+    modelId: "bytedance/seedream",
+    modelName: "Seedream V3",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 1.75,
+    estimatedTimeSeconds: 20,
+  },
+  "c0e4f338-683a-4b5d-8289-518f2b5ea983": {
+    recordId: "c0e4f338-683a-4b5d-8289-518f2b5ea983",
+    modelId: "bytedance/seedream-v4-text-to-image",
+    modelName: "Seedream V4",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 1.75,
+    estimatedTimeSeconds: 30,
+  },
+  "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": {
+    recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e",
+    modelId: "ultra-detail/v0",
+    modelName: "Ultra Detail V0",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 3.5,
+    estimatedTimeSeconds: 45,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IMAGE TO VIDEO MODELS (13 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": {
+    recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1",
+    modelId: "veo3_fast",
+    modelName: "Google Veo 3.1 Fast",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 300,
+  },
+  "a5c2ec16-6294-4588-86b6-7b4182601cda": {
+    recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda",
+    modelId: "veo3",
+    modelName: "Google Veo 3.1 HQ",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 125,
+    estimatedTimeSeconds: 300,
+  },
+  "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": {
+    recordId: "6e8a863e-8630-4eef-bdbb-5b41f4c883f9",
+    modelId: "veo3_fast",
+    modelName: "Google Veo 3.1 Reference",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 300,
+  },
+  "8c46aade-1272-4409-bb3a-3701e2423320": {
+    recordId: "8c46aade-1272-4409-bb3a-3701e2423320",
+    modelId: "grok-imagine/image-to-video",
+    modelName: "Grok Imagine",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 30,
+  },
+  "c3397c13-3a52-4973-a87c-b4c20aca0fc0": {
+    recordId: "c3397c13-3a52-4973-a87c-b4c20aca0fc0",
+    modelId: "kling/v2-1-master-image-to-video",
+    modelName: "Kling V2 Master",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 300,
+  },
+  "84084ca4-4153-46bc-8d01-cd4e37d1da68": {
+    recordId: "84084ca4-4153-46bc-8d01-cd4e37d1da68",
+    modelId: "kling/v2-1-pro",
+    modelName: "Kling V2 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 12,
+    estimatedTimeSeconds: 300,
+  },
+  "88e09730-07e0-4481-bda8-d9d9bde9fec6": {
+    recordId: "88e09730-07e0-4481-bda8-d9d9bde9fec6",
+    modelId: "kling/v2-1-standard",
+    modelName: "Kling V2 Standard",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 6,
+    estimatedTimeSeconds: 300,
+  },
+  "d2c37239-d544-4cce-bd8d-fb48ea44b287": {
+    recordId: "d2c37239-d544-4cce-bd8d-fb48ea44b287",
+    modelId: "runway-duration-5-generate",
+    modelName: "Runway",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 300,
+  },
+  "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2": {
+    recordId: "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2",
+    modelId: "bytedance/v1-lite-image-to-video",
+    modelName: "Seedance V1 Lite",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 300,
+  },
+  "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": {
+    recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad",
+    modelId: "bytedance:2@2",
+    modelName: "Seedance V1.0 Pro Fast",
+    provider: "runware",
+    contentType: "image_to_video",
+    baseCreditCost: 1.5,
+    estimatedTimeSeconds: 30,
+  },
+  "50eb3f02-1e58-4b85-a535-e8391a5623c4": {
+    recordId: "50eb3f02-1e58-4b85-a535-e8391a5623c4",
+    modelId: "bytedance/v1-pro-image-to-video",
+    modelName: "Seedream V1 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 8,
+    estimatedTimeSeconds: 300,
+  },
+  "11a995d9-a89e-47a2-b00c-11b2b7dbb717": {
+    recordId: "11a995d9-a89e-47a2-b00c-11b2b7dbb717",
+    modelId: "sora-2-image-to-video",
+    modelName: "Sora 2 by OpenAI (Watermarked)",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 75,
+    estimatedTimeSeconds: 300,
+  },
+  "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": {
+    recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1",
+    modelId: "wan/2-2-a14b-image-to-video-turbo",
+    modelName: "WAN 2.2 Turbo",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMPT TO VIDEO MODELS (12 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "a96af675-b780-4879-a61f-7285be8766c2": {
+    recordId: "a96af675-b780-4879-a61f-7285be8766c2",
+    modelId: "veo3_fast",
+    modelName: "Google Veo 3.1 Fast",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 120,
+  },
+  "d117daae-f3ec-4b79-b98f-adefeee21454": {
+    recordId: "d117daae-f3ec-4b79-b98f-adefeee21454",
+    modelId: "veo3",
+    modelName: "Google Veo 3.1 HQ",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 125,
+    estimatedTimeSeconds: 300,
+  },
+  "0643a43b-4995-4c5b-ac1d-76ea257a93a0": {
+    recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0",
+    modelId: "grok-imagine/text-to-video",
+    modelName: "Grok Imagine",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 45,
+  },
+  "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": {
+    recordId: "c5754cad-2b2c-4636-bc19-4ccaa97dde3d",
+    modelId: "kling/v2-1-master-text-to-video",
+    modelName: "Kling V2 Master",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 240,
+  },
+  "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f": {
+    recordId: "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f",
+    modelId: "kling/v2-pro",
+    modelName: "Kling V2 Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 240,
+  },
+  "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b": {
+    recordId: "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b",
+    modelId: "kling/v2-standard",
+    modelName: "Kling V2 Standard",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 18,
+    estimatedTimeSeconds: 180,
+  },
+  "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3": {
+    recordId: "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3",
+    modelId: "runway-duration-5-generate model",
+    modelName: "Runway",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 300,
+  },
+  "d9808197-5344-431e-a28e-b84482de076a": {
+    recordId: "d9808197-5344-431e-a28e-b84482de076a",
+    modelId: "seedance/v1-lite",
+    modelName: "Seedance V1 Lite",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 8,
+    estimatedTimeSeconds: 90,
+  },
+  "734c7712-aae3-4ad2-93b9-df198623503d": {
+    recordId: "734c7712-aae3-4ad2-93b9-df198623503d",
+    modelId: "bytedance:2@2",
+    modelName: "Seedance V1.0 Pro Fast",
+    provider: "runware",
+    contentType: "prompt_to_video",
+    baseCreditCost: 1.5,
+    estimatedTimeSeconds: 30,
+  },
+  "b2e60db5-d8b5-4b27-971d-7e195e6ffeda": {
+    recordId: "b2e60db5-d8b5-4b27-971d-7e195e6ffeda",
+    modelId: "seedream/v1-pro",
+    modelName: "Seedream V1 Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 25,
+    estimatedTimeSeconds: 200,
+  },
+  "81a078c7-10fa-450c-92d5-c9f46166be45": {
+    recordId: "81a078c7-10fa-450c-92d5-c9f46166be45",
+    modelId: "sora-2-text-to-video",
+    modelName: "Sora 2 by OpenAI (Watermarked)",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 50,
+    estimatedTimeSeconds: 360,
+  },
+  "0aaf528a-1334-4121-8467-331c95e8da6d": {
+    recordId: "0aaf528a-1334-4121-8467-331c95e8da6d",
+    modelId: "wan/v2-2-turbo-prompt-to-video",
+    modelName: "WAN 2.2 Turbo",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 180,
+  },
+};
+
+/**
+ * Get model metadata by record ID
+ */
+export function getModelMetadata(recordId: string): ModelMetadata | undefined {
+  return MODEL_METADATA[recordId];
+}
+
+/**
+ * Get all available model record IDs
+ */
+export function getAvailableModelRecordIds(): string[] {
+  return Object.keys(MODEL_METADATA);
+}
+
+/**
+ * Check if a model exists
+ */
+export function modelExists(recordId: string): boolean {
+  return recordId in MODEL_METADATA;
+}
+
+/**
+ * Get models by content type
+ */
+export function getModelsByContentType(contentType: string): ModelMetadata[] {
+  return Object.values(MODEL_METADATA).filter(m => m.contentType === contentType);
+}
+
+/**
+ * Get models by provider
+ */
+export function getModelsByProvider(provider: string): ModelMetadata[] {
+  return Object.values(MODEL_METADATA).filter(m => m.provider === provider);
+}

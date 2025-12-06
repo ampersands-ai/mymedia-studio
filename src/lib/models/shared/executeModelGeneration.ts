@@ -13,6 +13,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { assertNoBase64Images } from "@/lib/validation/imageValidation";
 
 /**
  * Model configuration for execution
@@ -144,7 +145,17 @@ export async function executeModelGeneration(options: ExecuteOptions): Promise<s
     throw new Error(`Failed to create generation record: ${error?.message || 'Unknown error'}`);
   }
 
-  // 5. Invoke edge function for server-side API call
+  // 5. Prepare payload and validate no base64 images
+  const payload = modelFunctions.preparePayload(inputs);
+  
+  // FAIL-SAFE: Assert no base64 images in payload before sending to edge function
+  // This catches any missed cases where images weren't uploaded to storage
+  assertNoBase64Images(
+    payload, 
+    `model: ${modelConfig.modelId}, generation: ${gen.id}`
+  );
+
+  // 6. Invoke edge function for server-side API call
   // This keeps API keys secure and avoids CORS issues
   const { error: funcError } = await supabase.functions.invoke('generate-content', {
     body: {
@@ -152,7 +163,7 @@ export async function executeModelGeneration(options: ExecuteOptions): Promise<s
       model_config: modelConfig,
       model_schema: modelSchema,
       prompt: inputs[promptField],
-      custom_parameters: modelFunctions.preparePayload(inputs)
+      custom_parameters: payload
     }
   });
 
@@ -166,10 +177,10 @@ export async function executeModelGeneration(options: ExecuteOptions): Promise<s
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 
-  // 6. Start polling for results
+  // 7. Start polling for results
   startPolling(gen.id);
 
-  // 7. Return generation ID
+  // 8. Return generation ID
   return gen.id;
 }
 

@@ -88,6 +88,7 @@ export const SCHEMA = {
       title: "Style",
       description: "The style type to generate with",
       default: "AUTO",
+      isAdvanced: true,
       enum: ["AUTO", "REALISTIC", "FICTION"],
     },
     num_images: {
@@ -104,12 +105,14 @@ export const SCHEMA = {
       title: "Negative Prompt",
       description: "Description of what to exclude from an image",
       maxLength: 5000,
+      isAdvanced: true,
     },
     expand_prompt: {
       type: "boolean",
       title: "Expand Prompt (MagicPrompt)",
       description: "Determine if MagicPrompt should be used in generating the request",
       default: true,
+      showToUser: false,
     },
 
     // Hidden parameters
@@ -117,7 +120,7 @@ export const SCHEMA = {
       type: "integer",
       title: "Seed",
       description: "Seed for the random number generator",
-      showToUser: false,
+      isAdvanced: true,
     },
   },
   required: ["prompt", "reference_image_urls"],

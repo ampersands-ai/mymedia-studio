@@ -6,7 +6,7 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../../_shared/edge-logger.ts";
-import { getModel } from "../../_shared/registry/index.ts";
+import { getModelConfig, type ModelMetadata } from "../../_shared/registry/index.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 import type { GenerationRecord } from "../../_shared/database-types.ts";
 import {
@@ -132,21 +132,9 @@ export async function orchestrateWorkflow(
         throw new Error(`Step ${nextStepNumber} not found in workflow template`);
       }
 
-      // Coerce parameters to schema
-      let coercedParameters = allParameters;
-      try {
-        if (nextStep.model_record_id) {
-          // ADR 007: Get schema from model registry instead of database
-          const model = await getModel(nextStep.model_record_id);
-          if (model.SCHEMA) {
-            coercedParameters = coerceParametersToSchema(allParameters, model.SCHEMA as unknown as import("./parameter-resolver.ts").JsonSchema);
-          }
-        }
-      } catch (e) {
-        logger.warn('Schema coercion skipped', {
-          metadata: { error: e instanceof Error ? e.message : String(e) }
-        });
-      }
+      // Note: Schema coercion skipped - static metadata doesn't include full schema
+      // Parameters will be validated by the generate-content edge function
+      const coercedParameters = allParameters;
 
       const sanitizedParameters = await sanitizeParametersForProviders(
         coercedParameters,

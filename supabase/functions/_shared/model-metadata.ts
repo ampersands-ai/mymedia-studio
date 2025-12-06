@@ -21,6 +21,7 @@ export interface ModelMetadata {
   contentType: string;
   baseCreditCost: number;
   estimatedTimeSeconds: number;
+  isActive: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_audio",
     baseCreditCost: 1.25,
     estimatedTimeSeconds: 90,
+    isActive: true,
   },
   "45fc7e71-0174-48eb-998d-547e8d2476db": {
     recordId: "45fc7e71-0174-48eb-998d-547e8d2476db",
@@ -48,6 +50,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_audio",
     baseCreditCost: 3,
     estimatedTimeSeconds: 90,
+    isActive: true,
   },
   "5c544c90-9344-4acb-9129-0acb9a6a915a": {
     recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a",
@@ -57,6 +60,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_audio",
     baseCreditCost: 6,
     estimatedTimeSeconds: 180,
+    isActive: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -70,6 +74,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 3,
     estimatedTimeSeconds: 120,
+    isActive: true,
   },
   "00ef3f28-4fab-4244-b93f-0ba48641fcbd": {
     recordId: "00ef3f28-4fab-4244-b93f-0ba48641fcbd",
@@ -79,6 +84,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 0.25,
     estimatedTimeSeconds: 20,
+    isActive: true,
   },
   "ab0ae096-f0ef-4197-b186-f38d69e72dd3": {
     recordId: "ab0ae096-f0ef-4197-b186-f38d69e72dd3",
@@ -88,6 +94,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 5,
     estimatedTimeSeconds: 50,
+    isActive: true,
   },
   "d0ef1f83-a613-47d4-82f8-10e41da3e2a0": {
     recordId: "d0ef1f83-a613-47d4-82f8-10e41da3e2a0",
@@ -97,6 +104,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 2.5,
     estimatedTimeSeconds: 50,
+    isActive: true,
   },
   "2959b083-2177-4b8c-ae56-31170c2eb9dc": {
     recordId: "2959b083-2177-4b8c-ae56-31170c2eb9dc",
@@ -106,6 +114,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 0.25,
     estimatedTimeSeconds: 18,
+    isActive: true,
   },
   "4a421ed9-ed0c-40bf-b06d-892871506124": {
     recordId: "4a421ed9-ed0c-40bf-b06d-892871506124",
@@ -115,6 +124,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 6,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "922ca567-5aa1-4fd3-86ba-587b723a5dbf": {
     recordId: "922ca567-5aa1-4fd3-86ba-587b723a5dbf",
@@ -124,6 +134,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 1.75,
     estimatedTimeSeconds: 60,
+    isActive: true,
   },
   "2c4802d0-f805-4c31-bab1-a07675e003eb": {
     recordId: "2c4802d0-f805-4c31-bab1-a07675e003eb",
@@ -133,6 +144,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 1.75,
     estimatedTimeSeconds: 60,
+    isActive: true,
   },
   "a70d01a3-05de-4918-b934-55a7e5e5d407": {
     recordId: "a70d01a3-05de-4918-b934-55a7e5e5d407",
@@ -142,6 +154,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 2,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "b6d430f1-e823-4192-bf72-0dba29079931": {
     recordId: "b6d430f1-e823-4192-bf72-0dba29079931",
@@ -151,6 +164,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 1,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "99532b69-d951-4431-87e3-1d88a9c8ee73": {
     recordId: "99532b69-d951-4431-87e3-1d88a9c8ee73",
@@ -160,6 +174,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 2,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": {
     recordId: "58b8b09f-57fd-42e3-ae2d-689e9ea3064d",
@@ -169,6 +184,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 0.5,
     estimatedTimeSeconds: 20,
+    isActive: true,
   },
   "d1d8b152-e123-4375-8f55-c0d0a699009b": {
     recordId: "d1d8b152-e123-4375-8f55-c0d0a699009b",
@@ -178,6 +194,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 0.06,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "dcd3329b-fafa-4689-b2e4-a08f7832c7ac": {
     recordId: "dcd3329b-fafa-4689-b2e4-a08f7832c7ac",
@@ -187,6 +204,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 2.5,
     estimatedTimeSeconds: 40,
+    isActive: true,
   },
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": {
     recordId: "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c",
@@ -196,6 +214,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_editing",
     baseCreditCost: 20,
     estimatedTimeSeconds: 90,
+    isActive: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -209,6 +228,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 3,
     estimatedTimeSeconds: 120,
+    isActive: true,
   },
   "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": {
     recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c",
@@ -218,6 +238,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.4,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "100@1": {
     recordId: "100@1",
@@ -227,6 +248,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.2,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": {
     recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6",
@@ -236,6 +258,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 5,
     estimatedTimeSeconds: 50,
+    isActive: true,
   },
   "94b43382-bf4b-490d-82b5-265d14473f9b": {
     recordId: "94b43382-bf4b-490d-82b5-265d14473f9b",
@@ -245,6 +268,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2.5,
     estimatedTimeSeconds: 50,
+    isActive: true,
   },
   "schnell": {
     recordId: "schnell",
@@ -254,6 +278,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.1,
     estimatedTimeSeconds: 10,
+    isActive: true,
   },
   "32e98d54-3e47-41f8-ae70-0b0c18b78b8f": {
     recordId: "32e98d54-3e47-41f8-ae70-0b0c18b78b8f",
@@ -263,6 +288,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.2,
     estimatedTimeSeconds: 8,
+    isActive: true,
   },
   "5290ad50-ebeb-4fc0-97fb-bff7db6784b5": {
     recordId: "5290ad50-ebeb-4fc0-97fb-bff7db6784b5",
@@ -272,6 +298,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 4,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "0ff9bb96-041e-4c24-90c5-543064b642ca": {
     recordId: "0ff9bb96-041e-4c24-90c5-543064b642ca",
@@ -281,6 +308,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "23e81043-5e53-400b-bc1a-2a1ed9f30ce0": {
     recordId: "23e81043-5e53-400b-bc1a-2a1ed9f30ce0",
@@ -290,6 +318,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 6,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "49a79e90-830d-40ff-ad05-447cf0232592": {
     recordId: "49a79e90-830d-40ff-ad05-447cf0232592",
@@ -299,6 +328,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "79ce627d-f90c-47b2-ae3f-9437d93f4529": {
     recordId: "79ce627d-f90c-47b2-ae3f-9437d93f4529",
@@ -308,6 +338,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.5,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "7fe80ee8-701c-49b9-a21e-79f8c82489c8": {
     recordId: "7fe80ee8-701c-49b9-a21e-79f8c82489c8",
@@ -317,6 +348,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.3,
     estimatedTimeSeconds: 10,
+    isActive: true,
   },
   "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e": {
     recordId: "a8f5c3e9-7d4b-6f2c-9a1e-5d8b3c7f4a6e",
@@ -326,6 +358,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e": {
     recordId: "f9c5e7a3-8d4b-6f2c-9a1e-5d7b3c8f4a6e",
@@ -335,6 +368,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2.5,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "94c0e508-226a-4e3d-8229-3820a61faa88": {
     recordId: "94c0e508-226a-4e3d-8229-3820a61faa88",
@@ -344,6 +378,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 1.75,
     estimatedTimeSeconds: 35,
+    isActive: true,
   },
   "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e": {
     recordId: "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e",
@@ -353,6 +388,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 20,
+    isActive: true,
   },
   "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": {
     recordId: "eff6c62e-c20e-4eed-9f5b-81e1a7f01529",
@@ -362,6 +398,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 3,
     estimatedTimeSeconds: 45,
+    isActive: true,
   },
   "4c680009-d3fe-436f-85a7-467c76e85f9e": {
     recordId: "4c680009-d3fe-436f-85a7-467c76e85f9e",
@@ -371,6 +408,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 1,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "09b03fa3-e648-4d42-8494-b91bd2e609b8": {
     recordId: "09b03fa3-e648-4d42-8494-b91bd2e609b8",
@@ -380,6 +418,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 15,
+    isActive: true,
   },
   "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": {
     recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8",
@@ -389,6 +428,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.5,
     estimatedTimeSeconds: 25,
+    isActive: true,
   },
   "edc7a24b-b9da-46a7-8155-635626c0f9a3": {
     recordId: "edc7a24b-b9da-46a7-8155-635626c0f9a3",
@@ -398,6 +438,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.25,
     estimatedTimeSeconds: 18,
+    isActive: true,
   },
   "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": {
     recordId: "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a",
@@ -407,6 +448,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.15,
     estimatedTimeSeconds: 12,
+    isActive: true,
   },
   "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": {
     recordId: "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a",
@@ -416,6 +458,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 0.12,
     estimatedTimeSeconds: 10,
+    isActive: true,
   },
   "ac90c626-ab01-4bc0-a000-9b952ddbde0e": {
     recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e",
@@ -425,6 +468,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 1.75,
     estimatedTimeSeconds: 20,
+    isActive: true,
   },
   "c0e4f338-683a-4b5d-8289-518f2b5ea983": {
     recordId: "c0e4f338-683a-4b5d-8289-518f2b5ea983",
@@ -434,6 +478,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 1.75,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": {
     recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e",
@@ -443,6 +488,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 3.5,
     estimatedTimeSeconds: 45,
+    isActive: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -456,6 +502,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 30,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "a5c2ec16-6294-4588-86b6-7b4182601cda": {
     recordId: "a5c2ec16-6294-4588-86b6-7b4182601cda",
@@ -465,6 +512,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 125,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": {
     recordId: "6e8a863e-8630-4eef-bdbb-5b41f4c883f9",
@@ -474,6 +522,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 30,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "8c46aade-1272-4409-bb3a-3701e2423320": {
     recordId: "8c46aade-1272-4409-bb3a-3701e2423320",
@@ -483,6 +532,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "c3397c13-3a52-4973-a87c-b4c20aca0fc0": {
     recordId: "c3397c13-3a52-4973-a87c-b4c20aca0fc0",
@@ -492,6 +542,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 40,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "84084ca4-4153-46bc-8d01-cd4e37d1da68": {
     recordId: "84084ca4-4153-46bc-8d01-cd4e37d1da68",
@@ -501,6 +552,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 12,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "88e09730-07e0-4481-bda8-d9d9bde9fec6": {
     recordId: "88e09730-07e0-4481-bda8-d9d9bde9fec6",
@@ -510,6 +562,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 6,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "d2c37239-d544-4cce-bd8d-fb48ea44b287": {
     recordId: "d2c37239-d544-4cce-bd8d-fb48ea44b287",
@@ -519,6 +572,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2": {
     recordId: "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2",
@@ -528,6 +582,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 2,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": {
     recordId: "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad",
@@ -537,6 +592,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 1.5,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "50eb3f02-1e58-4b85-a535-e8391a5623c4": {
     recordId: "50eb3f02-1e58-4b85-a535-e8391a5623c4",
@@ -546,6 +602,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 8,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "11a995d9-a89e-47a2-b00c-11b2b7dbb717": {
     recordId: "11a995d9-a89e-47a2-b00c-11b2b7dbb717",
@@ -555,6 +612,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 75,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": {
     recordId: "e4ae6c36-dfcb-4fe4-94f3-46962df720b1",
@@ -564,6 +622,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 15,
     estimatedTimeSeconds: 180,
+    isActive: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -577,6 +636,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 30,
     estimatedTimeSeconds: 120,
+    isActive: true,
   },
   "d117daae-f3ec-4b79-b98f-adefeee21454": {
     recordId: "d117daae-f3ec-4b79-b98f-adefeee21454",
@@ -586,6 +646,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 125,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "0643a43b-4995-4c5b-ac1d-76ea257a93a0": {
     recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0",
@@ -595,6 +656,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 45,
+    isActive: true,
   },
   "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": {
     recordId: "c5754cad-2b2c-4636-bc19-4ccaa97dde3d",
@@ -604,6 +666,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 40,
     estimatedTimeSeconds: 240,
+    isActive: true,
   },
   "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f": {
     recordId: "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f",
@@ -613,6 +676,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 30,
     estimatedTimeSeconds: 240,
+    isActive: true,
   },
   "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b": {
     recordId: "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b",
@@ -622,6 +686,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 18,
     estimatedTimeSeconds: 180,
+    isActive: true,
   },
   "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3": {
     recordId: "7bde9fb9-b16b-47b0-86a7-c0762a1a58e3",
@@ -631,6 +696,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 3,
     estimatedTimeSeconds: 300,
+    isActive: true,
   },
   "d9808197-5344-431e-a28e-b84482de076a": {
     recordId: "d9808197-5344-431e-a28e-b84482de076a",
@@ -640,6 +706,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 8,
     estimatedTimeSeconds: 90,
+    isActive: true,
   },
   "734c7712-aae3-4ad2-93b9-df198623503d": {
     recordId: "734c7712-aae3-4ad2-93b9-df198623503d",
@@ -649,6 +716,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 1.5,
     estimatedTimeSeconds: 30,
+    isActive: true,
   },
   "b2e60db5-d8b5-4b27-971d-7e195e6ffeda": {
     recordId: "b2e60db5-d8b5-4b27-971d-7e195e6ffeda",
@@ -658,6 +726,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 25,
     estimatedTimeSeconds: 200,
+    isActive: true,
   },
   "81a078c7-10fa-450c-92d5-c9f46166be45": {
     recordId: "81a078c7-10fa-450c-92d5-c9f46166be45",
@@ -667,6 +736,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 50,
     estimatedTimeSeconds: 360,
+    isActive: true,
   },
   "0aaf528a-1334-4121-8467-331c95e8da6d": {
     recordId: "0aaf528a-1334-4121-8467-331c95e8da6d",
@@ -676,6 +746,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 180,
+    isActive: true,
   },
 };
 

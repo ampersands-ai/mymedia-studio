@@ -28,7 +28,7 @@ export const MAX_PROMPT_LENGTH = 5000; // Max prompt text length
 
 export interface SchemaProperty {
   type?: string;
-  enum?: string[];
+  enum?: (string | number)[];
   default?: unknown;
   minimum?: number;
   maximum?: number;
@@ -246,8 +246,22 @@ export function validateGenerationSettingsWithSchema(
     const prop = propUnknown as SchemaProperty;
 
     if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0) {
-      // Use exact enum values from model schema (case-sensitive)
-      schemaShape[key] = z.enum(prop.enum as [string, ...string[]]).optional();
+      // Check if enum contains numbers or strings
+      const firstValue = prop.enum[0];
+      
+      if (typeof firstValue === 'number') {
+        // Integer enum: use z.union with z.literal for each value
+        const literals = prop.enum.map((val) => z.literal(val as number));
+        if (literals.length >= 2) {
+          schemaShape[key] = z.union([literals[0], literals[1], ...literals.slice(2)] as [z.ZodLiteral<number>, z.ZodLiteral<number>, ...z.ZodLiteral<number>[]]).optional();
+        } else {
+          // Single value enum - just use literal
+          schemaShape[key] = z.literal(firstValue).optional();
+        }
+      } else {
+        // String enum: use z.enum as before
+        schemaShape[key] = z.enum(prop.enum as [string, ...string[]]).optional();
+      }
     } else if (prop.type === 'string') {
       schemaShape[key] = z.string().max(MAX_STRING_LENGTH).optional();
     } else if (prop.type === 'number' || prop.type === 'integer') {

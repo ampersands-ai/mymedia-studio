@@ -26,7 +26,7 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 2.5,
   estimatedTimeSeconds: 40,
-  costMultipliers: {},
+  costMultipliers: { max_images: { "1": 1, "2": 2, "3": 3, "4": 4 } },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 10,

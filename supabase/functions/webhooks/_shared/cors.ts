@@ -5,24 +5,46 @@
  * SECURITY: Uses dynamic origin validation to prevent CSRF attacks
  */
 
+// Lovable domain patterns for preview and production URLs
+const LOVABLE_PATTERNS = [
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.lovableproject\.com$/,
+];
+
+/**
+ * Check if origin matches Lovable domain patterns or localhost
+ */
+function isAllowedOrigin(origin: string): boolean {
+  for (const pattern of LOVABLE_PATTERNS) {
+    if (pattern.test(origin)) {
+      return true;
+    }
+  }
+  if (origin.startsWith('http://localhost:')) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Get allowed origin based on environment configuration
  */
 function getAllowedOrigin(requestOrigin: string | null): string {
   const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
-  const allowedOrigins = allowedOriginsEnv
-    ? allowedOriginsEnv.split(',').map(origin => origin.trim())
-    : [
-        'https://yourappurl.com',
-        'http://localhost:5173',
-        'http://localhost:3000',
-      ];
 
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+  if (allowedOriginsEnv) {
+    const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim());
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+      return requestOrigin;
+    }
+    return allowedOrigins[0];
+  }
+
+  if (requestOrigin && isAllowedOrigin(requestOrigin)) {
     return requestOrigin;
   }
 
-  return allowedOrigins[0];
+  return requestOrigin || '*';
 }
 
 /**

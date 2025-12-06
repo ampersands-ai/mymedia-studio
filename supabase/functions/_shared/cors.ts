@@ -7,6 +7,29 @@
  * as it allows any website to make requests to your API with user credentials.
  */
 
+// Lovable domain patterns for preview and production URLs
+const LOVABLE_PATTERNS = [
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.lovableproject\.com$/,
+];
+
+/**
+ * Check if origin matches Lovable domain patterns or localhost
+ */
+function isAllowedOrigin(origin: string): boolean {
+  // Check Lovable patterns
+  for (const pattern of LOVABLE_PATTERNS) {
+    if (pattern.test(origin)) {
+      return true;
+    }
+  }
+  // Allow localhost for development
+  if (origin.startsWith('http://localhost:')) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Get the allowed origin based on environment
  * Supports multiple origins for development/staging/production
@@ -15,21 +38,22 @@ export function getAllowedOrigin(requestOrigin: string | null): string {
   // Get allowed origins from environment variable (comma-separated)
   const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
 
-  const allowedOrigins = allowedOriginsEnv
-    ? allowedOriginsEnv.split(',').map(origin => origin.trim())
-    : [
-        'https://yourappurl.com', // Production URL
-        'http://localhost:5173',   // Local development
-        'http://localhost:3000',   // Alternative local port
-      ];
+  // If environment variable is set, use explicit list
+  if (allowedOriginsEnv) {
+    const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim());
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+      return requestOrigin;
+    }
+    return allowedOrigins[0];
+  }
 
-  // If request origin is in allowed list, return it
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+  // Use pattern matching for Lovable domains
+  if (requestOrigin && isAllowedOrigin(requestOrigin)) {
     return requestOrigin;
   }
 
-  // Default to first allowed origin
-  return allowedOrigins[0];
+  // Return the request origin if provided (for flexibility), otherwise use wildcard
+  return requestOrigin || '*';
 }
 
 /**
@@ -77,21 +101,23 @@ export function getResponseHeaders(req: Request): HeadersInit {
  */
 export function handleCorsPreflight(req: Request): Response {
   const requestOrigin = req.headers.get('Origin');
-  const allowedOrigin = getAllowedOrigin(requestOrigin);
 
-  // Verify origin is allowed
+  // Verify origin is allowed using pattern matching or explicit list
   const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
-  const allowedOrigins = allowedOriginsEnv
-    ? allowedOriginsEnv.split(',').map(origin => origin.trim())
-    : [
-        'https://yourappurl.com',
-        'http://localhost:5173',
-        'http://localhost:3000',
-      ];
-
-  if (requestOrigin && !allowedOrigins.includes(requestOrigin)) {
-    // Return 403 for disallowed origins
-    return new Response('Forbidden', { status: 403 });
+  
+  if (requestOrigin) {
+    if (allowedOriginsEnv) {
+      // Use explicit list from environment
+      const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim());
+      if (!allowedOrigins.includes(requestOrigin)) {
+        return new Response('Forbidden', { status: 403 });
+      }
+    } else {
+      // Use pattern matching for Lovable domains
+      if (!isAllowedOrigin(requestOrigin)) {
+        return new Response('Forbidden', { status: 403 });
+      }
+    }
   }
 
   return new Response(null, {

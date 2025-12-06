@@ -88,8 +88,7 @@ export const SCHEMA = {
       minimum: 1,
       maximum: 6,
       default: 1,
-      description:
-        "Number of images to generate (1-6). State the exact number in your prompt for best results.",
+      description: "Number of images to generate (1-6). State the exact number in your prompt for best results.",
     },
     seed: {
       type: "integer",

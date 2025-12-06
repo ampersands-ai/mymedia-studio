@@ -12,7 +12,7 @@ import {
   GenerateContentRequestSchema,
   type GenerateContentRequest
 } from "../_shared/schemas.ts";
-import { validateGenerationSettings } from "../_shared/jsonb-validation-schemas.ts";
+import { validateGenerationSettingsWithSchema } from "../_shared/jsonb-validation-schemas.ts";
 import { GENERATION_STATUS, SYSTEM_LIMITS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
@@ -771,7 +771,8 @@ Deno.serve(async (req) => {
         _webhook_token: webhookToken
       };
 
-      const validationResult = validateGenerationSettings(settingsToValidate);
+      // Use dynamic schema-based validation - validates enum values against model's schema
+      const validationResult = validateGenerationSettingsWithSchema(settingsToValidate, model.input_schema);
       if (!validationResult.success) {
         logger.error('JSONB validation failed', undefined, {
           userId: user.id,

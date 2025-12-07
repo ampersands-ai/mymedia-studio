@@ -15,7 +15,10 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 1.75,
   estimatedTimeSeconds: 30,
-  costMultipliers: { max_images: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } },
+  costMultipliers: {
+    max_images: { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6 },
+    image_resolution: { "1K": 1, "2K": 1.5, "4K": 2 },
+  },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,
@@ -34,29 +37,78 @@ export const MODEL_CONFIG = {
 
 export const SCHEMA = {
   properties: {
-    aspect_ratio: { default: "1:1", enum: ["1:1", "3:4", "4:3", "9:16", "16:9"], type: "string" },
     prompt: { maxLength: 5000, renderer: "prompt", type: "string" },
-    seed: { type: "integer" },
+    image_size: {
+      default: "square_hd",
+      enum: [
+        "square",
+        "square_hd",
+        "portrait_4_3",
+        "portrait_3_2",
+        "portrait_16_9",
+        "landscape_4_3",
+        "landscape_3_2",
+        "landscape_16_9",
+        "landscape_21_9",
+      ],
+      enumLabels: {
+        square: "Square",
+        square_hd: "Square HD",
+        portrait_4_3: "Portrait 3:4",
+        portrait_3_2: "Portrait 2:3",
+        portrait_16_9: "Portrait 9:16",
+        landscape_4_3: "Landscape 4:3",
+        landscape_3_2: "Landscape 3:2",
+        landscape_16_9: "Landscape 16:9",
+        landscape_21_9: "Landscape 21:9",
+      },
+      type: "string",
+    },
+    image_resolution: {
+      default: "1K",
+      enum: ["1K", "2K", "4K"],
+      type: "string",
+    },
+    max_images: {
+      default: 1,
+      minimum: 1,
+      maximum: 6,
+      step: 1,
+      type: "number",
+    },
+    seed: { type: "integer", showToUser: false },
   },
   required: ["prompt"],
   type: "object",
 } as const;
 
 export function validate(inputs: Record<string, any>) {
-  return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" };
+  if (!inputs.prompt) return { valid: false, error: "Prompt required" };
+  if (inputs.max_images !== undefined && (inputs.max_images < 1 || inputs.max_images > 6)) {
+    return { valid: false, error: "max_images must be between 1 and 6" };
+  }
+  return { valid: true };
 }
+
 export function preparePayload(inputs: Record<string, any>) {
   return {
-    modelId: MODEL_CONFIG.modelId,
+    model: MODEL_CONFIG.modelId,
     input: {
       prompt: inputs.prompt,
-      aspect_ratio: inputs.aspect_ratio || "1:1",
-      ...(inputs.seed && { seed: inputs.seed }),
+      image_size: inputs.image_size || "square_hd",
+      image_resolution: inputs.image_resolution || "1K",
+      max_images: inputs.max_images || 1,
+      ...(inputs.seed !== undefined && inputs.seed !== null && { seed: inputs.seed }),
     },
   };
 }
-export function calculateCost(_inputs: Record<string, any>) {
-  return MODEL_CONFIG.baseCreditCost;
+
+export function calculateCost(inputs: Record<string, any>) {
+  const base = MODEL_CONFIG.baseCreditCost;
+  const resKey = (inputs.image_resolution || "1K") as keyof typeof MODEL_CONFIG.costMultipliers.image_resolution;
+  const resMult = MODEL_CONFIG.costMultipliers.image_resolution[resKey] || 1;
+  const numImages = Math.min(Math.max(inputs.max_images || 1, 1), 6);
+  return Math.round(base * resMult * numImages * 100) / 100;
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {

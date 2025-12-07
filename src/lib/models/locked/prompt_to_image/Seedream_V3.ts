@@ -15,7 +15,7 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 1.75,
   estimatedTimeSeconds: 20,
-  costMultipliers: { max_images: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 } },
+  costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,
@@ -34,27 +34,55 @@ export const MODEL_CONFIG = {
 
 export const SCHEMA = {
   properties: {
-    aspect_ratio: { default: "1:1", enum: ["1:1", "16:9", "9:16", "4:3", "3:4"], type: "string" },
     prompt: { maxLength: 5000, renderer: "prompt", type: "string" },
-    seed: { type: "integer" },
+    image_size: {
+      default: "square_hd",
+      enum: ["square", "square_hd", "portrait_4_3", "portrait_16_9", "landscape_4_3", "landscape_16_9"],
+      enumLabels: {
+        square: "Square",
+        square_hd: "Square HD",
+        portrait_4_3: "Portrait 3:4",
+        portrait_16_9: "Portrait 9:16",
+        landscape_4_3: "Landscape 4:3",
+        landscape_16_9: "Landscape 16:9",
+      },
+      type: "string",
+    },
+    guidance_scale: {
+      default: 2.5,
+      minimum: 1,
+      maximum: 10,
+      step: 0.1,
+      type: "number",
+    },
+    enable_safety_checker: { default: true, type: "boolean" },
+    seed: { type: "integer", showToUser: false },
   },
   required: ["prompt"],
   type: "object",
 } as const;
 
 export function validate(inputs: Record<string, any>) {
-  return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" };
+  if (!inputs.prompt) return { valid: false, error: "Prompt required" };
+  if (inputs.guidance_scale !== undefined && (inputs.guidance_scale < 1 || inputs.guidance_scale > 10)) {
+    return { valid: false, error: "guidance_scale must be between 1 and 10" };
+  }
+  return { valid: true };
 }
+
 export function preparePayload(inputs: Record<string, any>) {
   return {
-    modelId: MODEL_CONFIG.modelId,
+    model: MODEL_CONFIG.modelId,
     input: {
       prompt: inputs.prompt,
-      aspect_ratio: inputs.aspect_ratio || "1:1",
-      ...(inputs.seed && { seed: inputs.seed }),
+      image_size: inputs.image_size || "square_hd",
+      guidance_scale: inputs.guidance_scale ?? 2.5,
+      enable_safety_checker: inputs.enable_safety_checker !== false,
+      ...(inputs.seed !== undefined && inputs.seed !== null && { seed: inputs.seed }),
     },
   };
 }
+
 export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }

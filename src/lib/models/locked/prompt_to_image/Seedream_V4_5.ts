@@ -73,7 +73,7 @@ export function validate(inputs: Record<string, any>) {
 
 export function preparePayload(inputs: Record<string, any>) {
   return {
-    modelId: MODEL_CONFIG.modelId,
+    model: MODEL_CONFIG.modelId,
     input: {
       prompt: inputs.prompt,
       aspect_ratio: inputs.aspect_ratio || "1:1",
@@ -84,7 +84,8 @@ export function preparePayload(inputs: Record<string, any>) {
 
 export function calculateCost(inputs: Record<string, any>) {
   const baseCost = MODEL_CONFIG.baseCreditCost;
-  const qualityMultiplier = MODEL_CONFIG.costMultipliers.quality[inputs.quality as keyof typeof MODEL_CONFIG.costMultipliers.quality] || 1;
+  const qualityMultiplier =
+    MODEL_CONFIG.costMultipliers.quality[inputs.quality as keyof typeof MODEL_CONFIG.costMultipliers.quality] || 1;
   return baseCost * qualityMultiplier;
 }
 

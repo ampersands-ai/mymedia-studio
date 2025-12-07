@@ -24,10 +24,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
-  baseCreditCost: 2,
+  baseCreditCost: 3.5,
   estimatedTimeSeconds: 45,
   costMultipliers: {
-    quality: { basic: 1, high: 2 },
+    quality: { basic: 1, high: 1 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/seedream.png",
   modelFamily: "Seedream",
-  variantName: "Seedream 4.5",
+  variantName: "Seedream V4.5",
   displayOrderInFamily: 1,
 
   // Lock system
@@ -78,7 +78,7 @@ export const SCHEMA = {
       type: "string",
       title: "Quality",
       description: "Basic outputs 2K images, while High outputs 4K images",
-      default: "basic",
+      default: "high",
       enum: ["basic", "high"],
     },
   },

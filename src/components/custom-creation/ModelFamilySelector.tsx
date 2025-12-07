@@ -7,6 +7,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -32,6 +35,8 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   const isMobile = useIsMobile();
   const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
   const [expandedFamilies, setExpandedFamilies] = useState<Record<string, boolean>>({});
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
 
   // Group models by family
   const modelsByFamily = useMemo(() => {
@@ -82,6 +87,8 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   const handleModelSelect = (modelId: string) => {
     onModelChange(modelId);
     setMobileDialogOpen(false);
+    setOpenSubMenu(null);
+    setIsDropdownOpen(false);
   };
 
   const toggleFamily = (family: string) => {
@@ -308,7 +315,10 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   return (
     <div className="space-y-2">
       <Label>Model</Label>
-      <DropdownMenu modal={true}>
+      <DropdownMenu modal={true} open={isDropdownOpen} onOpenChange={(open) => {
+        setIsDropdownOpen(open);
+        if (!open) setOpenSubMenu(null);
+      }}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
             {currentModel ? (
@@ -365,7 +375,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
               return (
                 <DropdownMenuItem
                   key={family}
-                  onClick={() => onModelChange(model.record_id)}
+                  onClick={() => handleModelSelect(model.record_id)}
                   className="cursor-pointer p-3"
                 >
                   <div className="flex items-center gap-2 w-full min-w-0">
@@ -399,59 +409,57 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 </DropdownMenuItem>
               );
             } else {
-              // Multi-model family - inline collapsible within dropdown
-              const isExpanded = expandedFamilies[family];
+              // Multi-model family - controlled submenu
               return (
-                <div key={family} className="px-1">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleFamily(family);
-                    }}
-                    className="flex items-center gap-2 w-full p-3 rounded-sm hover:bg-accent cursor-pointer"
-                  >
-                    {logo && (
-                      <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <img 
-                          src={logo} 
-                          alt={family} 
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="font-medium text-sm truncate">{family}</span>
-                      {stats && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
-                          <div className="flex items-center gap-0.5">
-                            <Coins className="w-3 h-3" />
-                            <span>{stats.cost}+</span>
-                          </div>
-                          {stats.outputs && stats.outputs > 1 && (
-                            <div className="flex items-center gap-0.5">
-                              <ImageIcon className="w-3 h-3" />
-                              <span>×{stats.outputs}</span>
-                            </div>
-                          )}
+                <DropdownMenuSub 
+                  key={family}
+                  open={openSubMenu === family}
+                  onOpenChange={(open) => setOpenSubMenu(open ? family : null)}
+                >
+                  <DropdownMenuSubTrigger className="cursor-pointer p-3">
+                    <div className="flex items-center gap-2 w-full min-w-0">
+                      {logo && (
+                        <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <img 
+                            src={logo} 
+                            alt={family} 
+                            className="h-full w-full object-contain"
+                          />
                         </div>
                       )}
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate">{family}</span>
+                        {stats && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-0.5">
+                              <Coins className="w-3 h-3" />
+                              <span>{stats.cost}+</span>
+                            </div>
+                            {stats.outputs && stats.outputs > 1 && (
+                              <div className="flex items-center gap-0.5">
+                                <ImageIcon className="w-3 h-3" />
+                                <span>×{stats.outputs}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <ChevronRight className={cn(
-                      "h-4 w-4 shrink-0 transition-transform",
-                      isExpanded && "rotate-90"
-                    )} />
-                  </button>
-                  {isExpanded && (
-                    <div className="pl-4 space-y-1 pb-1">
-                      {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => (
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent 
+                    className="min-w-[280px] max-h-[300px] overflow-y-auto bg-background border-border"
+                    sideOffset={2}
+                    alignOffset={-5}
+                  >
+                    {familyModels.sort((a, b) => a.base_token_cost - b.base_token_cost).map((model) => {
+                      const isSelected = selectedModel === model.record_id;
+                      return (
                         <DropdownMenuItem
                           key={model.record_id}
-                          onClick={() => onModelChange(model.record_id)}
+                          onClick={() => handleModelSelect(model.record_id)}
                           className="cursor-pointer p-2"
                         >
-                          <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-1.5 w-full min-w-0">
                             <span className="font-medium text-sm truncate">
                               {model.variant_name || model.model_name}
                             </span>
@@ -467,12 +475,15 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                                 </div>
                               )}
                             </div>
+                            {isSelected && (
+                              <Check className="h-4 w-4 ml-auto flex-shrink-0" />
+                            )}
                           </div>
                         </DropdownMenuItem>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      );
+                    })}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               );
             }
           })}

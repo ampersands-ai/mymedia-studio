@@ -76,6 +76,7 @@ export const SCHEMA = {
         "5.1": "V5.1",
         niji6: "Niji 6 (Anime)",
       },
+      isAdvanced: true,
       type: "string",
     },
     stylization: {
@@ -84,6 +85,7 @@ export const SCHEMA = {
       maximum: 1000,
       step: 50,
       type: "integer",
+      isAdvanced: true,
       description: "Artistic style intensity (0-1000). Higher = more stylized.",
     },
     variety: {
@@ -92,6 +94,7 @@ export const SCHEMA = {
       maximum: 100,
       step: 5,
       type: "integer",
+      isAdvanced: true,
       description: "Diversity of results (0-100). Higher = more diverse.",
       showToUser: false,
     },
@@ -101,6 +104,7 @@ export const SCHEMA = {
       maximum: 3000,
       step: 100,
       type: "integer",
+      isAdvanced: true,
       description: "Creativity level (0-3000). Higher = more unusual.",
       showToUser: false,
     },

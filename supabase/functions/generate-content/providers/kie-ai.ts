@@ -100,12 +100,19 @@ export async function callKieAI(
     // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
     logger.debug('Using FLAT payload structure');
     
-    // Determine the correct field name: 'taskType' for Midjourney, 'model' for others
-    const modelFieldName = request.model === 'mj_txt2img' ? 'taskType' : 'model';
+    // Determine the correct field name: 'taskType' for Midjourney models, 'model' for others
+    // Check for both internal model ID (mj_txt2img) and external model ID (midjourney/text-to-image)
+    const isMidjourneyModel = request.model === 'mj_txt2img' || 
+                               request.model === 'midjourney/text-to-image' ||
+                               request.model.includes('midjourney');
+    const modelFieldName = isMidjourneyModel ? 'taskType' : 'model';
+    
+    // For Midjourney, use the correct taskType value
+    const modelValue = isMidjourneyModel ? 'mj_txt2img' : request.model;
     
     // No more FLAT_MODEL_DEFAULTS - all transformations happen in locked model files
     payload = {
-      [modelFieldName]: request.model,
+      [modelFieldName]: modelValue,
       callBackUrl: callbackUrl,  // System field - not from schema
       ...request.parameters // All parameters come from locked model preparePayload or schema
     };

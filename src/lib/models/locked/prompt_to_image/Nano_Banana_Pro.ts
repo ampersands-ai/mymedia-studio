@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/google.png",
   modelFamily: "Google",
-  variantName: "Pro",
+  variantName: "Nano Banana Pro",
   displayOrderInFamily: 1,
 
   // Lock system

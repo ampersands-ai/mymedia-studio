@@ -356,6 +356,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           className="w-[350px] max-h-[400px] overflow-y-auto bg-background border-border z-50 p-1"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {Object.keys(modelsByFamily).sort((a, b) => {
@@ -448,6 +449,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent 
                     className="min-w-[280px] max-h-[300px] overflow-y-auto bg-background border-border"
+                    style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}
                     sideOffset={2}
                     alignOffset={-5}
                   >

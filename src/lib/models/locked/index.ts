@@ -31,6 +31,8 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
     'image_editing': 'image',
     'image_to_video': 'video',
     'prompt_to_video': 'video',
+    'lip_sync': 'video',
+    'video_to_video': 'video',
     'prompt_to_audio': 'audio',
   };
 
@@ -234,7 +236,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 89 models across 5 groups
+ * Total: 89 models across 7 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -345,6 +347,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f8a2b3c4-9d0e-1f2a-3b4c-5d6e7f8a9b0c": Sora2Pro_PromptToVideo as ModelModule,            // Sora 2 Pro | prompt_to_video | kie_ai
   "a9b3c4d5-0e1f-2a3b-4c5d-6e7f8a9b0c1d": Sora2ProStoryboard_PromptToVideo as ModelModule,  // Sora 2 Pro Storyboard | prompt_to_video | kie_ai
   "0aaf528a-1334-4121-8467-331c95e8da6d": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo | prompt_to_video | kie_ai
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIP SYNC MODELS (0 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VIDEO TO VIDEO MODELS (0 total)
+  // ═══════════════════════════════════════════════════════════════════════════
 };
 
 /**

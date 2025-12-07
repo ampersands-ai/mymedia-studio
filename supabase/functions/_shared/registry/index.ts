@@ -28,6 +28,8 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
     'image_editing': 'image',
     'image_to_video': 'video',
     'prompt_to_video': 'video',
+    'lip_sync': 'video',
+    'video_to_video': 'video',
     'prompt_to_audio': 'audio',
   };
 

@@ -24,10 +24,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
-  baseCreditCost: 4,
+  baseCreditCost: 2.5,
   estimatedTimeSeconds: 50,
   costMultipliers: {
-    resolution: { "1K": 1, "2K": 1.5 },
+    resolution: { "1K": 1, "2K": 1.4 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",

@@ -18,7 +18,7 @@ export const MODEL_CONFIG = {
   costMultipliers: {},
   apiEndpoint: "/api/v1/flux/kontext/generate",
   payloadStructure: "flat",
-  maxImages: 0,
+  maxImages: 1,
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
@@ -26,7 +26,6 @@ export const MODEL_CONFIG = {
   modelFamily: "FLUX",
   variantName: "Flux Kontext Pro",
   displayOrderInFamily: 3,
-
   // Lock system
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/prompt_to_image/FLUX_1_Kontext_Pro_prompt.ts",
@@ -35,28 +34,56 @@ export const MODEL_CONFIG = {
 export const SCHEMA = {
   imageInputField: "inputImage",
   properties: {
-    aspectRatio: { default: "16:9", enum: ["1:1", "3:4", "4:3", "9:16", "16:9", "21:9"], type: "string" },
-    enableTranslation: { default: true, enum: [true, false], showToUser: false, type: "boolean" },
-    inputImage: { renderer: "image", title: "Upload Image", type: "string" },
-    outputFormat: { default: "jpeg", enum: ["jpeg", "png"], type: "string" },
     prompt: { renderer: "prompt", title: "Prompt", type: "string" },
+    inputImage: { renderer: "image", title: "Input Image (Optional)", type: "string" },
+    aspectRatio: {
+      default: "16:9",
+      enum: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+      enumLabels: {
+        "21:9": "Ultra-wide (21:9)",
+        "16:9": "Widescreen (16:9)",
+        "4:3": "Standard (4:3)",
+        "1:1": "Square (1:1)",
+        "3:4": "Portrait (3:4)",
+        "9:16": "Mobile Portrait (9:16)",
+      },
+      type: "string",
+    },
+    outputFormat: { default: "jpeg", enum: ["jpeg", "png"], type: "string" },
+    promptUpsampling: { default: false, type: "boolean", showToUser: false },
+    safetyTolerance: { default: 2, enum: [0, 1, 2, 3, 4, 5, 6], type: "integer", showToUser: false },
+    enableTranslation: { default: true, type: "boolean", showToUser: false },
+    uploadCn: { default: false, type: "boolean", showToUser: false },
+    watermark: { type: "string", showToUser: false },
   },
   required: ["prompt"],
   type: "object",
 } as const;
 
 export function validate(inputs: Record<string, any>) {
-  return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" };
+  if (!inputs.prompt) return { valid: false, error: "Prompt required" };
+  return { valid: true };
 }
+
 export function preparePayload(inputs: Record<string, any>) {
-  return {
+  const payload: Record<string, any> = {
+    model: MODEL_CONFIG.modelId,
     prompt: inputs.prompt,
-    inputImage: inputs.inputImage,
     aspectRatio: inputs.aspectRatio || "16:9",
     outputFormat: inputs.outputFormat || "jpeg",
-    enableTranslation: true,
+    enableTranslation: inputs.enableTranslation !== false,
   };
+
+  // Add optional parameters
+  if (inputs.inputImage) payload.inputImage = inputs.inputImage;
+  if (inputs.promptUpsampling) payload.promptUpsampling = inputs.promptUpsampling;
+  if (inputs.safetyTolerance !== undefined) payload.safetyTolerance = inputs.safetyTolerance;
+  if (inputs.uploadCn) payload.uploadCn = inputs.uploadCn;
+  if (inputs.watermark) payload.watermark = inputs.watermark;
+
+  return payload;
 }
+
 export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }
@@ -88,7 +115,6 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side
-  // This keeps API keys secure and avoids CORS issues
   const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,

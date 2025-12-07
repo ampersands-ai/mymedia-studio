@@ -51,7 +51,7 @@ export const SCHEMA = {
     image_size: {
       type: "string",
       enum: ["1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"],
-      default: "1:1",
+      default: "auto",
       description: "Aspect ratio for the generated image",
     },
     output_format: {

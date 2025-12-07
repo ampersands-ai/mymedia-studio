@@ -75,14 +75,14 @@ export const SCHEMA = {
       type: "string",
       title: "Aspect Ratio",
       description: "Aspect ratio of the generated image",
-      default: "1:1",
+      default: "auto",
       enum: ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "auto"],
     },
     resolution: {
       type: "string",
       title: "Resolution",
       description: "Resolution of the generated image",
-      default: "1K",
+      default: "2K",
       enum: ["1K", "2K", "4K"],
     },
     output_format: {

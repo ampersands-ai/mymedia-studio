@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { downloadSingleOutput } from "@/lib/download-utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface OutputGridProps {
   outputs: Array<{
@@ -88,15 +89,33 @@ export const OutputGrid = ({
     );
   }
 
-  // Multiple outputs - show grid
+  // Multiple outputs - show grid with adaptive layout
+  // Use 2x2 grid for 4 or fewer outputs to maximize image size
+  const getGridClass = () => {
+    if (isAudio) return "grid grid-cols-1 md:grid-cols-2 gap-3";
+    if (outputs.length <= 2) return "grid grid-cols-2 gap-4";
+    if (outputs.length <= 4) return "grid grid-cols-2 gap-4";
+    return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3";
+  };
+
+  // Use larger aspect ratio for fewer outputs
+  const getAspectClass = () => {
+    if (isAudio) return "";
+    if (outputs.length <= 4) return "aspect-[4/3]"; // Larger thumbnails for ≤4
+    return "aspect-square";
+  };
+
   return (
     <div className="space-y-3">
       {/* Grid of thumbnails */}
-      <div className={isAudio ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"}>
+      <div className={getGridClass()}>
         {outputs.map((output, index) => (
           <div key={output.id} className="space-y-2">
             <div
-              className={isAudio ? "relative cursor-pointer group" : "relative aspect-square cursor-pointer group"}
+              className={cn(
+                "relative cursor-pointer group",
+                !isAudio && getAspectClass()
+              )}
               onClick={() => onSelectOutput(index)}
             >
               {/* Output number badge */}

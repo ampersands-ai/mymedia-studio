@@ -36,7 +36,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "1 Kontext Max",
+  variantName: "Flux Kontext Max",
   displayOrderInFamily: 2,
 
   // Lock system

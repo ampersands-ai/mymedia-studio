@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "2 Pro Image-to-Image",
+  variantName: "Flex 2 Pro",
   displayOrderInFamily: 5,
 
   // Lock system
@@ -83,7 +83,7 @@ export const SCHEMA = {
         "9:16": "9:16 (Vertical)",
         "3:2": "3:2 (Classic)",
         "2:3": "2:3 (Classic Portrait)",
-        "auto": "Auto (Based on first input image)",
+        auto: "Auto (Based on first input image)",
       },
     },
     resolution: {

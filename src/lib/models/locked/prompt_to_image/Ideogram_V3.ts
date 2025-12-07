@@ -24,11 +24,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 4,
+  baseCreditCost: 1.75,
   estimatedTimeSeconds: 30,
   costMultipliers: {
     num_images: { "1": 1, "2": 2, "3": 3, "4": 4 },
-    rendering_speed: { TURBO: 1, BALANCED: 1.5, QUALITY: 2 },
+    rendering_speed: { TURBO: 1, BALANCED: 2, QUALITY: 3 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",

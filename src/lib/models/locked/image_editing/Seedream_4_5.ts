@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/seedream.png",
   modelFamily: "Seedream",
-  variantName: "4.5 Edit",
+  variantName: "Seedream 4.5",
   displayOrderInFamily: 1,
 
   // Lock system

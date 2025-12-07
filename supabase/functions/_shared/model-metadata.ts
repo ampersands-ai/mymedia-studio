@@ -26,7 +26,7 @@ export interface ModelMetadata {
 
 /**
  * Static model metadata - extracted from model files
- * Total: 83 models across 5 categories
+ * Total: 88 models across 5 categories
  */
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
@@ -582,7 +582,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO VIDEO MODELS (15 total)
+  // IMAGE TO VIDEO MODELS (17 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": {
     recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1",
@@ -736,7 +736,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (14 total)
+  // PROMPT TO VIDEO MODELS (17 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": {
     recordId: "a96af675-b780-4879-a61f-7285be8766c2",
@@ -876,6 +876,56 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 20,
     estimatedTimeSeconds: 200,
+    isActive: true,
+  },
+  "e7f1a2b3-8c9d-0e1f-2a3b-4c5d6e7f8a9b": {
+    recordId: "e7f1a2b3-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
+    modelId: "sora-2-text-to-video",
+    modelName: "Sora 2",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "f8a2b3c4-9d0e-1f2a-3b4c-5d6e7f8a9b0c": {
+    recordId: "f8a2b3c4-9d0e-1f2a-3b4c-5d6e7f8a9b0c",
+    modelId: "sora-2-pro-text-to-video",
+    modelName: "Sora 2 Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 240,
+    isActive: true,
+  },
+  "a9b3c4d5-0e1f-2a3b-4c5d-6e7f8a9b0c1d": {
+    recordId: "a9b3c4d5-0e1f-2a3b-4c5d-6e7f8a9b0c1d",
+    modelId: "sora-2-pro-storyboard",
+    modelName: "Sora 2 Pro Storyboard",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 50,
+    estimatedTimeSeconds: 300,
+    isActive: true,
+  },
+  "b0c4d5e6-1f2a-3b4c-5d6e-7f8a9b0c1d2e": {
+    recordId: "b0c4d5e6-1f2a-3b4c-5d6e-7f8a9b0c1d2e",
+    modelId: "sora-2-image-to-video",
+    modelName: "Sora 2",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "c1d5e6f7-2a3b-4c5d-6e7f-8a9b0c1d2e3f": {
+    recordId: "c1d5e6f7-2a3b-4c5d-6e7f-8a9b0c1d2e3f",
+    modelId: "sora-2-pro-image-to-video",
+    modelName: "Sora 2 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 240,
     isActive: true,
   },
 };

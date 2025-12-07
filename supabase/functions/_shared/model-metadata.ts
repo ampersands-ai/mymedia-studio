@@ -26,7 +26,7 @@ export interface ModelMetadata {
 
 /**
  * Static model metadata - extracted from model files
- * Total: 76 models across 5 categories
+ * Total: 79 models across 5 categories
  */
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
@@ -258,8 +258,38 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO IMAGE MODELS (29 total)
+  // PROMPT TO IMAGE MODELS (32 total)
   // ═══════════════════════════════════════════════════════════════════════════
+  "a1b2c3d4-e5f6-7890-abcd-ef1234567890": {
+    recordId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    modelId: "flux-2/pro-text-to-image",
+    modelName: "FLUX 2 Pro Text-to-Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 4,
+    estimatedTimeSeconds: 45,
+    isActive: true,
+  },
+  "b2c3d4e5-f6a7-8901-bcde-f12345678901": {
+    recordId: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    modelId: "flux-2/flex-text-to-image",
+    modelName: "FLUX 2 Flex Text-to-Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 40,
+    isActive: true,
+  },
+  "c3d4e5f6-a7b8-9012-cdef-123456789012": {
+    recordId: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    modelId: "z-image",
+    modelName: "Z-Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 30,
+    isActive: true,
+  },
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": {
     recordId: "3b83cee8-6164-4d98-aebe-f4eadcb3da1d",
     modelId: "4o-image-api",

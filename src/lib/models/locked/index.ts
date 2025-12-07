@@ -65,11 +65,13 @@ import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 
-// Image to Video Models (14)
+// Image to Video Models (16)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_ImageToVideo from "./image_to_video/Google_Veo_3_1_HQ";
 import * as GoogleVeo31Reference from "./image_to_video/Google_Veo_3_1_Reference";
 import * as GrokImagine_ImageToVideo from "./image_to_video/Grok_Imagine";
+import * as Kling26_ImageToVideo from "./image_to_video/Kling_2_6_I2V";
+import * as KlingV25TurboPro_ImageToVideo from "./image_to_video/Kling_V2_5_Turbo_Pro_I2V";
 import * as KlingV2Master_ImageToVideo from "./image_to_video/Kling_V2_Master";
 import * as KlingV2Pro_ImageToVideo from "./image_to_video/Kling_V2_Pro";
 import * as KlingV2Standard_ImageToVideo from "./image_to_video/Kling_V2_Standard";
@@ -119,10 +121,12 @@ import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
 import * as RunwareStableDiffusionV3 from "./prompt_to_image/runware_stable_diffusion_v3";
 import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diffusion_xl";
 
-// Prompt to Video Models (10)
+// Prompt to Video Models (14)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
+import * as Kling26_PromptToVideo from "./prompt_to_video/Kling_2_6_T2V";
+import * as KlingV25TurboPro_PromptToVideo from "./prompt_to_video/Kling_V2_5_Turbo_Pro_T2V";
 import * as KlingV2Master_PromptToVideo from "./prompt_to_video/Kling_V2_Master";
 import * as KlingV2Pro_PromptToVideo from "./prompt_to_video/Kling_V2_Pro";
 import * as KlingV2Standard_PromptToVideo from "./prompt_to_video/Kling_V2_Standard";
@@ -225,7 +229,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 80 models across 5 groups
+ * Total: 84 models across 5 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -296,12 +300,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO VIDEO MODELS (13 total)
+  // IMAGE TO VIDEO MODELS (15 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast | image_to_video | kie_ai
   "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ | image_to_video | kie_ai
   "6e8a863e-8630-4eef-bdbb-5b41f4c883f9": GoogleVeo31Reference as ModelModule,              // Google Veo 3.1 Reference | image_to_video | kie_ai
   "8c46aade-1272-4409-bb3a-3701e2423320": GrokImagine_ImageToVideo as ModelModule,          // Grok Imagine | image_to_video | kie_ai
+  "b4c8d0e2-5f6a-7b8c-9d0e-1f2a3b4c5d6e": Kling26_ImageToVideo as ModelModule,              // Kling 2.6 | image_to_video | kie_ai
+  "a3b7c9d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d": KlingV25TurboPro_ImageToVideo as ModelModule,     // Kling V2.5 Turbo Pro | image_to_video | kie_ai
   "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master | image_to_video | kie_ai
   "84084ca4-4153-46bc-8d01-cd4e37d1da68": KlingV2Pro_ImageToVideo as ModelModule,           // Kling V2 Pro | image_to_video | kie_ai
   "88e09730-07e0-4481-bda8-d9d9bde9fec6": KlingV2Standard_ImageToVideo as ModelModule,      // Kling V2 Standard | image_to_video | kie_ai
@@ -313,11 +319,13 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo | image_to_video | kie_ai
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (12 total)
+  // PROMPT TO VIDEO MODELS (14 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast | prompt_to_video | kie_ai
   "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ | prompt_to_video | kie_ai
   "0643a43b-4995-4c5b-ac1d-76ea257a93a0": GrokImagine_PromptToVideo as ModelModule,         // Grok Imagine | prompt_to_video | kie_ai
+  "d6e0f2a4-7b8c-9d0e-1f2a-3b4c5d6e7f8a": Kling26_PromptToVideo as ModelModule,             // Kling 2.6 | prompt_to_video | kie_ai
+  "c5d9e1f3-6a7b-8c9d-0e1f-2a3b4c5d6e7f": KlingV25TurboPro_PromptToVideo as ModelModule,    // Kling V2.5 Turbo Pro | prompt_to_video | kie_ai
   "c5754cad-2b2c-4636-bc19-4ccaa97dde3d": KlingV2Master_PromptToVideo as ModelModule,       // Kling V2 Master | prompt_to_video | kie_ai
   "b6e8c4a3-5d2f-1c7e-8a0f-3d5b6c7e4a8f": KlingV2Pro_PromptToVideo as ModelModule,          // Kling V2 Pro | prompt_to_video | kie_ai
   "e1f2a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a6b": KlingV2Standard_PromptToVideo as ModelModule,     // Kling V2 Standard | prompt_to_video | kie_ai

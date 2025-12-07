@@ -928,6 +928,70 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 240,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HAILUO MODELS (6 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "d7f2a3b4-9c0d-1e2f-3a4b-5c6d7e8f9a0b": {
+    recordId: "d7f2a3b4-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
+    modelId: "hailuo/02-text-to-video-pro",
+    modelName: "Hailuo 02 Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "e8a3b4c5-0d1e-2f3a-4b5c-6d7e8f9a0b1c": {
+    recordId: "e8a3b4c5-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
+    modelId: "hailuo/02-text-to-video-standard",
+    modelName: "Hailuo 02 Standard",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "f9b4c5d6-1e2f-3a4b-5c6d-7e8f9a0b1c2d": {
+    recordId: "f9b4c5d6-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
+    modelId: "hailuo/02-image-to-video-pro",
+    modelName: "Hailuo 02 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "a0c5d6e7-2f3a-4b5c-6d7e-8f9a0b1c2d3e": {
+    recordId: "a0c5d6e7-2f3a-4b5c-6d7e-8f9a0b1c2d3e",
+    modelId: "hailuo/02-image-to-video-standard",
+    modelName: "Hailuo 02 Standard",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "b1d6e7f8-3a4b-5c6d-7e8f-9a0b1c2d3e4f": {
+    recordId: "b1d6e7f8-3a4b-5c6d-7e8f-9a0b1c2d3e4f",
+    modelId: "hailuo/2-3-image-to-video-pro",
+    modelName: "Hailuo 2.3 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 25,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "c2e7f8a9-4b5c-6d7e-8f9a-0b1c2d3e4f5a": {
+    recordId: "c2e7f8a9-4b5c-6d7e-8f9a-0b1c2d3e4f5a",
+    modelId: "hailuo/2-3-image-to-video-standard",
+    modelName: "Hailuo 2.3 Standard",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
 };
 
 /**

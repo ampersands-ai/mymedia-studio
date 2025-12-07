@@ -992,6 +992,50 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 120,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WAN MODELS (4 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "d3e8f9a0-5b6c-7d8e-9f0a-1b2c3d4e5f6a": {
+    recordId: "d3e8f9a0-5b6c-7d8e-9f0a-1b2c3d4e5f6a",
+    modelId: "wan/2-2-a14b-text-to-video-turbo",
+    modelName: "Wan 2.2 Turbo",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "f5a0b1c2-7d8e-9f0a-1b2c-3d4e5f6a7b8c": {
+    recordId: "f5a0b1c2-7d8e-9f0a-1b2c-3d4e5f6a7b8c",
+    modelId: "wan/2-5-text-to-video",
+    modelName: "Wan 2.5",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "e4f9a0b1-6c7d-8e9f-0a1b-2c3d4e5f6a7b": {
+    recordId: "e4f9a0b1-6c7d-8e9f-0a1b-2c3d4e5f6a7b",
+    modelId: "wan/2-2-a14b-image-to-video-turbo",
+    modelName: "Wan 2.2 Turbo",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "a6b1c2d3-8e9f-0a1b-2c3d-4e5f6a7b8c9d": {
+    recordId: "a6b1c2d3-8e9f-0a1b-2c3d-4e5f6a7b8c9d",
+    modelId: "wan/2-5-image-to-video",
+    modelName: "Wan 2.5",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
 };
 
 /**

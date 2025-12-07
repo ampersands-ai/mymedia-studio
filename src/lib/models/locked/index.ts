@@ -65,7 +65,7 @@ import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 
-// Image to Video Models (16)
+// Image to Video Models (18)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_ImageToVideo from "./image_to_video/Google_Veo_3_1_HQ";
 import * as GoogleVeo31Reference from "./image_to_video/Google_Veo_3_1_Reference";
@@ -79,6 +79,8 @@ import * as Runway_ImageToVideo from "./image_to_video/Runway";
 import * as SeedanceV1Lite_ImageToVideo from "./image_to_video/Seedance_V1_Lite";
 import * as SeedreamV1Pro_ImageToVideo from "./image_to_video/Seedream_V1_Pro";
 import * as Sora2OpenAI from "./image_to_video/Sora_2_by_OpenAI_Watermarked";
+import * as Sora2_ImageToVideo from "./image_to_video/Sora_2_I2V";
+import * as Sora2Pro_ImageToVideo from "./image_to_video/Sora_2_Pro_I2V";
 import * as WAN22Turbo_ImageToVideo from "./image_to_video/WAN_2_2_Turbo";
 import * as SeedanceV1ProFastRunware from "./image_to_video/Seedance_V1_0_Pro_Fast_runware";
 
@@ -121,7 +123,7 @@ import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
 import * as RunwareStableDiffusionV3 from "./prompt_to_image/runware_stable_diffusion_v3";
 import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diffusion_xl";
 
-// Prompt to Video Models (14)
+// Prompt to Video Models (17)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
@@ -135,6 +137,9 @@ import * as SeedanceV1Lite_PromptToVideo from "./prompt_to_video/Seedance_V1_Lit
 import * as SeedanceV1ProFastRunware_PromptToVideo from "./prompt_to_video/Seedance_V1_0_Pro_Fast_runware";
 import * as SeedreamV1Pro_PromptToVideo from "./prompt_to_video/Seedream_V1_Pro";
 import * as Sora2OpenAI_PromptToVideo from "./prompt_to_video/Sora_2_by_OpenAI_Watermarked";
+import * as Sora2_PromptToVideo from "./prompt_to_video/Sora_2_T2V";
+import * as Sora2Pro_PromptToVideo from "./prompt_to_video/Sora_2_Pro_T2V";
+import * as Sora2ProStoryboard_PromptToVideo from "./prompt_to_video/Sora_2_Pro_Storyboard";
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 
 /**
@@ -229,7 +234,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 84 models across 5 groups
+ * Total: 89 models across 5 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -300,7 +305,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO VIDEO MODELS (15 total)
+  // IMAGE TO VIDEO MODELS (17 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast | image_to_video | kie_ai
   "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ | image_to_video | kie_ai
@@ -316,10 +321,12 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast | image_to_video | runware
   "50eb3f02-1e58-4b85-a535-e8391a5623c4": SeedreamV1Pro_ImageToVideo as ModelModule,        // Seedream V1 Pro | image_to_video | kie_ai
   "11a995d9-a89e-47a2-b00c-11b2b7dbb717": Sora2OpenAI as ModelModule,                       // Sora 2 by OpenAI (Watermarked) | image_to_video | kie_ai
+  "b0c4d5e6-1f2a-3b4c-5d6e-7f8a9b0c1d2e": Sora2_ImageToVideo as ModelModule,                // Sora 2 | image_to_video | kie_ai
+  "c1d5e6f7-2a3b-4c5d-6e7f-8a9b0c1d2e3f": Sora2Pro_ImageToVideo as ModelModule,             // Sora 2 Pro | image_to_video | kie_ai
   "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo | image_to_video | kie_ai
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (14 total)
+  // PROMPT TO VIDEO MODELS (17 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast | prompt_to_video | kie_ai
   "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ | prompt_to_video | kie_ai
@@ -334,6 +341,9 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "734c7712-aae3-4ad2-93b9-df198623503d": SeedanceV1ProFastRunware_PromptToVideo as ModelModule, // Seedance V1.0 Pro Fast | prompt_to_video | runware
   "b2e60db5-d8b5-4b27-971d-7e195e6ffeda": SeedreamV1Pro_PromptToVideo as ModelModule,       // Seedream V1 Pro | prompt_to_video | kie_ai
   "81a078c7-10fa-450c-92d5-c9f46166be45": Sora2OpenAI_PromptToVideo as ModelModule,         // Sora 2 by OpenAI (Watermarked) | prompt_to_video | kie_ai
+  "e7f1a2b3-8c9d-0e1f-2a3b-4c5d6e7f8a9b": Sora2_PromptToVideo as ModelModule,               // Sora 2 | prompt_to_video | kie_ai
+  "f8a2b3c4-9d0e-1f2a-3b4c-5d6e7f8a9b0c": Sora2Pro_PromptToVideo as ModelModule,            // Sora 2 Pro | prompt_to_video | kie_ai
+  "a9b3c4d5-0e1f-2a3b-4c5d-6e7f8a9b0c1d": Sora2ProStoryboard_PromptToVideo as ModelModule,  // Sora 2 Pro Storyboard | prompt_to_video | kie_ai
   "0aaf528a-1334-4121-8467-331c95e8da6d": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo | prompt_to_video | kie_ai
 };
 

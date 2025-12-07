@@ -44,20 +44,24 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
   return type;
 }
 
-// Image Editing Models (16)
+// Image Editing Models (20)
 import * as ChatGPT4oImage_ImageEditing from "./image_editing/ChatGPT_4o_Image";
 import * as RecraftCrispUpscale from "./image_editing/Recraft_Crisp_Upscale";
 import * as FLUX1KontextMax_ImageEditing from "./image_editing/FLUX_1_Kontext_Max";
 import * as FLUX1KontextPro_ImageEditing from "./image_editing/FLUX_1_Kontext_Pro";
+import * as FLUX2FlexImageToImage from "./image_editing/FLUX_2_Flex_Image_to_Image";
+import * as FLUX2ProImageToImage from "./image_editing/FLUX_2_Pro_Image_to_Image";
 import * as GoogleImageUpscale from "./image_editing/Google_Image_Upscale";
 import * as IdeogramCharacter_ImageEditing from "./image_editing/Ideogram_Character";
 import * as IdeogramImageRemix from "./image_editing/Ideogram_Image_Remix";
 import * as IdeogramV3Reframe from "./image_editing/Ideogram_V3_Reframe";
 import * as NanoBananaEdit from "./image_editing/Nano_Banana_by_Google_edit";
+import * as NanoBananaProEditing from "./image_editing/Nano_Banana_Pro";
 import * as QwenImageEditor from "./image_editing/Qwen_Image_Editor";
 import * as QwenImageToImage from "./image_editing/Qwen_Image_to_Image";
 import * as RemoveBackgroundKie from "./image_editing/Remove_Background_kie_ai";
 import * as RemoveBackgroundRunware from "./image_editing/Remove_Background_runware";
+import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 
@@ -81,7 +85,7 @@ import * as ElevenLabsFast from "./prompt_to_audio/ElevenLabs_Fast";
 import * as ElevenLabsTTS from "./prompt_to_audio/ElevenLabs_TTS";
 import * as Suno from "./prompt_to_audio/Suno";
 
-// Prompt to Image Models (28)
+// Prompt to Image Models (29)
 import * as ChatGPT4oImage_PromptToImage from "./prompt_to_image/ChatGPT_4o_Image";
 import * as Flux1Dev from "./prompt_to_image/Flux_1_Dev";
 import * as FLUX1KontextMax_PromptToImage from "./prompt_to_image/FLUX_1_Kontext_Max_prompt";
@@ -101,6 +105,7 @@ import * as JasperTextToImage from "./prompt_to_image/Jasper_Text_to_Image";
 import * as Midjourney from "./prompt_to_image/Midjourney";
 import * as NanoBananaLovableAI from "./prompt_to_image/Nano_Banana_Lovable_AI";
 import * as NanoBananaByGoogle from "./prompt_to_image/Nano_Banana_by_Google";
+import * as NanoBananaProGeneration from "./prompt_to_image/Nano_Banana_Pro";
 import * as QwenQwenVL from "./prompt_to_image/Qwen_QwenVL";
 import * as SeedreamV3 from "./prompt_to_image/Seedream_V3";
 import * as SeedreamV4_PromptToImage from "./prompt_to_image/Seedream_V4";
@@ -216,7 +221,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 72 models across 5 groups
+ * Total: 77 models across 5 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -228,26 +233,30 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "5c544c90-9344-4acb-9129-0acb9a6a915a": Suno as ModelModule,                              // Suno
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE EDITING MODELS (15 total)
+  // IMAGE EDITING MODELS (19 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "4b68811b-28be-45cb-bcae-9db721ba4547": ChatGPT4oImage_ImageEditing as ModelModule,      // ChatGPT 4o Image | image_editing | kie_ai
   "00ef3f28-4fab-4244-b93f-0ba48641fcbd": RecraftCrispUpscale as ModelModule,               // Crisp Image Upscale | image_editing | kie_ai
   "ab0ae096-f0ef-4197-b186-f38d69e72dd3": FLUX1KontextMax_ImageEditing as ModelModule,      // FLUX.1 Kontext Max | image_editing | kie_ai
   "d0ef1f83-a613-47d4-82f8-10e41da3e2a0": FLUX1KontextPro_ImageEditing as ModelModule,      // FLUX.1 Kontext Pro | image_editing | kie_ai
+  "e1f2a3b4-5c6d-7e8f-9a0b-1c2d3e4f5a6b": FLUX2FlexImageToImage as ModelModule,             // FLUX 2 Flex Image-to-Image | image_editing | kie_ai
+  "f2e3d4c5-6b7a-8f9e-0d1c-2b3a4e5f6d7c": FLUX2ProImageToImage as ModelModule,              // FLUX 2 Pro Image-to-Image | image_editing | kie_ai
   "2959b083-2177-4b8c-ae56-31170c2eb9dc": GoogleImageUpscale as ModelModule,                 // Google Image Upscale | image_editing | kie_ai
   "4a421ed9-ed0c-40bf-b06d-892871506124": IdeogramCharacter_ImageEditing as ModelModule,    // Ideogram Character | image_editing | kie_ai
   "922ca567-5aa1-4fd3-86ba-587b723a5dbf": IdeogramImageRemix as ModelModule,                // Ideogram Image Remix | image_editing | kie_ai
   "2c4802d0-f805-4c31-bab1-a07675e003eb": IdeogramV3Reframe as ModelModule,                 // Ideogram V3 Reframe | image_editing | kie_ai
   "a70d01a3-05de-4918-b934-55a7e5e5d407": NanoBananaEdit as ModelModule,                     // Nano Banana by Google | image_editing | kie_ai
+  "b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e": NanoBananaProEditing as ModelModule,              // Nano Banana Pro | image_editing | kie_ai
   "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditor as ModelModule,                   // Qwen Image Editor | image_editing | kie_ai
   "99532b69-d951-4431-87e3-1d88a9c8ee73": QwenImageToImage as ModelModule,                  // Qwen Image to Image | image_editing | kie_ai
   "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": RemoveBackgroundKie as ModelModule,               // Remove Background | image_editing | kie_ai
   "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background | image_editing | runware
+  "a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d": Seedream45 as ModelModule,                        // Seedream 4.5 | image_editing | kie_ai
   "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO IMAGE MODELS (28 total)
+  // PROMPT TO IMAGE MODELS (29 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o-Image | prompt_to_image | kie_ai
   "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux.1 Dev | prompt_to_image | runware
@@ -269,6 +278,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "eff6c62e-c20e-4eed-9f5b-81e1a7f01529": Midjourney as ModelModule,                        // Midjourney | prompt_to_image | kie_ai
   "4c680009-d3fe-436f-85a7-467c76e85f9e": NanoBananaLovableAI as ModelModule,               // Nano Banana (Lovable AI) | prompt_to_image | lovable_ai_sync
   "09b03fa3-e648-4d42-8494-b91bd2e609b8": NanoBananaByGoogle as ModelModule,                // Nano Banana by Google | prompt_to_image | kie_ai
+  "c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f": NanoBananaProGeneration as ModelModule,           // Nano Banana Pro | prompt_to_image | kie_ai
   "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": QwenQwenVL as ModelModule,                        // Qwen Text to Image | prompt_to_image | kie_ai
   "edc7a24b-b9da-46a7-8155-635626c0f9a3": RunwareFlux11Pro as ModelModule,                  // runware:101@1 | prompt_to_image | runware
   "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": RunwareStableDiffusionV3 as ModelModule,          // runware stable diffusion v3 | prompt_to_image | runware

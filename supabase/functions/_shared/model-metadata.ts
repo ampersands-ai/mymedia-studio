@@ -26,7 +26,7 @@ export interface ModelMetadata {
 
 /**
  * Static model metadata - extracted from model files
- * Total: 71 models across 5 categories
+ * Total: 76 models across 5 categories
  */
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
@@ -64,8 +64,68 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE EDITING MODELS (15 total)
+  // IMAGE EDITING MODELS (19 total)
   // ═══════════════════════════════════════════════════════════════════════════
+  "4b68811b-28be-45cb-bcae-9db721ba4547": {
+    recordId: "4b68811b-28be-45cb-bcae-9db721ba4547",
+    modelId: "4o-image-api",
+    modelName: "ChatGPT 4o Image",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "00ef3f28-4fab-4244-b93f-0ba48641fcbd": {
+    recordId: "00ef3f28-4fab-4244-b93f-0ba48641fcbd",
+    modelId: "recraft/crisp-upscale",
+    modelName: "Crisp Image Upscale",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 0.25,
+    estimatedTimeSeconds: 20,
+    isActive: true,
+  },
+  "e1f2a3b4-5c6d-7e8f-9a0b-1c2d3e4f5a6b": {
+    recordId: "e1f2a3b4-5c6d-7e8f-9a0b-1c2d3e4f5a6b",
+    modelId: "flux-2/flex-image-to-image",
+    modelName: "FLUX 2 Flex Image-to-Image",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 3,
+    estimatedTimeSeconds: 40,
+    isActive: true,
+  },
+  "f2e3d4c5-6b7a-8f9e-0d1c-2b3a4e5f6d7c": {
+    recordId: "f2e3d4c5-6b7a-8f9e-0d1c-2b3a4e5f6d7c",
+    modelId: "flux-2/pro-image-to-image",
+    modelName: "FLUX 2 Pro Image-to-Image",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 4,
+    estimatedTimeSeconds: 50,
+    isActive: true,
+  },
+  "a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d": {
+    recordId: "a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d",
+    modelId: "seedream/4.5-edit",
+    modelName: "Seedream 4.5",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 45,
+    isActive: true,
+  },
+  "b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e": {
+    recordId: "b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e",
+    modelId: "nano-banana-pro",
+    modelName: "Nano Banana Pro",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 35,
+    isActive: true,
+  },
   "4b68811b-28be-45cb-bcae-9db721ba4547": {
     recordId: "4b68811b-28be-45cb-bcae-9db721ba4547",
     modelId: "4o-image-api",
@@ -218,7 +278,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO IMAGE MODELS (28 total)
+  // PROMPT TO IMAGE MODELS (29 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": {
     recordId: "3b83cee8-6164-4d98-aebe-f4eadcb3da1d",
@@ -418,6 +478,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 2,
     estimatedTimeSeconds: 15,
+    isActive: true,
+  },
+  "c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f": {
+    recordId: "c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f",
+    modelId: "nano-banana-pro",
+    modelName: "Nano Banana Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 35,
     isActive: true,
   },
   "36246bd4-f2e5-472b-bcf8-3dd99bc313d8": {

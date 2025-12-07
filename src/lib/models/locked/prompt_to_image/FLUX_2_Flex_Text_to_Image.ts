@@ -26,7 +26,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "2 Flex Text-to-Image",
+  variantName: "Flux 2 Flex",
   displayOrderInFamily: 7,
   // Lock system
   isLocked: true,

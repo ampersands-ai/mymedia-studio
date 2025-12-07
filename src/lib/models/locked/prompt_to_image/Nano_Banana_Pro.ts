@@ -60,17 +60,6 @@ export const SCHEMA = {
       renderer: "prompt",
     },
 
-    // Optional parameters (shown in UI)
-    image_input: {
-      type: "array",
-      title: "Input Images (Optional)",
-      description:
-        "Input images to transform or use as reference (supports up to 8 images). Formats: JPEG, PNG, WebP. Max size: 30MB.",
-      renderer: "image",
-      showToUser: false,
-      items: { type: "string", format: "uri" },
-      maxItems: 8,
-    },
     aspect_ratio: {
       type: "string",
       title: "Aspect Ratio",

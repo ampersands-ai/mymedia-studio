@@ -24,10 +24,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 2,
+  baseCreditCost: 9,
   estimatedTimeSeconds: 35,
   costMultipliers: {
-    resolution: { "1K": 1, "2K": 1.5, "4K": 2 },
+    resolution: { "1K": 1, "2K": 1, "4K": 1.333 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -36,8 +36,8 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/nano-banana.png",
-  modelFamily: "Nano Banana",
+  logoUrl: "/logos/google.png",
+  modelFamily: "Google",
   variantName: "Pro",
   displayOrderInFamily: 1,
 
@@ -64,7 +64,8 @@ export const SCHEMA = {
     image_input: {
       type: "array",
       title: "Input Images (Optional)",
-      description: "Input images to transform or use as reference (supports up to 8 images). Formats: JPEG, PNG, WebP. Max size: 30MB.",
+      description:
+        "Input images to transform or use as reference (supports up to 8 images). Formats: JPEG, PNG, WebP. Max size: 30MB.",
       renderer: "image",
       items: { type: "string", format: "uri" },
       maxItems: 8,

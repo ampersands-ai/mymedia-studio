@@ -109,6 +109,7 @@ import * as NanoBananaProGeneration from "./prompt_to_image/Nano_Banana_Pro";
 import * as QwenQwenVL from "./prompt_to_image/Qwen_QwenVL";
 import * as SeedreamV3 from "./prompt_to_image/Seedream_V3";
 import * as SeedreamV4_PromptToImage from "./prompt_to_image/Seedream_V4";
+import * as SeedreamV45_PromptToImage from "./prompt_to_image/Seedream_V4_5";
 import * as UltraDetailV0 from "./prompt_to_image/Ultra_Detail_V0";
 import * as RunwareFlux11Pro from "./prompt_to_image/runware_flux_1_1_pro";
 import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
@@ -285,6 +286,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": RunwareStableDiffusionXL as ModelModule,          // runware stable diffusion xl | prompt_to_image | runware
   "ac90c626-ab01-4bc0-a000-9b952ddbde0e": SeedreamV3 as ModelModule,                        // Seedream V3 | prompt_to_image | kie_ai
   "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 | prompt_to_image | kie_ai
+  "d5e6f7a8-9b0c-1d2e-3f4a-5b6c7d8e9f0a": SeedreamV45_PromptToImage as ModelModule,         // Seedream V4.5 | prompt_to_image | kie_ai
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════

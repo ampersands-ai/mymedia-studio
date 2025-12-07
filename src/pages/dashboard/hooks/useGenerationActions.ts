@@ -205,7 +205,7 @@ export const useGenerationActions = (userId: string | undefined) => {
 
       if (!hasOutput) {
         // No output = instant refund
-        toast.success(`Report submitted! ${(Number(variables.generation.tokens_used) / 100).toFixed(2)} credits will be refunded to your account.`);
+        toast.success(`Report submitted! ${Number(variables.generation.tokens_used)} credits will be refunded to your account.`);
       } else {
         // Has output = needs review
         toast.success("Report submitted! Our team will review it and respond shortly.");

@@ -20,6 +20,7 @@ const partners: { name: string; logo: string }[] = [
   { name: 'Ideogram', logo: '/logos/ideogram.png' },
   { name: 'Flux', logo: '/logos/flux.png' },
   { name: 'ElevenLabs', logo: '/logos/elevenlabs.png' },
+  { name: 'Z-Image', logo: '/logos/z-image.png' },
 ];
 
 export const PartnerLogosCarousel = () => {
@@ -27,7 +28,7 @@ export const PartnerLogosCarousel = () => {
     <div className="w-full space-y-4">
       {/* Label */}
       <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
-        Powered by 16+ leading AI providers
+        Powered by 17+ leading AI providers
       </p>
 
       {/* Carousel container */}

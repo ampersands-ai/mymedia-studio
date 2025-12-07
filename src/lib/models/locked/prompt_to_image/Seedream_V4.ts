@@ -74,7 +74,7 @@ export const SCHEMA = {
       minimum: 1,
       maximum: 4,
       step: 1,
-      type: "number",
+      type: "integer",
     },
     seed: { type: "integer" },
   },

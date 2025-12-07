@@ -13,9 +13,9 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 2,
+  baseCreditCost: 3.5,
   estimatedTimeSeconds: 35,
-  costMultipliers: { quality: { basic: 1, high: 2 } },
+  costMultipliers: { quality: { basic: 1, high: 1 } },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,
@@ -51,7 +51,7 @@ export const SCHEMA = {
       type: "string",
     },
     quality: {
-      default: "basic",
+      default: "high",
       enum: ["basic", "high"],
       enumLabels: {
         basic: "Basic (2K)",

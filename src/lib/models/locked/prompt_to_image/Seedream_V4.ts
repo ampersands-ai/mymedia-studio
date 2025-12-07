@@ -76,7 +76,7 @@ export const SCHEMA = {
       step: 1,
       type: "number",
     },
-    seed: { type: "integer", showToUser: false },
+    seed: { type: "integer" },
   },
   required: ["prompt"],
   type: "object",

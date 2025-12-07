@@ -96,7 +96,6 @@ export const SCHEMA = {
       type: "integer",
       isAdvanced: true,
       description: "Diversity of results (0-100). Higher = more diverse.",
-      showToUser: false,
     },
     weirdness: {
       default: 0,
@@ -106,7 +105,6 @@ export const SCHEMA = {
       type: "integer",
       isAdvanced: true,
       description: "Creativity level (0-3000). Higher = more unusual.",
-      showToUser: false,
     },
   },
   required: ["prompt"],

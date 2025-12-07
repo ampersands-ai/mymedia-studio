@@ -530,6 +530,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 30,
     isActive: true,
   },
+  "d5e6f7a8-9b0c-1d2e-3f4a-5b6c7d8e9f0a": {
+    recordId: "d5e6f7a8-9b0c-1d2e-3f4a-5b6c7d8e9f0a",
+    modelId: "seedream/4.5-text-to-image",
+    modelName: "Seedream V4.5",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 35,
+    isActive: true,
+  },
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": {
     recordId: "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e",
     modelId: "ultra-detail/v0",

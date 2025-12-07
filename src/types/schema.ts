@@ -34,6 +34,7 @@ export interface JsonSchemaProperty {
   description?: string;
   default?: ParameterValue;
   enum?: Array<string | number>;
+  enumLabels?: Record<string, string>;
   showToUser?: boolean;
   isAdvanced?: boolean;
   minimum?: number;

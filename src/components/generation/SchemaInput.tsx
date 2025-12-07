@@ -663,11 +663,15 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
             <SelectValue placeholder={`Select ${displayName.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
-            {enumOptions.map((option: unknown) => (
-              <SelectItem key={String(option)} value={String(option)}>
-                {String(option)}
-              </SelectItem>
-            ))}
+            {enumOptions.map((option: unknown) => {
+              const optionStr = String(option);
+              const displayLabel = schema.enumLabels?.[optionStr] ?? optionStr;
+              return (
+                <SelectItem key={optionStr} value={optionStr}>
+                  {displayLabel}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

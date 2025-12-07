@@ -26,6 +26,7 @@ export interface JsonSchemaProperty {
   description?: string;
   default?: unknown;
   enum?: unknown[];
+  enumLabels?: Record<string, string>;
   minimum?: number;
   maximum?: number;
   minLength?: number;

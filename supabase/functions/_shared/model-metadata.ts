@@ -26,7 +26,7 @@ export interface ModelMetadata {
 
 /**
  * Static model metadata - extracted from model files
- * Total: 79 models across 5 categories
+ * Total: 83 models across 5 categories
  */
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
@@ -582,7 +582,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO VIDEO MODELS (13 total)
+  // IMAGE TO VIDEO MODELS (15 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": {
     recordId: "8aac94cb-5625-47f4-880c-4f0fd8bd83a1",
@@ -714,9 +714,29 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 180,
     isActive: true,
   },
+  "a3b7c9d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d": {
+    recordId: "a3b7c9d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+    modelId: "kling/v2-5-turbo-image-to-video-pro",
+    modelName: "Kling V2.5 Turbo Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "b4c8d0e2-5f6a-7b8c-9d0e-1f2a3b4c5d6e": {
+    recordId: "b4c8d0e2-5f6a-7b8c-9d0e-1f2a3b4c5d6e",
+    modelId: "kling-2.6/image-to-video",
+    modelName: "Kling 2.6",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 200,
+    isActive: true,
+  },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (12 total)
+  // PROMPT TO VIDEO MODELS (14 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": {
     recordId: "a96af675-b780-4879-a61f-7285be8766c2",
@@ -836,6 +856,26 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "c5d9e1f3-6a7b-8c9d-0e1f-2a3b4c5d6e7f": {
+    recordId: "c5d9e1f3-6a7b-8c9d-0e1f-2a3b4c5d6e7f",
+    modelId: "kling/v2-5-turbo-text-to-video-pro",
+    modelName: "Kling V2.5 Turbo Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "d6e0f2a4-7b8c-9d0e-1f2a-3b4c5d6e7f8a": {
+    recordId: "d6e0f2a4-7b8c-9d0e-1f2a-3b4c5d6e7f8a",
+    modelId: "kling-2.6/text-to-video",
+    modelName: "Kling 2.6",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 200,
     isActive: true,
   },
 };

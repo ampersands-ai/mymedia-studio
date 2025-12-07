@@ -13,7 +13,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 2,
+  baseCreditCost: 0.4,
   estimatedTimeSeconds: 30,
   costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",

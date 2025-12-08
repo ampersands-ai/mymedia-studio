@@ -9,9 +9,6 @@ import { cn } from "@/lib/utils";
 import type { CreationGroup } from "@/constants/creation-groups";
 import type { ModelRecord } from "@/types/custom-creation";
 
-// Fallback logo when model logo is not available
-const FALLBACK_LOGO = "/logos/artifio.png";
-
 interface ModelSelectorProps {
   models: ModelRecord[];
   selectedModel: string | null;
@@ -57,13 +54,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           ? "bg-primary/10 border-primary" 
           : "bg-background border-border hover:bg-muted/30"
       )}>
-        <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-          <img
-            src={model.logo_url || FALLBACK_LOGO}
-            alt={model.model_name}
-            className="h-full w-full object-contain"
-          />
-        </div>
+        {model.logo_url && (
+          <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <img
+              src={model.logo_url}
+              alt={model.model_name}
+              className="h-full w-full object-contain"
+            />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-foreground truncate">
             {model.model_name}
@@ -150,13 +149,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <SelectValue placeholder="Select a model">
             {currentModel && (
               <div className="flex items-center gap-3 w-full">
-                <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <img
-                    src={currentModel.logo_url || FALLBACK_LOGO}
-                    alt={currentModel.model_name}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
+                {currentModel.logo_url && (
+                  <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <img
+                      src={currentModel.logo_url}
+                      alt={currentModel.model_name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                )}
                 <div className="flex-1 text-left min-w-0">
                   <div className="font-semibold text-foreground truncate">
                     {currentModel.model_name}
@@ -204,13 +205,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 className="cursor-pointer"
               >
                 <div className="flex items-center gap-3 w-full py-1">
-                  <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <img
-                      src={model.logo_url || FALLBACK_LOGO}
-                      alt={model.model_name}
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
+                  {model.logo_url && (
+                    <div className="h-8 w-8 rounded-md bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <img
+                        src={model.logo_url}
+                        alt={model.model_name}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-foreground truncate">
                       {model.model_name}

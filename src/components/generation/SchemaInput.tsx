@@ -531,7 +531,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           {((imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('data:image/'))) ||
             (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image/')))) ? (
             <div className="space-y-2">
-              <div className="relative">
+              <div className="relative inline-block">
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted border border-border">
                   <img 
                     src={imagePreview || value as string} 

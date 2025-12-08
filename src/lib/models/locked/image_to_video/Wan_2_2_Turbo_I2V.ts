@@ -21,14 +21,16 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 40, // Default: 720p × 5s = 8 × 5
+  baseCreditCost: 20, // Default: 720p × 5s = 8 × 5
   estimatedTimeSeconds: 120,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 1,
   maxFileSize: 10 * 1024 * 1024, // 10MB
   defaultOutputs: 1,
-  costMultipliers: null,
+  costMultipliers: {
+    resolution: { "480p": 1, "580p": 1.5, "720p": 2 },
+  },
   // UI metadata
   isActive: true,
   logoUrl: "/logos/wan.png",
@@ -53,11 +55,12 @@ export const SCHEMA = {
       type: "string",
       format: "uri",
       title: "Input Image",
-      description: "Image to animate. Will be resized/cropped to match aspect ratio. Formats: jpeg, png, webp (max 10MB)",
+      description:
+        "Image to animate. Will be resized/cropped to match aspect ratio. Formats: jpeg, png, webp (max 10MB)",
       renderer: "image",
     },
     resolution: {
-      default: "720p",
+      default: "480p",
       enum: ["480p", "580p", "720p"],
       enumLabels: {
         "480p": "480p (Budget)",
@@ -83,6 +86,7 @@ export const SCHEMA = {
       type: "boolean",
       default: false,
       title: "Prompt Expansion",
+      showToUser: false,
       description: "Use LLM to expand prompt with additional details",
     },
     seed: {
@@ -90,11 +94,13 @@ export const SCHEMA = {
       minimum: 0,
       maximum: 2147483647,
       title: "Seed",
+      isAdvanced: true,
       description: "Random seed for reproducibility (leave empty for random)",
     },
     acceleration: {
       default: "none",
       enum: ["none", "regular"],
+      isAdvanced: true,
       enumLabels: {
         none: "None (Best Quality)",
         regular: "Regular (Faster)",

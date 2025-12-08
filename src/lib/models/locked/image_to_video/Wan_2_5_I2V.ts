@@ -20,19 +20,22 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 30, // Default: 720p × 5s = 6 × 5
+  baseCreditCost: 20, // Default: 720p × 5s = 6 × 5
   estimatedTimeSeconds: 180,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 1,
   maxFileSize: 10 * 1024 * 1024, // 10MB
   defaultOutputs: 1,
-  costMultipliers: null,
+  costMultipliers: {
+    resolution: { "720p": 1, "1080p": 1.6667 },
+    duration: { "5": 1, "10": 2 },
+  },
   // UI metadata
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.5 Image-to-Video",
+  variantName: "Wan 2.5",
   displayOrderInFamily: 4,
   // Lock system
   isLocked: true,
@@ -78,6 +81,7 @@ export const SCHEMA = {
     negative_prompt: {
       maxLength: 500,
       type: "string",
+      isAdvanced: true,
       title: "Negative Prompt",
       description: "Describe content to avoid in the video",
     },
@@ -85,11 +89,13 @@ export const SCHEMA = {
       type: "boolean",
       default: true,
       title: "Prompt Expansion",
+      showToUser: false,
       description: "Use LLM to rewrite/improve prompt",
     },
     seed: {
       type: "integer",
       title: "Seed",
+      isAdvanced: true,
       description: "Random seed for reproducibility (leave empty for random)",
     },
   },

@@ -21,7 +21,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 4, // Default: 720p × 5s = 8 × 5
+  baseCreditCost: 20, // Default: 720p × 5s = 8 × 5
   estimatedTimeSeconds: 120,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",

@@ -292,6 +292,66 @@ const CustomCreation = () => {
     }
   }, []);
 
+  // Recovery: If we have a pollingGenerationId but no outputs and not actively polling, try to recover
+  useEffect(() => {
+    if (!state.pollingGenerationId || state.generatedOutputs.length > 0 || isPolling || processorStatus !== 'idle') {
+      return;
+    }
+
+    const recoverOutputs = async () => {
+      try {
+        logger.info('Attempting to recover outputs for generation', { generationId: state.pollingGenerationId });
+        
+        const { data: gen, error } = await supabase
+          .from('generations')
+          .select('id, status, storage_path, type, model_id, model_record_id')
+          .eq('id', state.pollingGenerationId)
+          .single();
+
+        if (error || !gen) {
+          logger.warn('Failed to recover generation', { error });
+          return;
+        }
+
+        if (gen.status === 'completed' && gen.storage_path) {
+          // Hydrate outputs - generation completed in background
+          logger.info('Recovered completed generation', { generationId: gen.id, storagePath: gen.storage_path });
+          updateState({
+            generatedOutputs: [{
+              id: gen.id,
+              storage_path: gen.storage_path,
+              output_index: 0,
+              model_id: gen.model_id || undefined,
+              provider: undefined,
+            }],
+            generatedOutput: gen.storage_path,
+            generationCompleteTime: Date.now(),
+            localGenerating: false,
+          });
+        } else if (gen.status === 'processing' || gen.status === 'pending') {
+          // Resume polling - generation still in progress
+          logger.info('Resuming polling for in-progress generation', { generationId: gen.id, status: gen.status });
+          startPolling(state.pollingGenerationId!);
+        } else if (gen.status === 'failed' || gen.status === 'error') {
+          // Clear failed generation
+          updateState({
+            pollingGenerationId: null,
+            localGenerating: false,
+            failedGenerationError: {
+              message: 'Generation failed',
+              generationId: gen.id,
+              timestamp: Date.now(),
+            }
+          });
+        }
+      } catch (err) {
+        logger.error('Error recovering generation outputs', err instanceof Error ? err : new Error(String(err)));
+      }
+    };
+
+    recoverOutputs();
+  }, [state.pollingGenerationId, state.generatedOutputs.length, isPolling, processorStatus, updateState, startPolling]);
+
   // Load template preview images
   useEffect(() => {
     const loadTemplateImages = async () => {

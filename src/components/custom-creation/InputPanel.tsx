@@ -16,7 +16,7 @@ import type {
   SchemaChangeHandler 
 } from "@/types/custom-creation";
 import type { JsonSchemaProperty, ModelJsonSchema, ModelParameters } from "@/types/model-schema";
-import { getFieldOrder, getSchemaProperty } from "@/types/model-schema";
+import { getFieldOrder, getSchemaProperty, getFilteredEnum } from "@/types/model-schema";
 
 interface InputPanelProps {
   selectedModel: string | null;
@@ -340,6 +340,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                               value={modelParameters[key]}
                               onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
                               required={modelSchema?.required?.includes(key)}
+                              filteredEnum={getFilteredEnum(modelSchema, key, schemaProp, modelParameters)}
+                              allValues={modelParameters}
+                              modelSchema={modelSchema}
                               modelId={modelId}
                               provider={provider}
                             />
@@ -349,6 +352,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                               value={modelParameters[nextKey]}
                               onChange={(value) => onModelParametersChange({ ...modelParameters, [nextKey]: value })}
                               required={modelSchema?.required?.includes(nextKey)}
+                              filteredEnum={getFilteredEnum(modelSchema, nextKey, nextProp!, modelParameters)}
+                              allValues={modelParameters}
+                              modelSchema={modelSchema}
                               modelId={modelId}
                               provider={provider}
                             />
@@ -365,6 +371,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                           value={modelParameters[key]}
                           onChange={(value) => onModelParametersChange({ ...modelParameters, [key]: value })}
                           required={modelSchema?.required?.includes(key)}
+                          filteredEnum={getFilteredEnum(modelSchema, key, schemaProp, modelParameters)}
+                          allValues={modelParameters}
+                          modelSchema={modelSchema}
                           modelId={modelId}
                           provider={provider}
                         />

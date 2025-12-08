@@ -57,6 +57,7 @@ import * as GoogleImageUpscale from "./image_editing/Google_Image_Upscale";
 import * as IdeogramCharacter_ImageEditing from "./image_editing/Ideogram_Character";
 import * as IdeogramImageRemix from "./image_editing/Ideogram_Image_Remix";
 import * as IdeogramV3Reframe from "./image_editing/Ideogram_V3_Reframe";
+import * as MidjourneyI2I from "./image_editing/Midjourney_I2I";
 import * as NanoBananaEdit from "./image_editing/Nano_Banana_by_Google_edit";
 import * as NanoBananaProEditing from "./image_editing/Nano_Banana_Pro";
 import * as QwenImageEditor from "./image_editing/Qwen_Image_Editor";
@@ -67,7 +68,7 @@ import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 
-// Image to Video Models (23)
+// Image to Video Models (24)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
 import * as GoogleVeo31HQ_ImageToVideo from "./image_to_video/Google_Veo_3_1_HQ";
 import * as GoogleVeo31Reference from "./image_to_video/Google_Veo_3_1_Reference";
@@ -81,6 +82,7 @@ import * as KlingV25TurboPro_ImageToVideo from "./image_to_video/Kling_V2_5_Turb
 import * as KlingV2Master_ImageToVideo from "./image_to_video/Kling_V2_Master";
 import * as KlingV2Pro_ImageToVideo from "./image_to_video/Kling_V2_Pro";
 import * as KlingV2Standard_ImageToVideo from "./image_to_video/Kling_V2_Standard";
+import * as MidjourneyI2V from "./image_to_video/Midjourney_I2V";
 import * as Runway_ImageToVideo from "./image_to_video/Runway";
 import * as SeedanceV1Lite_ImageToVideo from "./image_to_video/Seedance_V1_Lite";
 import * as SeedreamV1Pro_ImageToVideo from "./image_to_video/Seedream_V1_Pro";
@@ -264,7 +266,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "5c544c90-9344-4acb-9129-0acb9a6a915a": Suno as ModelModule,                              // Suno
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE EDITING MODELS (19 total)
+  // IMAGE EDITING MODELS (20 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "4b68811b-28be-45cb-bcae-9db721ba4547": ChatGPT4oImage_ImageEditing as ModelModule,      // ChatGPT 4o Image | image_editing | kie_ai
   "00ef3f28-4fab-4244-b93f-0ba48641fcbd": RecraftCrispUpscale as ModelModule,               // Crisp Image Upscale | image_editing | kie_ai
@@ -276,6 +278,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "4a421ed9-ed0c-40bf-b06d-892871506124": IdeogramCharacter_ImageEditing as ModelModule,    // Ideogram Character | image_editing | kie_ai
   "922ca567-5aa1-4fd3-86ba-587b723a5dbf": IdeogramImageRemix as ModelModule,                // Ideogram Image Remix | image_editing | kie_ai
   "2c4802d0-f805-4c31-bab1-a07675e003eb": IdeogramV3Reframe as ModelModule,                 // Ideogram V3 Reframe | image_editing | kie_ai
+  "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c": MidjourneyI2I as ModelModule,                     // Midjourney I2I | image_editing | kie_ai
   "a70d01a3-05de-4918-b934-55a7e5e5d407": NanoBananaEdit as ModelModule,                     // Nano Banana by Google | image_editing | kie_ai
   "b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e": NanoBananaProEditing as ModelModule,              // Nano Banana Pro | image_editing | kie_ai
   "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditor as ModelModule,                   // Qwen Image Editor | image_editing | kie_ai
@@ -323,7 +326,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO VIDEO MODELS (21 total)
+  // IMAGE TO VIDEO MODELS (22 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "8aac94cb-5625-47f4-880c-4f0fd8bd83a1": GoogleVeo31Fast_ImageToVideo as ModelModule,      // Google Veo 3.1 Fast | image_to_video | kie_ai
   "a5c2ec16-6294-4588-86b6-7b4182601cda": GoogleVeo31HQ_ImageToVideo as ModelModule,        // Google Veo 3.1 HQ | image_to_video | kie_ai
@@ -338,6 +341,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "c3397c13-3a52-4973-a87c-b4c20aca0fc0": KlingV2Master_ImageToVideo as ModelModule,        // Kling V2 Master | image_to_video | kie_ai
   "84084ca4-4153-46bc-8d01-cd4e37d1da68": KlingV2Pro_ImageToVideo as ModelModule,           // Kling V2 Pro | image_to_video | kie_ai
   "88e09730-07e0-4481-bda8-d9d9bde9fec6": KlingV2Standard_ImageToVideo as ModelModule,      // Kling V2 Standard | image_to_video | kie_ai
+  "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b": MidjourneyI2V as ModelModule,                     // Midjourney I2V | image_to_video | kie_ai
   "d2c37239-d544-4cce-bd8d-fb48ea44b287": Runway_ImageToVideo as ModelModule,               // Runway | image_to_video | kie_ai
   "d7df81f6-dc86-4e04-9f75-d4e8c9b03fb2": SeedanceV1Lite_ImageToVideo as ModelModule,      // Seedance V1 Lite | image_to_video | kie_ai
   "3ac57af3-f7f0-4205-b1a4-3c7c3c1c7dad": SeedanceV1ProFastRunware as ModelModule,          // Seedance V1.0 Pro Fast | image_to_video | runware

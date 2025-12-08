@@ -1080,6 +1080,28 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 180,
     isActive: true,
   },
+  // Midjourney I2V
+  "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b": {
+    recordId: "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
+    modelId: "midjourney/image-to-video",
+    modelName: "Midjourney I2V",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  // Midjourney I2I
+  "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c": {
+    recordId: "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
+    modelId: "midjourney/image-to-image",
+    modelName: "Midjourney I2I",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
 };
 
 /**

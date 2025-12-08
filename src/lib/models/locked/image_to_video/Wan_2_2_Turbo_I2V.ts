@@ -35,7 +35,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.2-a14b Image-to-Video Turbo",
+  variantName: "Wan 2.2 Turbo",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

@@ -531,20 +531,22 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
           {((imagePreview && (imagePreview.startsWith('http') || imagePreview.startsWith('data:image/'))) ||
             (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image/')))) ? (
             <div className="space-y-2">
-              <div className="relative inline-block">
-                <img 
-                  src={imagePreview || value as string} 
-                  alt="Preview" 
-                  className="max-w-full h-auto max-h-48 rounded-lg border"
-                />
+              <div className="relative">
+                <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted border border-border">
+                  <img 
+                    src={imagePreview || value as string} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2 h-6 w-6"
+                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full shadow-lg z-10 border border-background"
                   onClick={clearImage}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
               <Input

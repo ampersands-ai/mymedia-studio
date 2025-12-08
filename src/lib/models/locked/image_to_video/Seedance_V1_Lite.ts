@@ -20,11 +20,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 2,
+  baseCreditCost: 5,
   estimatedTimeSeconds: 300,
   costMultipliers: {
     duration: { "5": 1, "10": 2 },
-    resolution: { "480p": 1, "720p": 2.5, "1080p": 5 },
+    resolution: { "480p": 1, "720p": 2.25, "1080p": 5 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -66,7 +66,7 @@ export const SCHEMA = {
       renderer: "image",
     },
     resolution: {
-      default: "720p",
+      default: "480p",
       enum: ["480p", "720p", "1080p"],
       enumLabels: {
         "480p": "480p (Fast)",
@@ -90,6 +90,7 @@ export const SCHEMA = {
       type: "boolean",
       default: false,
       title: "Fixed Camera",
+      isAdvanced: true,
       description: "Whether to fix the camera position",
     },
     seed: {
@@ -97,12 +98,14 @@ export const SCHEMA = {
       minimum: -1,
       maximum: 2147483647,
       default: -1,
+      isAdvanced: true,
       title: "Seed",
       description: "Random seed for reproducibility. Use -1 for random.",
     },
     enable_safety_checker: {
       type: "boolean",
-      default: true,
+      default: false,
+      showToUser: false,
       title: "Safety Checker",
       description: "Check content for safety before processing",
     },

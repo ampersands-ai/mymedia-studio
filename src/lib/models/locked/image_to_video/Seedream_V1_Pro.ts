@@ -59,7 +59,7 @@ export const SCHEMA = {
       renderer: "image",
     },
     resolution: {
-      default: "720p",
+      default: "480p",
       enum: ["480p", "720p", "1080p"],
       enumLabels: {
         "480p": "480p (Fast)",
@@ -82,6 +82,7 @@ export const SCHEMA = {
     camera_fixed: {
       type: "boolean",
       default: false,
+      isAdvanced: true,
       title: "Fixed Camera",
       description: "Whether to fix the camera position",
     },
@@ -90,12 +91,14 @@ export const SCHEMA = {
       minimum: -1,
       maximum: 2147483647,
       default: -1,
+      isAdvanced: true,
       title: "Seed",
       description: "Random seed for reproducibility. Use -1 for random.",
     },
     enable_safety_checker: {
       type: "boolean",
-      default: true,
+      default: false,
+      showToUser: false,
       title: "Safety Checker",
       description: "Check content for safety before processing",
     },

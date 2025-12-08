@@ -20,11 +20,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 8,
+  baseCreditCost: 5,
   estimatedTimeSeconds: 90,
   costMultipliers: {
     duration: { "5": 1, "10": 2 },
-    resolution: { "480p": 0.5, "720p": 1, "1080p": 2 },
+    resolution: { "480p": 1, "720p": 2.25, "1080p": 5 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -64,7 +64,7 @@ export const SCHEMA = {
       title: "Aspect Ratio",
     },
     resolution: {
-      default: "720p",
+      default: "480p",
       enum: ["480p", "720p", "1080p"],
       enumLabels: {
         "480p": "480p (Fast)",
@@ -86,6 +86,7 @@ export const SCHEMA = {
     },
     camera_fixed: {
       type: "boolean",
+      isAdvanced: true,
       default: false,
       title: "Fixed Camera",
       description: "Whether to fix the camera position",
@@ -93,6 +94,7 @@ export const SCHEMA = {
     seed: {
       type: "integer",
       minimum: -1,
+      isAdvanced: true,
       maximum: 2147483647,
       default: -1,
       title: "Seed",
@@ -100,7 +102,8 @@ export const SCHEMA = {
     },
     enable_safety_checker: {
       type: "boolean",
-      default: true,
+      default: false,
+      showToUser: false,
       title: "Safety Checker",
       description: "Check content for safety before processing",
     },

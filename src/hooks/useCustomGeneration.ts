@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger';
 import { handleError } from "@/lib/errors";
 import { UserTokens, OnboardingProgress } from "@/types/generation";
 import type { AIModel } from "@/hooks/useModels";
+import { getModel } from "@/lib/models/registry";
 
 const customGenerationLogger = logger.child({ component: 'useCustomGeneration' });
 
@@ -51,7 +52,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   const { generate, isGenerating } = useGeneration();
 
   /**
-   * Calculate token cost with multipliers
+   * Calculate token cost using model's calculateCost() function
+   * This ensures single source of truth - model files control all pricing
    */
   const calculateTokens = useCallback(() => {
     if (!state.selectedModel || !filteredModels) return 50;
@@ -59,6 +61,21 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     const currentModel = filteredModels.find(m => m.record_id === state.selectedModel);
     if (!currentModel) return 50;
 
+    // PRIMARY: Use model's own calculateCost function (single source of truth)
+    try {
+      const modelModule = getModel(state.selectedModel);
+      if (modelModule?.calculateCost) {
+        const inputs = { 
+          prompt: state.prompt, 
+          ...state.modelParameters 
+        };
+        return Math.round(modelModule.calculateCost(inputs) * 100) / 100;
+      }
+    } catch {
+      // Model not found in registry - fall through to fallback
+    }
+
+    // FALLBACK: Legacy multiplier-based calculation (from database)
     let tokens = currentModel.base_token_cost;
     const multipliers = currentModel.cost_multipliers || {};
     
@@ -67,15 +84,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       
       if (paramValue === undefined || paramValue === null) continue;
       
-      // Handle nested object (parameter-first structure)
-      // Example: { "quality": { "Standard": 1, "HD": 1.5 } }
       if (typeof multiplierConfig === 'object' && !Array.isArray(multiplierConfig)) {
         const multiplier = (multiplierConfig as Record<string, number>)[paramValue] ?? 1;
         if (typeof multiplier === 'number') {
           tokens *= multiplier;
         }
       }
-      // Legacy: Handle flat number (for backward compatibility)
       else if (typeof multiplierConfig === 'number') {
         if (typeof paramValue === 'boolean' && paramValue === true) {
           tokens *= multiplierConfig;
@@ -89,13 +103,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       }
     }
     
-    // Legacy: Add cost for uploaded images if multiplier exists
     if (uploadedImages.length > 0 && multipliers.uploaded_image) {
       tokens += uploadedImages.length * (multipliers.uploaded_image as number);
     }
     
     return Math.round(tokens * 100) / 100;
-  }, [state.selectedModel, state.modelParameters, uploadedImages, filteredModels]);
+  }, [state.selectedModel, state.modelParameters, state.prompt, uploadedImages, filteredModels]);
 
   /**
    * Estimated tokens with caption cost

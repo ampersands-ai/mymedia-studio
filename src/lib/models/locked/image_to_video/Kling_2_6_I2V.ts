@@ -33,7 +33,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "Kling 2.6",
+  variantName: "Kling V2.6",
   displayOrderInFamily: 5,
   // Lock system
   isLocked: true,

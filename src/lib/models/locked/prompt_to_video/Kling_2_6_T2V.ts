@@ -17,7 +17,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "kling-2.6/text-to-video",
   recordId: "d6e0f2a4-7b8c-9d0e-1f2a-3b4c5d6e7f8a",
-  modelName: "Kling 2.6",
+  modelName: "Kling V2.6",
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
@@ -32,7 +32,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "2.6",
+  variantName: "Kling V2.6",
   displayOrderInFamily: 5,
   // Lock system
   isLocked: true,

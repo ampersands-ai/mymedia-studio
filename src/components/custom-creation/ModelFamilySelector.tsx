@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AIModel } from "@/hooks/useModels";
 
+// Fallback logo when model logo is not available
+const FALLBACK_LOGO = "/logos/artifio.png";
+
 interface ModelFamilySelectorProps {
   models: AIModel[];
   selectedModel: string | null;
@@ -78,10 +81,10 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
     };
   };
 
-  // Get logo from first model in family
+  // Get logo from first model in family (with fallback)
   const getFamilyLogo = (family: string) => {
     const firstModel = modelsByFamily[family]?.[0];
-    return firstModel?.logo_url;
+    return firstModel?.logo_url || FALLBACK_LOGO;
   };
 
   const handleModelSelect = (modelId: string) => {
@@ -123,15 +126,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
         >
           {currentModel ? (
             <div className="flex items-center gap-3">
-              {currentModel.logo_url && (
-                <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <img 
-                    src={currentModel.logo_url} 
-                    alt={currentModel.model_name} 
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              )}
+              <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <img 
+                  src={currentModel.logo_url || FALLBACK_LOGO} 
+                  alt={currentModel.model_name} 
+                  className="h-full w-full object-contain"
+                />
+              </div>
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="font-medium truncate">{currentModel.model_name}</span>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
@@ -185,15 +186,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                       onClick={() => handleModelSelect(model.record_id)}
                     >
                       <div className="flex items-center gap-2 w-full min-w-0">
-                        {logo && (
-                          <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <img 
-                              src={logo} 
-                              alt={model.model_name} 
-                              className="h-full w-full object-contain"
-                            />
-                          </div>
-                        )}
+                        <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <img 
+                            src={logo} 
+                            alt={model.model_name} 
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span className="font-medium text-sm truncate">{model.model_name}</span>
                           {stats && (
@@ -230,15 +229,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                           className="w-full justify-between h-auto p-3 bg-muted/50"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                            {logo && (
-                              <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <img 
-                                  src={logo} 
-                                  alt={family} 
-                                  className="h-full w-full object-contain"
-                                />
-                              </div>
-                            )}
+                            <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <img 
+                                src={logo} 
+                                alt={family} 
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
                             <div className="flex items-center gap-1.5 flex-1 min-w-0">
                               <span className="font-medium text-sm truncate">{family}</span>
                               {stats && (
@@ -323,15 +320,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
           <Button variant="outline" className="w-full justify-between">
             {currentModel ? (
               <div className="flex items-center gap-3">
-                {currentModel.logo_url && (
-                  <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <img 
-                      src={currentModel.logo_url} 
-                      alt={currentModel.model_name} 
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
-                )}
+                <div className="h-8 w-8 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <img 
+                    src={currentModel.logo_url || FALLBACK_LOGO} 
+                    alt={currentModel.model_name} 
+                    className="h-full w-full object-contain"
+                  />
+                </div>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="font-medium truncate">{currentModel.model_name}</span>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
@@ -380,15 +375,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                   className="cursor-pointer p-3"
                 >
                   <div className="flex items-center gap-2 w-full min-w-0">
-                    {logo && (
-                      <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <img 
-                          src={logo} 
-                          alt={model.model_name} 
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <img 
+                        src={logo} 
+                        alt={model.model_name} 
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <span className="font-medium text-sm truncate">{model.model_name}</span>
                       {stats && (
@@ -419,15 +412,13 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 >
                   <DropdownMenuSubTrigger className="cursor-pointer p-3">
                     <div className="flex items-center gap-2 w-full min-w-0">
-                      {logo && (
-                        <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
-                          <img 
-                            src={logo} 
-                            alt={family} 
-                            className="h-full w-full object-contain"
-                          />
-                        </div>
-                      )}
+                      <div className="h-7 w-7 rounded bg-white/90 dark:bg-white/95 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <img 
+                          src={logo} 
+                          alt={family} 
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
                       <div className="flex items-center gap-1.5 flex-1 min-w-0">
                         <span className="font-medium text-sm truncate">{family}</span>
                         {stats && (

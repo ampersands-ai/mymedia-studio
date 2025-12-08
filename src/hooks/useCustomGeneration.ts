@@ -152,7 +152,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     };
     const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
 
-    // Start generation
+    // Start generation - clear any previous error state
     updateState({ 
       localGenerating: true, 
       generationStartTime: Date.now(),
@@ -161,6 +161,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       selectedOutputIndex: 0,
       captionData: null,
       showLightbox: false,
+      failedGenerationError: null,
     });
 
     try {

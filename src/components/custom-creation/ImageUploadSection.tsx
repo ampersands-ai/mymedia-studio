@@ -199,7 +199,7 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
       {isSoraModel && (
         <p className="text-xs text-amber-600 dark:text-amber-400">
-          ⚠️ We currently do not support uploads of images containing photorealistic people (AI generated only).
+          ⚠️ We currently do not support uploads of images containing photorealistic people.
         </p>
       )}
       <p className="text-xs text-muted-foreground">

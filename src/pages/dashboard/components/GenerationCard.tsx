@@ -105,9 +105,8 @@ export const GenerationCard = ({ generation, index, onView, onDownload }: Genera
                 playOnHover={true}
                 priority={index < 6}
                 isExternalUrl={
-                  generation.is_video_job ||
-                  (generation.output_url !== null &&
-                    !/^(storyboard-videos|faceless-videos)\//.test(generation.output_url || ''))
+                  generation.output_url !== null && 
+                  !generation.output_url.includes('supabase.co/storage')
                 }
               />
             ) : effectiveType === "image" ? (

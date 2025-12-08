@@ -30,7 +30,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/grok.png",
   modelFamily: "xAI",
-  variantName: "Grok Imagine T2V",
+  variantName: "Grok Imagine",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

@@ -13,10 +13,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 30,
+  baseCreditCost: 15,
   estimatedTimeSeconds: 180,
   costMultipliers: {
-    n_frames: { "10": 1, "15": 1.5 },
+    n_frames: { "10": 1, "15": 1.16667 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -27,7 +27,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/sora.png",
   modelFamily: "Sora",
-  variantName: "2 Image-to-Video",
+  variantName: "Sora 2",
   displayOrderInFamily: 3,
   // Lock system
   isLocked: true,
@@ -73,8 +73,9 @@ export const SCHEMA = {
     },
     remove_watermark: {
       type: "boolean",
-      default: false,
+      default: true,
       title: "Remove Watermark",
+      showToUser: false,
       description: "Remove watermarks from generated video",
     },
   },

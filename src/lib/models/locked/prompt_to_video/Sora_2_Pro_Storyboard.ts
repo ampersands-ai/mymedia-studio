@@ -18,10 +18,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 50,
-  estimatedTimeSeconds: 300,
+  baseCreditCost: 75,
+  estimatedTimeSeconds: 1000,
   costMultipliers: {
-    n_frames: { "10": 1, "15": 1.5, "25": 2.5 },
+    n_frames: { "10": 1, "15": 1.8, "25": 2 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -32,7 +32,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/sora.png",
   modelFamily: "Sora",
-  variantName: "2 Pro Storyboard",
+  variantName: "Sora 2 Pro Storyboard",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

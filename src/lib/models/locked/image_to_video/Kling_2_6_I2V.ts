@@ -17,7 +17,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "kling-2.6/image-to-video",
   recordId: "b4c8d0e2-5f6a-7b8c-9d0e-1f2a3b4c5d6e",
-  modelName: "Kling 2.6",
+  modelName: "Kling V2.6",
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",

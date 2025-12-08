@@ -13,7 +13,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 15,
+  baseCreditCost: 21,
   estimatedTimeSeconds: 180,
   costMultipliers: { duration: { "5": 1, "10": 2 } },
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -24,7 +24,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "V2.5 Turbo Pro",
+  variantName: "Kling V2.5 Turbo Pro",
   displayOrderInFamily: 4,
   // Lock system
   isLocked: true,

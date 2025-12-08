@@ -46,6 +46,13 @@ export const SCHEMA = {
   imageInputField: "image_urls",
   properties: {
     // Method 1: External image URL
+    prompt: {
+      maxLength: 5000,
+      renderer: "prompt",
+      type: "string",
+      title: "Prompt (Optional)",
+      description: "Text prompt describing the desired video motion",
+    },
     image_urls: {
       type: "array",
       title: "External Image URL",
@@ -59,6 +66,7 @@ export const SCHEMA = {
       type: "string",
       maxLength: 100,
       title: "Grok Task ID",
+      showToUser: false,
       description: "Task ID from a previous Grok image generation. Supports Spicy mode. Don't use with image_urls.",
     },
     index: {
@@ -67,29 +75,21 @@ export const SCHEMA = {
       maximum: 5,
       default: 0,
       title: "Image Index",
+      showToUser: false,
       description: "Which of the 6 generated images to use (0-5). Only used with task_id.",
-    },
-    prompt: {
-      maxLength: 5000,
-      renderer: "prompt",
-      type: "string",
-      title: "Prompt (Optional)",
-      description: "Text prompt describing the desired video motion",
     },
     mode: {
       default: "normal",
-      enum: ["fun", "normal", "spicy"],
+      enum: ["fun", "normal"],
       enumLabels: {
         fun: "Fun",
         normal: "Normal",
-        spicy: "Spicy (task_id only)",
       },
       type: "string",
       title: "Mode",
-      description: "Spicy mode only works with task_id input, not external images",
     },
   },
-  required: [], // No individual field is strictly required, but need image_urls OR task_id
+  required: ["prompt", "image_urls"], // No individual field is strictly required, but need image_urls OR task_id
   type: "object",
 } as const;
 

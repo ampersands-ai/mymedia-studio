@@ -1,12 +1,20 @@
 /**
  * Midjourney Image-to-Video Model
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
+ * CRITICAL FIXES APPLIED:
+ * - Endpoint: /api/v1/mj/generate (NOT /api/v1/jobs/createTask)
+ * - Payload: FLAT structure (NOT wrapper)
+ * - Image field: fileUrls array with maxItems: 1 (NOT image_url string)
+ * - Added: taskType: "mj_video", aspectRatio
+ * - Removed: speed (NOT required for video per API docs)
+ * - Removed: version, stylization, variety, weirdness (NOT applicable for video)
+ *
  * @locked
  * @model midjourney/image-to-video
  * @provider kie.ai
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 import { getGenerationType } from "@/lib/models/registry";
@@ -27,62 +35,103 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 20,
+  baseCreditCost: 15,
   estimatedTimeSeconds: 120,
-  costMultipliers: null,
-  apiEndpoint: "/api/v1/jobs/createTask",
-  payloadStructure: "wrapper",
-  maxImages: 1,
+  costMultipliers: null, // No multipliers for video
+  apiEndpoint: "/api/v1/mj/generate", // CORRECTED: Was /api/v1/jobs/createTask
+  payloadStructure: "flat", // CORRECTED: Was wrapper
+  maxImages: 1, // ONLY one image for video generation
   maxFileSize: 10 * 1024 * 1024,
   defaultOutputs: 1,
   isActive: true,
-  logoUrl: null,
+  logoUrl: "/logos/midjourney.png",
   modelFamily: "Midjourney",
-  variantName: "Midjourney I2V",
-  displayOrderInFamily: 1,
+  variantName: "Image-to-Video",
+  displayOrderInFamily: 3,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/image_to_video/Midjourney_I2V.ts",
 } as const;
 
 // ============================================================================
-// FROZEN SCHEMA - DO NOT MODIFY
+// SCHEMA - CORRECTED TO MATCH API
+// Note: Video generation does NOT use speed, version, stylization, variety, weirdness
 // ============================================================================
 
 export const SCHEMA = Object.freeze({
   type: "object",
-  required: ["prompt", "image_url"],
+  required: ["prompt", "fileUrls"],
+  imageInputField: "fileUrls", // CORRECTED: Was image_url
   properties: {
     prompt: {
       type: "string",
       title: "Prompt",
       default: "",
-      description: "Describe what you want to generate",
+      description: "Text prompt describing the desired video motion and content",
       maxLength: 2000,
       renderer: "prompt",
     },
-    image_url: {
-      type: "string",
-      title: "Reference Image",
-      default: "",
-      description: "Upload an image to animate",
+    fileUrls: {
+      type: "array",
+      title: "Input Image",
+      description: "Single image to animate (only one image supported for video)",
       renderer: "image",
+      items: { type: "string", format: "uri" },
+      minItems: 1,
+      maxItems: 1, // CRITICAL: Only 1 image for video
+    },
+    aspectRatio: {
+      type: "string",
+      title: "Aspect Ratio",
+      default: "16:9",
+      enum: ["1:2", "9:16", "2:3", "3:4", "5:6", "6:5", "4:3", "3:2", "1:1", "16:9", "2:1"],
+      enumLabels: {
+        "1:2": "Tall (1:2)",
+        "9:16": "Portrait (9:16)",
+        "2:3": "Portrait (2:3)",
+        "3:4": "Portrait (3:4)",
+        "5:6": "Portrait (5:6)",
+        "6:5": "Landscape (6:5)",
+        "4:3": "Landscape (4:3)",
+        "3:2": "Landscape (3:2)",
+        "1:1": "Square (1:1)",
+        "16:9": "Widescreen (16:9)",
+        "2:1": "Ultra Wide (2:1)",
+      },
+    },
+    waterMark: {
+      type: "string",
+      title: "Watermark",
+      description: "Optional watermark text to add to generated video",
+      isAdvanced: true,
     },
   },
+  "x-order": ["prompt", "fileUrls", "aspectRatio"],
 });
 
 // ============================================================================
-// PAYLOAD PREPARATION
+// PAYLOAD PREPARATION - FLAT STRUCTURE WITH taskType
+// Note: speed is NOT required for mj_video per API docs
 // ============================================================================
 
 export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
+    taskType: "mj_video", // REQUIRED for video
     prompt: inputs.prompt || "",
-    image_url: inputs.image_url || "",
+    fileUrls: inputs.fileUrls || [],
+    aspectRatio: inputs.aspectRatio || "16:9",
   };
+
+  // Note: speed, version, stylization, variety, weirdness are NOT applicable for video
+
+  if (inputs.waterMark) {
+    payload.waterMark = inputs.waterMark;
+  }
+
+  return payload;
 }
 
 // ============================================================================
-// COST CALCULATION
+// COST CALCULATION - FIXED COST FOR VIDEO
 // ============================================================================
 
 export function calculateCost(_inputs: Record<string, unknown>): number {
@@ -90,16 +139,24 @@ export function calculateCost(_inputs: Record<string, unknown>): number {
 }
 
 // ============================================================================
-// VALIDATION
+// VALIDATION - CORRECTED FOR fileUrls ARRAY WITH MAX 1 IMAGE
 // ============================================================================
 
 export function validate(inputs: Record<string, unknown>): { valid: boolean; error?: string } {
   if (!inputs.prompt || (typeof inputs.prompt === "string" && inputs.prompt.trim() === "")) {
     return { valid: false, error: "Prompt is required" };
   }
+  if (typeof inputs.prompt === "string" && inputs.prompt.length > 2000) {
+    return { valid: false, error: "Prompt must be 2000 characters or less" };
+  }
 
-  if (!inputs.image_url || (typeof inputs.image_url === "string" && inputs.image_url.trim() === "")) {
-    return { valid: false, error: "Reference image is required" };
+  if (!inputs.fileUrls || !Array.isArray(inputs.fileUrls) || inputs.fileUrls.length === 0) {
+    return { valid: false, error: "Input image is required" };
+  }
+
+  // CRITICAL: Only one image allowed for video generation
+  if (Array.isArray(inputs.fileUrls) && inputs.fileUrls.length > 1) {
+    return { valid: false, error: "Only one image is supported for video generation" };
   }
 
   return { valid: true };
@@ -110,9 +167,14 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { userId, prompt, modelParameters, startPolling } = params;
+  const { userId, prompt, modelParameters, uploadedImages, uploadImagesToStorage, startPolling } = params;
 
-  const allInputs = { ...modelParameters, prompt };
+  const allInputs: Record<string, unknown> = { ...modelParameters, prompt };
+
+  // Upload image and get URL
+  if (uploadedImages && uploadedImages.length > 0) {
+    allInputs.fileUrls = await uploadImagesToStorage(userId);
+  }
 
   const validation = validate(allInputs);
   if (!validation.valid) {

@@ -21,18 +21,20 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 40, // Default: 720p × 5s = 8 × 5
+  baseCreditCost: 4, // Default: 720p × 5s = 8 × 5
   estimatedTimeSeconds: 120,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,
   defaultOutputs: 1,
-  costMultipliers: null,
+  costMultipliers: {
+    resolution: { "480p": 1, "580p": 1.5, "720p": 2 },
+  },
   // UI metadata
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.2-a14b Text-to-Video Turbo",
+  variantName: "Wan 2.2 Turbo",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,
@@ -48,13 +50,8 @@ export const SCHEMA = {
       description: "Text prompt to guide video generation",
     },
     resolution: {
-      default: "720p",
+      default: "480p",
       enum: ["480p", "580p", "720p"],
-      enumLabels: {
-        "480p": "480p (Budget)",
-        "580p": "580p (Standard)",
-        "720p": "720p (HD)",
-      },
       type: "string",
       title: "Resolution",
     },
@@ -72,6 +69,7 @@ export const SCHEMA = {
     enable_prompt_expansion: {
       type: "boolean",
       default: false,
+      showToUser: false,
       title: "Prompt Expansion",
       description: "Use LLM to expand prompt with additional details",
     },
@@ -80,6 +78,7 @@ export const SCHEMA = {
       minimum: 0,
       maximum: 2147483647,
       title: "Seed",
+      isAdvanced: true,
       description: "Random seed for reproducibility (leave empty for random)",
     },
     acceleration: {
@@ -89,6 +88,7 @@ export const SCHEMA = {
         none: "None (Best Quality)",
         regular: "Regular (Faster)",
       },
+      isAdvanced: true,
       type: "string",
       title: "Acceleration",
       description: "More acceleration = faster but lower quality",

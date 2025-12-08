@@ -27,12 +27,15 @@ export const MODEL_CONFIG = {
   payloadStructure: "wrapper",
   maxImages: 0,
   defaultOutputs: 1,
-  costMultipliers: null,
+  costMultipliers: {
+    resolution: { "720p": 1, "1080p": 1.6667 },
+    duration: { "5": 1, "10": 2 },
+  },
   // UI metadata
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.5 Text-to-Video",
+  variantName: "Wan 2.5",
   displayOrderInFamily: 3,
   // Lock system
   isLocked: true,
@@ -81,6 +84,7 @@ export const SCHEMA = {
     negative_prompt: {
       maxLength: 500,
       type: "string",
+      isAdvanced: true,
       title: "Negative Prompt",
       description: "Describe content to avoid in the video",
     },
@@ -88,11 +92,13 @@ export const SCHEMA = {
       type: "boolean",
       default: true,
       title: "Prompt Expansion",
+      showToUser: false,
       description: "Use LLM to improve short prompts (increases processing time)",
     },
     seed: {
       type: "integer",
       title: "Seed",
+      isAdvanced: true,
       description: "Random seed for reproducibility (leave empty for random)",
     },
   },

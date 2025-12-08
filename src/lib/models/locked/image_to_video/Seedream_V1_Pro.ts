@@ -20,11 +20,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 8,
+  baseCreditCost: 7,
   estimatedTimeSeconds: 300,
   costMultipliers: {
     duration: { "5": 1, "10": 2 },
-    resolution: { "480p": 0.5, "720p": 1, "1080p": 2 },
+    resolution: { "480p": 1, "720p": 2.14285, "1080p": 5 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",

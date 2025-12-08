@@ -55,7 +55,7 @@ export const SCHEMA = {
     },
     image_urls: {
       type: "array",
-      title: "External Image URL",
+      title: "Upload Image",
       description: "Upload an external image (max 1)",
       renderer: "image",
       items: { type: "string", format: "uri" },

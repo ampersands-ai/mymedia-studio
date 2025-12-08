@@ -77,7 +77,8 @@ export const ModelConfigSchema = z.object({
   estimatedTimeSeconds: z.number().optional(),
   // Support both flat (Record<string, number>) and nested (Record<string, Record<string, number>>) structures
   // Using z.any() to allow flexible nested structures that token-calculator.ts handles
-  costMultipliers: z.record(z.any()).optional(),
+  // Allow null, undefined, or object (some models set costMultipliers: null explicitly)
+  costMultipliers: z.record(z.any()).nullable().optional(),
   maxImages: z.number().nullable().optional(),
   defaultOutputs: z.number().optional(),
   isActive: z.boolean().optional(),

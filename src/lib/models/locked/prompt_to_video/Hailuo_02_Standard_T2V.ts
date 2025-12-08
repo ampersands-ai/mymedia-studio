@@ -31,7 +31,7 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/minimax.png",
+  logoUrl: "/logos/hailuo.png",
   modelFamily: "Hailuo",
   variantName: "Hailuo 2 Standard",
   displayOrderInFamily: 3,

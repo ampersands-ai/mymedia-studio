@@ -30,7 +30,7 @@ export const MODEL_CONFIG = {
   costMultipliers: null,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/minimax.png",
+  logoUrl: "/logos/hailuo.png",
   modelFamily: "Hailuo",
   variantName: "Hailuo 2 Pro",
   displayOrderInFamily: 2,

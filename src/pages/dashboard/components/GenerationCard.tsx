@@ -25,6 +25,23 @@ const getTypeIcon = (type: string) => {
   }
 };
 
+/**
+ * Infer the effective type from storage path extension
+ * Handles cases where database type doesn't match the actual file type
+ */
+const getEffectiveType = (generation: Generation): string => {
+  const storagePath = generation.storage_path || generation.output_url;
+  if (!storagePath) return generation.type;
+  
+  const ext = storagePath.split('.').pop()?.toLowerCase().split('?')[0];
+  
+  if (['mp4', 'webm', 'mov', 'avi'].includes(ext || '')) return 'video';
+  if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext || '')) return 'audio';
+  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) return 'image';
+  
+  return generation.type;
+};
+
 const getStatusBadge = (status: string, createdAt?: string) => {
   switch (status) {
     case "completed":
@@ -55,6 +72,7 @@ const getStatusBadge = (status: string, createdAt?: string) => {
 };
 
 export const GenerationCard = ({ generation, index, onView, onDownload }: GenerationCardProps) => {
+  const effectiveType = getEffectiveType(generation);
   const versionedPath = generation.storage_path
     ? `${generation.storage_path}${generation.storage_path.includes('?') ? '&' : '?'}v=${encodeURIComponent(generation.created_at)}`
     : null;
@@ -79,7 +97,7 @@ export const GenerationCard = ({ generation, index, onView, onDownload }: Genera
           </div>
         ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
           <>
-            {generation.type === "video" ? (
+            {effectiveType === "video" ? (
               <OptimizedVideoPreview
                 storagePath={generation.storage_path}
                 outputUrl={generation.output_url}
@@ -92,26 +110,26 @@ export const GenerationCard = ({ generation, index, onView, onDownload }: Genera
                     !/^(storyboard-videos|faceless-videos)\//.test(generation.output_url || ''))
                 }
               />
-            ) : generation.type === "image" ? (
+            ) : effectiveType === "image" ? (
               <OptimizedGenerationImage
                 storagePath={versionedPath!}
                 alt="Generated content"
                 className="w-full h-full object-cover"
               />
-            ) : generation.type === "audio" ? (
+            ) : effectiveType === "audio" ? (
               <AudioPlayer
                 generation={generation}
                 className="w-full h-full"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                {getTypeIcon(generation.type)}
+                {getTypeIcon(effectiveType)}
               </div>
             )}
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            {getTypeIcon(generation.type)}
+            {getTypeIcon(effectiveType)}
           </div>
         )}
       </div>
@@ -119,8 +137,8 @@ export const GenerationCard = ({ generation, index, onView, onDownload }: Genera
       <CardContent className="p-2 space-y-1">
         <div className="flex items-center justify-between flex-wrap gap-1">
           <div className="flex items-center gap-1">
-            {getTypeIcon(generation.type)}
-            <span className="font-bold text-xs capitalize">{generation.type}</span>
+            {getTypeIcon(effectiveType)}
+            <span className="font-bold text-xs capitalize">{effectiveType}</span>
             {generation.ai_caption && (
               <Sparkles className="h-3 w-3 text-primary" />
             )}

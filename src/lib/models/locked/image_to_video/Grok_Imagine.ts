@@ -56,7 +56,7 @@ export const SCHEMA = {
     image_urls: {
       type: "array",
       title: "External Image URL",
-      description: "Upload an external image (max 1). Note: Spicy mode is NOT supported with external images.",
+      description: "Upload an external image (max 1)",
       renderer: "image",
       items: { type: "string", format: "uri" },
       maxItems: 1,

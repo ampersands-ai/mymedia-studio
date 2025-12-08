@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
       content_type: model_config.contentType,
       base_token_cost: model_config.baseCreditCost,
       input_schema: model_schema,
-      cost_multipliers: model_config.costMultipliers || {},
+      cost_multipliers: model_config.costMultipliers ?? {},
       api_endpoint: model_config.apiEndpoint || undefined,
       payload_structure: model_config.payloadStructure || 'wrapper',
     };

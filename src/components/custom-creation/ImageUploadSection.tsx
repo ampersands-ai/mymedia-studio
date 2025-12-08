@@ -12,7 +12,7 @@ interface ImageUploadSectionProps {
   cameraLoading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onNativeCameraPick: (source: 'camera' | 'gallery') => Promise<void>;
-  modelId?: string;
+  modelName?: string;
 }
 
 /**
@@ -28,10 +28,10 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   cameraLoading,
   fileInputRef,
   onNativeCameraPick,
-  modelId,
+  modelName,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const isSoraModel = modelId?.toLowerCase().includes('sora');
+  const isSoraModel = modelName?.toLowerCase().includes('sora');
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();

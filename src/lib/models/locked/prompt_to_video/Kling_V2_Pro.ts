@@ -16,7 +16,6 @@ export const MODEL_CONFIG = {
   baseCreditCost: 25,
   estimatedTimeSeconds: 240,
   costMultipliers: { duration: { "5": 1, "10": 2 } },
-  costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 0,

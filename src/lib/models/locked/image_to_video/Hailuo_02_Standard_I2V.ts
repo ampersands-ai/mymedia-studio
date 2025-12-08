@@ -33,9 +33,9 @@ export const MODEL_CONFIG = {
   costMultipliers: null,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/hailuo.png",
+  logoUrl: "/logos/minimax.png",
   modelFamily: "Hailuo",
-  variantName: "02 Standard Image-to-Video",
+  variantName: "Hailuo 2 Standard",
   displayOrderInFamily: 4,
   // Lock system
   isLocked: true,
@@ -98,7 +98,8 @@ export const SCHEMA = {
 
 export function validate(inputs: Record<string, unknown>) {
   if (!inputs.prompt) return { valid: false, error: "Prompt required" };
-  if (typeof inputs.prompt === "string" && inputs.prompt.length > 1500) return { valid: false, error: "Prompt must be 1500 characters or less" };
+  if (typeof inputs.prompt === "string" && inputs.prompt.length > 1500)
+    return { valid: false, error: "Prompt must be 1500 characters or less" };
   if (!inputs.image_url) return { valid: false, error: "Start frame image required" };
   return { valid: true };
 }

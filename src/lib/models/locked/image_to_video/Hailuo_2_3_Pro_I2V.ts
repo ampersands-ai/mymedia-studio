@@ -33,9 +33,9 @@ export const MODEL_CONFIG = {
   costMultipliers: null,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/hailuo.png",
+  logoUrl: "/logos/minimax.png",
   modelFamily: "Hailuo",
-  variantName: "2.3 Pro Image-to-Video",
+  variantName: "Hailuo 2.3 Pro",
   displayOrderInFamily: 5,
   // Lock system
   isLocked: true,
@@ -86,7 +86,8 @@ export const SCHEMA = {
 
 export function validate(inputs: Record<string, unknown>) {
   if (!inputs.prompt) return { valid: false, error: "Prompt required" };
-  if (typeof inputs.prompt === "string" && inputs.prompt.length > 5000) return { valid: false, error: "Prompt must be 5000 characters or less" };
+  if (typeof inputs.prompt === "string" && inputs.prompt.length > 5000)
+    return { valid: false, error: "Prompt must be 5000 characters or less" };
   if (!inputs.image_url) return { valid: false, error: "Image required" };
 
   // Validate 10s + 1080P combination is not allowed

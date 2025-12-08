@@ -12,6 +12,7 @@ interface ImageUploadSectionProps {
   cameraLoading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onNativeCameraPick: (source: 'camera' | 'gallery') => Promise<void>;
+  modelId?: string;
 }
 
 /**
@@ -27,8 +28,10 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   cameraLoading,
   fileInputRef,
   onNativeCameraPick,
+  modelId,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const isSoraModel = modelId?.toLowerCase().includes('sora');
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -194,6 +197,11 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
         </>
       )}
 
+      {isSoraModel && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          ⚠️ We currently do not support uploads of images containing photorealistic people (AI generated only).
+        </p>
+      )}
       <p className="text-xs text-muted-foreground">
         Supported formats: JPEG, PNG, WebP (max 10MB per image)
       </p>

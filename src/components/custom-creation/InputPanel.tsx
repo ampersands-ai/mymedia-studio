@@ -240,6 +240,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             cameraLoading={cameraLoading}
             fileInputRef={fileInputRef}
             onNativeCameraPick={onNativeCameraPick}
+            modelId={modelId}
           />
         )}
 

@@ -1,4 +1,4 @@
-/** Seedance V1 Lite Text-to-Video (prompt_to_video) - Record: e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f */
+/** Seedance V1 Lite Text-to-Video (prompt_to_video) - Record: d9808197-5344-431e-a28e-b84482de076a */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -15,7 +15,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  */
 export const MODEL_CONFIG = {
   modelId: "bytedance/v1-lite-text-to-video", // CORRECTED!
-  recordId: "e8d7c6b5-7e4f-3c2d-8a1f-5d7b8c9e4a6f",
+  recordId: "d9808197-5344-431e-a28e-b84482de076a",
   modelName: "Seedance V1 Lite",
   provider: "kie_ai",
   contentType: "prompt_to_video",

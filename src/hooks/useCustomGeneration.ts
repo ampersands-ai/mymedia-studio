@@ -239,11 +239,13 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       const selectedPrompt = getSurpriseMePrompt(state.selectedGroup);
       updateState({ prompt: selectedPrompt, generatingSurprise: false });
       
-      const promptTypeLabels = {
+      const promptTypeLabels: Record<string, string> = {
         'image_editing': 'Image editing',
         'prompt_to_image': 'Text to image',
         'prompt_to_video': 'Text to video',
         'image_to_video': 'Image animation',
+        'video_to_video': 'Video to video',
+        'lip_sync': 'Lip sync',
         'prompt_to_audio': 'Audio studio'
       };
       

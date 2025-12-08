@@ -1,4 +1,4 @@
-import { Palette, ImagePlus, Video, Film, Music } from "lucide-react";
+import { Palette, ImagePlus, Video, Film, Music, Mic, Repeat } from "lucide-react";
 
 export const CREATION_GROUPS = [
   { 
@@ -30,6 +30,20 @@ export const CREATION_GROUPS = [
     description: "Animate images into videos" 
   },
   { 
+    id: "video_to_video" as const, 
+    label: "Video to Video", 
+    subtitle: "(video editing)",
+    Icon: Repeat, 
+    description: "Transform existing videos" 
+  },
+  { 
+    id: "lip_sync" as const, 
+    label: "Lip Sync", 
+    subtitle: "(audio to video)",
+    Icon: Mic, 
+    description: "Sync audio to video" 
+  },
+  { 
     id: "prompt_to_audio" as const, 
     label: "Audio Studio", 
     subtitle: "(sounds to songs)",
@@ -38,4 +52,4 @@ export const CREATION_GROUPS = [
   },
 ] as const;
 
-export type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "prompt_to_audio";
+export type CreationGroup = "image_editing" | "prompt_to_image" | "prompt_to_video" | "image_to_video" | "video_to_video" | "lip_sync" | "prompt_to_audio";

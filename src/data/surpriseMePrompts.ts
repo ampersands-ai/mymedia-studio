@@ -121,7 +121,7 @@ export function getWorkflowSurpriseMePrompt(category: string): string {
 /**
  * Get random prompt based on creation type
  */
-export function getSurpriseMePrompt(creationType: 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'prompt_to_audio'): string {
+export function getSurpriseMePrompt(creationType: 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'video_to_video' | 'lip_sync' | 'prompt_to_audio'): string {
   const dayOfYear = getDayOfYear();
   const randomOffset = Math.floor(Math.random() * 30);
   
@@ -139,6 +139,12 @@ export function getSurpriseMePrompt(creationType: 'image_editing' | 'prompt_to_i
       break;
     case 'image_to_video':
       prompts = imageToVideoPrompts;
+      break;
+    case 'video_to_video':
+      prompts = videoPrompts; // Use video prompts as fallback
+      break;
+    case 'lip_sync':
+      prompts = audioPrompts; // Use audio prompts for lip sync context
       break;
     case 'prompt_to_audio':
       prompts = audioPrompts;

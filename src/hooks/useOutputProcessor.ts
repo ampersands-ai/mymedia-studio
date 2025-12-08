@@ -1,8 +1,8 @@
 /**
- * useOutputProcessor - Simplified polling hook for generation outputs
+ * useOutputProcessor - Progressive polling hook for generation outputs
  * 
  * Uses direct database polling (same pattern as History page) for reliable
- * output display. Polls every 2 seconds for up to 90 seconds.
+ * output display. Polls every 2s for first 3 minutes, then 7s for up to 30 minutes.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -11,7 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { getModel } from "@/lib/models/registry";
 import type { GenerationOutput, ProcessorStatus } from "@/lib/output/types";
-import { POLLING_INTERVAL_MS, POLLING_MAX_ATTEMPTS } from "@/lib/output/constants";
+import { 
+  POLLING_INTERVAL_FAST_MS, 
+  POLLING_INTERVAL_SLOW_MS,
+  FAST_POLLING_DURATION_MS,
+  MAX_POLLING_DURATION_MS 
+} from "@/lib/output/constants";
 
 interface UseOutputProcessorOptions {
   onComplete?: (outputs: GenerationOutput[], parentId: string) => void;
@@ -35,7 +40,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
   const [error, setError] = useState<string | null>(null);
   
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pollAttemptsRef = useRef(0);
+  const pollingStartTimeRef = useRef<number>(0);
   const generationIdRef = useRef<string | null>(null);
   const optionsRef = useRef(options);
   const hasCompletedRef = useRef(false);
@@ -45,9 +50,16 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     optionsRef.current = options;
   }, [options]);
 
+  // Get current interval based on elapsed time
+  const getCurrentInterval = useCallback((elapsedMs: number): number => {
+    return elapsedMs < FAST_POLLING_DURATION_MS 
+      ? POLLING_INTERVAL_FAST_MS 
+      : POLLING_INTERVAL_SLOW_MS;
+  }, []);
+
   const clearPolling = useCallback(() => {
     if (pollingTimerRef.current) {
-      clearInterval(pollingTimerRef.current);
+      clearTimeout(pollingTimerRef.current);
       pollingTimerRef.current = null;
     }
   }, []);
@@ -144,15 +156,16 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     const generationId = generationIdRef.current;
     if (!generationId || hasCompletedRef.current) return;
 
-    pollAttemptsRef.current++;
+    const elapsedMs = Date.now() - pollingStartTimeRef.current;
 
-    if (pollAttemptsRef.current >= POLLING_MAX_ATTEMPTS) {
-      logger.error('[useOutputProcessor] Max polling attempts reached', { generationId } as any);
+    // Check for 30-minute timeout
+    if (elapsedMs >= MAX_POLLING_DURATION_MS) {
+      logger.error('[useOutputProcessor] 30-minute timeout reached', { generationId } as any);
       clearPolling();
-      setError('Generation timed out');
+      setError('Generation timed out after 30 minutes');
       setStatus('error');
       setIsProcessing(false);
-      optionsRef.current.onError?.('Generation timed out');
+      optionsRef.current.onError?.('Generation timed out after 30 minutes');
       return;
     }
 
@@ -162,7 +175,8 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
       if (result && result.length > 0) {
         logger.info('[useOutputProcessor] Outputs found', { 
           generationId, 
-          count: result.length 
+          count: result.length,
+          elapsedMs 
         } as any);
         
         hasCompletedRef.current = true;
@@ -171,6 +185,10 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
         setStatus('completed');
         setIsProcessing(false);
         optionsRef.current.onComplete?.(result, generationId);
+      } else {
+        // Schedule next poll with dynamic interval
+        const nextInterval = getCurrentInterval(elapsedMs);
+        pollingTimerRef.current = setTimeout(pollForOutputs, nextInterval);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
@@ -183,7 +201,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
       setIsProcessing(false);
       optionsRef.current.onError?.(errorMsg);
     }
-  }, [fetchOutputs, clearPolling]);
+  }, [fetchOutputs, clearPolling, getCurrentInterval]);
 
   const startProcessing = useCallback((generationId: string) => {
     if (!user?.id) {
@@ -199,18 +217,15 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     
     // Reset state
     generationIdRef.current = generationId;
-    pollAttemptsRef.current = 0;
+    pollingStartTimeRef.current = Date.now();
     hasCompletedRef.current = false;
     setOutputs([]);
     setError(null);
     setIsProcessing(true);
     setStatus('polling');
 
-    // Immediate first check
+    // Immediate first check, then setTimeout schedules next polls
     pollForOutputs();
-
-    // Start polling interval
-    pollingTimerRef.current = setInterval(pollForOutputs, POLLING_INTERVAL_MS);
   }, [user?.id, clearPolling, pollForOutputs]);
 
   const stopProcessing = useCallback(() => {

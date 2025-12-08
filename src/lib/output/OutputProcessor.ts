@@ -11,14 +11,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { getModel } from "@/lib/models/registry";
-import { POLLING_INTERVAL_MS, POLLING_MAX_ATTEMPTS, TERMINAL_STATUSES } from "./constants";
+import { POLLING_INTERVAL_FAST_MS, MAX_POLLING_DURATION_MS, TERMINAL_STATUSES } from "./constants";
 import type { ProcessorConfig, ProcessorStatus, GenerationOutput, ChildGenerationRecord } from "./types";
 
 export class OutputProcessor {
   private config: ProcessorConfig;
   private status: ProcessorStatus = 'idle';
   private pollingTimer: NodeJS.Timeout | null = null;
-  private pollAttempts = 0;
+  private pollingStartTime = 0;
   private hasCompleted = false;
 
   constructor(config: ProcessorConfig) {
@@ -31,32 +31,37 @@ export class OutputProcessor {
 
     logger.info('[OutputProcessor] Starting', { generationId: this.config.generationId } as any);
     this.setStatus('polling');
-    this.pollAttempts = 0;
+    this.pollingStartTime = Date.now();
     this.hasCompleted = false;
 
-    // Immediate first check
+    // Immediate first check, then schedule next
     await this.checkAndProcess();
+    this.scheduleNextPoll();
+  }
 
-    // Start polling
-    this.pollingTimer = setInterval(() => {
-      this.pollAttempts++;
-      if (this.pollAttempts >= POLLING_MAX_ATTEMPTS) {
-        this.stop();
-        this.config.onError('Generation timed out');
-        return;
-      }
-      this.checkAndProcess();
-    }, POLLING_INTERVAL_MS);
+  private scheduleNextPoll(): void {
+    if (this.hasCompleted) return;
+    
+    const elapsed = Date.now() - this.pollingStartTime;
+    if (elapsed >= MAX_POLLING_DURATION_MS) {
+      this.stop();
+      this.config.onError('Generation timed out after 30 minutes');
+      return;
+    }
+    
+    this.pollingTimer = setTimeout(() => {
+      this.checkAndProcess().then(() => this.scheduleNextPoll());
+    }, POLLING_INTERVAL_FAST_MS);
   }
 
   stop(): void {
     if (this.pollingTimer) {
-      clearInterval(this.pollingTimer);
+      clearTimeout(this.pollingTimer);
       this.pollingTimer = null;
     }
     this.setStatus('idle');
     this.hasCompleted = false;
-    this.pollAttempts = 0;
+    this.pollingStartTime = 0;
   }
 
   getStatus(): ProcessorStatus {

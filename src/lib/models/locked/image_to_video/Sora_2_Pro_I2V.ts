@@ -47,7 +47,8 @@ export const SCHEMA = {
     image_urls: {
       type: "array",
       title: "First Frame Image",
-      description: "Image to use as the first frame. Formats: jpeg, png, webp (max 10MB)",
+      description:
+        "Image to use as the first frame. Formats: jpeg, png, webp (max 10MB). We currently do not support uploads of images containing photorealistic people (AI generated).",
       renderer: "image",
       items: { type: "string", format: "uri" },
       minItems: 1,

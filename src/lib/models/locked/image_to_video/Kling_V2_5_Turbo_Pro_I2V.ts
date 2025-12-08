@@ -25,7 +25,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "V2.5 Turbo Pro",
+  variantName: "Kling V2.5 Turbo Pro",
   displayOrderInFamily: 4,
   // Lock system
   isLocked: true,

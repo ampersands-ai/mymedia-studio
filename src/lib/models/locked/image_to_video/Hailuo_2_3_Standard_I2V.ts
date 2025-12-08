@@ -13,8 +13,8 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  * - Longer prompts (5000 chars)
  * - Pricing (20% below official):
  *   - 6s 768P: 15 credits
- *   - 10s 768P: 26 credits
- *   - 6s 1080P: 26 credits
+ *   - 10s 768P: 25 credits
+ *   - 6s 1080P: 25 credits
  */
 export const MODEL_CONFIG = {
   modelId: "hailuo/2-3-image-to-video-standard",
@@ -119,8 +119,8 @@ export function calculateCost(inputs: Record<string, unknown>) {
 
   // Pricing matrix (20% below official rates)
   const pricing: Record<string, Record<string, number>> = {
-    "768P": { "6": 15, "10": 26 },
-    "1080P": { "6": 26 }, // 10s not supported at 1080P
+    "768P": { "6": 15, "10": 25 },
+    "1080P": { "6": 25 }, // 10s not supported at 1080P
   };
 
   return pricing[resolution]?.[duration] ?? 15;

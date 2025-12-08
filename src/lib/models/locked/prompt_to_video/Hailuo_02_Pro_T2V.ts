@@ -48,6 +48,7 @@ export const SCHEMA = {
     prompt_optimizer: {
       type: "boolean",
       default: true,
+      showToUser: false,
       title: "Prompt Optimizer",
       description: "Use the model's prompt optimizer for better results",
     },

@@ -23,7 +23,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 25, // Default: 768P 6s
+  baseCreditCost: 22.5, // Default: 768P 6s
   estimatedTimeSeconds: 180,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -119,7 +119,7 @@ export function calculateCost(inputs: Record<string, unknown>) {
 
   // Pricing matrix (20% below official rates)
   const pricing: Record<string, Record<string, number>> = {
-    "768P": { "6": 25, "10": 45 },
+    "768P": { "6": 22.5, "10": 45 },
     "1080P": { "6": 40 }, // 10s not supported at 1080P
   };
 

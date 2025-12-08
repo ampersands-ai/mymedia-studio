@@ -23,7 +23,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 15, // Default: 768P 6s
+  baseCreditCost: 6, // Default: 768P 6s
   estimatedTimeSeconds: 120,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -78,16 +78,13 @@ export const SCHEMA = {
     resolution: {
       default: "768P",
       enum: ["512P", "768P"],
-      enumLabels: {
-        "512P": "512P (Budget)",
-        "768P": "768P (Standard)",
-      },
       type: "string",
       title: "Resolution",
     },
     prompt_optimizer: {
       type: "boolean",
-      default: true,
+      default: false,
+      showToUser: false,
       title: "Prompt Optimizer",
       description: "Use the model's prompt optimizer for better results",
     },

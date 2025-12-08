@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSurpriseMePrompt as getHardcodedPrompt } from "@/data/surpriseMePrompts";
 import { logger } from "@/lib/logger";
 
-type CreationType = 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'prompt_to_audio';
+type CreationType = 'image_editing' | 'prompt_to_image' | 'prompt_to_video' | 'image_to_video' | 'video_to_video' | 'lip_sync' | 'prompt_to_audio';
 
 /**
  * Calculate current day of year (1-365/366)
@@ -24,6 +24,8 @@ const categoryMap: Record<CreationType, string> = {
   'prompt_to_image': 'text_to_image',
   'prompt_to_video': 'text_to_video',
   'image_to_video': 'image_to_video',
+  'video_to_video': 'video_to_video',
+  'lip_sync': 'lip_sync',
   'prompt_to_audio': 'text_to_audio'
 };
 

@@ -9,11 +9,11 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "kling/v2-1-master-image-to-video",
   recordId: "c3397c13-3a52-4973-a87c-b4c20aca0fc0",
-  modelName: "Kling V2 Master",
+  modelName: "Kling V2.1 Master",
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 40,
+  baseCreditCost: 80,
   estimatedTimeSeconds: 300,
   costMultipliers: { duration: { "5": 1, "10": 2 } },
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -25,7 +25,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "V2 Master",
+  variantName: "Kling V2.1 Master",
   displayOrderInFamily: 3,
   // Lock system
   isLocked: true,

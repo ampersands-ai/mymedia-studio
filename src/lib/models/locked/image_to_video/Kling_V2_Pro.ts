@@ -14,11 +14,11 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "kling/v2-1-pro",
   recordId: "84084ca4-4153-46bc-8d01-cd4e37d1da68",
-  modelName: "Kling V2 Pro",
+  modelName: "Kling V2.1 Pro",
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 12,
+  baseCreditCost: 25,
   estimatedTimeSeconds: 300,
   costMultipliers: { duration: { "5": 1, "10": 2 } },
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -30,7 +30,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling",
-  variantName: "V2 Pro",
+  variantName: "Kling V2.1 Pro",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

@@ -1,57 +1,189 @@
-/** Seedream V1 Pro (prompt_to_video) - Record: d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f */
-import { getGenerationType } from '@/lib/models/registry';
+/** Seedance V1 Pro Text-to-Video (prompt_to_video) - Record: d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f */
+import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
 
-export const MODEL_CONFIG = { modelId: "seedream/v1-pro", recordId: "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f", modelName: "Seedream V1 Pro", provider: "kie_ai", contentType: "prompt_to_video",
-  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO", baseCreditCost: 25, estimatedTimeSeconds: 200, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
+/**
+ * Seedance V1 Pro Text-to-Video
+ * - CORRECTED modelId: bytedance/v1-pro-text-to-video (not seedream/v1-pro)
+ * - Higher quality than Lite
+ * - Resolution: 480p, 720p, 1080p
+ * - Duration: 5s or 10s
+ * - Includes 21:9 ultra-wide aspect ratio
+ */
+export const MODEL_CONFIG = {
+  modelId: "bytedance/v1-pro-text-to-video", // CORRECTED!
+  recordId: "d7c6b5a4-6e3f-2c1d-7a0f-4d6b7c8e5a9f",
+  modelName: "Seedance V1 Pro",
+  provider: "kie_ai",
+  contentType: "prompt_to_video",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
+  baseCreditCost: 25,
+  estimatedTimeSeconds: 200,
+  costMultipliers: {
+    duration: { "5": 1, "10": 2 },
+    resolution: { "480p": 0.5, "720p": 1, "1080p": 2 },
+  },
+  apiEndpoint: "/api/v1/jobs/createTask",
+  payloadStructure: "wrapper",
+  maxImages: 0,
+  defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/seedream.png",
-  modelFamily: "Seedream",
-  variantName: "Seedream V1 Pro",
-  displayOrderInFamily: 3,
-
+  logoUrl: "/logos/seedance.png",
+  modelFamily: "Seedance",
+  variantName: "Seedance V1 Pro",
+  displayOrderInFamily: 4,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/prompt_to_video/Seedream_V1_Pro.ts" } as const;
+  lockedFilePath: "src/lib/models/locked/prompt_to_video/Seedance_V1_Pro_T2V.ts",
+} as const;
 
-export const SCHEMA = { properties: { aspect_ratio: { default: "16:9", enum: ["16:9", "9:16", "1:1"], type: "string" }, prompt: { maxLength: 5000, renderer: "prompt", type: "string" } }, required: ["prompt"], type: "object" } as const;
+export const SCHEMA = {
+  properties: {
+    prompt: {
+      maxLength: 10000,
+      renderer: "prompt",
+      type: "string",
+      description: "Text prompt to guide video generation",
+    },
+    aspect_ratio: {
+      default: "16:9",
+      enum: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+      enumLabels: {
+        "21:9": "Ultra Wide (21:9)",
+        "16:9": "Landscape (16:9)",
+        "4:3": "Standard (4:3)",
+        "1:1": "Square (1:1)",
+        "3:4": "Portrait (3:4)",
+        "9:16": "Vertical (9:16)",
+      },
+      type: "string",
+      title: "Aspect Ratio",
+    },
+    resolution: {
+      default: "720p",
+      enum: ["480p", "720p", "1080p"],
+      enumLabels: {
+        "480p": "480p (Fast)",
+        "720p": "720p (Balanced)",
+        "1080p": "1080p (High Quality)",
+      },
+      type: "string",
+      title: "Resolution",
+    },
+    duration: {
+      default: "5",
+      enum: ["5", "10"],
+      enumLabels: {
+        "5": "5 seconds",
+        "10": "10 seconds",
+      },
+      type: "string",
+      title: "Duration",
+    },
+    camera_fixed: {
+      type: "boolean",
+      default: false,
+      title: "Fixed Camera",
+      description: "Whether to fix the camera position",
+    },
+    seed: {
+      type: "integer",
+      minimum: -1,
+      maximum: 2147483647,
+      default: -1,
+      title: "Seed",
+      description: "Random seed for reproducibility. Use -1 for random.",
+    },
+    enable_safety_checker: {
+      type: "boolean",
+      default: true,
+      title: "Safety Checker",
+      description: "Check content for safety before processing",
+    },
+  },
+  required: ["prompt"],
+  type: "object",
+} as const;
 
-export function validate(inputs: Record<string, any>) { return inputs.prompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
-export function preparePayload(inputs: Record<string, any>) { return { modelId: MODEL_CONFIG.modelId, input: { prompt: inputs.prompt, aspect_ratio: inputs.aspect_ratio || "16:9" } }; }
-export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function validate(inputs: Record<string, any>) {
+  if (!inputs.prompt) return { valid: false, error: "Prompt required" };
+  if (inputs.prompt.length > 10000) return { valid: false, error: "Prompt must be 10000 characters or less" };
+  return { valid: true };
+}
+
+export function preparePayload(inputs: Record<string, any>) {
+  const payload: Record<string, any> = {
+    prompt: inputs.prompt,
+  };
+
+  if (inputs.aspect_ratio) payload.aspect_ratio = inputs.aspect_ratio;
+  if (inputs.resolution) payload.resolution = inputs.resolution;
+  if (inputs.duration) payload.duration = inputs.duration;
+  if (inputs.camera_fixed !== undefined) payload.camera_fixed = inputs.camera_fixed;
+  if (inputs.seed !== undefined && inputs.seed !== null) payload.seed = inputs.seed;
+  if (inputs.enable_safety_checker !== undefined) payload.enable_safety_checker = inputs.enable_safety_checker;
+
+  return {
+    model: MODEL_CONFIG.modelId,
+    input: payload,
+  };
+}
+
+export function calculateCost(inputs: Record<string, any>) {
+  const base = MODEL_CONFIG.baseCreditCost;
+  const durKey = (inputs.duration || "5") as keyof typeof MODEL_CONFIG.costMultipliers.duration;
+  const resKey = (inputs.resolution || "720p") as keyof typeof MODEL_CONFIG.costMultipliers.resolution;
+
+  const durMult = MODEL_CONFIG.costMultipliers.duration[durKey] || 1;
+  const resMult = MODEL_CONFIG.costMultipliers.resolution[resKey] || 1;
+
+  return Math.round(base * durMult * resMult * 100) / 100;
+}
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;
   const inputs: Record<string, any> = { prompt, ...modelParameters };
-  const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
+  const validation = validate(inputs);
+  if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: sanitizeForStorage(modelParameters) }).select().single(); // (edge function will process)
+
+  const { data: gen, error } = await supabase
+    .from("generations")
+    .insert({
+      user_id: userId,
+      model_id: MODEL_CONFIG.modelId,
+      model_record_id: MODEL_CONFIG.recordId,
+      type: getGenerationType(MODEL_CONFIG.contentType),
+      prompt,
+      tokens_used: cost,
+      status: GENERATION_STATUS.PENDING,
+      settings: sanitizeForStorage(modelParameters),
+    })
+    .select()
+    .single();
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
-  // Call edge function to handle API call server-side
-  // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+  const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt,
-      custom_parameters: preparePayload(inputs)
-    }
+      custom_parameters: preparePayload(inputs),
+    },
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
+    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
     throw new Error(`Edge function failed: ${funcError.message}`);
   }
 
   startPolling(gen.id);
   return gen.id;
 }
-

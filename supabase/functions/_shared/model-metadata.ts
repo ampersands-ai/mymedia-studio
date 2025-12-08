@@ -1036,6 +1036,50 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 180,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIP SYNC MODELS (4 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v": {
+    recordId: "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v",
+    modelId: "kling/v1-avatar-standard",
+    modelName: "Kling Avatar Standard",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w": {
+    recordId: "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w",
+    modelId: "kling/ai-avatar-v1-pro",
+    modelName: "Kling Avatar Pro",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 40,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x": {
+    recordId: "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x",
+    modelId: "infinitalk/from-audio",
+    modelName: "Infinitalk",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 7.5,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y": {
+    recordId: "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y",
+    modelId: "wan/2-2-a14b-speech-to-video-turbo",
+    modelName: "Wan 2.2 Speech-to-Video",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
 };
 
 /**

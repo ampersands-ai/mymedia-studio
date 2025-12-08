@@ -10,8 +10,12 @@ export interface ExecuteGenerationParams {
   modelParameters: Record<string, unknown>;
   uploadedImages: File[];
   uploadedImageUrls?: string[];
+  uploadedAudios?: File[];
+  uploadedAudioUrls?: string[];
   userId: string;
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
+  uploadAudiosToStorage?: (userId: string) => Promise<string[]>;
+  getAudioDuration?: (file: File) => Promise<number>;
   generate: (params: Record<string, unknown>) => Promise<unknown>;
   startPolling: (id: string) => void;
   navigate: NavigateFunction;

@@ -82,6 +82,20 @@ export const SCHEMA = {
   },
   required: ["prompt", "image_url"],
   type: "object",
+  fieldDependencies: {
+    resolution: {
+      duration: {
+        "6": ["768P", "1080P"],
+        "10": ["768P"],
+      },
+    },
+    duration: {
+      resolution: {
+        "768P": ["6", "10"],
+        "1080P": ["6"],
+      },
+    },
+  },
 } as const;
 
 export function validate(inputs: Record<string, unknown>) {

@@ -133,6 +133,12 @@ import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diff
 
 // Prompt to Video Models (21)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
+
+// Lip Sync Models (4)
+import * as KlingV1AvatarStandard_LipSync from "./lip_sync/Kling_V1_Avatar_Standard";
+import * as KlingAIAvatarV1Pro_LipSync from "./lip_sync/Kling_AI_Avatar_V1_Pro";
+import * as Infinitalk_LipSync from "./lip_sync/Infinitalk_from_audio";
+import * as Wan22SpeechToVideo_LipSync from "./lip_sync/Wan_2_2_Speech_to_Video";
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
 import * as Hailuo02Pro_PromptToVideo from "./prompt_to_video/Hailuo_02_Pro_T2V";
@@ -246,7 +252,7 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  * Maps unique record_ids to their model modules.
  * This is the PRIMARY and PREFERRED lookup method since record_id is unique.
  * 
- * Total: 99 models across 7 groups
+ * Total: 103 models across 7 groups
  * ═══════════════════════════════════════════════════════════════════════════
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
@@ -369,8 +375,12 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f5a0b1c2-7d8e-9f0a-1b2c-3d4e5f6a7b8c": Wan25_PromptToVideo as ModelModule,               // Wan 2.5 | prompt_to_video | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // LIP SYNC MODELS (0 total)
+  // LIP SYNC MODELS (4 total)
   // ═══════════════════════════════════════════════════════════════════════════
+  "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v": KlingV1AvatarStandard_LipSync as ModelModule,   // Kling Avatar Standard | lip_sync | kie_ai
+  "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w": KlingAIAvatarV1Pro_LipSync as ModelModule,      // Kling Avatar Pro | lip_sync | kie_ai
+  "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x": Infinitalk_LipSync as ModelModule,              // Infinitalk | lip_sync | kie_ai
+  "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y": Wan22SpeechToVideo_LipSync as ModelModule,      // Wan 2.2 Speech-to-Video | lip_sync | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VIDEO TO VIDEO MODELS (0 total)

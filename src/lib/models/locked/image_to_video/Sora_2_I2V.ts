@@ -14,7 +14,7 @@ export const MODEL_CONFIG = {
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
   baseCreditCost: 15,
-  estimatedTimeSeconds: 500,
+  estimatedTimeSeconds: 1000,
   costMultipliers: {
     n_frames: { "10": 1, "15": 1.16667 },
   },

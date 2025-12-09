@@ -275,7 +275,6 @@ export const StoryboardEditor = () => {
         onSave={(settings) => {
           updateRenderSettings({ subtitle_settings: settings as unknown as Json });
           setShowSubtitleCustomizer(false);
-          toast.success('Subtitle settings saved');
         }}
       />
     </div>

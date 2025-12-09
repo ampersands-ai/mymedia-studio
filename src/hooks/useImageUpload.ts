@@ -251,7 +251,6 @@ export const useImageUpload = (currentModel: AIModel | null) => {
       const file = await pickImage(source);
       if (file) {
         setUploadedImages([file]);
-        toast.success("Image captured successfully");
       }
     } else {
       // Multiple images (gallery only)

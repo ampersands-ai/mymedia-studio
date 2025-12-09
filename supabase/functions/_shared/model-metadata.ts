@@ -1040,8 +1040,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
   // LIP SYNC MODELS (4 total)
   // ═══════════════════════════════════════════════════════════════════════════
-  "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v": {
-    recordId: "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v",
+  "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d": {
+    recordId: "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
     modelId: "kling/v1-avatar-standard",
     modelName: "Kling Avatar Standard",
     provider: "kie_ai",
@@ -1050,8 +1050,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 120,
     isActive: true,
   },
-  "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w": {
-    recordId: "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w",
+  "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e": {
+    recordId: "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e",
     modelId: "kling/ai-avatar-v1-pro",
     modelName: "Kling Avatar Pro",
     provider: "kie_ai",
@@ -1060,8 +1060,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 180,
     isActive: true,
   },
-  "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x": {
-    recordId: "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x",
+  "a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d": {
+    recordId: "a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d",
     modelId: "infinitalk/from-audio",
     modelName: "Infinitalk",
     provider: "kie_ai",
@@ -1070,8 +1070,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 120,
     isActive: true,
   },
-  "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y": {
-    recordId: "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y",
+  "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f": {
+    recordId: "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
     modelId: "wan/2-2-a14b-speech-to-video-turbo",
     modelName: "Wan 2.2 Speech-to-Video",
     provider: "kie_ai",

@@ -1,4 +1,4 @@
-/** Kling AI Avatar V1 Pro (lip_sync) - Record: h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w */
+/** Kling AI Avatar V1 Pro (lip_sync) - Record: b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -15,7 +15,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  */
 export const MODEL_CONFIG = {
   modelId: "kling/ai-avatar-v1-pro",
-  recordId: "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w",
+  recordId: "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e",
   modelName: "Kling Avatar Pro",
   provider: "kie_ai",
   contentType: "lip_sync",

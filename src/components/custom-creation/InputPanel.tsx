@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ModelFamilySelector } from "./ModelFamilySelector";
 import { PromptInput } from "./PromptInput";
 import { ImageUploadSection } from "./ImageUploadSection";
+import { AudioUploadSection } from "./AudioUploadSection";
 import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +44,14 @@ interface InputPanelProps {
   cameraLoading: boolean;
   isNative: boolean;
   onNativeCameraPick: (source: 'camera' | 'gallery') => Promise<void>;
+  // Audio upload props
+  uploadedAudio: File | null;
+  onAudioUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveAudio: () => void;
+  audioFieldName: string | null;
+  isAudioRequired: boolean;
+  audioMaxDuration: number | null;
+  audioFileInputRef: React.RefObject<HTMLInputElement>;
   hasDuration: boolean;
   durationValue: SchemaValue;
   onDurationChange: SchemaChangeHandler;
@@ -95,6 +104,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   cameraLoading,
   isNative,
   onNativeCameraPick,
+  // Audio upload props
+  uploadedAudio,
+  onAudioUpload,
+  onRemoveAudio,
+  audioFieldName,
+  isAudioRequired,
+  audioMaxDuration,
+  audioFileInputRef,
   hasDuration,
   durationValue,
   onDurationChange,
@@ -122,6 +139,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     selectedModel &&
     (!isPromptRequired || prompt.trim()) &&
     (!isImageRequired || uploadedImages.length > 0) &&
+    (!isAudioRequired || uploadedAudio !== null) &&
     (maxPromptLength === undefined || prompt.length <= maxPromptLength);
   
   // Get selected model details for duration display
@@ -156,6 +174,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       if (shouldUseSpecializedImageRenderer &&
           prop.renderer === 'image' &&
           key === imageFieldName) {
+        specializedFields.add(key);
+      }
+
+      // Audio renderer fields - add to specialized to skip in generic loop
+      if (audioFieldName && prop.renderer === 'audio' && key === audioFieldName) {
         specializedFields.add(key);
       }
 
@@ -241,6 +264,18 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             fileInputRef={fileInputRef}
             onNativeCameraPick={onNativeCameraPick}
             modelName={selectedModelData?.model_name}
+          />
+        )}
+
+        {/* Audio upload section */}
+        {audioFieldName && (
+          <AudioUploadSection
+            audio={uploadedAudio}
+            onUpload={onAudioUpload}
+            onRemove={onRemoveAudio}
+            isRequired={isAudioRequired}
+            fileInputRef={audioFileInputRef}
+            maxDuration={audioMaxDuration}
           />
         )}
 

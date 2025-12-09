@@ -15,6 +15,7 @@ import { useCustomCreationState } from "@/hooks/useCustomCreationState";
 import { useOutputProcessor } from "@/hooks/useOutputProcessor";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { useAudioUpload } from "@/hooks/useAudioUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
@@ -92,6 +93,7 @@ const CustomCreation = () => {
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();
   const imageFieldInfo = schemaHelpers.getImageFieldInfo(modelConfig);
+  const audioFieldInfo = schemaHelpers.getAudioFieldInfo(modelConfig);
 
   // Output processor (independent module for handling generation outputs)
   const { 
@@ -206,6 +208,16 @@ const CustomCreation = () => {
     cameraLoading,
     isNative
   } = useImageUpload(modelConfig);
+
+  // Audio upload
+  const {
+    uploadedAudios,
+    setUploadedAudios,
+    handleFileUpload: handleAudioUpload,
+    removeAudio,
+    uploadAudiosToStorage: _uploadAudiosToStorage, // Will be used in generation flow
+    fileInputRef: audioFileInputRef,
+  } = useAudioUpload(modelConfig);
 
   // Caption generation
   const {
@@ -529,6 +541,13 @@ const CustomCreation = () => {
             cameraLoading={cameraLoading}
             isNative={isNative}
             onNativeCameraPick={handleNativeCameraPick}
+            uploadedAudio={uploadedAudios[0] || null}
+            onAudioUpload={(e) => { handleAudioUpload(e); updateState({ generateCaption: false }); }}
+            onRemoveAudio={() => { removeAudio(); updateState({ generateCaption: false }); }}
+            audioFieldName={audioFieldInfo.fieldName}
+            isAudioRequired={audioFieldInfo.isRequired}
+            audioMaxDuration={audioFieldInfo.maxDuration}
+            audioFileInputRef={audioFileInputRef}
             hasDuration={hasDuration}
             durationValue={state.modelParameters.duration}
             durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}
@@ -550,8 +569,12 @@ const CustomCreation = () => {
               handleCancelGeneration(state.pollingGenerationId);
               stopPolling();
               setUploadedImages([]);
+              setUploadedAudios([]);
               if (fileInputRef.current) {
                 fileInputRef.current.value = '';
+              }
+              if (audioFileInputRef.current) {
+                audioFileInputRef.current.value = '';
               }
               resetState();
             }}

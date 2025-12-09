@@ -1,4 +1,4 @@
-/** Wan 2.2-a14b Speech-to-Video Turbo (lip_sync) - Record: j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y */
+/** Wan 2.2-a14b Speech-to-Video Turbo (lip_sync) - Record: c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -15,7 +15,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  */
 export const MODEL_CONFIG = {
   modelId: "wan/2-2-a14b-speech-to-video-turbo",
-  recordId: "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y",
+  recordId: "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
   modelName: "Wan 2.2 Speech-to-Video",
   provider: "kie_ai",
   contentType: "lip_sync",

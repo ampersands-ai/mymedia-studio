@@ -381,10 +381,10 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // ═══════════════════════════════════════════════════════════════════════════
   // LIP SYNC MODELS (4 total)
   // ═══════════════════════════════════════════════════════════════════════════
-  "g7h8i9j0-1k2l-3m4n-5o6p-7q8r9s0t1u2v": KlingV1AvatarStandard_LipSync as ModelModule,   // Kling Avatar Standard | lip_sync | kie_ai
-  "h8i9j0k1-2l3m-4n5o-6p7q-8r9s0t1u2v3w": KlingAIAvatarV1Pro_LipSync as ModelModule,      // Kling Avatar Pro | lip_sync | kie_ai
-  "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x": Infinitalk_LipSync as ModelModule,              // Infinitalk | lip_sync | kie_ai
-  "j0k1l2m3-4n5o-6p7q-8r9s-0t1u2v3w4x5y": Wan22SpeechToVideo_LipSync as ModelModule,      // Wan 2.2 Speech-to-Video | lip_sync | kie_ai
+  "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d": KlingV1AvatarStandard_LipSync as ModelModule,   // Kling Avatar Standard | lip_sync | kie_ai
+  "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e": KlingAIAvatarV1Pro_LipSync as ModelModule,      // Kling Avatar Pro | lip_sync | kie_ai
+  "a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d": Infinitalk_LipSync as ModelModule,              // Infinitalk | lip_sync | kie_ai
+  "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f": Wan22SpeechToVideo_LipSync as ModelModule,      // Wan 2.2 Speech-to-Video | lip_sync | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VIDEO TO VIDEO MODELS (0 total)

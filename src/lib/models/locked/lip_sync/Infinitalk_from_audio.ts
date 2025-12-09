@@ -1,4 +1,4 @@
-/** Infinitalk from-audio (lip_sync) - Record: i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x */
+/** Infinitalk from-audio (lip_sync) - Record: a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -15,7 +15,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  */
 export const MODEL_CONFIG = {
   modelId: "infinitalk/from-audio",
-  recordId: "i9j0k1l2-3m4n-5o6p-7q8r-9s0t1u2v3w4x",
+  recordId: "a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d",
   modelName: "Infinitalk",
   provider: "kie_ai",
   contentType: "lip_sync",

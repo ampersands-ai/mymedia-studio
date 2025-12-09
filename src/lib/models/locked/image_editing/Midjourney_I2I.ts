@@ -36,7 +36,7 @@ export const MODEL_CONFIG = {
   baseCreditCost: 3,
   estimatedTimeSeconds: 60,
   costMultipliers: {
-    speed: { relaxed: 1, fast: 1.3334, turbo: 2.66667 },
+    speed: { relaxed: 1, fast: 2.66667, turbo: 5.3334 },
   },
   apiEndpoint: "/api/v1/mj/generate", // CORRECTED: Was /api/v1/jobs/createTask
   payloadStructure: "flat", // CORRECTED: Was wrapper

@@ -9,10 +9,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 3,
+  baseCreditCost: 1.5,
   estimatedTimeSeconds: 45,
   costMultipliers: {
-    speed: { relaxed: 1, fast: 1.3334, turbo: 2.66667 },
+    speed: { relaxed: 1, fast: 2.66667, turbo: 5.3334 },
   },
   apiEndpoint: "/api/v1/mj/generate",
   payloadStructure: "flat",

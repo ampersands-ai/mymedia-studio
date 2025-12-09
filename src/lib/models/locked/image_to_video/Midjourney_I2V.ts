@@ -101,8 +101,8 @@ export const SCHEMA = Object.freeze({
     waterMark: {
       type: "string",
       title: "Watermark",
+      showToUser: false,
       description: "Optional watermark text to add to generated video",
-      isAdvanced: true,
     },
   },
   "x-order": ["prompt", "fileUrls", "aspectRatio"],

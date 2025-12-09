@@ -97,18 +97,23 @@ export async function callKieAI(
   // This provider is now a dumb transport layer that sends whatever payload it receives
   
   if (useFlatStructure) {
-    // Flat structure for veo3, sora-2-*, mj_txt2img, etc.
+    // Flat structure for veo3, sora-2-*, mj_txt2img, mj_video, etc.
     logger.debug('Using FLAT payload structure');
     
+    // Check if taskType is already provided by the model's preparePayload (e.g., mj_video, mj_txt2img)
+    const hasTaskType = 'taskType' in request.parameters;
+    
     // Determine the correct field name: 'taskType' for Midjourney models, 'model' for others
-    // Check for both internal model ID (mj_txt2img) and external model ID (midjourney/text-to-image)
-    const isMidjourneyModel = request.model === 'mj_txt2img' || 
+    const isMidjourneyModel = hasTaskType || 
+                               request.model === 'mj_txt2img' || 
                                request.model === 'midjourney/text-to-image' ||
                                request.model.includes('midjourney');
     const modelFieldName = isMidjourneyModel ? 'taskType' : 'model';
     
-    // For Midjourney, use the correct taskType value
-    const modelValue = isMidjourneyModel ? 'mj_txt2img' : request.model;
+    // For Midjourney, use the taskType from parameters if provided, else default to mj_txt2img
+    const modelValue = hasTaskType 
+      ? request.parameters.taskType  // Respect model's preparePayload (e.g., mj_video)
+      : (isMidjourneyModel ? 'mj_txt2img' : request.model);
     
     // No more FLAT_MODEL_DEFAULTS - all transformations happen in locked model files
     payload = {
@@ -166,7 +171,7 @@ export async function callKieAI(
 
     // Check response structure
     if (createData.code !== 200 || !createData.data?.taskId) {
-      throw new Error(`Kie.ai task creation failed: ${createData.message || 'Unknown error'}`);
+      throw new Error(`Kie.ai task creation failed: ${createData.msg || 'Unknown error'}`);
     }
 
     const taskId = createData.data.taskId;

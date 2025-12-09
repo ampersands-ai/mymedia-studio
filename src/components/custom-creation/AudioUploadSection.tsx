@@ -11,6 +11,7 @@ interface AudioUploadSectionProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   maxDuration?: number | null;
   isUploading?: boolean;
+  onDurationChange?: (duration: number | null) => void;
 }
 
 /**
@@ -24,6 +25,7 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
   fileInputRef,
   maxDuration,
   isUploading = false,
+  onDurationChange,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
@@ -33,19 +35,21 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
   useEffect(() => {
     if (!audio) {
       setAudioDuration(null);
+      onDurationChange?.(null);
       return;
     }
 
     const audioEl = new Audio();
     audioEl.onloadedmetadata = () => {
       setAudioDuration(audioEl.duration);
+      onDurationChange?.(audioEl.duration);
     };
     audioEl.src = URL.createObjectURL(audio);
 
     return () => {
       URL.revokeObjectURL(audioEl.src);
     };
-  }, [audio]);
+  }, [audio, onDurationChange]);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();

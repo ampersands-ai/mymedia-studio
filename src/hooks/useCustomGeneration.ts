@@ -77,7 +77,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
           prompt: state.prompt, 
           ...state.modelParameters 
         };
-        return Math.round(modelModule.calculateCost(inputs) * 100) / 100;
+        // Pass audio duration for lip sync models (cost depends on audio length)
+        const audioDurationSeconds = state.audioDuration ?? undefined;
+        return Math.round(modelModule.calculateCost(inputs, audioDurationSeconds) * 100) / 100;
       }
     } catch {
       // Model not found in registry - fall through to fallback
@@ -116,7 +118,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     }
     
     return Math.round(tokens * 100) / 100;
-  }, [state.selectedModel, state.modelParameters, state.prompt, uploadedImages, filteredModels]);
+  }, [state.selectedModel, state.modelParameters, state.prompt, state.audioDuration, uploadedImages, filteredModels]);
 
   /**
    * Estimated tokens with caption cost

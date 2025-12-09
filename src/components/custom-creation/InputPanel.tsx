@@ -52,6 +52,7 @@ interface InputPanelProps {
   isAudioRequired: boolean;
   audioMaxDuration: number | null;
   audioFileInputRef: React.RefObject<HTMLInputElement>;
+  onAudioDurationChange?: (duration: number | null) => void;
   hasDuration: boolean;
   durationValue: SchemaValue;
   onDurationChange: SchemaChangeHandler;
@@ -112,6 +113,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   isAudioRequired,
   audioMaxDuration,
   audioFileInputRef,
+  onAudioDurationChange,
   hasDuration,
   durationValue,
   onDurationChange,
@@ -276,6 +278,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             isRequired={isAudioRequired}
             fileInputRef={audioFileInputRef}
             maxDuration={audioMaxDuration}
+            onDurationChange={onAudioDurationChange}
           />
         )}
 

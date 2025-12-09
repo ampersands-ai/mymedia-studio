@@ -558,6 +558,7 @@ const CustomCreation = () => {
             isAudioRequired={audioFieldInfo.isRequired}
             audioMaxDuration={audioFieldInfo.maxDuration}
             audioFileInputRef={audioFileInputRef}
+            onAudioDurationChange={(duration) => updateState({ audioDuration: duration })}
             hasDuration={hasDuration}
             durationValue={state.modelParameters.duration}
             durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}

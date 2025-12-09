@@ -74,17 +74,31 @@ interface Model {
 
 // Normalize content type to match database constraint
 function normalizeContentType(contentType: string): 'image' | 'video' | 'text' | 'audio' {
-  const normalized = contentType.toLowerCase();
+  // Explicit mapping for known content types (matches frontend getGenerationType)
+  const typeMap: Record<string, 'image' | 'video' | 'text' | 'audio'> = {
+    'prompt_to_image': 'image',
+    'image_editing': 'image',
+    'image_to_video': 'video',
+    'prompt_to_video': 'video',
+    'lip_sync': 'video',
+    'video_to_video': 'video',
+    'prompt_to_audio': 'audio',
+  };
   
-  // Map various content types to allowed database values
-  if (normalized.includes('image') || normalized.includes('photo') || normalized.includes('picture')) {
-    return 'image';
-  }
+  const mapped = typeMap[contentType.toLowerCase()];
+  if (mapped) return mapped;
+  
+  // Fallback heuristics for unknown types - check video BEFORE image
+  // to handle compound types like "image_to_video" correctly
+  const normalized = contentType.toLowerCase();
   if (normalized.includes('video') || normalized.includes('animation')) {
     return 'video';
   }
   if (normalized.includes('audio') || normalized.includes('voice') || normalized.includes('music') || normalized.includes('sound')) {
     return 'audio';
+  }
+  if (normalized.includes('image') || normalized.includes('photo') || normalized.includes('picture')) {
+    return 'image';
   }
   if (normalized.includes('text') || normalized.includes('caption') || normalized.includes('script')) {
     return 'text';

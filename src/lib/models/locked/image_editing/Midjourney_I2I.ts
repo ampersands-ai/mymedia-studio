@@ -31,7 +31,7 @@ export const MODEL_CONFIG = {
   recordId: "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
   modelName: "Midjourney",
   provider: "kie_ai",
-  contentType: "image_to_image",
+  contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_IMAGE",
   baseCreditCost: 3,
   estimatedTimeSeconds: 60,

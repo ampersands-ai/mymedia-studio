@@ -3,7 +3,7 @@
  * Displays comprehensive pricing table with export functionality
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   RefreshCw, 
@@ -34,11 +34,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
 import { toast } from "sonner";
@@ -427,13 +422,13 @@ export default function ModelPricing() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40px]"></TableHead>
-                  <TableHead>Model Name</TableHead>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Base Cost</TableHead>
-                  <TableHead className="text-right">Configs</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="min-w-[180px]">Model Name</TableHead>
+                  <TableHead className="w-[100px]">Provider</TableHead>
+                  <TableHead className="w-[140px]">Category</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="w-[100px] text-right">Base Cost</TableHead>
+                  <TableHead className="w-[100px] text-right">Configs</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -449,33 +444,34 @@ export default function ModelPricing() {
                     const hasMultipleConfigs = model.configurations.length > 1;
                     
                     return (
-                      <Collapsible key={model.recordId} open={isExpanded}>
-                        <TableRow className={hasMultipleConfigs ? "cursor-pointer hover:bg-muted/50" : ""}>
-                          <TableCell>
+                      <Fragment key={model.recordId}>
+                        <TableRow 
+                          className={hasMultipleConfigs ? "cursor-pointer hover:bg-muted/50" : ""}
+                          onClick={() => hasMultipleConfigs && toggleExpanded(model.recordId)}
+                        >
+                          <TableCell className="w-12">
                             {hasMultipleConfigs && (
-                              <CollapsibleTrigger asChild onClick={() => toggleExpanded(model.recordId)}>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                  {isExpanded ? (
-                                    <ChevronDown className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronRight className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </CollapsibleTrigger>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
                             )}
                           </TableCell>
-                          <TableCell className="font-medium">{model.modelName}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-medium min-w-[180px]">{model.modelName}</TableCell>
+                          <TableCell className="w-[100px]">
                             <Badge variant="outline">{model.provider}</Badge>
                           </TableCell>
-                          <TableCell>{formatCategory(model.category)}</TableCell>
-                          <TableCell>
+                          <TableCell className="w-[140px]">{formatCategory(model.category)}</TableCell>
+                          <TableCell className="w-[100px]">
                             <Badge variant={model.status === "active" ? "default" : "secondary"}>
                               {model.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right font-mono">{model.baseCost}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="w-[100px] text-right font-mono">{model.baseCost}</TableCell>
+                          <TableCell className="w-[100px] text-right">
                             {hasMultipleConfigs ? (
                               <Badge variant="outline">{model.configurations.length} configs</Badge>
                             ) : (
@@ -483,23 +479,26 @@ export default function ModelPricing() {
                             )}
                           </TableCell>
                         </TableRow>
-                        {hasMultipleConfigs && (
-                          <CollapsibleContent asChild>
-                            <>
-                              {model.configurations.map((config, idx) => (
-                                <TableRow key={idx} className="bg-muted/30">
-                                  <TableCell></TableCell>
-                                  <TableCell colSpan={4} className="pl-12 text-sm text-muted-foreground">
-                                    {config.config}
-                                  </TableCell>
-                                  <TableCell className="text-right font-mono">{config.cost}</TableCell>
-                                  <TableCell></TableCell>
-                                </TableRow>
-                              ))}
-                            </>
-                          </CollapsibleContent>
+                        {hasMultipleConfigs && isExpanded && (
+                          <TableRow className="bg-muted/30 hover:bg-muted/30">
+                            <TableCell colSpan={7} className="p-0">
+                              <div className="py-3 px-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {model.configurations.map((config, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex justify-between items-center px-3 py-2 bg-background rounded-md border"
+                                    >
+                                      <span className="text-sm">{config.config}</span>
+                                      <span className="font-mono text-sm font-medium">{config.cost}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
                         )}
-                      </Collapsible>
+                      </Fragment>
                     );
                   })
                 )}

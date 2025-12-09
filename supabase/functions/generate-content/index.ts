@@ -457,6 +457,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    // API control parameters that models can pass but aren't user-facing schema fields
+    const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion'];
+
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
       parameters: Record<string, unknown>,
@@ -522,6 +525,13 @@ Deno.serve(async (req) => {
         }
       }
       
+      // Preserve API control parameters (e.g., taskType for Midjourney routing)
+      for (const controlParam of API_CONTROL_PARAMS) {
+        if (controlParam in parameters && parameters[controlParam] !== undefined) {
+          filtered[controlParam] = parameters[controlParam];
+        }
+      }
+
       logger.debug('Parameters filtered from schema', {
         metadata: {
           original_keys: Object.keys(parameters).length,

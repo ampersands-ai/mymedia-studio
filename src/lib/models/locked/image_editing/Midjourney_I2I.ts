@@ -33,10 +33,10 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_IMAGE",
-  baseCreditCost: 3,
+  baseCreditCost: 1.5,
   estimatedTimeSeconds: 60,
   costMultipliers: {
-    speed: { relaxed: 1, fast: 1.5, turbo: 2 },
+    speed: { relaxed: 1, fast: 1.3334, turbo: 5.3334 },
   },
   apiEndpoint: "/api/v1/mj/generate", // CORRECTED: Was /api/v1/jobs/createTask
   payloadStructure: "flat", // CORRECTED: Was wrapper

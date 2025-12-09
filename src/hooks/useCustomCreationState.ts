@@ -3,7 +3,7 @@ import type { CustomCreationState } from "@/types/custom-creation";
 import type { CreationGroup } from "@/constants/creation-groups";
 import { logger } from "@/lib/logger";
 
-const STORAGE_VERSION = '1.0';
+const STORAGE_VERSION = '1.1'; // Bumped to invalidate cached invalid UUIDs
 const MAX_STORAGE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 interface StoredState {

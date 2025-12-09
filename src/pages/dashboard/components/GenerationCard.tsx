@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ const getStatusBadge = (status: string, createdAt?: string) => {
   }
 };
 
-export const GenerationCard = ({ generation, index, onView, onDownload }: GenerationCardProps) => {
+const GenerationCardComponent = ({ generation, index, onView, onDownload }: GenerationCardProps) => {
   const effectiveType = getEffectiveType(generation);
   const versionedPath = generation.storage_path
     ? `${generation.storage_path}${generation.storage_path.includes('?') ? '&' : '?'}v=${encodeURIComponent(generation.created_at)}`
@@ -186,3 +187,6 @@ export const GenerationCard = ({ generation, index, onView, onDownload }: Genera
     </Card>
   );
 };
+
+// Memoize to prevent unnecessary re-renders in lists
+export const GenerationCard = React.memo(GenerationCardComponent);

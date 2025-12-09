@@ -1096,24 +1096,29 @@ Deno.serve(async (req) => {
           parametersWithPrompt[promptFieldName] = finalPrompt;
         }
         
-        // Filter to only allowed parameters
+        // API control parameters that models can pass but aren't user-facing schema fields
+        // These are used by providers for routing/configuration but shouldn't be exposed to users
+        const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion'];
+        
+        // Filter to only allowed parameters (schema + API control params)
         const allowedParams: Record<string, unknown> = {};
         const unknownKeys: string[] = [];
         
         for (const [key, value] of Object.entries(parametersWithPrompt)) {
-          if (allowedPropertyNames.includes(key)) {
+          if (allowedPropertyNames.includes(key) || API_CONTROL_PARAMS.includes(key)) {
             allowedParams[key] = value;
           } else {
             unknownKeys.push(key);
           }
         }
         
-        // Reject request if unknown parameters are present
+        // Reject request if truly unknown parameters are present (not API control params)
         if (unknownKeys.length > 0) {
           logger.error('Unknown parameters detected', undefined, {
             metadata: {
               unknownKeys,
               allowedPropertyNames,
+              apiControlParams: API_CONTROL_PARAMS,
               receivedKeys: Object.keys(parametersWithPrompt)
             }
           });

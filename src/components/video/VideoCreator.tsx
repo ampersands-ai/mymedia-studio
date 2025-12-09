@@ -341,7 +341,6 @@ export function VideoCreator() {
                       className="flex-1 justify-start h-9"
                       onClick={() => {
                         setCustomCaptionStyle(preset.settings as unknown as CaptionStyle);
-                        toast.success(`Loaded "${preset.name}"`);
                       }}
                       disabled={isDisabled}
                     >

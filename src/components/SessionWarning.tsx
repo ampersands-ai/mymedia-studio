@@ -63,7 +63,6 @@ export const SessionWarning = () => {
       
       timer.end({ success: true });
       sessionLogger.info('Session extended successfully');
-      toast.success('Session extended successfully');
       setShowWarning(false);
     } catch (error) {
       sessionLogger.error('Failed to extend session', error as Error);

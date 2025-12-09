@@ -31,7 +31,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "midjourney/image-to-video",
   recordId: "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
-  modelName: "Midjourney I2V",
+  modelName: "Midjourney",
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
@@ -46,7 +46,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/midjourney.png",
   modelFamily: "Midjourney",
-  variantName: "Image-to-Video",
+  variantName: "Midjourney",
   displayOrderInFamily: 3,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/image_to_video/Midjourney_I2V.ts",

@@ -29,7 +29,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "midjourney/image-to-image",
   recordId: "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
-  modelName: "Midjourney I2I",
+  modelName: "Midjourney",
   provider: "kie_ai",
   contentType: "image_to_image",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_IMAGE",
@@ -46,7 +46,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/midjourney.png",
   modelFamily: "Midjourney",
-  variantName: "Image-to-Image",
+  variantName: "Midjourney",
   displayOrderInFamily: 2,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/image_to_image/Midjourney_I2I.ts",

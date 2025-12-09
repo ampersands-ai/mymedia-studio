@@ -20,7 +20,7 @@ interface ModelSelectorProps {
 /**
  * Model selection dropdown with logos, cost, time, and cross-group indicators
  */
-export const ModelSelector: React.FC<ModelSelectorProps> = ({
+const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
   models,
   selectedModel,
   onModelChange,
@@ -268,3 +268,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     </div>
   );
 };
+
+// Memoize to prevent re-renders when parent state changes unrelated to model selection
+export const ModelSelector = React.memo(ModelSelectorComponent);

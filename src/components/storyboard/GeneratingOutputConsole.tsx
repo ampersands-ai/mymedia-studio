@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -23,7 +24,7 @@ interface GeneratingOutputConsoleProps {
   isCanceling: boolean;
 }
 
-export const GeneratingOutputConsole = ({
+const GeneratingOutputConsoleComponent = ({
   progress,
   statusMessage,
   elapsedTime,
@@ -135,3 +136,6 @@ export const GeneratingOutputConsole = ({
     </Card>
   );
 };
+
+// Memoize to prevent unnecessary re-renders during progress updates
+export const GeneratingOutputConsole = React.memo(GeneratingOutputConsoleComponent);

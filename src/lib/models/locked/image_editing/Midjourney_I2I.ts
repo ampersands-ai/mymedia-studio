@@ -33,7 +33,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_IMAGE",
-  baseCreditCost: 3,
+  baseCreditCost: 1.5,
   estimatedTimeSeconds: 60,
   costMultipliers: {
     speed: { relaxed: 1, fast: 2.66667, turbo: 5.3334 },

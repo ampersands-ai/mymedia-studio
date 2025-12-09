@@ -28,7 +28,6 @@ export const usePromptEnhancement = () => {
         throw new Error('No enhanced prompt received');
       }
 
-      toast.success('Prompt enhanced successfully!', { duration: 2000 });
       return data.enhanced_prompt;
 
     } catch (error) {

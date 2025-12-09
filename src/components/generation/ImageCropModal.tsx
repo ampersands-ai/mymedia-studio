@@ -50,7 +50,6 @@ export const ImageCropModal = ({
         rotation
       );
       onCropComplete(blob, url);
-      toast.success("Image cropped successfully!");
       onOpenChange(false);
     } catch (error) {
       logger.error('Image crop processing failed', error as Error, {

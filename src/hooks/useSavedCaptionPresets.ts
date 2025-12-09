@@ -51,7 +51,6 @@ export function useSavedCaptionPresets() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-caption-presets'] });
-      toast.success('Caption preset saved successfully');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to save preset');

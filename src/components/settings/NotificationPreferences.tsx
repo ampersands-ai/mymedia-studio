@@ -81,8 +81,6 @@ export const NotificationPreferences = () => {
         });
 
       if (error) throw error;
-      
-      toast.success('Notification preferences saved successfully');
     } catch (error) {
       logger.error('Notification preferences save failed', error as Error, {
         component: 'NotificationPreferences',

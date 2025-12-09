@@ -36,7 +36,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 3,
+  baseCreditCost: 6,
   estimatedTimeSeconds: 300,
   costMultipliers: {
     duration: { 5: 1, 10: 2.5 },

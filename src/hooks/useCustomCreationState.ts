@@ -93,6 +93,7 @@ const INITIAL_STATE: CustomCreationState = {
   generateCaption: false,
   resolution: "Native",
   advancedOpen: false,
+  audioDuration: null,
   
   // Generation state
   generatedOutput: null,

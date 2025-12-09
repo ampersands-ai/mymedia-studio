@@ -228,7 +228,7 @@ export interface ModelModule {
   SCHEMA: ModelJsonSchema;
   validate: (inputs: Record<string, unknown>) => ValidationResult;
   preparePayload: (inputs: Record<string, unknown>) => Record<string, unknown> | unknown[];
-  calculateCost: (inputs: Record<string, unknown>) => number;
+  calculateCost: (inputs: Record<string, unknown>, audioDurationSeconds?: number) => number;
   execute: (params: ExecuteGenerationParams) => Promise<string>;
 }
 

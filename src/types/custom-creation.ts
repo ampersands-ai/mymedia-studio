@@ -69,6 +69,7 @@ export interface CustomCreationState {
   generateCaption: boolean;
   resolution: "Native" | "HD";
   advancedOpen: boolean;
+  audioDuration: number | null;
   
   // Generation state
   generatedOutput: string | null;

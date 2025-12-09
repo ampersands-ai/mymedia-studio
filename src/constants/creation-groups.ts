@@ -38,10 +38,10 @@ export const CREATION_GROUPS = [
   },
   { 
     id: "lip_sync" as const, 
-    label: "Lip Sync", 
+    label: "Custom Avatar", 
     subtitle: "(audio to video)",
     Icon: Mic, 
-    description: "Sync audio to video" 
+    description: "Create talking avatar videos" 
   },
   { 
     id: "prompt_to_audio" as const, 

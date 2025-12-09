@@ -5,6 +5,7 @@ import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { downloadSingleOutput } from "@/lib/download-utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OutputGridProps {
   outputs: Array<{
@@ -31,6 +32,7 @@ export const OutputGrid = ({
   onDownloadSuccess,
   userTokensRemaining
 }: OutputGridProps) => {
+  const isMobile = useIsMobile();
   const isAudio = contentType === 'audio';
   const MP4_TOKEN_COST = 1;
   const hasInsufficientCredits = userTokensRemaining !== undefined && userTokensRemaining < MP4_TOKEN_COST;
@@ -126,11 +128,14 @@ export const OutputGrid = ({
                 #{output.output_index + 1}
               </Badge>
 
-              {/* Download button (top-left) */}
+              {/* Download button (top-left) - always visible on mobile for touch accessibility */}
               <Button
                 variant="secondary"
                 size="icon"
-                className="absolute top-2 left-2 z-10 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                className={cn(
+                  "absolute top-2 left-2 z-10 h-10 w-10 min-h-[44px] min-w-[44px] transition-opacity",
+                  isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
                 onClick={(e) => {
                   e.stopPropagation();
                   downloadSingleOutput(output.storage_path, output.output_index, contentType, onDownloadSuccess);

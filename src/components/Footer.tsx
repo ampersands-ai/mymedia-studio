@@ -18,9 +18,9 @@ export const Footer = () => {
   return (
     <footer className="border-t-4 border-black bg-card mt-20">
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
-          {/* Brand */}
-          <div className="space-y-4 text-center md:text-left">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12">
+          {/* Brand - full width on mobile */}
+          <div className="col-span-2 md:col-span-1 space-y-4 text-center md:text-left">
             <Link to="/" className="flex items-center gap-3 justify-center md:justify-start">
           <img 
             src={logo} 

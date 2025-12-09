@@ -403,7 +403,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       </div>
 
       {/* Sticky action buttons at bottom - ALWAYS VISIBLE */}
-      <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 md:pb-6 border-t border-border bg-background/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">
+      <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 pb-safe md:pb-6 border-t border-border bg-background/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">
         <Button
           onClick={onGenerate}
           disabled={!canGenerate || isDisabled}
@@ -431,12 +431,12 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         </Button>
       </div>
 
-      {/* Floating scroll-to-top button */}
+      {/* Floating scroll-to-top button - positioned above sticky footer with safe area */}
       {showScrollTop && (
         <Button
           onClick={scrollToTop}
           size="icon"
-          className="absolute bottom-28 right-4 md:bottom-32 md:right-8 z-10 shadow-lg rounded-full h-12 w-12 transition-all duration-300 hover:scale-110"
+          className="absolute bottom-32 right-4 md:bottom-36 md:right-8 z-10 shadow-lg rounded-full h-12 w-12 min-h-[48px] min-w-[48px] transition-all duration-300 hover:scale-110"
           title="Scroll to top"
         >
           <ArrowUp className="h-5 w-5" />

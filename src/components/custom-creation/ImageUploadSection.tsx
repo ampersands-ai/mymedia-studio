@@ -121,12 +121,12 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                 variant="outline"
                 onClick={() => onNativeCameraPick('camera')}
                 disabled={cameraLoading}
-                className="w-full justify-center gap-2"
+                className="w-full justify-center gap-2 h-12 min-h-[48px] text-base"
               >
                 {cameraLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Camera className="h-4 w-4" />
+                  <Camera className="h-5 w-5" />
                 )}
                 Camera
               </Button>
@@ -134,12 +134,12 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                 variant="outline"
                 onClick={() => onNativeCameraPick('gallery')}
                 disabled={cameraLoading}
-                className="w-full justify-center gap-2"
+                className="w-full justify-center gap-2 h-12 min-h-[48px] text-base"
               >
                 {cameraLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <ImageIcon className="h-4 w-4" />
+                  <ImageIcon className="h-5 w-5" />
                 )}
                 Gallery
               </Button>

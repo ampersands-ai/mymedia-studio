@@ -29,25 +29,31 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Get audio duration when file changes
+  // Calculate audio duration and create stable blob URL when file changes
   useEffect(() => {
     if (!audio) {
       setAudioDuration(null);
+      setAudioPreviewUrl(null);
       onDurationChange?.(null);
       return;
     }
+
+    // Create blob URL once for this audio file
+    const blobUrl = URL.createObjectURL(audio);
+    setAudioPreviewUrl(blobUrl);
 
     const audioEl = new Audio();
     audioEl.onloadedmetadata = () => {
       setAudioDuration(audioEl.duration);
       onDurationChange?.(audioEl.duration);
     };
-    audioEl.src = URL.createObjectURL(audio);
+    audioEl.src = blobUrl;
 
     return () => {
-      URL.revokeObjectURL(audioEl.src);
+      URL.revokeObjectURL(blobUrl);
     };
   }, [audio, onDurationChange]);
 
@@ -141,12 +147,14 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
           </div>
 
           {/* Audio player */}
-          <audio
-            ref={audioRef}
-            src={URL.createObjectURL(audio)}
-            controls
-            className="w-full h-10"
-          />
+          {audioPreviewUrl && (
+            <audio
+              ref={audioRef}
+              src={audioPreviewUrl}
+              controls
+              className="w-full h-10"
+            />
+          )}
 
           {/* Change audio button */}
           <input

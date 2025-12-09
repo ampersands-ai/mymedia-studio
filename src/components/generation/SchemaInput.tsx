@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Upload, X, Volume2, FileText, Plus, Minus } from "lucide-react";
+import { Upload, X, Volume2, FileText, Plus, Minus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -45,7 +45,14 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   const { user } = useAuth();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [_isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Sync imagePreview with value prop - clears preview when value is reset externally
+  useEffect(() => {
+    if (value === null || value === undefined) {
+      setImagePreview(null);
+    }
+  }, [value]);
   
   // Check if showToUser flag should hide this field
   if (schema.showToUser === false) {
@@ -424,13 +431,23 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                disabled={isUploading}
                 className={`w-full border-2 border-dashed rounded-lg p-8 transition-colors bg-background ${
                   isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
+                } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm font-medium">Drag and drop or click to upload</span>
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                      <span className="text-sm font-medium">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-sm font-medium">Drag and drop or click to upload</span>
+                    </>
+                  )}
                 </div>
               </button>
             </>
@@ -502,15 +519,25 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              disabled={isUploading}
               className={`w-full border-2 border-dashed rounded-lg p-6 transition-colors bg-background ${
                 isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-              }`}
+              } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <div className="flex flex-col items-center justify-center gap-2">
-                <Plus className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                  {imageArray.length > 0 ? 'Drag and drop or click to add more' : 'Drag and drop or click to upload'}
-                </span>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                    <span className="text-sm font-medium">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      {imageArray.length > 0 ? 'Drag and drop or click to add more' : 'Drag and drop or click to upload'}
+                    </span>
+                  </>
+                )}
               </div>
             </button>
           </>
@@ -582,13 +609,23 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                disabled={isUploading}
                 className={`w-full border-2 border-dashed rounded-lg p-8 transition-colors bg-background ${
                   isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
+                } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm font-medium">Drag and drop or click to upload</span>
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                      <span className="text-sm font-medium">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-sm font-medium">Drag and drop or click to upload</span>
+                    </>
+                  )}
                 </div>
               </button>
               {schema.description && (

@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2, Sparkles, AlertCircle, Flag, CheckCircle, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import { OptimizedGenerationImage } from "@/components/generation/OptimizedGenerationImage";
 import { VideoPlayer } from "./VideoPlayer";
 import { AudioPlayer } from "./AudioPlayer";
@@ -204,7 +203,6 @@ export const GenerationDetailsModal = ({
                   variant="ghost"
                   onClick={() => {
                     navigator.clipboard.writeText(generation.ai_hashtags!.join(' '));
-                    toast.success('Hashtags copied to clipboard!');
                   }}
                   className="h-7 text-xs"
                 >
@@ -219,7 +217,6 @@ export const GenerationDetailsModal = ({
                     className="text-xs cursor-pointer hover:bg-primary/20"
                     onClick={() => {
                       navigator.clipboard.writeText(tag);
-                      toast.success(`Copied: ${tag}`);
                     }}
                   >
                     {tag}

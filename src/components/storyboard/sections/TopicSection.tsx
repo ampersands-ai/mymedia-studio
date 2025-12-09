@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
 
 const TOPIC_SUGGESTIONS = [
   'Why octopuses have 3 hearts and blue blood',
@@ -37,7 +36,6 @@ export function TopicSection({ topic, onTopicChange, disabled }: TopicSectionPro
   const handleSurpriseMe = () => {
     const randomTopic = TOPIC_SUGGESTIONS[Math.floor(Math.random() * TOPIC_SUGGESTIONS.length)];
     onTopicChange(randomTopic);
-    toast.success('✨ Random topic selected!', { id: 'random-topic' });
   };
 
   return (

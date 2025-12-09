@@ -66,7 +66,6 @@ export const ImageGenerationPanel = ({
     setSelectedPrompt(suggested.prompt);
     setCustomPrompt(suggested.prompt);
     setAltText(suggested.alt_text);
-    toast.success("Prompt loaded! Select a model and generate.");
   };
 
   const handleGenerate = async () => {
@@ -173,7 +172,6 @@ export const ImageGenerationPanel = ({
   const handleCopyImageTag = (image: GeneratedImage) => {
     const imageTag = `<img src="${image.url}" alt="${image.alt_text}" class="rounded-lg shadow-lg my-4" />`;
     navigator.clipboard.writeText(imageTag);
-    toast.success("Image HTML copied! Paste it in the editor.");
   };
 
   return (

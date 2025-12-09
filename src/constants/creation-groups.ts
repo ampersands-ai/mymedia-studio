@@ -1,4 +1,4 @@
-import { Palette, ImagePlus, Video, Film, Music, Mic, Repeat } from "lucide-react";
+import { Palette, ImagePlus, Video, Film, Music, CircleUser, Repeat } from "lucide-react";
 
 export const CREATION_GROUPS = [
   { 
@@ -40,7 +40,7 @@ export const CREATION_GROUPS = [
     id: "lip_sync" as const, 
     label: "Custom Avatar", 
     subtitle: "(audio to video)",
-    Icon: Mic, 
+    Icon: CircleUser, 
     description: "Create talking avatar videos" 
   },
   { 

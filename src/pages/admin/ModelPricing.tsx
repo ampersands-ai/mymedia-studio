@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getAllModels, type ModelModule } from "@/lib/models/registry";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface PricingConfiguration {
@@ -43,12 +44,19 @@ interface PricingConfiguration {
   cost: number;
 }
 
+type ModelStatus = "active" | "hidden" | "deactivated";
+
+interface VisibilitySettings {
+  visible: Record<string, boolean>;
+  deactivated: Record<string, boolean>;
+}
+
 interface ModelPricingData {
   recordId: string;
   modelName: string;
   provider: string;
   category: string;
-  status: "active" | "inactive";
+  status: ModelStatus;
   baseCost: number;
   configurations: PricingConfiguration[];
 }
@@ -136,10 +144,27 @@ export default function ModelPricing() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set());
 
-  // Fetch model data from registry
+  // Fetch model data from registry with database visibility settings
   const { data: models, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["admin-model-pricing"],
     queryFn: async (): Promise<ModelPricingData[]> => {
+      // Fetch visibility settings from database
+      const { data: settingsData } = await supabase
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "model_visibility")
+        .maybeSingle();
+
+      const visibility: VisibilitySettings = (settingsData?.setting_value as unknown as VisibilitySettings) || 
+        { visible: {}, deactivated: {} };
+
+      // Determine effective status based on both file and database settings
+      const getEffectiveStatus = (recordId: string, isActiveInFile: boolean): ModelStatus => {
+        if (visibility.deactivated[recordId]) return "deactivated";
+        if (recordId in visibility.visible && !visibility.visible[recordId]) return "hidden";
+        return isActiveInFile ? "active" : "deactivated";
+      };
+
       const allModels = getAllModels();
       
       return allModels.map((model) => ({
@@ -147,7 +172,7 @@ export default function ModelPricing() {
         modelName: model.MODEL_CONFIG.modelName,
         provider: model.MODEL_CONFIG.provider,
         category: model.MODEL_CONFIG.contentType,
-        status: model.MODEL_CONFIG.isActive ? "active" : "inactive",
+        status: getEffectiveStatus(model.MODEL_CONFIG.recordId, model.MODEL_CONFIG.isActive),
         baseCost: model.MODEL_CONFIG.baseCreditCost,
         configurations: extractPricingConfigurations(model),
       }));
@@ -406,7 +431,8 @@ export default function ModelPricing() {
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="hidden">Hidden</SelectItem>
+            <SelectItem value="deactivated">Deactivated</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -466,7 +492,14 @@ export default function ModelPricing() {
                           </TableCell>
                           <TableCell className="w-[140px]">{formatCategory(model.category)}</TableCell>
                           <TableCell className="w-[100px]">
-                            <Badge variant={model.status === "active" ? "default" : "secondary"}>
+                            <Badge 
+                              variant={
+                                model.status === "active" ? "default" : 
+                                model.status === "hidden" ? "outline" : 
+                                "secondary"
+                              }
+                              className={model.status === "deactivated" ? "bg-destructive/10 text-destructive" : ""}
+                            >
                               {model.status}
                             </Badge>
                           </TableCell>

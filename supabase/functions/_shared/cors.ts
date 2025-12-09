@@ -37,22 +37,25 @@ function isAllowedOrigin(origin: string): boolean {
 export function getAllowedOrigin(requestOrigin: string | null): string {
   // Get allowed origins from environment variable (comma-separated)
   const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
+  const allowedOrigins = allowedOriginsEnv 
+    ? allowedOriginsEnv.split(',').map(origin => origin.trim())
+    : [];
 
-  // If environment variable is set, use explicit list
-  if (allowedOriginsEnv) {
-    const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim());
-    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
-      return requestOrigin;
-    }
-    return allowedOrigins[0];
+  // Check if origin is in explicit list
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    return requestOrigin;
   }
 
-  // Use pattern matching for Lovable domains
+  // Check Lovable patterns and localhost (always allowed)
   if (requestOrigin && isAllowedOrigin(requestOrigin)) {
     return requestOrigin;
   }
 
-  // Return the request origin if provided (for flexibility), otherwise use wildcard
+  // Fallback: use first allowed origin if set, otherwise request origin or wildcard
+  if (allowedOrigins.length > 0) {
+    return allowedOrigins[0];
+  }
+  
   return requestOrigin || '*';
 }
 
@@ -102,21 +105,21 @@ export function getResponseHeaders(req: Request): HeadersInit {
 export function handleCorsPreflight(req: Request): Response {
   const requestOrigin = req.headers.get('Origin');
 
-  // Verify origin is allowed using pattern matching or explicit list
-  const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
-  
   if (requestOrigin) {
-    if (allowedOriginsEnv) {
-      // Use explicit list from environment
-      const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim());
-      if (!allowedOrigins.includes(requestOrigin)) {
-        return new Response('Forbidden', { status: 403 });
-      }
-    } else {
-      // Use pattern matching for Lovable domains
-      if (!isAllowedOrigin(requestOrigin)) {
-        return new Response('Forbidden', { status: 403 });
-      }
+    const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
+    const allowedOrigins = allowedOriginsEnv 
+      ? allowedOriginsEnv.split(',').map(origin => origin.trim())
+      : [];
+
+    // Check explicit list first
+    const inExplicitList = allowedOrigins.includes(requestOrigin);
+    
+    // Then check Lovable patterns and localhost
+    const matchesPattern = isAllowedOrigin(requestOrigin);
+    
+    // Reject if neither matches
+    if (!inExplicitList && !matchesPattern) {
+      return new Response('Forbidden', { status: 403 });
     }
   }
 

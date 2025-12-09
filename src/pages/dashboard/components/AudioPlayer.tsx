@@ -47,7 +47,6 @@ export const AudioPlayer = ({ generation, className, showControls = false }: Aud
                   a.click();
                   window.URL.revokeObjectURL(blobUrl);
                   document.body.removeChild(a);
-                  toast.success('Download started successfully!', { id: 'audio-download' });
                 }
               } catch {
                 toast.error('Failed to download', { id: 'audio-download' });

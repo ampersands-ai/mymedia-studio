@@ -30,7 +30,6 @@ export async function downloadSingleOutput(
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    toast.success('Download started!');
     onDownloadSuccess?.();
   } catch (error) {
     logger.error('Single output download failed', error as Error, {

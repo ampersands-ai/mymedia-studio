@@ -82,8 +82,6 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
-        
-        toast.success('Download started!');
       } catch (error) {
         componentLogger.error('Web download failed', error instanceof Error ? error : new Error(String(error)), {
           operation: 'downloadFile',

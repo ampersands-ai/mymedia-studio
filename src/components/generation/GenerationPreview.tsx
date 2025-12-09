@@ -183,7 +183,6 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
                 a.click();
                 window.URL.revokeObjectURL(blobUrl);
                 document.body.removeChild(a);
-                toast.success('Download started!');
               }
             } catch {
               toast.error('Failed to download');
@@ -231,7 +230,6 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
                   a.click();
                   window.URL.revokeObjectURL(blobUrl);
                   document.body.removeChild(a);
-                  toast.success('Download started!');
                 }
               } catch {
                 toast.error('Failed to download');

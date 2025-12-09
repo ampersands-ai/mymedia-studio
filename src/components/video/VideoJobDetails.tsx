@@ -57,7 +57,6 @@ export function VideoJobDetails({ job, onPreview, onGenerateCaption, isGeneratin
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
-      toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
       componentLogger.error('Download error', error as Error, { jobId: job.id } as any);
       toast.error(

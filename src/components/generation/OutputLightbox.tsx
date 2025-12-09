@@ -176,7 +176,6 @@ export const OutputLightbox = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Download started!');
     } catch (error) {
       logger.error('Output download failed', error as Error, {
         component: 'OutputLightbox',

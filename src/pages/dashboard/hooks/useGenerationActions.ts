@@ -39,7 +39,6 @@ export const useGenerationActions = (userId: string | undefined) => {
         a.click();
         window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
-        toast.success('Download started successfully!', { id: 'download-toast' });
 
         // Track activity
         clientLogger.activity({
@@ -97,7 +96,6 @@ export const useGenerationActions = (userId: string | undefined) => {
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
-      toast.success('Download started successfully!', { id: 'download-toast' });
 
       // Track activity
       clientLogger.activity({

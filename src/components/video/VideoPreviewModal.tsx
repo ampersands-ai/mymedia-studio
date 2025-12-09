@@ -161,7 +161,6 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
-      toast.success('Download started!', { id: 'video-download' });
     } catch (error) {
       componentLogger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'handleDownload',

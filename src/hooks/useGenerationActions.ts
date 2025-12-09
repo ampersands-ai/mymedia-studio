@@ -178,7 +178,6 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Download started!', { id: TOAST_IDS.DOWNLOAD });
       
       // Update onboarding progress
       if (onboardingProgress && !onboardingProgress.checklist.downloadedResult && updateOnboardingProgress) {

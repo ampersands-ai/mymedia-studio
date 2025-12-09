@@ -74,7 +74,6 @@ export const VideoPlayer = ({
               a.click();
               window.URL.revokeObjectURL(blobUrl);
               document.body.removeChild(a);
-              toast.success('Download started successfully!', { id: 'video-download' });
             } catch (error) {
               logger.error('Video download error', error as Error, {
                 component: 'VideoPlayer',

@@ -1,10 +1,34 @@
-/** Runway (image_to_video) - Record: b8f9c5e2-6d4a-3f7b-9e8c-5a7d3f6b4e9a */
+/**
+ * Runway Image-to-Video Model
+ *
+ * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
+ *
+ * CRITICAL FIXES APPLIED:
+ * - Endpoint: /api/v1/runway/generate (NOT /api/v1/jobs/createTask)
+ * - Payload: FLAT structure (NOT wrapper)
+ * - Image field: imageUrl (camelCase, NOT image_url)
+ * - Added: quality (REQUIRED), waterMark
+ * - Removed: aspectRatio (determined by image for I2V)
+ * - Prompt maxLength: 1800 (NOT 5000)
+ * - Duration: numbers 5/10 (NOT strings)
+ * - CONSTRAINT: 10s + 1080p = NOT ALLOWED
+ *
+ * @locked
+ * @model runway/image-to-video
+ * @provider kie.ai
+ * @version 2.0.0
+ */
+
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+
+// ============================================================================
+// MODEL CONFIGURATION
+// ============================================================================
 
 export const MODEL_CONFIG = {
   modelId: "runway-duration-5-generate",
@@ -15,10 +39,14 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
   baseCreditCost: 10,
   estimatedTimeSeconds: 300,
-  costMultipliers: {},
-  apiEndpoint: "/api/v1/jobs/createTask",
-  payloadStructure: "wrapper",
+  costMultipliers: {
+    duration: { 5: 1, 10: 2.5 },
+    quality: { "720p": 1, "1080p": 2.5 },
+  },
+  apiEndpoint: "/api/v1/runway/generate", // CORRECTED: Was /api/v1/jobs/createTask
+  payloadStructure: "flat", // CORRECTED: Was wrapper
   maxImages: 1,
+  maxFileSize: 10 * 1024 * 1024,
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
@@ -26,76 +54,204 @@ export const MODEL_CONFIG = {
   modelFamily: "Runway",
   variantName: "Runway",
   displayOrderInFamily: 2,
-
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/image_to_video/Runway.ts",
+  lockedFilePath: "src/lib/models/locked/image_to_video/Runway_I2V.ts",
 } as const;
 
-export const SCHEMA = {
-  properties: {
-    duration: { default: "5", enum: ["5", "10"], type: "string" },
-    image_url: { type: "string" },
-    prompt: { type: "string" },
-  },
-  required: ["prompt", "image_url"],
+// ============================================================================
+// SCHEMA - CORRECTED TO MATCH API
+// ============================================================================
+
+export const SCHEMA = Object.freeze({
   type: "object",
-} as const;
+  required: ["prompt", "imageUrl", "duration", "quality"],
+  imageInputField: "imageUrl", // CORRECTED: Was image_url (camelCase!)
+  properties: {
+    prompt: {
+      type: "string",
+      title: "Prompt",
+      default: "",
+      description: "Describes how to animate or modify the image content",
+      maxLength: 1800, // CORRECTED: Was 5000
+      renderer: "prompt",
+    },
+    imageUrl: {
+      type: "string",
+      format: "uri",
+      title: "Reference Image",
+      description: "Image to animate. Aspect ratio will be determined by the image.",
+      renderer: "image",
+    },
+    duration: {
+      type: "number", // CORRECTED: Was string
+      title: "Duration",
+      default: 5,
+      enum: [5, 10],
+      enumLabels: {
+        5: "5 seconds",
+        10: "10 seconds (720p only)",
+      },
+      description: "Video duration. 10s cannot use 1080p quality.",
+    },
+    quality: {
+      type: "string",
+      title: "Quality",
+      default: "720p",
+      enum: ["720p", "1080p"],
+      enumLabels: {
+        "720p": "720p (HD)",
+        "1080p": "1080p (Full HD, 5s only)",
+      },
+      description: "Video resolution. 1080p cannot generate 10s videos.",
+    },
+    waterMark: {
+      type: "string",
+      title: "Watermark",
+      default: "",
+      description: "Watermark text. Empty = no watermark.",
+      isAdvanced: true,
+    },
+  },
+  "x-order": ["prompt", "imageUrl", "duration", "quality"],
+});
 
-export function validate(inputs: Record<string, any>) {
-  return inputs.prompt && inputs.image_url ? { valid: true } : { valid: false, error: "Prompt and image required" };
+// ============================================================================
+// VALIDATION - WITH 10s + 1080p CONSTRAINT
+// ============================================================================
+
+export function validate(inputs: Record<string, unknown>): { valid: boolean; error?: string } {
+  if (!inputs.prompt || (typeof inputs.prompt === "string" && inputs.prompt.trim() === "")) {
+    return { valid: false, error: "Prompt is required" };
+  }
+  if (typeof inputs.prompt === "string" && inputs.prompt.length > 1800) {
+    return { valid: false, error: "Prompt must be 1800 characters or less" };
+  }
+
+  if (!inputs.imageUrl || (typeof inputs.imageUrl === "string" && inputs.imageUrl.trim() === "")) {
+    return { valid: false, error: "Reference image is required" };
+  }
+
+  // CRITICAL CONSTRAINT: 10s + 1080p = NOT ALLOWED
+  const duration = inputs.duration || 5;
+  const quality = inputs.quality || "720p";
+  if (duration === 10 && quality === "1080p") {
+    return { valid: false, error: "10-second videos cannot use 1080p resolution. Use 720p or reduce duration to 5s." };
+  }
+
+  return { valid: true };
 }
-export function preparePayload(inputs: Record<string, any>) {
-  return {
-    modelId: MODEL_CONFIG.modelId,
-    input: { prompt: inputs.prompt, image_url: inputs.image_url, duration: inputs.duration || "5" },
+
+// ============================================================================
+// PAYLOAD PREPARATION - FLAT STRUCTURE (NO WRAPPER)
+// ============================================================================
+
+export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    prompt: inputs.prompt || "",
+    imageUrl: inputs.imageUrl || "",
+    duration: inputs.duration || 5,
+    quality: inputs.quality || "720p",
   };
+
+  // Note: aspectRatio is NOT used for I2V - determined by image
+
+  if (inputs.waterMark !== undefined && inputs.waterMark !== "") {
+    payload.waterMark = inputs.waterMark;
+  }
+
+  return payload;
 }
-export function calculateCost(_inputs: Record<string, any>) {
-  return MODEL_CONFIG.baseCreditCost;
+
+// ============================================================================
+// COST CALCULATION - WITH DURATION AND QUALITY MULTIPLIERS
+// ============================================================================
+
+export function calculateCost(inputs: Record<string, unknown>): number {
+  const base = MODEL_CONFIG.baseCreditCost;
+  const duration = (inputs.duration || 5) as keyof typeof MODEL_CONFIG.costMultipliers.duration;
+  const quality = (inputs.quality || "720p") as keyof typeof MODEL_CONFIG.costMultipliers.quality;
+
+  const durMult = MODEL_CONFIG.costMultipliers.duration[duration] || 1;
+  const qualMult = MODEL_CONFIG.costMultipliers.quality[quality] || 1;
+
+  return Math.round(base * durMult * qualMult * 100) / 100;
 }
+
+// ============================================================================
+// EXECUTION
+// ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;
-  const inputs: Record<string, any> = { prompt, ...modelParameters };
-  if (uploadedImages.length > 0) inputs.image_url = (await uploadImagesToStorage(userId))[0];
-  const validation = validate(inputs);
-  if (!validation.valid) throw new Error(validation.error);
-  const cost = calculateCost(inputs);
+  const { userId, prompt, modelParameters, uploadedImages, uploadImagesToStorage, startPolling } = params;
+
+  const allInputs: Record<string, unknown> = { ...modelParameters, prompt };
+
+  // Upload image and get URL
+  if (uploadedImages && uploadedImages.length > 0) {
+    const imageUrls = await uploadImagesToStorage(userId);
+    allInputs.imageUrl = imageUrls[0];
+  }
+
+  const validation = validate(allInputs);
+  if (!validation.valid) {
+    throw new Error(validation.error || "Validation failed");
+  }
+
+  const cost = calculateCost(allInputs);
+
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase
+
+  const { data: generation, error: insertError } = await supabase
     .from("generations")
     .insert({
       user_id: userId,
+      prompt: prompt,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
       type: getGenerationType(MODEL_CONFIG.contentType),
-      prompt,
+      status: GENERATION_STATUS.PROCESSING,
       tokens_used: cost,
-      status: GENERATION_STATUS.PENDING,
       settings: sanitizeForStorage(modelParameters),
     })
-    .select()
+    .select("id")
     .single();
-  if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
-  // Call edge function to handle API call server-side (edge function will process)
-  // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke("generate-content", {
+  if (insertError || !generation) {
+    throw new Error(`Failed to create generation record: ${insertError?.message}`);
+  }
+
+  const generationId = generation.id;
+
+  const { error: functionError } = await supabase.functions.invoke("generate-content", {
     body: {
-      generationId: gen.id,
+      generation_id: generationId,
+      user_id: userId,
+      model_id: MODEL_CONFIG.modelId,
+      model_record_id: MODEL_CONFIG.recordId,
+      prompt: prompt,
+      custom_parameters: preparePayload(allInputs),
+      cost: cost,
+      use_api_key: MODEL_CONFIG.use_api_key,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
-      prompt,
-      custom_parameters: preparePayload(inputs),
     },
   });
 
-  if (funcError) {
-    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+  if (functionError) {
+    throw new Error(`Generation failed: ${functionError.message}`);
   }
 
-  startPolling(gen.id);
-  return gen.id;
+  startPolling(generationId);
+
+  return generationId;
 }
+
+export default {
+  MODEL_CONFIG,
+  SCHEMA,
+  preparePayload,
+  calculateCost,
+  validate,
+  execute,
+};

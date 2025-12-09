@@ -75,9 +75,49 @@ export const useSchemaHelpers = () => {
     return 5000;
   }, []);
 
+  /**
+   * Dynamically detect audio field from schema using explicit audioInputField flag
+   */
+  const getAudioFieldInfo = useCallback((model: AIModel | null): { 
+    fieldName: string | null; 
+    isRequired: boolean; 
+    maxDuration: number | null;
+  } => {
+    if (!model?.input_schema) {
+      return { fieldName: null, isRequired: false, maxDuration: null };
+    }
+
+    const schema = model.input_schema as { 
+      audioInputField?: string; 
+      properties?: Record<string, { maxDuration?: number }>; 
+      required?: string[] 
+    };
+    const audioFieldName = schema.audioInputField;
+
+    // No audio input field defined in schema
+    if (!audioFieldName) {
+      return { fieldName: null, isRequired: false, maxDuration: null };
+    }
+
+    const properties = schema.properties || {};
+    const fieldSchema = properties[audioFieldName];
+
+    if (!fieldSchema) {
+      logger.warn(`Audio field '${audioFieldName}' declared in schema but not found in properties`);
+      return { fieldName: null, isRequired: false, maxDuration: null };
+    }
+
+    const required = schema.required || [];
+    const isRequired = required.includes(audioFieldName);
+    const maxDuration = fieldSchema.maxDuration || null;
+
+    return { fieldName: audioFieldName, isRequired, maxDuration };
+  }, []);
+
   return {
     getSchemaRequiredFields,
     getImageFieldInfo,
+    getAudioFieldInfo,
     getMaxPromptLength,
   };
 };

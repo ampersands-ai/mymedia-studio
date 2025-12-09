@@ -254,6 +254,16 @@ const CustomCreation = () => {
     uploadedImages,
     uploadImagesToStorage,
     imageFieldInfo,
+    uploadedAudios,
+    uploadAudiosToStorage: _uploadAudiosToStorage,
+    getAudioDuration: async (file: File) => {
+      return new Promise<number>((resolve) => {
+        const audio = new Audio();
+        audio.onloadedmetadata = () => resolve(audio.duration);
+        audio.src = URL.createObjectURL(file);
+      });
+    },
+    audioFieldInfo,
     filteredModels,
     onboardingProgress: progress,
     updateProgress,

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Upload, X, Volume2, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 
 interface AudioUploadSectionProps {
   audio: File | null;
@@ -78,6 +79,12 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
     const audioFiles = files.filter(file => 
       file.type.startsWith('audio/')
     );
+
+    // Show error if non-audio files were dropped
+    if (audioFiles.length === 0 && files.length > 0) {
+      toast.error("Please upload an audio file (MP3, WAV, AAC, M4A, OGG, FLAC)");
+      return;
+    }
 
     if (audioFiles.length > 0) {
       const syntheticEvent = {

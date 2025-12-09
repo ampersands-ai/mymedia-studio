@@ -38,8 +38,11 @@ export async function executeGeneration({
   prompt,
   modelParameters,
   uploadedImages,
+  uploadedAudios,
   userId,
   uploadImagesToStorage,
+  uploadAudiosToStorage,
+  getAudioDuration,
   startPolling,
   navigate,
 }: ExecuteGenerationParams): Promise<string> {
@@ -56,6 +59,12 @@ export async function executeGeneration({
     uploadedImageUrls = await uploadImagesToStorage(userId);
   }
 
+  // Upload audios to storage first (if any)
+  let uploadedAudioUrls: string[] = [];
+  if (uploadedAudios?.length && uploadAudiosToStorage) {
+    uploadedAudioUrls = await uploadAudiosToStorage(userId);
+  }
+
   // Pass ORIGINAL modelParameters to model's execute()
   // Each model handles sanitization at its own database insert point
   const generationId = await modelModule.execute({
@@ -64,8 +73,12 @@ export async function executeGeneration({
     modelParameters,
     uploadedImages,
     uploadedImageUrls,
+    uploadedAudios,
+    uploadedAudioUrls,
     userId,
     uploadImagesToStorage,
+    uploadAudiosToStorage,
+    getAudioDuration,
     generate: async () => ({}),
     startPolling,
     navigate,

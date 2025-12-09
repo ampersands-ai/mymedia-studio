@@ -31,13 +31,19 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const onDurationChangeRef = useRef(onDurationChange);
+
+  // Keep ref in sync with prop
+  useEffect(() => {
+    onDurationChangeRef.current = onDurationChange;
+  }, [onDurationChange]);
 
   // Calculate audio duration and create stable blob URL when file changes
   useEffect(() => {
     if (!audio) {
       setAudioDuration(null);
       setAudioPreviewUrl(null);
-      onDurationChange?.(null);
+      onDurationChangeRef.current?.(null);
       return;
     }
 
@@ -48,14 +54,14 @@ export const AudioUploadSection: React.FC<AudioUploadSectionProps> = ({
     const audioEl = new Audio();
     audioEl.onloadedmetadata = () => {
       setAudioDuration(audioEl.duration);
-      onDurationChange?.(audioEl.duration);
+      onDurationChangeRef.current?.(audioEl.duration);
     };
     audioEl.src = blobUrl;
 
     return () => {
       URL.revokeObjectURL(blobUrl);
     };
-  }, [audio, onDurationChange]);
+  }, [audio]);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();

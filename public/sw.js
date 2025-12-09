@@ -68,33 +68,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-// Network-first for Supabase API calls
-if (url.origin.includes('supabase')) {
-  // Skip service worker for non-GET requests (edge functions, POST, etc.)
-  // to avoid CORS/caching issues - let browser handle them directly
-  if (request.method !== 'GET') {
+  // Network-first for Supabase API calls
+  if (url.origin.includes('supabase')) {
+    // Skip service worker for non-GET requests (edge functions, POST, etc.)
+    // to avoid CORS/caching issues - let browser handle them directly
+    if (request.method !== 'GET') {
+      return;
+    }
+    
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache successful GET requests
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(request);
+        })
+    );
     return;
   }
-  
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful GET requests
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Fallback to cache if offline
-        return caches.match(request);
-      })
-  );
-  return;
-}
 
   // Stale-while-revalidate for images
   if (request.destination === 'image') {

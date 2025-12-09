@@ -22,6 +22,11 @@ interface UseCustomGenerationOptions {
   uploadedImages: File[];
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   imageFieldInfo: { fieldName: string | null; isRequired: boolean; isArray: boolean; maxImages: number };
+  // Audio upload support
+  uploadedAudios?: File[];
+  uploadAudiosToStorage?: (userId: string) => Promise<string[]>;
+  getAudioDuration?: (file: File) => Promise<number>;
+  audioFieldInfo?: { fieldName: string | null; isRequired: boolean; maxDuration: number | null };
   filteredModels: AIModel[];
   onboardingProgress: OnboardingProgress | null;
   updateProgress: (progress: Partial<OnboardingProgress['checklist']>) => void;
@@ -40,6 +45,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     startPolling,
     uploadedImages,
     uploadImagesToStorage,
+    uploadedAudios,
+    uploadAudiosToStorage,
+    getAudioDuration,
     filteredModels,
     onboardingProgress,
     updateProgress,
@@ -187,8 +195,11 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         prompt: state.prompt,
         modelParameters: state.modelParameters,
         uploadedImages,
+        uploadedAudios,
         userId: user.id,
         uploadImagesToStorage,
+        uploadAudiosToStorage,
+        getAudioDuration,
         generate,
         startPolling,
         navigate,

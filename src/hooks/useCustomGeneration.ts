@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePromptModeration } from "@/hooks/usePromptModeration";
 import { getMaxPromptLength } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import type { CustomCreationState } from "@/types/custom-creation";
@@ -58,6 +59,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { generate, isGenerating } = useGeneration();
+  const { checkPrompt, isChecking: isModerating } = usePromptModeration();
 
   /**
    * Calculate token cost using model's calculateCost() function
@@ -140,6 +142,19 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     if (!currentModel) {
       toast.error("Please select a model");
       return;
+    }
+
+    // Prompt moderation check (before any other processing)
+    if (state.prompt?.trim()) {
+      const moderationResult = await checkPrompt(state.prompt);
+      if (moderationResult?.flagged && !moderationResult.exempt) {
+        const flaggedCategories = moderationResult.flaggedCategories?.join(', ') || 'content policy';
+        toast.error("Content policy violation", {
+          description: `Your prompt contains content that violates our guidelines: ${flaggedCategories}. Please revise and try again.`,
+          duration: 8000,
+        });
+        return;
+      }
     }
 
     // Credit balance check
@@ -254,6 +269,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     onboardingProgress,
     updateProgress,
     setFirstGeneration,
+    checkPrompt,
   ]);
 
   /**
@@ -339,5 +355,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     calculateTokens,
     estimatedTokens,
     isGenerating,
+    isModerating,
   };
 };

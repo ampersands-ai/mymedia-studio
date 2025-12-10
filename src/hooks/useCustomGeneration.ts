@@ -12,6 +12,7 @@ import { handleError } from "@/lib/errors";
 import { UserTokens, OnboardingProgress } from "@/types/generation";
 import type { AIModel } from "@/hooks/useModels";
 import { getModel } from "@/lib/models/registry";
+import { usePromptModeration } from "@/hooks/usePromptModeration";
 
 const customGenerationLogger = logger.child({ component: 'useCustomGeneration' });
 
@@ -58,6 +59,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { generate, isGenerating } = useGeneration();
+  const { checkPrompt, isChecking: isCheckingModeration } = usePromptModeration();
 
   /**
    * Calculate token cost using model's calculateCost() function
@@ -140,6 +142,15 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     if (!currentModel) {
       toast.error("Please select a model");
       return;
+    }
+
+    // Content moderation check - validate prompt before generation
+    if (state.prompt && state.prompt.trim().length > 0) {
+      const moderationResult = await checkPrompt(state.prompt);
+      if (moderationResult.flagged) {
+        // Toast is already shown by the hook
+        return;
+      }
     }
 
     // Credit balance check
@@ -254,6 +265,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     onboardingProgress,
     updateProgress,
     setFirstGeneration,
+    checkPrompt,
   ]);
 
   /**
@@ -339,5 +351,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     calculateTokens,
     estimatedTokens,
     isGenerating,
+    isCheckingModeration,
   };
 };

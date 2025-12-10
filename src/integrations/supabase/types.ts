@@ -1275,6 +1275,33 @@ export type Database = {
           },
         ]
       }
+      moderation_exemptions: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
@@ -3264,6 +3291,7 @@ export type Database = {
         Args: { amount: number; user_id_param: string }
         Returns: undefined
       }
+      is_moderation_exempt: { Args: { _user_id: string }; Returns: boolean }
       resolve_error_event: {
         Args: { p_error_id: string; p_resolution_notes?: string }
         Returns: undefined

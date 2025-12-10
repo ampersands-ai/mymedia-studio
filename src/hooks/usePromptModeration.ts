@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ModerationResponse {
   flagged: boolean;
+  exempt: boolean;
   flaggedCategories: string[];
   categories: Record<string, boolean>;
   categoryScores: Record<string, number>;
@@ -27,8 +28,14 @@ export function usePromptModeration(): UsePromptModerationReturn {
     setError(null);
 
     try {
+      // Get current user ID for exemption check
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error: funcError } = await supabase.functions.invoke('moderate-prompt', {
-        body: { prompt },
+        body: { 
+          prompt,
+          userId: user?.id 
+        },
       });
 
       if (funcError) {

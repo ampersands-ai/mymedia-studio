@@ -109,6 +109,10 @@ export const GenerateContentRequestSchema = z.object({
   user_id: z.string().uuid().optional(),
   test_mode: z.boolean().default(false),
   test_run_id: z.string().uuid().optional(), // For comprehensive model testing system
+  
+  // Pre-calculated cost from model's calculateCost() function (for audio-duration-based pricing)
+  // When provided, edge function uses this instead of recalculating
+  preCalculatedCost: z.number().positive().max(10000).optional(),
 });
 
 export const ModelInputSchemaPropertySchema = z.object({

@@ -20,7 +20,7 @@ const partners: { name: string; logo: string }[] = [
   { name: 'Ideogram', logo: '/logos/ideogram.png' },
   { name: 'Flux', logo: '/logos/flux.png' },
   { name: 'ElevenLabs', logo: '/logos/elevenlabs.png' },
-  
+  { name: 'Z-Image', logo: '/logos/z-image.png' },
 ];
 
 export const PartnerLogosCarousel = () => {

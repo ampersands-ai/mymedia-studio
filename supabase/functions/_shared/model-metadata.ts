@@ -280,6 +280,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 40,
     isActive: true,
   },
+  "c3d4e5f6-a7b8-9012-cdef-123456789012": {
+    recordId: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    modelId: "z-image",
+    modelName: "Z-Image",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 30,
+    isActive: true,
+  },
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": {
     recordId: "3b83cee8-6164-4d98-aebe-f4eadcb3da1d",
     modelId: "4o-image-api",

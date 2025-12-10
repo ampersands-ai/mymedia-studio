@@ -103,7 +103,7 @@ import * as Suno from "./prompt_to_audio/Suno";
 import * as ChatGPT4oImage_PromptToImage from "./prompt_to_image/ChatGPT_4o_Image";
 import * as FLUX2ProTextToImage from "./prompt_to_image/FLUX_2_Pro_Text_to_Image";
 import * as FLUX2FlexTextToImage from "./prompt_to_image/FLUX_2_Flex_Text_to_Image";
-import * as ZImage from "./prompt_to_image/Z_Image";
+
 import * as Flux1Dev from "./prompt_to_image/Flux_1_Dev";
 import * as FLUX1KontextMax_PromptToImage from "./prompt_to_image/FLUX_1_Kontext_Max_prompt";
 import * as FLUX1KontextPro_PromptToImage from "./prompt_to_image/FLUX_1_Kontext_Pro_prompt";
@@ -295,7 +295,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "3b83cee8-6164-4d98-aebe-f4eadcb3da1d": ChatGPT4oImage_PromptToImage as ModelModule,      // ChatGPT 4o-Image | prompt_to_image | kie_ai
   "a1b2c3d4-e5f6-7890-abcd-ef1234567890": FLUX2ProTextToImage as ModelModule,               // FLUX 2 Pro Text-to-Image | prompt_to_image | kie_ai
   "b2c3d4e5-f6a7-8901-bcde-f12345678901": FLUX2FlexTextToImage as ModelModule,              // FLUX 2 Flex Text-to-Image | prompt_to_image | kie_ai
-  "c3d4e5f6-a7b8-9012-cdef-123456789012": ZImage as ModelModule,                            // Z-Image | prompt_to_image | kie_ai
+  
   "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c": Flux1Dev as ModelModule,                          // Flux.1 Dev | prompt_to_image | runware
   "100@1": FLUX1Pro as ModelModule,                                                         // FLUX.1 Pro | prompt_to_image | runware
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": FLUX1KontextMax_PromptToImage as ModelModule,     // FLUX.1 Kontext Max | prompt_to_image | kie_ai

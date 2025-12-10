@@ -30,7 +30,47 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     
-    // Insert error log
+    // Rate limiting: Check if same error was logged recently (within 5 minutes)
+    const errorFingerprint = `${body.error_type}:${body.error_message?.substring(0, 100)}:${body.route_path}`;
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    const { data: recentError } = await supabase
+      .from('user_error_logs')
+      .select('id, metadata')
+      .eq('user_id', user?.id || null)
+      .eq('error_type', body.error_type)
+      .eq('route_path', body.route_path || '')
+      .gte('created_at', fiveMinutesAgo)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // If recent duplicate exists, increment counter instead of creating new log
+    if (recentError) {
+      const currentCount = (recentError.metadata as any)?.occurrence_count || 1;
+      await supabase
+        .from('user_error_logs')
+        .update({
+          metadata: {
+            ...(body.metadata || {}),
+            occurrence_count: currentCount + 1,
+            last_occurrence: new Date().toISOString(),
+          },
+        })
+        .eq('id', recentError.id);
+
+      logger.info('Duplicate error suppressed, incremented counter', {
+        userId: user?.id,
+        metadata: { error_type: body.error_type, occurrence_count: currentCount + 1 }
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, error_id: recentError.id, deduplicated: true }),
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Insert error log (new error)
     const { data: errorRecord, error: insertError } = await supabase
       .from('user_error_logs')
       .insert({

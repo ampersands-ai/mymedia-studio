@@ -137,7 +137,8 @@ export function useRealtimeSubscription<T extends Record<string, any> = Record<s
       if (status === 'SUBSCRIBED') {
         logger.info('Realtime subscription active', { table, filter });
       } else if (status === 'CHANNEL_ERROR') {
-        logger.error('Realtime subscription error', new Error('Channel error'), {
+        // Use warn instead of error - these are transient network issues that self-heal
+        logger.warn('Realtime subscription error (transient)', {
           table,
           filter,
         });

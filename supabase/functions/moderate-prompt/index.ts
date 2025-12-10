@@ -1,4 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,7 @@ interface ModerationResult {
 
 interface ModeratePromptRequest {
   prompt: string;
+  userId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -35,21 +37,47 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const { prompt, userId } = await req.json() as ModeratePromptRequest;
+
+    if (!prompt || typeof prompt !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Prompt is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user is exempt from moderation
+    if (userId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+      const { data: isExempt, error: exemptError } = await supabaseAdmin
+        .rpc('is_moderation_exempt', { _user_id: userId });
+
+      if (exemptError) {
+        console.error('Error checking moderation exemption:', exemptError);
+      } else if (isExempt === true) {
+        console.log('User is exempt from moderation:', userId);
+        return new Response(
+          JSON.stringify({
+            flagged: false,
+            exempt: true,
+            flaggedCategories: [],
+            categories: {},
+            categoryScores: {},
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       console.error('OPENAI_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Moderation service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { prompt } = await req.json() as ModeratePromptRequest;
-
-    if (!prompt || typeof prompt !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Prompt is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -92,11 +120,13 @@ Deno.serve(async (req) => {
       prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       flagged: result.flagged,
       flaggedCategories,
+      userId: userId || 'anonymous',
     });
 
     return new Response(
       JSON.stringify({
         flagged: result.flagged,
+        exempt: false,
         flaggedCategories,
         categories: result.categories,
         categoryScores: result.category_scores,

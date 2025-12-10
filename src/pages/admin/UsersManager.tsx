@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Shield, Coins, Crown } from "lucide-react";
+import { Shield, Coins, Crown, ShieldOff } from "lucide-react";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface UserWithSubscription {
@@ -27,6 +27,7 @@ interface UserWithSubscription {
     plan: string;
   };
   roles?: Array<{ role: string }>;
+  isModExempt?: boolean;
 }
 
 export default function UsersManager() {
@@ -65,14 +66,25 @@ export default function UsersManager() {
 
         if (rolesError) throw rolesError;
 
+        // Fetch moderation exemptions
+        const { data: exemptions, error: exemptError } = await supabase
+          .from("moderation_exemptions")
+          .select("user_id, is_active");
+
+        if (exemptError) throw exemptError;
+
         // Combine data
         const usersWithData = profiles?.map((profile: { id: string }) => {
           const userSub = subscriptions?.find((s: { user_id: string }) => s.user_id === profile.id);   
           const userRoles = roles?.filter((r: { user_id: string }) => r.user_id === profile.id);
+          const userExemption = exemptions?.find((e: { user_id: string; is_active: boolean }) => 
+            e.user_id === profile.id && e.is_active
+          );
           return {
             ...profile,
             subscription: userSub,
             roles: userRoles,
+            isModExempt: !!userExemption,
           };
         });
 
@@ -157,7 +169,52 @@ export default function UsersManager() {
     );
   };
 
-  // No loading state - render immediately
+  const handleToggleModerationExempt = async (userId: string, currentlyExempt: boolean) => {
+    await execute(
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (currentlyExempt) {
+          // Remove exemption by setting is_active to false
+          const { error } = await supabase
+            .from("moderation_exemptions")
+            .update({ is_active: false })
+            .eq("user_id", userId);
+
+          if (error) throw error;
+        } else {
+          // Add or reactivate exemption
+          const { error } = await supabase
+            .from("moderation_exemptions")
+            .upsert({
+              user_id: userId,
+              granted_by: user?.id,
+              is_active: true,
+              granted_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (error) throw error;
+        }
+
+        fetchUsers();
+      },
+      {
+        successMessage: currentlyExempt 
+          ? "Moderation exemption removed" 
+          : "User exempted from moderation",
+        errorMessage: "Failed to update moderation exemption",
+        context: {
+          component: 'UsersManager',
+          operation: 'handleToggleModerationExempt',
+          userId,
+          currentlyExempt
+        }
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -180,6 +237,7 @@ export default function UsersManager() {
                 <TableHead className="font-bold">Credits</TableHead>
                 <TableHead className="font-bold">Plan</TableHead>
                 <TableHead className="font-bold">Role</TableHead>
+                <TableHead className="font-bold">Moderation</TableHead>
                 <TableHead className="font-bold">Joined</TableHead>
                 <TableHead className="font-bold">Actions</TableHead>
               </TableRow>
@@ -215,10 +273,18 @@ export default function UsersManager() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {user.isModExempt && (
+                        <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 border-amber-500/30">
+                          <ShieldOff className="h-3 w-3 mr-1" />
+                          Exempt
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           variant="outline"
                           size="sm"
@@ -237,6 +303,14 @@ export default function UsersManager() {
                         >
                           <Shield className="h-4 w-4 mr-1" />
                           {isAdmin ? "Remove Admin" : "Make Admin"}
+                        </Button>
+                        <Button
+                          variant={user.isModExempt ? "destructive" : "secondary"}
+                          size="sm"
+                          onClick={() => handleToggleModerationExempt(user.id, user.isModExempt ?? false)}
+                        >
+                          <ShieldOff className="h-4 w-4 mr-1" />
+                          {user.isModExempt ? "Remove Exempt" : "Exempt Mod"}
                         </Button>
                       </div>
                     </TableCell>

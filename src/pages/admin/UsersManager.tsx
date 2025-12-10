@@ -342,19 +342,21 @@ export default function UsersManager() {
 
             {/* Filters */}
             <div className="flex flex-wrap gap-2">
-              <Select value={filters.plan} onValueChange={(v) => updateFilter("plan", v)}>
+              <Select value={filters.plan} onValueChange={(v) => updateFilter("plan", v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[130px]">
                   <SelectValue placeholder="Plan" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
                   <SelectItem value="freemium">Freemium</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="explorer">Explorer</SelectItem>
+                  <SelectItem value="creators">Creators</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="ultimate">Ultimate</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
+              <Select value={filters.status} onValueChange={(v) => updateFilter("status", v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[130px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -366,7 +368,7 @@ export default function UsersManager() {
                 </SelectContent>
               </Select>
 
-              <Select value={filters.role} onValueChange={(v) => updateFilter("role", v)}>
+              <Select value={filters.role} onValueChange={(v) => updateFilter("role", v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[130px]">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
@@ -379,7 +381,7 @@ export default function UsersManager() {
 
               <Select
                 value={filters.emailVerified}
-                onValueChange={(v) => updateFilter("emailVerified", v)}
+                onValueChange={(v) => updateFilter("emailVerified", v === "all" ? "" : v)}
               >
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Verified" />

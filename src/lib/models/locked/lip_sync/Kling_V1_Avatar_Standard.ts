@@ -101,7 +101,7 @@ export function calculateCost(_inputs: Record<string, any>, audioDurationSeconds
   const duration = audioDurationSeconds || 5;
   // Cap at 15 seconds
   const cappedDuration = Math.min(duration, 15);
-  return Math.round(ratePerSecond * cappedDuration * 100) / 100;
+  return Math.ceil(ratePerSecond * cappedDuration);
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {

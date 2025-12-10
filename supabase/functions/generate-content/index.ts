@@ -617,16 +617,22 @@ Deno.serve(async (req) => {
     // which only passes parameters explicitly defined in the model's input_schema.
     // Any format defaults should be defined in the model schema itself.
 
-    // Calculate token cost with validated parameters
-    const tokenCost = calculateTokenCost(
-      model.base_token_cost,
-      model.cost_multipliers || {},
-      validatedParameters
-    );
+    // Calculate token cost - use pre-calculated cost from model if provided
+    // This handles dynamic pricing (audio duration, video length) calculated client-side
+    const tokenCost = validatedRequest.preCalculatedCost 
+      ? validatedRequest.preCalculatedCost
+      : calculateTokenCost(
+          model.base_token_cost,
+          model.cost_multipliers || {},
+          validatedParameters
+        );
 
     logger.info('Token cost calculated', {
       userId: user.id,
-      metadata: { token_cost: tokenCost }
+      metadata: { 
+        token_cost: tokenCost,
+        source: validatedRequest.preCalculatedCost ? 'preCalculatedCost' : 'calculateTokenCost'
+      }
     });
 
     // SECURITY FIX: Transaction-like token deduction + generation creation

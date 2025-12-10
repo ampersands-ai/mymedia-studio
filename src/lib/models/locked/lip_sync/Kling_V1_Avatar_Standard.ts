@@ -153,6 +153,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_schema: SCHEMA,
       prompt: prompt || "",
       custom_parameters: preparePayload(inputs),
+      preCalculatedCost: cost,
     },
   });
 

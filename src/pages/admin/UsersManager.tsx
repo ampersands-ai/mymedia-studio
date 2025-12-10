@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,94 +12,65 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Shield, Coins, Crown, ShieldOff } from "lucide-react";
+import {
+  Shield,
+  Coins,
+  Crown,
+  ShieldOff,
+  Search,
+  Download,
+  RefreshCw,
+  Users,
+  UserCheck,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Loader2,
+  ArrowUpDown,
+} from "lucide-react";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
-
-interface UserWithSubscription {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  created_at: string;
-  subscription?: {
-    tokens_remaining: number;
-    plan: string;
-  };
-  roles?: Array<{ role: string }>;
-  isModExempt?: boolean;
-}
+import { useAdminUsers, type SortColumn } from "@/hooks/useAdminUsers";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function UsersManager() {
   const { execute } = useErrorHandler();
-  const [users, setUsers] = useState<UserWithSubscription[]>([]);
-  const [selectedUser, setSelectedUser] = useState<UserWithSubscription | null>(null);
+  const {
+    users,
+    stats,
+    isLoading,
+    isLoadingStats,
+    searchTerm,
+    setSearchTerm,
+    filters,
+    updateFilter,
+    clearFilters,
+    sortColumn,
+    sortDirection,
+    handleSort,
+    pagination,
+    exportToCSV,
+    refresh,
+  } = useAdminUsers();
+
+  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(null);
   const [tokenAmount, setTokenAmount] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    await execute(
-      async () => {
-        // Fetch profiles
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, email, full_name, created_at")
-          .order("created_at", { ascending: false });
-
-        if (profilesError) throw profilesError;
-
-        // Fetch subscriptions
-        const { data: subscriptions, error: subsError } = await supabase
-          .from("user_subscriptions")
-          .select("user_id, tokens_remaining, plan");
-
-        if (subsError) throw subsError;
-
-        // Fetch roles
-        const { data: roles, error: rolesError } = await supabase
-          .from("user_roles")
-          .select("user_id, role");
-
-        if (rolesError) throw rolesError;
-
-        // Fetch moderation exemptions
-        const { data: exemptions, error: exemptError } = await supabase
-          .from("moderation_exemptions")
-          .select("user_id, is_active");
-
-        if (exemptError) throw exemptError;
-
-        // Combine data
-        const usersWithData = profiles?.map((profile: { id: string }) => {
-          const userSub = subscriptions?.find((s: { user_id: string }) => s.user_id === profile.id);   
-          const userRoles = roles?.filter((r: { user_id: string }) => r.user_id === profile.id);
-          const userExemption = exemptions?.find((e: { user_id: string; is_active: boolean }) => 
-            e.user_id === profile.id && e.is_active
-          );
-          return {
-            ...profile,
-            subscription: userSub,
-            roles: userRoles,
-            isModExempt: !!userExemption,
-          };
-        });
-
-        setUsers(usersWithData || []);
-      },
-      {
-        showSuccessToast: false,
-        errorMessage: "Failed to load users",
-        context: {
-          component: 'UsersManager',
-          operation: 'fetchUsers'
-        }
-      }
-    );
-  };
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleAddTokens = async () => {
     if (!selectedUser || !tokenAmount) return;
@@ -112,30 +83,29 @@ export default function UsersManager() {
 
     await execute(
       async () => {
-        // Use edge function for secure token management with audit trail
-        const { error } = await supabase.functions.invoke('manage-user-tokens', {
+        const { error } = await supabase.functions.invoke("manage-user-tokens", {
           body: {
             user_id: selectedUser.id,
             amount: amount,
-            action: 'add'
-          }
+            action: "add",
+          },
         });
 
         if (error) throw error;
 
         setDialogOpen(false);
         setTokenAmount("");
-        fetchUsers();
+        refresh();
       },
       {
         successMessage: `Added ${amount} credits to ${selectedUser.email}`,
         errorMessage: "Failed to add tokens",
         context: {
-          component: 'UsersManager',
-          operation: 'handleAddTokens',
+          component: "UsersManager",
+          operation: "handleAddTokens",
           userId: selectedUser.id,
-          amount
-        }
+          amount,
+        },
       }
     );
   };
@@ -143,28 +113,27 @@ export default function UsersManager() {
   const handleToggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
     await execute(
       async () => {
-        // Use edge function for secure role management with audit trail
-        const { error } = await supabase.functions.invoke('manage-user-role', {
+        const { error } = await supabase.functions.invoke("manage-user-role", {
           body: {
             user_id: userId,
-            role: 'admin',
-            action: currentlyAdmin ? 'revoke' : 'grant'
-          }
+            role: "admin",
+            action: currentlyAdmin ? "revoke" : "grant",
+          },
         });
 
         if (error) throw error;
 
-        fetchUsers();
+        refresh();
       },
       {
         successMessage: currentlyAdmin ? "Admin role removed" : "Admin role granted",
         errorMessage: "Failed to update admin role",
         context: {
-          component: 'UsersManager',
-          operation: 'handleToggleAdmin',
+          component: "UsersManager",
+          operation: "handleToggleAdmin",
           userId,
-          currentlyAdmin
-        }
+          currentlyAdmin,
+        },
       }
     );
   };
@@ -172,10 +141,11 @@ export default function UsersManager() {
   const handleToggleModerationExempt = async (userId: string, currentlyExempt: boolean) => {
     await execute(
       async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (currentlyExempt) {
-          // Remove exemption by setting is_active to false
           const { error } = await supabase
             .from("moderation_exemptions")
             .update({ is_active: false })
@@ -183,108 +153,393 @@ export default function UsersManager() {
 
           if (error) throw error;
         } else {
-          // Add or reactivate exemption
-          const { error } = await supabase
-            .from("moderation_exemptions")
-            .upsert({
+          const { error } = await supabase.from("moderation_exemptions").upsert(
+            {
               user_id: userId,
               granted_by: user?.id,
               is_active: true,
               granted_at: new Date().toISOString(),
-            }, {
-              onConflict: 'user_id'
-            });
+            },
+            {
+              onConflict: "user_id",
+            }
+          );
 
           if (error) throw error;
         }
 
-        fetchUsers();
+        refresh();
       },
       {
-        successMessage: currentlyExempt 
-          ? "Moderation exemption removed" 
+        successMessage: currentlyExempt
+          ? "Moderation exemption removed"
           : "User exempted from moderation",
         errorMessage: "Failed to update moderation exemption",
         context: {
-          component: 'UsersManager',
-          operation: 'handleToggleModerationExempt',
+          component: "UsersManager",
+          operation: "handleToggleModerationExempt",
           userId,
-          currentlyExempt
-        }
+          currentlyExempt,
+        },
       }
     );
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    const result = await exportToCSV();
+    setIsExporting(false);
+
+    if (result.success) {
+      toast.success(`Exported ${result.count} users to CSV`);
+    } else {
+      toast.error(result.message || "Export failed");
+    }
+  };
+
+  const hasActiveFilters =
+    searchTerm || filters.plan || filters.status || filters.role || filters.emailVerified;
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    }
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-3 w-3 ml-1" />
+    ) : (
+      <ChevronDown className="h-3 w-3 ml-1" />
+    );
+  };
+
+  const formatRelativeTime = (dateString: string | null) => {
+    if (!dateString) return "Never";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-black mb-2">USERS MANAGEMENT</h1>
-        <p className="text-muted-foreground">
-          View and manage user accounts, tokens, and roles
-        </p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black mb-2">USERS MANAGEMENT</h1>
+          <p className="text-muted-foreground">
+            View and manage user accounts, tokens, and roles
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={refresh} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-1" />
+            )}
+            Export CSV
+          </Button>
+        </div>
       </div>
 
-      <Card className="border-3 border-black brutal-shadow">
-        <CardHeader>
-          <CardTitle>All Users ({users.length})</CardTitle>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <Card className="border-2">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Total</span>
+            </div>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.total_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-green-500" />
+              <span className="text-xs text-muted-foreground">Active</span>
+            </div>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.active_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-purple-500" />
+              <span className="text-xs text-muted-foreground">Admins</span>
+            </div>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.admin_count.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-blue-500" />
+              <span className="text-xs text-muted-foreground">Verified</span>
+            </div>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.verified_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2 hidden lg:block">
+          <CardContent className="p-4">
+            <span className="text-xs text-muted-foreground">Freemium</span>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.freemium_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2 hidden lg:block">
+          <CardContent className="p-4">
+            <span className="text-xs text-muted-foreground">Premium</span>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.premium_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-2 hidden lg:block">
+          <CardContent className="p-4">
+            <span className="text-xs text-muted-foreground">Pro</span>
+            <p className="text-2xl font-bold mt-1">
+              {isLoadingStats ? "..." : stats?.pro_users.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search and Filters */}
+      <Card className="border-2">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by email or name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2">
+              <Select value={filters.plan} onValueChange={(v) => updateFilter("plan", v)}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value="freemium">Freemium</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.status} onValueChange={(v) => updateFilter("status", v)}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.role} onValueChange={(v) => updateFilter("role", v)}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={filters.emailVerified}
+                onValueChange={(v) => updateFilter("emailVerified", v)}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Verified" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="true">Verified</SelectItem>
+                  <SelectItem value="false">Not Verified</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users Table */}
+      <Card className="border-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">
+            {isLoading ? (
+              "Loading..."
+            ) : (
+              <>
+                {pagination.totalCount.toLocaleString()} users
+                {hasActiveFilters && " (filtered)"}
+              </>
+            )}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-bold">Email</TableHead>
-                <TableHead className="font-bold">Full Name</TableHead>
-                <TableHead className="font-bold">Credits</TableHead>
+                <TableHead
+                  className="font-bold cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("email")}
+                >
+                  <div className="flex items-center">
+                    Email
+                    <SortIcon column="email" />
+                  </div>
+                </TableHead>
+                <TableHead className="font-bold">Name</TableHead>
+                <TableHead
+                  className="font-bold cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("tokens_remaining")}
+                >
+                  <div className="flex items-center">
+                    Credits
+                    <SortIcon column="tokens_remaining" />
+                  </div>
+                </TableHead>
                 <TableHead className="font-bold">Plan</TableHead>
+                <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="font-bold">Role</TableHead>
-                <TableHead className="font-bold">Moderation</TableHead>
-                <TableHead className="font-bold">Joined</TableHead>
+                <TableHead
+                  className="font-bold cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("last_activity_at")}
+                >
+                  <div className="flex items-center">
+                    Last Active
+                    <SortIcon column="last_activity_at" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="font-bold cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("created_at")}
+                >
+                  <div className="flex items-center">
+                    Joined
+                    <SortIcon column="created_at" />
+                  </div>
+                </TableHead>
                 <TableHead className="font-bold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => {
-                const isAdmin = user.roles?.some(r => r.role === "admin");
-                return (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading users...</p>
+                  </TableCell>
+                </TableRow>
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {hasActiveFilters ? "No users match your filters" : "No users found"}
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.email || "N/A"}
+                    <TableCell className="font-medium max-w-[200px] truncate">
+                      <div className="flex items-center gap-1">
+                        {user.email || "N/A"}
+                        {user.email_verified && (
+                          <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{user.full_name || "N/A"}</TableCell>
+                    <TableCell className="max-w-[150px] truncate">
+                      {user.full_name || "N/A"}
+                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Coins className="h-4 w-4 text-primary" />
                         <span className="font-bold">
-                          {Number(user.subscription?.tokens_remaining || 0).toFixed(2)}
+                          {Number(user.tokens_remaining || 0).toFixed(0)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                       <Badge variant="outline" className="capitalize">
-                        {user.subscription?.plan || "freemium"}
+                      <Badge variant="outline" className="capitalize">
+                        {user.plan || "freemium"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {isAdmin && (
-                        <Badge className="bg-purple-500">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Admin
-                        </Badge>
-                      )}
+                      <Badge
+                        variant={user.subscription_status === "active" ? "default" : "secondary"}
+                        className="capitalize"
+                      >
+                        {user.subscription_status || "active"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      {user.isModExempt && (
-                        <Badge variant="secondary" className="bg-amber-500/20 text-amber-600 border-amber-500/30">
-                          <ShieldOff className="h-3 w-3 mr-1" />
-                          Exempt
-                        </Badge>
-                      )}
+                      <div className="flex gap-1">
+                        {user.is_admin && (
+                          <Badge className="bg-purple-500">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Admin
+                          </Badge>
+                        )}
+                        {user.is_mod_exempt && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-amber-500/20 text-amber-600 border-amber-500/30"
+                          >
+                            <ShieldOff className="h-3 w-3" />
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatRelativeTime(user.last_activity_at)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-1 flex-wrap">
                         <Button
                           variant="outline"
                           size="sm"
@@ -293,35 +548,50 @@ export default function UsersManager() {
                             setDialogOpen(true);
                           }}
                         >
-                          <Coins className="h-4 w-4 mr-1" />
-                          Add Credits
+                          <Coins className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant={isAdmin ? "destructive" : "default"}
+                          variant={user.is_admin ? "destructive" : "outline"}
                           size="sm"
-                          onClick={() => handleToggleAdmin(user.id, isAdmin ?? false)}
+                          onClick={() => handleToggleAdmin(user.id, user.is_admin)}
                         >
-                          <Shield className="h-4 w-4 mr-1" />
-                          {isAdmin ? "Remove Admin" : "Make Admin"}
+                          <Crown className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant={user.isModExempt ? "destructive" : "secondary"}
+                          variant={user.is_mod_exempt ? "destructive" : "outline"}
                           size="sm"
-                          onClick={() => handleToggleModerationExempt(user.id, user.isModExempt ?? false)}
+                          onClick={() =>
+                            handleToggleModerationExempt(user.id, user.is_mod_exempt)
+                          }
                         >
-                          <ShieldOff className="h-4 w-4 mr-1" />
-                          {user.isModExempt ? "Remove Exempt" : "Exempt Mod"}
+                          <ShieldOff className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                );
-              })}
+                ))
+              )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <PaginationControls
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalCount={pagination.totalCount}
+              pageSize={pagination.pageSize}
+              hasPrevious={pagination.hasPrevious}
+              hasNext={pagination.hasNext}
+              onPageChange={pagination.goToPage}
+              onFirstPage={pagination.firstPage}
+              onLastPage={pagination.lastPage}
+            />
+          )}
         </CardContent>
       </Card>
 
+      {/* Add Tokens Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -333,7 +603,7 @@ export default function UsersManager() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                Current balance: {Number(selectedUser?.subscription?.tokens_remaining || 0).toFixed(2)} credits
+                Current balance: {Number(selectedUser?.tokens_remaining || 0).toFixed(2)} credits
               </p>
               <Input
                 type="number"

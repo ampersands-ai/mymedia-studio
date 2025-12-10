@@ -171,9 +171,7 @@ export default function UsersManager() {
         refresh();
       },
       {
-        successMessage: currentlyExempt
-          ? "Moderation exemption removed"
-          : "User exempted from moderation",
+        successMessage: currentlyExempt ? undefined : "User exempted from moderation",
         errorMessage: "Failed to update moderation exemption",
         context: {
           component: "UsersManager",

@@ -200,7 +200,7 @@ export function calculateCost(inputs: Record<string, any>) {
     "720p": 12,
   };
 
-  return Math.round((ratePerSecond[resolution] || 6) * videoDuration * 100) / 100;
+  return Math.ceil((ratePerSecond[resolution] || 6) * videoDuration);
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {

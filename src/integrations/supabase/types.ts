@@ -1311,6 +1311,7 @@ export type Database = {
           full_name: string | null
           id: string
           keep_logged_in: boolean | null
+          last_activity_at: string | null
           phone_number: string | null
           updated_at: string
           zipcode: string | null
@@ -1323,6 +1324,7 @@ export type Database = {
           full_name?: string | null
           id: string
           keep_logged_in?: boolean | null
+          last_activity_at?: string | null
           phone_number?: string | null
           updated_at?: string
           zipcode?: string | null
@@ -1335,6 +1337,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           keep_logged_in?: boolean | null
+          last_activity_at?: string | null
           phone_number?: string | null
           updated_at?: string
           zipcode?: string | null
@@ -3237,6 +3240,18 @@ export type Database = {
           tokens_remaining: number
         }[]
       }
+      get_admin_user_stats: {
+        Args: never
+        Returns: {
+          active_users: number
+          admin_count: number
+          freemium_users: number
+          premium_users: number
+          pro_users: number
+          total_users: number
+          verified_users: number
+        }[]
+      }
       get_api_health_summary: {
         Args: never
         Returns: {
@@ -3297,6 +3312,34 @@ export type Database = {
         Returns: undefined
       }
       sanitize_provider_data: { Args: { data: Json }; Returns: Json }
+      search_admin_users: {
+        Args: {
+          filter_email_verified?: boolean
+          filter_plan?: string
+          filter_role?: string
+          filter_status?: string
+          page_limit?: number
+          page_offset?: number
+          search_term?: string
+          sort_column?: string
+          sort_direction?: string
+        }
+        Returns: {
+          created_at: string
+          email: string
+          email_verified: boolean
+          full_name: string
+          id: string
+          is_admin: boolean
+          is_mod_exempt: boolean
+          last_activity_at: string
+          plan: string
+          subscription_status: string
+          tokens_remaining: number
+          tokens_total: number
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

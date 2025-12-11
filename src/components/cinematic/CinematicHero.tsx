@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { EffectFade, Autoplay } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+import "swiper/css";
+import "swiper/css/effect-fade";
 
 const heroVideos = [
   "/hero-1.mp4",
@@ -12,15 +17,40 @@ const heroVideos = [
   "/hero-7.mp4",
 ];
 
+const aiModels = [
+  { name: "Veo 3.1", group: "prompt_to_video" },
+  { name: "Sora 2", group: "prompt_to_video" },
+  { name: "Wan 2.5", group: "prompt_to_video" },
+  { name: "xAI Imagine", group: "prompt_to_image" },
+];
+
 export const CinematicHero = () => {
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const swiperRef = useRef<SwiperType | null>(null);
+
+  const handleSlideChange = (swiper: SwiperType) => {
+    const newIndex = swiper.realIndex;
+
+    // Pause all videos and play the active one
+    videoRefs.current.forEach((video, index) => {
+      if (video) {
+        if (index === newIndex) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      }
+    });
+  };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentVideoIndex((prev) => (prev + 1) % heroVideos.length);
-    }, 7000);
-    return () => clearInterval(interval);
+    // Start playing the first video
+    const firstVideo = videoRefs.current[0];
+    if (firstVideo) {
+      firstVideo.play().catch(() => {});
+    }
   }, []);
 
   const scrollToPortfolio = () => {
@@ -32,30 +62,54 @@ export const CinematicHero = () => {
 
   return (
     <section id="hero" className="relative h-screen w-full overflow-hidden">
-      {/* Video Background with Crossfade */}
-      {heroVideos.map((src, index) => (
-        <video
-          key={src}
-          autoPlay
-          muted={isMuted}
-          loop
-          playsInline
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-            index === currentVideoIndex ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <source src={src} type="video/mp4" />
-        </video>
-      ))}
+      {/* Video Background with Swiper */}
+      <Swiper
+        modules={[EffectFade, Autoplay]}
+        effect="fade"
+        fadeEffect={{ crossFade: true }}
+        autoplay={{ delay: 7000, disableOnInteraction: false }}
+        loop={true}
+        speed={1000}
+        onSwiper={(swiper) => (swiperRef.current = swiper)}
+        onSlideChange={handleSlideChange}
+        className="absolute inset-0 w-full h-full"
+      >
+        {heroVideos.map((src, index) => (
+          <SwiperSlide key={src} className="w-full h-full">
+            <video
+              ref={(el) => (videoRefs.current[index] = el)}
+              muted={isMuted}
+              loop
+              playsInline
+              preload="auto"
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src={src} type="video/mp4" />
+            </video>
+          </SwiperSlide>
+        ))}
+      </Swiper>
 
       {/* Minimal Dark Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/40 z-10" />
 
       {/* Bottom Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
 
-      {/* MOJJU-Style Bottom Left Content */}
-      <div className="absolute bottom-24 left-8 md:left-16 z-10 max-w-3xl">
+      {/* Bottom Left Content */}
+      <div className="absolute bottom-24 left-8 md:left-16 z-20 max-w-3xl">
+        {/* AI Model Pills */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {aiModels.map((model) => (
+            <span
+              key={model.name}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium hover:bg-white/20 hover:scale-105 transition-all cursor-default"
+            >
+              {model.name}
+            </span>
+          ))}
+        </div>
+
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
           AI Content Creation
           <br />
@@ -69,7 +123,7 @@ export const CinematicHero = () => {
         <div className="flex items-center gap-4">
           <Link
             to="/auth"
-            className="px-8 py-4 bg-red-600 text-white font-bold uppercase tracking-wide hover:bg-red-700 transition-colors"
+            className="px-8 py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105"
           >
             Start Creating Free
           </Link>
@@ -85,7 +139,7 @@ export const CinematicHero = () => {
       {/* Sound Toggle - Bottom Right */}
       <button
         onClick={() => setIsMuted(!isMuted)}
-        className="absolute bottom-24 right-8 md:right-16 z-10 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors"
+        className="absolute bottom-24 right-8 md:right-16 z-20 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors"
       >
         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
       </button>
@@ -93,7 +147,7 @@ export const CinematicHero = () => {
       {/* Scroll Indicator */}
       <button
         onClick={scrollToPortfolio}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 hover:text-white transition-colors animate-bounce"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 hover:text-white transition-colors animate-bounce z-20"
       >
         <ChevronDown className="w-8 h-8" />
       </button>

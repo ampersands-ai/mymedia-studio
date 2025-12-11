@@ -10,37 +10,37 @@ interface PortfolioItem {
 const portfolioItems: PortfolioItem[] = [
   {
     id: "1",
-    videoSrc: "/videos/hero-demo-1.mp4",
+    videoSrc: "/hero-demo.mp4",
     title: "AI Commercial",
     category: "Video Generation",
   },
   {
     id: "2",
-    videoSrc: "/videos/hero-demo-2.mp4",
+    videoSrc: "/hero-demo-2.mp4",
     title: "Product Showcase",
     category: "Image to Video",
   },
   {
     id: "3",
-    videoSrc: "/videos/hero-demo-3.mp4",
+    videoSrc: "/hero-demo-3.mp4",
     title: "Brand Story",
     category: "Text to Video",
   },
   {
     id: "4",
-    videoSrc: "/videos/hero-demo-4.mp4",
+    videoSrc: "/hero-demo-4.mp4",
     title: "Social Content",
     category: "AI Generation",
   },
   {
     id: "5",
-    videoSrc: "/videos/hero-demo-5.mp4",
+    videoSrc: "/hero-demo-5.mp4",
     title: "Creative Campaign",
     category: "Video Production",
   },
   {
     id: "6",
-    videoSrc: "/videos/hero-demo-6.mp4",
+    videoSrc: "/hero-demo-6.mp4",
     title: "Digital Art",
     category: "Image Generation",
   },

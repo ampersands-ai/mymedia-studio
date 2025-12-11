@@ -74,6 +74,7 @@ const CreateBlog = lazy(() => import("./pages/admin/CreateBlog"));
 const ComprehensiveModelTester = lazy(() => import("./pages/admin/ComprehensiveModelTester"));
 const VaultSetup = lazy(() => import("./pages/admin/VaultSetup"));
 const ModelPricing = lazy(() => import("./pages/admin/ModelPricing"));
+const CinematicTest = lazy(() => import("./pages/CinematicTest"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -202,6 +203,7 @@ const AppContent = () => {
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
             <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
             <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
+            <Route path="/cinematic-test" element={<RouteErrorBoundary routeName="Cinematic Test"><CinematicTest /></RouteErrorBoundary>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />
           </Routes>

@@ -3,13 +3,13 @@ import { ChevronDown, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const heroVideos = [
-  "/videos/hero-1.mp4",
-  "/videos/hero-2.mp4",
-  "/videos/hero-3.mp4",
-  "/videos/hero-4.mp4",
-  "/videos/hero-5.mp4",
-  "/videos/hero-6.mp4",
-  "/videos/hero-7.mp4",
+  "/hero-1.mp4",
+  "/hero-2.mp4",
+  "/hero-3.mp4",
+  "/hero-4.mp4",
+  "/hero-5.mp4",
+  "/hero-6.mp4",
+  "/hero-7.mp4",
 ];
 
 export const CinematicHero = () => {

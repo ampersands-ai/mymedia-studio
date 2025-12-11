@@ -52,11 +52,13 @@ export const CinematicNav = () => {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link 
-          to="/" 
-          className="text-xl font-bold text-white hover:text-white/80 transition-colors"
-        >
-          ARTIFIO
+        <Link to="/" className="flex items-center gap-2">
+          <img 
+            src="/logos/artifio.png" 
+            alt="Artifio" 
+            className="h-8 w-auto"
+          />
+          <span className="text-xl font-bold text-white">artifio.ai</span>
         </Link>
 
         {/* Nav Links */}
@@ -66,15 +68,15 @@ export const CinematicNav = () => {
               key={item.id}
               onClick={() => scrollToSection(item.id)}
               className={cn(
-                "relative text-sm font-medium transition-colors py-2",
+                "relative text-sm font-medium uppercase tracking-wide transition-colors py-2",
                 activeSection === item.id
                   ? "text-white"
-                  : "text-white/60 hover:text-white"
+                  : "text-white/50 hover:text-white"
               )}
             >
               {item.label}
               {activeSection === item.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
               )}
             </button>
           ))}
@@ -83,7 +85,7 @@ export const CinematicNav = () => {
         {/* CTA */}
         <Link
           to="/auth"
-          className="px-5 py-2 text-sm font-medium text-black bg-white rounded-full hover:bg-white/90 transition-colors"
+          className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors"
         >
           Get Started
         </Link>

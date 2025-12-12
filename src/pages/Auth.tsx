@@ -306,8 +306,14 @@ const Auth = () => {
               email: email.toLowerCase()
             });
           }
-          // Generic error message to prevent user enumeration
-          throw new Error("Unable to create account. Please try a different email.");
+          // Provide helpful error messages for common signup issues
+          if (error.message?.includes('already registered') || error.status === 422) {
+            throw new Error("This email is already registered. Please log in instead or use a different email.");
+          }
+          if (error.message?.includes('invalid') || error.message?.includes('email')) {
+            throw new Error("Please enter a valid email address.");
+          }
+          throw new Error("Unable to create account. Please try again or contact support.");
         }
         
         // Log successful signup

@@ -58,7 +58,7 @@ export const CinematicNav = () => {
 
         {/* Desktop CTA */}
         <Link
-          to="/custom-creation"
+          to="/dashboard/custom-creation"
           className="hidden md:block px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
         >
           Dashboard
@@ -118,7 +118,7 @@ export const CinematicNav = () => {
               {/* CTA */}
               <div className="p-6 border-t border-white/10">
                 <Link
-                  to="/custom-creation"
+                  to="/dashboard/custom-creation"
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
                 >

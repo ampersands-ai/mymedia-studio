@@ -163,7 +163,6 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
     setResult(null);
     setStatusMessage('');
     setInputs({});
-    toast.info('Test reset');
   };
 
   const handleTest = async () => {
@@ -210,7 +209,6 @@ export const WorkflowTestDialog = ({ workflow, open, onOpenChange }: WorkflowTes
         });
         setStatusMessage('');
         setResult({ url: result.final_output_url, credits: result.tokens_used });
-        toast.success('Workflow test completed!');
       } else {
         testLogger.warn('Workflow test failed or timed out', { requestId, workflow_id: workflow.id });
         setStatusMessage('');

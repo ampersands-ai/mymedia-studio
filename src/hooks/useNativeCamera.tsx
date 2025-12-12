@@ -118,10 +118,6 @@ export const useNativeCamera = (): UseNativeCameraResult => {
     const files: File[] = [];
     
     try {
-      // Note: Capacitor Camera doesn't support multiple selection directly
-      // We'll pick one at a time until user cancels or reaches max
-      toast.info(`Select up to ${maxImages} images (tap cancel when done)`);
-      
       for (let i = 0; i < maxImages; i++) {
         const photo = await Camera.getPhoto({
           quality: 90,

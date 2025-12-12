@@ -376,7 +376,6 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
                   if (ref) ref.value = '';
                 });
                 onReset?.();
-                toast.success('Inputs reset');
               }}
             >
               Reset

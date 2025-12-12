@@ -40,9 +40,7 @@ export async function downloadFromStorage(
 ): Promise<boolean> {
   const {
     filename,
-    showSuccessToast = true,
     showErrorToast = true,
-    successMessage = 'Download started',
     bucket = 'generated-content',
     expiresIn = 60,
   } = options;
@@ -92,11 +90,6 @@ export async function downloadFromStorage(
     document.body.appendChild(anchorElement);
     anchorElement.click();
 
-    // Show success message
-    if (showSuccessToast) {
-      toast.success(successMessage);
-    }
-
     logger.info('File downloaded successfully', {
       storagePath,
       filename: finalFilename,
@@ -141,9 +134,7 @@ export async function downloadFromUrl(
 ): Promise<boolean> {
   const {
     filename,
-    showSuccessToast = true,
     showErrorToast = true,
-    successMessage = 'Download started',
   } = options;
 
   let blobUrl: string | null = null;
@@ -169,10 +160,6 @@ export async function downloadFromUrl(
 
     document.body.appendChild(anchorElement);
     anchorElement.click();
-
-    if (showSuccessToast) {
-      toast.success(successMessage);
-    }
 
     logger.info('File downloaded successfully', {
       url,
@@ -210,15 +197,12 @@ export async function downloadBatchFromStorage(
   options: Omit<DownloadOptions, 'filename'> = {}
 ): Promise<{ successful: number; failed: number }> {
   const {
-    showSuccessToast = true,
     showErrorToast = true,
     bucket = 'generated-content',
   } = options;
 
   let successful = 0;
   let failed = 0;
-
-  const toastId = toast.loading(`Downloading ${storagePaths.length} files...`);
 
   for (let i = 0; i < storagePaths.length; i++) {
     const path = storagePaths[i];
@@ -235,24 +219,14 @@ export async function downloadBatchFromStorage(
       failed++;
     }
 
-    // Update progress
-    toast.loading(`Downloaded ${successful + failed} of ${storagePaths.length} files...`, {
-      id: toastId,
-    });
-
     // Small delay between downloads to avoid overwhelming the browser
     if (i < storagePaths.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
 
-  // Dismiss loading toast
-  toast.dismiss(toastId);
-
-  // Show final result
-  if (failed === 0 && showSuccessToast) {
-    toast.success(`Successfully downloaded ${successful} files`);
-  } else if (failed > 0 && showErrorToast) {
+  // Show final result only for errors
+  if (failed > 0 && showErrorToast) {
     toast.error(`Downloaded ${successful} files, ${failed} failed`);
   }
 

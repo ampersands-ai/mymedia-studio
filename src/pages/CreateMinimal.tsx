@@ -35,7 +35,6 @@ export default function CreateMinimal() {
     onComplete: (outputs) => {
       if (outputs && outputs.length > 0) {
         setGeneratedOutput(outputs[0].storage_path);
-        toast.success('Generation complete!');
       }
     },
     onError: (error: string) => {
@@ -120,7 +119,6 @@ export default function CreateMinimal() {
 
       if (result?.storage_path) {
         setGeneratedOutput(result.storage_path);
-        toast.success('Generation complete!');
       }
     }
   };

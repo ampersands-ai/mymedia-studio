@@ -62,8 +62,6 @@ export const GenerationsInProgress = ({
     setCancelingId(generationId);
     
     try {
-      toast.info('Checking provider status...');
-      
       const { data, error } = await supabase.functions.invoke('poll-kie-status', {
         body: { generation_id: generationId }
       });
@@ -71,13 +69,8 @@ export const GenerationsInProgress = ({
       if (error) throw error;
 
       if (data?.success && data?.status === 'completed') {
-        toast.success('Generation recovered successfully!');
         queryClient.invalidateQueries({ queryKey: ['active-generations'] });
         queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
-      } else if (data?.status === 'processing') {
-        toast.info('Generation still processing on provider');
-      } else {
-        toast.warning('Unable to recover generation');
       }
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to check provider status');

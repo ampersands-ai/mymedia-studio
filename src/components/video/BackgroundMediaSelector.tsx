@@ -103,9 +103,6 @@ export function BackgroundMediaSelector({
 
       setMediaItems(filteredItems);
       
-      if (filteredItems.length === 0) {
-        toast.info(`No ${type}s found matching your criteria. Try a different search.`);
-      }
     } catch (error) {
       const appError = error instanceof Error ? error : new Error(String(error));
       logger.error('Error searching Pixabay', appError, {
@@ -140,7 +137,6 @@ export function BackgroundMediaSelector({
         // Remove from selection
         const updatedMedia = selectedMedia.filter(item => item.url !== mediaUrl);
         onSelectMedia(updatedMedia);
-        toast.success('Removed from selection');
       } else {
         // Add to selection
         const newMedia: SelectedMedia = {
@@ -150,7 +146,6 @@ export function BackgroundMediaSelector({
           duration: media.duration
         };
         onSelectMedia([...selectedMedia, newMedia]);
-        toast.success(`${media.type === 'video' ? 'Video' : 'Image'} added (${selectedMedia.length + 1} total)`);
       }
     }
   };
@@ -158,7 +153,6 @@ export function BackgroundMediaSelector({
   const handleRemoveMedia = (url: string) => {
     const updatedMedia = selectedMedia.filter(item => item.url !== url);
     onSelectMedia(updatedMedia);
-    toast.success('Removed from selection');
   };
 
   const isMediaSelected = (media: PixabayMedia): boolean => {

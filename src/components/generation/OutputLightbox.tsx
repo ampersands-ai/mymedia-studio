@@ -199,7 +199,6 @@ export const OutputLightbox = ({
   const handleUndo = useCallback(() => {
     const entry = undo();
     if (entry) {
-      toast.success('Undone');
       trackEvent('edit_undone', { generation_id: currentOutput.id });
     }
   }, [undo, currentOutput]);
@@ -207,7 +206,6 @@ export const OutputLightbox = ({
   const handleRedo = useCallback(() => {
     const entry = redo();
     if (entry) {
-      toast.success('Redone');
       trackEvent('edit_redone', { generation_id: currentOutput.id });
     }
   }, [redo, currentOutput]);
@@ -272,7 +270,6 @@ export const OutputLightbox = ({
 
   const handleSave = () => {
     setIsSaved(!isSaved);
-    toast.success(isSaved ? 'Removed from favorites' : 'Saved to favorites!');
     trackEvent('output_save_toggled', {
       generation_id: currentOutput.id,
       is_saved: !isSaved

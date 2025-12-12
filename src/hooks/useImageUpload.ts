@@ -161,7 +161,6 @@ export const useImageUpload = (currentModel: AIModel | null) => {
     if (uploadedImages.length + files.length > effectiveMax) {
       if (effectiveMax === 1) {
         // Single image: replace existing
-        toast.info("Replacing existing image");
         setUploadedImages([]); // Clear existing
       } else {
         toast.error(`Maximum ${effectiveMax} image(s) allowed for this model`);
@@ -257,7 +256,6 @@ export const useImageUpload = (currentModel: AIModel | null) => {
       const files = await pickMultipleImages(effectiveMax - uploadedImages.length);
       if (files.length > 0) {
         setUploadedImages([...uploadedImages, ...files]);
-        toast.success(`${files.length} image(s) selected`);
       }
     }
   }, [pickImage, pickMultipleImages, uploadedImages, imageFieldInfo]);

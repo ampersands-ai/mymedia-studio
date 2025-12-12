@@ -262,7 +262,6 @@ export default function ModelPricing() {
     a.click();
     URL.revokeObjectURL(url);
     
-    toast.success("CSV exported successfully");
   };
 
   // Export to JSON
@@ -293,14 +292,11 @@ export default function ModelPricing() {
     a.download = `model-pricing-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    
-    toast.success("JSON exported successfully");
   };
 
   // Handle refresh
   const handleRefresh = async () => {
     await refetch();
-    toast.success("Pricing data refreshed");
   };
 
   return (

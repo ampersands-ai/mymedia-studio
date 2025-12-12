@@ -20,7 +20,7 @@ const partners: { name: string; logo: string }[] = [
   { name: 'Ideogram', logo: '/logos/ideogram.png' },
   { name: 'Flux', logo: '/logos/flux.png' },
   { name: 'ElevenLabs', logo: '/logos/elevenlabs.png' },
-  { name: 'Z-Image', logo: '/logos/z-image.png' },
+  { name: 'Wan', logo: '/logos/wan.png' },
 ];
 
 export const PartnerLogosCarousel = () => {
@@ -66,6 +66,10 @@ export const PartnerLogosCarousel = () => {
                   src={partner.logo}
                   alt={`${partner.name} logo`}
                   className="h-12 md:h-14 w-auto object-contain bg-white p-3 rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.25)] hover:scale-110 transition-all duration-300"
+                  onError={(e) => {
+                    // Hide broken images
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
             </SwiperSlide>

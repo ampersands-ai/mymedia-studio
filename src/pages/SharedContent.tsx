@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, AlertCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function SharedContent() {
@@ -64,7 +63,6 @@ export default function SharedContent() {
   const handleDownload = async () => {
     if (!contentUrl) return;
 
-    toast.loading('Preparing download...', { id: 'download' });
     await execute(
       async () => {
         const response = await fetch(contentUrl);

@@ -56,8 +56,6 @@ export async function downloadMultipleOutputs(
 
   // Multiple outputs - create ZIP using signed URLs
   try {
-    const toastId = toast.loading(`Preparing ${outputs.length} files for download...`);
-    
     const zip = new JSZip();
     
     // Download all files in parallel using signed URLs
@@ -79,9 +77,6 @@ export async function downloadMultipleOutputs(
     
     await Promise.all(downloadPromises);
     
-    // Update toast with progress
-    toast.loading('Creating ZIP file...', { id: toastId });
-    
     // Generate ZIP
     const zipBlob = await zip.generateAsync({ 
       type: 'blob',
@@ -99,7 +94,6 @@ export async function downloadMultipleOutputs(
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
     
-    toast.success(`Successfully downloaded ${outputs.length} outputs!`, { id: toastId });
     onDownloadSuccess?.();
   } catch (error) {
     logger.error('Batch outputs download failed', error as Error, {

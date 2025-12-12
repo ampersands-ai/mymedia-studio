@@ -136,8 +136,6 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   };
 
   const handleDownload = async () => {
-    toast.loading('Preparing download...', { id: 'video-download' });
-    
     try {
       const downloadUrl = videoSignedUrl || job.final_video_url;
       

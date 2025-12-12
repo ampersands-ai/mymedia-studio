@@ -32,8 +32,6 @@ export function VideoJobDetails({ job, onPreview, onGenerateCaption, isGeneratin
   }
 
   const handleDownload = async () => {
-    toast.loading('Preparing download...', { id: 'video-download' });
-
     try {
       if (!videoSignedUrl) {
         componentLogger.error('Download failed: No signed URL available', new Error('No signed URL'), { jobId: job.id } as any);

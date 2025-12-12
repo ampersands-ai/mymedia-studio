@@ -52,7 +52,6 @@ export const VideoPlayer = ({
           variant="outline"
           onClick={async (e) => {
             e.stopPropagation();
-            toast.loading('Preparing your download...', { id: 'video-download' });
             try {
               const urlToFetch = finalVideoUrl
                 || (generation.is_video_job ? generation.output_url : null)

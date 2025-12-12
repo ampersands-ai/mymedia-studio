@@ -9,10 +9,18 @@ const preloadHookLogger = logger.child({ component: 'useRoutePreload' });
  */
 export function useRoutePreload() {
   useEffect(() => {
-    // Prefetch likely routes after initial render
-    prefetchOnIdle(() => import('../pages/Create'));
-    prefetchOnIdle(() => import('../pages/Templates'), 3000);
+    // Prefetch critical routes after initial render
+    // Dashboard routes (most likely navigation targets)
+    prefetchOnIdle(() => import('../pages/CustomCreation'), 1000);
+    prefetchOnIdle(() => import('../pages/Settings'), 1500);
+    prefetchOnIdle(() => import('../pages/dashboard/History'), 2000);
+    
+    // Public routes
+    prefetchOnIdle(() => import('../pages/IndexV2'), 2500);
+    prefetchOnIdle(() => import('../pages/Create'), 3000);
+    prefetchOnIdle(() => import('../pages/Templates'), 3500);
     prefetchOnIdle(() => import('../pages/Pricing'), 4000);
+    prefetchOnIdle(() => import('../pages/Auth'), 4500);
   }, []);
 }
 
@@ -21,11 +29,17 @@ export function useRoutePreload() {
  */
 export function usePrefetchOnHover(routePath: string) {
   const routeMap: Record<string, () => Promise<any>> = {
+    '/': () => import('../pages/IndexV2'),
+    '/old-home': () => import('../pages/IndexV2'),
+    '/auth': () => import('../pages/Auth'),
     '/create': () => import('../pages/Create'),
     '/templates': () => import('../pages/Templates'),
     '/pricing': () => import('../pages/Pricing'),
     '/playground': () => import('../pages/Playground'),
     '/video-studio': () => import('../pages/VideoStudio'),
+    '/dashboard/custom-creation': () => import('../pages/CustomCreation'),
+    '/dashboard/history': () => import('../pages/dashboard/History'),
+    '/settings': () => import('../pages/Settings'),
   };
 
   const handleMouseEnter = async () => {

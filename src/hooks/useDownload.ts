@@ -24,19 +24,14 @@ export function useDownload() {
     setIsDownloading(true);
     setProgress(0);
     
-    const toastId = toast.loading('Preparing download...');
-    
     try {
       await DownloadManager.download(url, filename, (progress) => {
         setProgress(progress);
-        toast.loading(`Downloading... ${progress}%`, { id: toastId });
       });
-      
-      toast.success('Download complete', { id: toastId });
     } catch (error) {
       const appError = handleError(error, { url, filename });
       logger.error('Download failed', error as Error, { url, filename } as any);
-      toast.error(appError.message, { id: toastId });
+      toast.error(appError.message);
       throw appError;
     } finally {
       setIsDownloading(false);

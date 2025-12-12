@@ -26,7 +26,6 @@ export const useGenerationActions = (userId: string | undefined) => {
   const handleDownload = async (storagePath: string | null, type: string, outputUrl?: string | null) => {
     // For video jobs with direct URLs, use the URL directly (legacy support)
     if (!storagePath && outputUrl) {
-      toast.loading('Preparing your download...', { id: 'download-toast' });
 
       try {
         const response = await fetch(outputUrl);
@@ -68,9 +67,6 @@ export const useGenerationActions = (userId: string | undefined) => {
       toast.error('No file path available');
       return;
     }
-
-    // Show instant feedback
-    toast.loading('Preparing your download...', { id: 'download-toast' });
 
     try {
       // Create signed URL for download

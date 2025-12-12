@@ -31,7 +31,6 @@ export const AudioPlayer = ({ generation, className, showControls = false }: Aud
           onClick={async (e) => {
             e.stopPropagation();
             if (generation.storage_path) {
-              toast.loading('Preparing your download...', { id: 'audio-download' });
               try {
                 const { data } = await supabase.storage
                   .from('generated-content')

@@ -10,8 +10,8 @@ const stats = [
 
 export const AboutSection = () => {
   return (
-    <section id="about" className="py-24 md:py-32 bg-zinc-950">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id="about" className="py-24 md:py-32 bg-zinc-950 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left - Text */}
           <AnimatedSection>

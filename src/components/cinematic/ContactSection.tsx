@@ -1,86 +1,264 @@
 import { AnimatedSection } from "./AnimatedSection";
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook } from "lucide-react";
+import { useState } from "react";
+
+const footerLinks = {
+  product: [
+    { label: "Features", href: "/features" },
+    { label: "Workflow Templates", href: "/templates" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Sign Up", href: "/auth" },
+  ],
+  templates: [
+    { label: "Professional Headshots", href: "/templates/professional-headshots" },
+    { label: "Product Photography", href: "/templates/product-photography" },
+    { label: "Social Media Content", href: "/templates/social-media-content" },
+  ],
+  company: [
+    { label: "About", href: "/about" },
+    { label: "Blog", href: "/blog" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+  ],
+  support: [
+    { label: "FAQ", href: "/faq" },
+    { label: "Community", href: "/community" },
+    { label: "Contact Us", href: "mailto:hello@artifio.ai" },
+    { label: "Help Center", href: "/help" },
+  ],
+};
+
+const socialLinks = [
+  { icon: Twitter, href: "https://x.com/artifio_ai", label: "Twitter" },
+  { icon: Linkedin, href: "https://linkedin.com/company/artifio", label: "LinkedIn" },
+  { icon: Youtube, href: "https://youtube.com/@artifio", label: "YouTube" },
+  { icon: Instagram, href: "https://instagram.com/artifio_ai", label: "Instagram" },
+  { icon: Facebook, href: "https://facebook.com/artifio", label: "Facebook" },
+];
 
 export const ContactSection = () => {
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle newsletter subscription
+    console.log("Subscribe:", email);
+    setEmail("");
+  };
+
   return (
-    <section id="contact" className="py-24 md:py-32 bg-black relative overflow-hidden">
-      {/* Red Gradient Accent */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[150px] pointer-events-none" />
-      
-      <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-        <AnimatedSection>
-          <span className="text-sm font-medium uppercase tracking-widest text-red-600 mb-4 block">
-            Get Started
-          </span>
-          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-8">
-            Ready to Create?
-          </h2>
-          <p className="text-xl text-white/60 mb-12 max-w-2xl mx-auto">
-            Join thousands of creators using AI to bring their ideas to life. 
-            Start free, no credit card required.
-          </p>
-        </AnimatedSection>
+    <section id="contact" className="bg-[#0f1419]">
+      {/* CTA Section */}
+      <div className="py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-orange/20 rounded-full blur-[150px] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <AnimatedSection>
+            <span className="text-sm font-medium uppercase tracking-widest text-primary-orange mb-4 block">
+              Get Started
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-8">
+              Ready to Create?
+            </h2>
+            <p className="text-xl text-white/60 mb-12 max-w-2xl mx-auto">
+              Join thousands of creators using AI to bring their ideas to life. 
+              Start free, no credit card required.
+            </p>
+          </AnimatedSection>
 
-        <AnimatedSection delay={200}>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
-            <Link
-              to="/auth"
-              className="px-10 py-5 bg-red-600 text-white font-bold uppercase tracking-wide hover:bg-red-700 transition-colors text-lg"
-            >
-              Start Creating Free
-            </Link>
-            <a
-              href="mailto:hello@artifio.ai"
-              className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors"
-            >
-              <Mail className="w-5 h-5" />
-              Contact Us
-            </a>
-          </div>
-        </AnimatedSection>
+          <AnimatedSection delay={200}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <Link
+                to="/auth"
+                className="px-10 py-5 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all text-lg"
+              >
+                Start Creating Free
+              </Link>
+              <a
+                href="mailto:hello@artifio.ai"
+                className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                Contact Us
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
 
-        {/* Footer */}
-        <AnimatedSection delay={400}>
-          <div className="pt-16 border-t border-white/10">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-2">
+      {/* Footer */}
+      <div className="border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+            {/* Brand Column */}
+            <div className="col-span-2 md:col-span-1">
+              <Link to="/" className="flex items-center gap-2 mb-4">
                 <img 
                   src="/logos/artifio.png" 
                   alt="Artifio" 
-                  className="h-6 w-auto opacity-60"
+                  className="h-8 w-auto"
                 />
-                <span className="text-white/40 text-sm">
-                  © 2025 ARTIFIO.AI. All rights reserved.
-                </span>
+                <span className="text-xl font-bold text-white">artifio.ai</span>
+              </Link>
+              <p className="text-sm text-white/50 mb-6">
+                AI-powered content creation platform for creators and businesses.
+              </p>
+              <div className="flex items-center gap-3">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-primary-orange hover:text-white transition-all"
+                    aria-label={social.label}
+                  >
+                    <social.icon className="w-4 h-4" />
+                  </a>
+                ))}
               </div>
-              <div className="flex items-center gap-8">
-                <a 
-                  href="https://x.com/artifio_ai" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-white/40 hover:text-white text-sm uppercase tracking-wide transition-colors"
+            </div>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
+                Product
+              </h4>
+              <ul className="space-y-3">
+                {footerLinks.product.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      to={link.href}
+                      className="text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Popular Templates */}
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
+                Popular Templates
+              </h4>
+              <ul className="space-y-3">
+                {footerLinks.templates.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      to={link.href}
+                      className="text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
+                Company
+              </h4>
+              <ul className="space-y-3">
+                {footerLinks.company.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      to={link.href}
+                      className="text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
+                Support
+              </h4>
+              <ul className="space-y-3">
+                {footerLinks.support.map((link) => (
+                  <li key={link.label}>
+                    {link.href.startsWith("mailto:") ? (
+                      <a 
+                        href={link.href}
+                        className="text-sm text-white/70 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link 
+                        to={link.href}
+                        className="text-sm text-white/70 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Newsletter */}
+          <div className="border-t border-white/10 pt-8 mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-2">
+                  Stay Updated
+                </h4>
+                <p className="text-sm text-white/50">
+                  Get the latest AI features and updates delivered to your inbox.
+                </p>
+              </div>
+              <form onSubmit={handleSubscribe} className="flex gap-3 w-full md:w-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm flex-1 md:w-64 focus:outline-none focus:border-primary-orange"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all"
                 >
-                  X / Twitter
-                </a>
-                <a 
-                  href="https://linkedin.com/company/artifio" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-white/40 hover:text-white text-sm uppercase tracking-wide transition-colors"
-                >
-                  LinkedIn
-                </a>
+                  Subscribe
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-white/10 pt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-white/40">
+                © 2025 artifio.ai. All rights reserved.
+              </p>
+              <div className="flex items-center gap-6">
                 <Link 
                   to="/privacy"
-                  className="text-white/40 hover:text-white text-sm uppercase tracking-wide transition-colors"
+                  className="text-sm text-white/40 hover:text-white transition-colors"
                 >
-                  Privacy
+                  Privacy Policy
+                </Link>
+                <Link 
+                  to="/terms"
+                  className="text-sm text-white/40 hover:text-white transition-colors"
+                >
+                  Terms of Service
                 </Link>
               </div>
             </div>
           </div>
-        </AnimatedSection>
+        </div>
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 import { AnimatedSection } from "./AnimatedSection";
+import { PartnerLogosCarousel } from "@/components/homepage/PartnerLogosCarousel";
 
 const stats = [
   { value: "10,000+", label: "Creators" },
@@ -15,7 +16,7 @@ export const AboutSection = () => {
           {/* Left - Text */}
           <AnimatedSection>
             <div>
-              <span className="text-sm font-medium uppercase tracking-widest text-red-600 mb-4 block">
+              <span className="text-sm font-medium uppercase tracking-widest text-primary-orange mb-4 block">
                 About Us
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-8">
@@ -40,7 +41,7 @@ export const AboutSection = () => {
               {stats.map((stat) => (
                 <div 
                   key={stat.label} 
-                  className="border-l-2 border-red-600 pl-6"
+                  className="border-l-2 border-primary-orange pl-6"
                 >
                   <div className="text-4xl md:text-5xl font-black text-white mb-2">
                     {stat.value}
@@ -52,6 +53,11 @@ export const AboutSection = () => {
               ))}
             </div>
           </AnimatedSection>
+        </div>
+
+        {/* Partner Logo Carousel */}
+        <div className="mt-20">
+          <PartnerLogosCarousel />
         </div>
       </div>
     </section>

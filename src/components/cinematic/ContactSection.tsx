@@ -48,7 +48,7 @@ export const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="bg-[#0f1419]">
+    <section id="contact" className="bg-black">
       {/* CTA Section */}
       <div className="py-24 md:py-32 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-orange/20 rounded-full blur-[150px] pointer-events-none" />
@@ -223,12 +223,12 @@ export const ContactSection = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm w-full sm:flex-1 md:w-64 focus:outline-none focus:border-primary-orange"
+                  className="px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm w-full sm:flex-1 md:w-64 focus:outline-none focus:border-primary-orange rounded-2xl"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all whitespace-nowrap"
+                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all whitespace-nowrap rounded-2xl"
                 >
                   Subscribe
                 </button>

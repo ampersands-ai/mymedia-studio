@@ -58,8 +58,8 @@ export const CinematicNav = () => {
 
         {/* Desktop CTA */}
         <Link
-          to="/dashboard"
-          className="hidden md:block px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all"
+          to="/custom-creation"
+          className="hidden md:block px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
         >
           Dashboard
         </Link>
@@ -118,16 +118,16 @@ export const CinematicNav = () => {
               {/* CTA */}
               <div className="p-6 border-t border-white/10">
                 <Link
-                  to="/dashboard"
+                  to="/custom-creation"
                   onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all"
+                  className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/auth"
                   onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all"
+                  className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all rounded-2xl"
                 >
                   Sign Up Free
                 </Link>

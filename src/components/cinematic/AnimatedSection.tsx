@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 
@@ -19,24 +20,36 @@ export const AnimatedSection = ({
     triggerOnce: true,
   });
 
-  const directionStyles = {
-    up: "translate-y-12",
-    down: "-translate-y-12",
-    left: "translate-x-12",
-    right: "-translate-x-12",
+  const directionVariants = {
+    up: { y: 60, x: 0 },
+    down: { y: -60, x: 0 },
+    left: { x: 60, y: 0 },
+    right: { x: -60, y: 0 },
   };
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      className={cn(
-        "transition-all duration-700 ease-out",
-        inView ? "opacity-100 translate-x-0 translate-y-0" : `opacity-0 ${directionStyles[direction]}`,
-        className
-      )}
-      style={{ transitionDelay: `${delay}ms` }}
+      initial={{ 
+        opacity: 0, 
+        ...directionVariants[direction] 
+      }}
+      animate={inView ? { 
+        opacity: 1, 
+        x: 0, 
+        y: 0 
+      } : { 
+        opacity: 0, 
+        ...directionVariants[direction] 
+      }}
+      transition={{ 
+        duration: 0.8, 
+        delay: delay / 1000,
+        ease: [0.25, 0.4, 0.25, 1]
+      }}
+      className={cn(className)}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };

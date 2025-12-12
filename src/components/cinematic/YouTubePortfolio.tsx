@@ -68,7 +68,7 @@ const VideoCard = ({ item, index }: { item: PortfolioItem; index: number }) => {
         
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <span className="text-xs font-medium uppercase tracking-wider text-red-500 mb-2 block">
+          <span className="text-xs font-medium uppercase tracking-wider text-primary-orange mb-2 block">
             {item.category}
           </span>
           <h3 className="text-xl font-bold text-white">{item.title}</h3>
@@ -84,7 +84,7 @@ export const YouTubePortfolio = () => {
       <div className="max-w-7xl mx-auto px-6">
         <AnimatedSection>
           <div className="mb-16">
-            <span className="text-sm font-medium uppercase tracking-widest text-red-600 mb-4 block">
+            <span className="text-sm font-medium uppercase tracking-widest text-primary-orange mb-4 block">
               Portfolio
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight">

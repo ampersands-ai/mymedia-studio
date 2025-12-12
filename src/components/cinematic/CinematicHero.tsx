@@ -81,7 +81,8 @@ export const CinematicHero = () => {
               muted={isMuted}
               loop
               playsInline
-              preload="auto"
+              autoPlay={index === 0}
+              preload={index < 3 ? "auto" : "metadata"}
               className="absolute inset-0 w-full h-full object-cover"
             >
               <source src={src} type="video/mp4" />

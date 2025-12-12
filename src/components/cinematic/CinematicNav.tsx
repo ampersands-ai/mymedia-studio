@@ -3,43 +3,22 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
 const navItems = [
-  { id: "hero", label: "Home" },
-  { id: "portfolio", label: "Work" },
-  { id: "about", label: "About" },
-  { id: "contact", label: "Contact" },
+  { id: "features", label: "Features", href: "/features" },
+  { id: "pricing", label: "Pricing", href: "/pricing" },
+  { id: "blog", label: "Blog", href: "/blog" },
 ];
 
 export const CinematicNav = () => {
-  const [activeSection, setActiveSection] = useState("hero");
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-
-      // Determine active section
-      const sections = navItems.map(item => document.getElementById(item.id));
-      const scrollPos = window.scrollY + 100;
-
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
-        if (section && section.offsetTop <= scrollPos) {
-          setActiveSection(navItems[i].id);
-          break;
-        }
-      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   return (
     <nav
@@ -64,30 +43,22 @@ export const CinematicNav = () => {
         {/* Nav Links */}
         <div className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
-            <button
+            <Link
               key={item.id}
-              onClick={() => scrollToSection(item.id)}
-              className={cn(
-                "relative text-sm font-medium uppercase tracking-wide transition-colors py-2",
-                activeSection === item.id
-                  ? "text-white"
-                  : "text-white/50 hover:text-white"
-              )}
+              to={item.href}
+              className="text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
             >
               {item.label}
-              {activeSection === item.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />
-              )}
-            </button>
+            </Link>
           ))}
         </div>
 
         {/* CTA */}
         <Link
-          to="/auth"
-          className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors"
+          to="/dashboard"
+          className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all"
         >
-          Get Started
+          Dashboard
         </Link>
       </div>
     </nav>

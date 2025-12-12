@@ -154,7 +154,7 @@ export const CinematicHero = () => {
       {/* Sound Toggle - Bottom Right */}
       <button
         onClick={() => setIsMuted(!isMuted)}
-        className="absolute bottom-32 md:bottom-24 right-4 md:right-16 z-20 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors"
+        className="absolute bottom-32 md:bottom-24 right-4 md:right-16 z-20 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors rounded-2xl"
       >
         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
       </button>

@@ -138,13 +138,13 @@ export const CinematicHero = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <Link
             to="/auth"
-            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105 text-center text-sm sm:text-base"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105 text-center text-sm sm:text-base rounded-2xl"
           >
             Start Creating Free
           </Link>
           <button
             onClick={scrollToPortfolio}
-            className="px-6 sm:px-8 py-3 sm:py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors text-sm sm:text-base"
+            className="px-6 sm:px-8 py-3 sm:py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors text-sm sm:text-base rounded-2xl"
           >
             View Work
           </button>

@@ -100,7 +100,7 @@ All colors MUST be HSL.
   --gradient-hero: linear-gradient(180deg, hsl(240, 10%, 12%) 0%, hsl(240, 10%, 15%) 100%);
   
   /* Tailwind dark mode colors */
-  --background: 222 47% 11%;
+  --background: 0 0% 0%;
   --foreground: 210 40% 98%;
 
   /* Light-Only Components - DO NOT CHANGE (ensures floating UI remains readable) */

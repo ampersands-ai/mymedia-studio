@@ -217,18 +217,18 @@ export const ContactSection = () => {
                   Get the latest AI features and updates delivered to your inbox.
                 </p>
               </div>
-              <form onSubmit={handleSubscribe} className="flex gap-3 w-full md:w-auto">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm flex-1 md:w-64 focus:outline-none focus:border-primary-orange"
+                  className="px-4 py-3 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm w-full sm:flex-1 md:w-64 focus:outline-none focus:border-primary-orange"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all"
+                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all whitespace-nowrap"
                 >
                   Subscribe
                 </button>

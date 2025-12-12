@@ -25,7 +25,8 @@ export const ThemeToggle = ({ className = "" }: { className?: string }) => {
       onClick={toggleTheme}
       className={cn(
         "p-2 rounded-lg transition-colors",
-        "hover:bg-gray-100 dark:hover:bg-gray-800",
+        "hover:bg-white/10 text-white/70 hover:text-white dark:hover:bg-white/10 dark:text-white/70 dark:hover:text-white",
+        "light:hover:bg-black/10 light:text-black/70 light:hover:text-black",
         className
       )}
       aria-label="Toggle theme"

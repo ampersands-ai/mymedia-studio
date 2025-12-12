@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { AnimatedSection } from "./AnimatedSection";
 
 interface PortfolioItem {
@@ -47,42 +48,49 @@ const portfolioItems: PortfolioItem[] = [
 ];
 
 const VideoCard = ({ item, index }: { item: PortfolioItem; index: number }) => {
-  const handleInteractionStart = (e: React.MouseEvent<HTMLVideoElement> | React.TouchEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget;
-    video.play().catch(() => {});
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleInteractionStart = () => {
+    videoRef.current?.play().catch(() => {});
   };
 
-  const handleInteractionEnd = (e: React.MouseEvent<HTMLVideoElement> | React.TouchEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget;
-    video.pause();
-    video.currentTime = 0;
+  const handleInteractionEnd = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
   };
 
   return (
     <AnimatedSection delay={index * 100}>
-      <div className="group relative aspect-video bg-white/5 overflow-hidden cursor-pointer">
+      <div 
+        className="group relative aspect-video bg-white/5 overflow-hidden cursor-pointer"
+        onMouseEnter={handleInteractionStart}
+        onMouseLeave={handleInteractionEnd}
+        onTouchStart={handleInteractionStart}
+        onTouchEnd={handleInteractionEnd}
+      >
         <video
+          ref={videoRef}
           src={item.videoSrc}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           muted
           loop
           playsInline
           preload="metadata"
-          onMouseEnter={handleInteractionStart}
-          onMouseLeave={handleInteractionEnd}
-          onTouchStart={handleInteractionStart}
-          onTouchEnd={handleInteractionEnd}
         />
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         
-        {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <span className="text-xs font-medium uppercase tracking-wider text-primary-orange mb-2 block">
-            {item.category}
-          </span>
-          <h3 className="text-xl font-bold text-white">{item.title}</h3>
+        {/* Content with frosted glass background */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+          <div className="backdrop-blur-md bg-black/40 rounded-lg p-3 border border-white/10">
+            <span className="text-xs font-medium uppercase tracking-wider text-primary-orange mb-1 block">
+              {item.category}
+            </span>
+            <h3 className="text-lg font-bold text-white">{item.title}</h3>
+          </div>
         </div>
       </div>
     </AnimatedSection>

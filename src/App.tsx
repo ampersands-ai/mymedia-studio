@@ -202,6 +202,7 @@ const AppContent = () => {
             <Route path="/faq" element={<RouteErrorBoundary routeName="FAQ"><FAQ /></RouteErrorBoundary>} />
             <Route path="/features" element={<RouteErrorBoundary routeName="Features"><Features /></RouteErrorBoundary>} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
+            <Route path="/custom-creation" element={<Navigate to="/dashboard/custom-creation" replace />} />
             <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
             <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />

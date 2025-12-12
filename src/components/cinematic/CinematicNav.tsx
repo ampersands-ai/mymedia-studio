@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
@@ -56,13 +57,16 @@ export const CinematicNav = () => {
           ))}
         </div>
 
-        {/* Desktop CTA */}
-        <Link
-          to="/dashboard/custom-creation"
-          className="hidden md:block px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
-        >
-          Dashboard
-        </Link>
+        {/* Desktop CTA + Theme Toggle */}
+        <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            to="/dashboard/custom-creation"
+            className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
+          >
+            Dashboard
+          </Link>
+        </div>
 
         {/* Mobile Menu */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -89,14 +93,17 @@ export const CinematicNav = () => {
                   />
                   <span className="text-lg font-bold text-white">artifio.ai</span>
                 </Link>
-                <SheetClose asChild>
-                  <button
-                    className="p-2 text-white/60 hover:text-white transition-colors"
-                    aria-label="Close menu"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </SheetClose>
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <SheetClose asChild>
+                    <button
+                      className="p-2 text-white/60 hover:text-white transition-colors"
+                      aria-label="Close menu"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </SheetClose>
+                </div>
               </div>
 
               {/* Nav Links */}

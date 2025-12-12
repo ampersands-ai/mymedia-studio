@@ -89,15 +89,15 @@ All colors MUST be HSL.
   animation: slide-up 0.3s ease-out;
 }
 
-/* Dark mode support */
+/* Dark mode support - Pure black/neutral gray palette */
 .dark {
-  --bg-primary: hsl(240, 10%, 12%);
-  --bg-surface: hsl(240, 10%, 15%);
+  --bg-primary: hsl(0, 0%, 5%);
+  --bg-surface: hsl(0, 0%, 8%);
   --text-primary: hsl(210, 40%, 98%);
-  --text-secondary: hsl(215, 20%, 75%);
-  --glass: rgba(30, 30, 38, 0.7);
+  --text-secondary: hsl(0, 0%, 70%);
+  --glass: rgba(15, 15, 15, 0.85);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --gradient-hero: linear-gradient(180deg, hsl(240, 10%, 12%) 0%, hsl(240, 10%, 15%) 100%);
+  --gradient-hero: linear-gradient(180deg, hsl(0, 0%, 0%) 0%, hsl(0, 0%, 5%) 100%);
   
   /* Tailwind dark mode colors */
   --background: 0 0% 0%;
@@ -110,10 +110,10 @@ All colors MUST be HSL.
   --text-on-light: 222 47% 11%;
   --text-on-light-muted: 215 19% 35%;
 
-  --card: 217 33% 17%;
+  --card: 0 0% 8%;
   --card-foreground: 210 40% 98%;
   
-  --popover: 217 33% 17%;
+  --popover: 0 0% 8%;
   --popover-foreground: 210 40% 98%;
   
   --primary: 38 92% 50%;
@@ -122,8 +122,8 @@ All colors MUST be HSL.
   --secondary: 271 81% 56%;
   --secondary-foreground: 0 0% 100%;
   
-  --muted: 215 25% 27%;
-  --muted-foreground: 215 20% 75%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 70%;
   
   --accent: 199 89% 48%;
   --accent-foreground: 0 0% 100%;
@@ -131,8 +131,8 @@ All colors MUST be HSL.
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   
-  --border: 215 25% 27%;
-  --input: 215 25% 27%;
+  --border: 0 0% 18%;
+  --input: 0 0% 12%;
   --ring: 271 81% 56%;
 }
 

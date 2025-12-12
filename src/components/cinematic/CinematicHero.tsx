@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFade, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
+import { useIsMobile } from "@/hooks/use-mobile";
 import "swiper/css";
 import "swiper/css/effect-fade";
 
-const heroVideos = [
+const heroVideosDesktop = [
   "/hero-1.mp4",
   "/hero-2.mp4",
   "/hero-3.mp4",
@@ -15,6 +16,16 @@ const heroVideos = [
   "/hero-5.mp4",
   "/hero-6.mp4",
   "/hero-7.mp4",
+];
+
+const heroVideosMobile = [
+  "/hero-1-mobile.mp4",
+  "/hero-2-mobile.mp4",
+  "/hero-3-mobile.mp4",
+  "/hero-4-mobile.mp4",
+  "/hero-5-mobile.mp4",
+  "/hero-6-mobile.mp4",
+  "/hero-7-mobile.mp4",
 ];
 
 const aiModels = [
@@ -28,6 +39,9 @@ export const CinematicHero = () => {
   const [isMuted, setIsMuted] = useState(true);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const swiperRef = useRef<SwiperType | null>(null);
+  const isMobile = useIsMobile();
+  
+  const heroVideos = isMobile ? heroVideosMobile : heroVideosDesktop;
 
   const handleSlideChange = (swiper: SwiperType) => {
     const newIndex = swiper.realIndex;
@@ -98,7 +112,7 @@ export const CinematicHero = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
 
       {/* Bottom Left Content */}
-      <div className="absolute bottom-24 left-8 md:left-16 z-20 max-w-3xl">
+      <div className="absolute bottom-32 md:bottom-24 left-4 right-4 md:left-16 md:right-auto z-20 max-w-3xl">
         {/* AI Model Pills */}
         <div className="flex flex-wrap gap-2 mb-6">
           {aiModels.map((model) => (
@@ -111,7 +125,7 @@ export const CinematicHero = () => {
           ))}
         </div>
 
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
           AI Content Creation
           <br />
           <span className="text-white/90">Without Limits</span>
@@ -121,16 +135,16 @@ export const CinematicHero = () => {
         </p>
 
         {/* CTAs */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <Link
             to="/auth"
-            className="px-8 py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105 text-center text-sm sm:text-base"
           >
             Start Creating Free
           </Link>
           <button
             onClick={scrollToPortfolio}
-            className="px-8 py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors"
+            className="px-6 sm:px-8 py-3 sm:py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors text-sm sm:text-base"
           >
             View Work
           </button>
@@ -140,7 +154,7 @@ export const CinematicHero = () => {
       {/* Sound Toggle - Bottom Right */}
       <button
         onClick={() => setIsMuted(!isMuted)}
-        className="absolute bottom-24 right-8 md:right-16 z-20 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors"
+        className="absolute bottom-32 md:bottom-24 right-4 md:right-16 z-20 p-3 border border-white/30 text-white/60 hover:text-white hover:border-white/60 transition-colors"
       >
         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
       </button>

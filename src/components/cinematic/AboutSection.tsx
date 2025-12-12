@@ -37,16 +37,16 @@ export const AboutSection = () => {
 
           {/* Right - Stats */}
           <AnimatedSection delay={200}>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-4 sm:gap-8">
               {stats.map((stat) => (
                 <div 
                   key={stat.label} 
-                  className="border-l-2 border-primary-orange pl-6"
+                  className="border-l-2 border-primary-orange pl-3 sm:pl-6"
                 >
-                  <div className="text-4xl md:text-5xl font-black text-white mb-2">
+                  <div className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-2 whitespace-nowrap">
                     {stat.value}
                   </div>
-                  <div className="text-sm uppercase tracking-widest text-white/50">
+                  <div className="text-xs sm:text-sm uppercase tracking-widest text-white/50">
                     {stat.label}
                   </div>
                 </div>

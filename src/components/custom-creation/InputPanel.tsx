@@ -441,7 +441,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       </div>
 
       {/* Sticky action buttons at bottom - ALWAYS VISIBLE */}
-      <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 pb-safe md:pb-6 border-t border-border bg-background/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">
+      <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 pb-safe md:pb-6 border-t border-border bg-card backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">
         <Button
           onClick={onGenerate}
           disabled={!canGenerate || isDisabled}
@@ -463,7 +463,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             )}
           </div>
         </Button>
-        <Button onClick={onReset} variant="outline" className="w-full gap-2">
+        <Button onClick={onReset} variant="outline" className="w-full gap-2 bg-muted/50 hover:bg-muted">
           <RotateCcw className="h-4 w-4" />
           Reset
         </Button>

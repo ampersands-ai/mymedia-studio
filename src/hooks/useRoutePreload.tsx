@@ -12,15 +12,17 @@ export function useRoutePreload() {
     // Prefetch critical routes after initial render
     // Dashboard routes (most likely navigation targets)
     prefetchOnIdle(() => import('../pages/CustomCreation'), 1000);
-    prefetchOnIdle(() => import('../pages/Settings'), 1500);
-    prefetchOnIdle(() => import('../pages/dashboard/History'), 2000);
+    prefetchOnIdle(() => import('../pages/StoryboardPage'), 1500);
+    prefetchOnIdle(() => import('../pages/VideoStudio'), 2000);
+    prefetchOnIdle(() => import('../pages/Settings'), 2500);
+    prefetchOnIdle(() => import('../pages/dashboard/History'), 3000);
     
     // Public routes
-    prefetchOnIdle(() => import('../pages/IndexV2'), 2500);
-    prefetchOnIdle(() => import('../pages/Create'), 3000);
-    prefetchOnIdle(() => import('../pages/Templates'), 3500);
-    prefetchOnIdle(() => import('../pages/Pricing'), 4000);
-    prefetchOnIdle(() => import('../pages/Auth'), 4500);
+    prefetchOnIdle(() => import('../pages/IndexV2'), 3500);
+    prefetchOnIdle(() => import('../pages/Create'), 4000);
+    prefetchOnIdle(() => import('../pages/Templates'), 4500);
+    prefetchOnIdle(() => import('../pages/Pricing'), 5000);
+    prefetchOnIdle(() => import('../pages/Auth'), 5500);
   }, []);
 }
 
@@ -38,6 +40,8 @@ export function usePrefetchOnHover(routePath: string) {
     '/playground': () => import('../pages/Playground'),
     '/video-studio': () => import('../pages/VideoStudio'),
     '/dashboard/custom-creation': () => import('../pages/CustomCreation'),
+    '/dashboard/storyboard': () => import('../pages/StoryboardPage'),
+    '/dashboard/faceless-video': () => import('../pages/VideoStudio'),
     '/dashboard/history': () => import('../pages/dashboard/History'),
     '/settings': () => import('../pages/Settings'),
   };

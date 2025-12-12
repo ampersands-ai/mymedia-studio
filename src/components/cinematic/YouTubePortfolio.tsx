@@ -56,10 +56,15 @@ const VideoCard = ({ item, index }: { item: PortfolioItem; index: number }) => {
           muted
           loop
           playsInline
-          onMouseEnter={(e) => e.currentTarget.play()}
+          preload="metadata"
+          onMouseEnter={(e) => {
+            const video = e.currentTarget;
+            video.play().catch(() => {});
+          }}
           onMouseLeave={(e) => {
-            e.currentTarget.pause();
-            e.currentTarget.currentTime = 0;
+            const video = e.currentTarget;
+            video.pause();
+            video.currentTime = 0;
           }}
         />
         

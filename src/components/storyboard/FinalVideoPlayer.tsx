@@ -25,8 +25,6 @@ export const FinalVideoPlayer = ({
         toast.error('Video URL not available');
         return;
       }
-
-      toast.loading('Downloading video...', { id: 'download-video' });
       
       const response = await fetch(videoUrl);
       if (!response.ok) throw new Error('Download failed');
@@ -40,8 +38,6 @@ export const FinalVideoPlayer = ({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
-      toast.success('Video downloaded!', { id: 'download-video' });
     } catch (error) {
       logger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'FinalVideoPlayer',

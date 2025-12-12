@@ -33,7 +33,6 @@ export function VideoFromAudioPreview({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('Video downloaded successfully');
     } catch (error) {
       logger.error('Video download failed', error as Error, {
         component: 'VideoFromAudioPreview',

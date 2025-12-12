@@ -18,41 +18,6 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
   const isNative = isNativePlatform();
 
   /**
-   * Determine MIME type from URL or filename
-   * Properly handles URLs with query parameters
-   */
-  const getMimeType = (url: string): string => {
-    // Extract pathname from URL (handles query parameters)
-    let pathname: string;
-    try {
-      const urlObj = new URL(url);
-      pathname = urlObj.pathname;
-    } catch {
-      // If URL parsing fails, use the string directly (might be a relative path)
-      pathname = url;
-    }
-
-    // Extract extension from pathname
-    const extension = pathname.split('.').pop()?.toLowerCase() || '';
-
-    const mimeTypes: Record<string, string> = {
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      png: 'image/png',
-      gif: 'image/gif',
-      webp: 'image/webp',
-      mp4: 'video/mp4',
-      webm: 'video/webm',
-      mov: 'video/quicktime',
-      mp3: 'audio/mpeg',
-      wav: 'audio/wav',
-      pdf: 'application/pdf',
-    };
-
-    return mimeTypes[extension] || 'application/octet-stream';
-  };
-
-  /**
    * Download file to device
    */
   const downloadFile = async (url: string, filename?: string): Promise<void> => {
@@ -95,8 +60,6 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
 
     // Native download
     try {
-      toast.info('Downloading...');
-      
       // Fetch the file
       const response = await fetch(url);
       const blob = await response.blob();
@@ -113,10 +76,6 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
       });
 
       // Determine directory based on file type
-      const mimeType = getMimeType(url);
-      const isImage = mimeType.startsWith('image/');
-      const isVideo = mimeType.startsWith('video/');
-      
       // On iOS, save to Documents (can't directly save to Photos without plugin)
       // On Android, save to Downloads
       const directory = isIOS() ? Directory.Documents : Directory.Documents;
@@ -129,14 +88,6 @@ export const useNativeDownload = (): UseNativeDownloadResult => {
       });
 
       await triggerHaptic('medium');
-      
-      if (isIOS()) {
-        toast.success(`Saved to Files app!`, {
-          description: 'Open Files app to view your download',
-        });
-      } else {
-        toast.success(`Saved to ${isImage ? 'Gallery' : isVideo ? 'Videos' : 'Downloads'}!`);
-      }
       
       componentLogger.debug('File saved to device', {
         operation: 'downloadFile',

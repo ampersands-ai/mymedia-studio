@@ -408,7 +408,7 @@ export const ScenePreviewGenerator = ({
         </h4>
         <div className="flex items-center gap-2">
           {import.meta.env.DEV && (
-            <Button
+          <Button
               size="sm"
               variant="outline"
               onClick={() => {
@@ -417,7 +417,6 @@ export const ScenePreviewGenerator = ({
                   component: 'ScenePreviewGenerator',
                   operation: 'clearCache'
                 });
-                toast.success('Model cache cleared');
               }}
               className="h-8 px-2 text-xs"
               title="Clear model cache (dev only)"

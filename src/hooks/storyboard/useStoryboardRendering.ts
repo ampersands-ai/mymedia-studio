@@ -232,7 +232,6 @@ export const useStoryboardRendering = (
       }
 
       if (storyboardData.status === 'complete') {
-        toast.info('Video already complete!');
         queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
         return;
       }

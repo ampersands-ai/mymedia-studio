@@ -97,9 +97,6 @@ export function BackgroundMusicSelector({
       if (error) throw error;
       setAudioItems(data.items || []);
       
-      if ((data.items || []).length === 0) {
-        toast.info('No music found. Try a different search.');
-      }
     } catch (error) {
       logger.error('Music search failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'BackgroundMusicSelector',
@@ -115,7 +112,6 @@ export function BackgroundMusicSelector({
   const handleSelectMusic = (audio: PixabayAudio) => {
     onSelectMusic(audio.audioURL, volume);
     setSelectedPreviewAudio(audio);
-    toast.success('Background music selected');
     
     // Stop preview audio
     if (playingAudio) {
@@ -255,7 +251,6 @@ export function BackgroundMusicSelector({
       selectedAudioRef.current = null;
       setIsSelectedPlaying(false);
     }
-    toast.success('Background music removed');
   };
 
   return (

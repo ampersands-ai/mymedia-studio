@@ -47,6 +47,17 @@ const portfolioItems: PortfolioItem[] = [
 ];
 
 const VideoCard = ({ item, index }: { item: PortfolioItem; index: number }) => {
+  const handleInteractionStart = (e: React.MouseEvent<HTMLVideoElement> | React.TouchEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    video.play().catch(() => {});
+  };
+
+  const handleInteractionEnd = (e: React.MouseEvent<HTMLVideoElement> | React.TouchEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    video.pause();
+    video.currentTime = 0;
+  };
+
   return (
     <AnimatedSection delay={index * 100}>
       <div className="group relative aspect-video bg-white/5 overflow-hidden cursor-pointer">
@@ -57,15 +68,10 @@ const VideoCard = ({ item, index }: { item: PortfolioItem; index: number }) => {
           loop
           playsInline
           preload="metadata"
-          onMouseEnter={(e) => {
-            const video = e.currentTarget;
-            video.play().catch(() => {});
-          }}
-          onMouseLeave={(e) => {
-            const video = e.currentTarget;
-            video.pause();
-            video.currentTime = 0;
-          }}
+          onMouseEnter={handleInteractionStart}
+          onMouseLeave={handleInteractionEnd}
+          onTouchStart={handleInteractionStart}
+          onTouchEnd={handleInteractionEnd}
         />
         
         {/* Overlay */}
@@ -90,10 +96,10 @@ export const YouTubePortfolio = () => {
         <AnimatedSection>
           <div className="mb-16">
             <span className="text-sm font-medium uppercase tracking-widest text-primary-orange mb-4 block">
-              Portfolio
+              Features
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
-              Featured Work
+              What You Can Create
             </h2>
           </div>
         </AnimatedSection>

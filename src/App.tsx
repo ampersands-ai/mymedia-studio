@@ -149,7 +149,8 @@ const AppContent = () => {
           <Analytics />
           {import.meta.env.DEV && <DebugPanel />}
               <Routes>
-                <Route path="/" element={<RouteErrorBoundary routeName="Home"><IndexV2 /></RouteErrorBoundary>} />
+                <Route path="/" element={<RouteErrorBoundary routeName="Home"><CinematicTest /></RouteErrorBoundary>} />
+                <Route path="/old-home" element={<RouteErrorBoundary routeName="Old Home"><IndexV2 /></RouteErrorBoundary>} />
           <Route path="/minimal" element={<RouteErrorBoundary routeName="Home Minimal"><IndexMinimal /></RouteErrorBoundary>} />
           <Route path="/create-minimal" element={<RouteErrorBoundary routeName="Create Minimal"><CreateMinimal /></RouteErrorBoundary>} />
           <Route path="/storyboard-minimal" element={<RouteErrorBoundary routeName="Storyboard Minimal"><StoryboardMinimal /></RouteErrorBoundary>} />
@@ -203,7 +204,7 @@ const AppContent = () => {
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
             <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
             <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
-            <Route path="/cinematic-test" element={<RouteErrorBoundary routeName="Cinematic Test"><CinematicTest /></RouteErrorBoundary>} />
+            <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />
           </Routes>

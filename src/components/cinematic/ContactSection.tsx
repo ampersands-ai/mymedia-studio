@@ -71,13 +71,13 @@ export const ContactSection = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link
                 to="/auth"
-                className="px-10 py-5 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all text-lg"
+                className="px-10 py-5 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all text-lg rounded-2xl"
               >
                 Start Creating Free
               </Link>
               <a
                 href="mailto:hello@artifio.ai"
-                className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors rounded-2xl"
               >
                 <Mail className="w-5 h-5" />
                 Contact Us

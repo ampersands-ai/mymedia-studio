@@ -23,13 +23,8 @@ export const AboutSection = () => {
                 <br />
                 When You Can Pay Less?
               </h2>
-              <p className="text-lg text-white/60 mb-6 leading-relaxed">
-                Artifio brings together the world's most powerful AI models in one seamless platform. 
-                Generate stunning videos, images, and audio content without switching between tools.
-              </p>
               <p className="text-lg text-white/60 leading-relaxed">
-                From Sora and Kling to Midjourney and beyond — access 30+ cutting-edge AI models 
-                with a single subscription. No API keys. No complexity. Just create.
+                Every model. One place. A price that actually respects your budget. No compromises. No Excuses.
               </p>
             </div>
           </AnimatedSection>

@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFade, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useInterval } from "@/hooks/useInterval";
+
 import "swiper/css";
 import "swiper/css/effect-fade";
 
@@ -47,9 +47,17 @@ export const CinematicHero = () => {
   
   const heroVideos = isMobile ? heroVideosMobile : heroVideosDesktop;
 
-  useInterval(() => {
-    setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-  }, 2000);
+  // Dynamic interval: pause longer on "Anything" (last word)
+  useEffect(() => {
+    const isAnything = currentWordIndex === rotatingWords.length - 1;
+    const delay = isAnything ? 3000 : 1500; // 3s pause on "Anything", 1.5s for others
+    
+    const timer = setTimeout(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, delay);
+    
+    return () => clearTimeout(timer);
+  }, [currentWordIndex]);
 
   const handleSlideChange = (swiper: SwiperType) => {
     const newIndex = swiper.realIndex;
@@ -137,7 +145,10 @@ export const CinematicHero = () => {
           Create{" "}
           <span 
             key={currentWordIndex} 
-            className="inline-block animate-fade-in px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/20"
+            className="inline-block animate-fade-in px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-glow animate-shimmer"
+            style={{
+              textShadow: '0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(255, 200, 100, 0.3)',
+            }}
           >
             {rotatingWords[currentWordIndex]}
           </span>.

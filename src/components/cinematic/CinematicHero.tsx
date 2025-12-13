@@ -135,7 +135,10 @@ export const CinematicHero = () => {
 
         <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
           Create{" "}
-          <span key={currentWordIndex} className="inline-block animate-fade-in">
+          <span 
+            key={currentWordIndex} 
+            className="inline-block animate-fade-in px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/20"
+          >
             {rotatingWords[currentWordIndex]}
           </span>.
           <br />

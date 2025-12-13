@@ -153,7 +153,7 @@ export const CinematicHero = () => {
             {rotatingWords[currentWordIndex]}
           </span>.
           <br />
-          <span className="text-white/90">Instantly.</span>
+          <span className="text-white/90">Stop Overpaying!</span>
         </h1>
         <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl">
           World's most powerful models. Video. Image. Audio. One place.

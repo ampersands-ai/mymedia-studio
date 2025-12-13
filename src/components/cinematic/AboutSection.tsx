@@ -28,7 +28,7 @@ export const AboutSection = () => {
                 Generate stunning videos, images, and audio content without switching between tools.
               </p>
               <p className="text-lg text-white/60 leading-relaxed">
-                Cutting-edge models. One place. Fraction of what you'd pay elsewhere. No compromises. No Exceptions.
+                Fraction of what you'd pay elsewhere. No compromises. No Exceptions.
               </p>
             </div>
           </AnimatedSection>

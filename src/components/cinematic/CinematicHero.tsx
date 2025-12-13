@@ -5,8 +5,11 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFade, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useInterval } from "@/hooks/useInterval";
 import "swiper/css";
 import "swiper/css/effect-fade";
+
+const rotatingWords = ["Audios", "Videos", "Stories", "Images", "Shorts", "Anything"];
 
 const heroVideosDesktop = [
   "/hero-1.mp4",
@@ -37,11 +40,16 @@ const aiModels = [
 
 export const CinematicHero = () => {
   const [isMuted, setIsMuted] = useState(true);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const swiperRef = useRef<SwiperType | null>(null);
   const isMobile = useIsMobile();
   
   const heroVideos = isMobile ? heroVideosMobile : heroVideosDesktop;
+
+  useInterval(() => {
+    setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+  }, 2000);
 
   const handleSlideChange = (swiper: SwiperType) => {
     const newIndex = swiper.realIndex;
@@ -126,7 +134,10 @@ export const CinematicHero = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
-          Create Anything.
+          Create{" "}
+          <span key={currentWordIndex} className="inline-block animate-fade-in">
+            {rotatingWords[currentWordIndex]}
+          </span>.
           <br />
           <span className="text-white/90">Instantly.</span>
         </h1>

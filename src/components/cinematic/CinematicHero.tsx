@@ -157,7 +157,7 @@ export const CinematicHero = () => {
         </h1>
         <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl">
           World&apos;s most powerful models.<br />
-          A fraction of what you&apos;d pay elsewhere.
+          For a fraction of what you&apos;d pay elsewhere.
         </p>
 
         {/* CTAs */}

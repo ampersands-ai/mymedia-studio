@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
 import { Card } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
@@ -9,27 +9,41 @@ interface SuccessConfettiProps {
   message?: string;
 }
 
+const SESSION_KEY = 'firstGenConfettiShown';
+
 export const SuccessConfetti = ({ 
   trigger, 
   onComplete,
   message = "🎉 Amazing! Your first creation is ready!" 
 }: SuccessConfettiProps) => {
   const { fireCelebration } = useConfetti();
+  
+  // Check if confetti was already shown this session
+  const [hasShownThisSession] = useState(() => {
+    return sessionStorage.getItem(SESSION_KEY) === 'true';
+  });
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (trigger) {
+    // Only fire confetti if: trigger is true AND hasn't been shown this session
+    if (trigger && !hasShownThisSession) {
+      // Mark as shown for this session
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      setIsVisible(true);
       fireCelebration();
       
       const timer = setTimeout(() => {
+        setIsVisible(false);
         onComplete?.();
       }, 3000);
 
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [trigger, onComplete, fireCelebration]);
+  }, [trigger, hasShownThisSession, onComplete, fireCelebration]);
 
-  if (!trigger) return null;
+  // Don't render if not visible or already shown
+  if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center pointer-events-none animate-in fade-in duration-300">

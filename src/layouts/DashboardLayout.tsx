@@ -106,12 +106,14 @@ export const DashboardLayout = () => {
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-              <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-primary-500 text-neutral-900 border-2 border-primary-600">
-                <div className="flex items-center gap-1 md:gap-2">
-                  <Coins className="h-3.5 w-3.5 md:h-5 md:w-5" />
-                  <span className="font-black text-xs md:text-base whitespace-nowrap">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
+              <Link to="/dashboard/settings?tab=billing">
+                <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-primary-500 text-neutral-900 border-2 border-primary-600 cursor-pointer hover:bg-primary-600 transition-colors">
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <Coins className="h-3.5 w-3.5 md:h-5 md:w-5" />
+                    <span className="font-black text-xs md:text-base whitespace-nowrap">{Number(tokenData?.tokens_remaining || 0).toFixed(2)}</span>
+                  </div>
                 </div>
-              </div>
+              </Link>
 
               {/* Mobile Menu */}
               <MobileMenu creditBalance={tokenData?.tokens_remaining} />

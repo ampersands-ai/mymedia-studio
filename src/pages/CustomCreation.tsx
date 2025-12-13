@@ -397,6 +397,22 @@ const CustomCreation = () => {
     }
   }, [filteredModels, state.selectedModel, setStateSelectedModel]);
 
+  // Track onboarding: viewedTemplates when user lands on CustomCreation page
+  useEffect(() => {
+    if (progress && !progress.checklist.viewedTemplates) {
+      updateProgress({ viewedTemplates: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress?.checklist.viewedTemplates]);
+
+  // Track onboarding: viewedTokenCost when estimatedTokens is visible
+  useEffect(() => {
+    if (estimatedTokens > 0 && progress && !progress.checklist.viewedTokenCost) {
+      updateProgress({ viewedTokenCost: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estimatedTokens, progress?.checklist.viewedTokenCost]);
+
   // Track onboarding: selected template/model
   useEffect(() => {
     if (state.selectedModel && progress && !progress.checklist.selectedTemplate) {

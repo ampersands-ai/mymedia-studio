@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +59,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { generate, isGenerating } = useGeneration();
   const { checkPrompt, isChecking: isModerating } = usePromptModeration();
 
@@ -224,6 +226,10 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       });
 
       updateState({ pollingGenerationId: genId });
+
+      // Invalidate credit balance to ensure UI updates after deduction
+      queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
+      queryClient.invalidateQueries({ queryKey: ['user-credits'] });
 
       // Update onboarding
       if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration) {

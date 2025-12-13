@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown } from "lucide-react";
 import { useTokenUsage } from "@/hooks/useTokenUsage";
-import { TokenUsageHistoryModal } from "@/components/TokenUsageHistoryModal";
 
 interface Subscription {
   plan: string;
@@ -26,34 +24,28 @@ interface SavingsData {
   savingsPercentage: number;
 }
 
-interface Generation {
-  id: string;
-  type: string;
-  prompt: string;
-  status: string;
-  tokens_used: number;
-  created_at: string;
+interface SavingsData {
+  userPlanPrice: number;
+  competitorTotal: number;
+  monthlySavings: number;
+  totalSavings: number;
+  monthsAsMember: number;
+  savingsPercentage: number;
 }
 
 interface SubscriptionSectionProps {
   subscription: Subscription | null;
   savings: SavingsData | null;
-  generations: Generation[];
 }
 
-export function SubscriptionSection({ subscription, savings, generations }: SubscriptionSectionProps) {
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+export function SubscriptionSection({ subscription, savings }: SubscriptionSectionProps) {
   const {
     currentMonth,
     isLoadingCurrent,
-    allTime,
-    isLoadingAllTime,
-    refetchAllTime
   } = useTokenUsage();
 
   return (
-    <>
-      <div className="space-y-4">
+    <div className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>Subscription & Tokens</CardTitle>
@@ -330,27 +322,16 @@ export function SubscriptionSection({ subscription, savings, generations }: Subs
               )}
             </div>
 
-            <Button
-              onClick={() => {
-                refetchAllTime();
-                setShowHistoryModal(true);
-              }}
-              className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold"
-              size="lg"
-            >
-              View Full History
-            </Button>
+            <Link to="/dashboard/history">
+              <Button
+                className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold"
+                size="lg"
+              >
+                View Full History
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
-
-      <TokenUsageHistoryModal
-        isOpen={showHistoryModal}
-        onClose={() => setShowHistoryModal(false)}
-        allTimeStats={allTime}
-        isLoading={isLoadingAllTime}
-        generations={generations}
-      />
-    </>
   );
 }

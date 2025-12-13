@@ -155,7 +155,7 @@ export const CinematicHero = () => {
           <br />
           <span className="text-white/90">Instantly. Without overpaying.</span>
         </h1>
-        <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl">
+        <p className="text-xl md:text-2xl text-white/70 mb-8 max-w-xl">
           World&apos;s most powerful models. Disruptive Pricing.
         </p>
 

@@ -126,12 +126,12 @@ export const CinematicHero = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4">
-          AI Content Creation
+          Create Anything.
           <br />
-          <span className="text-white/90">Without Limits</span>
+          <span className="text-white/90">Instantly.</span>
         </h1>
         <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl">
-          30+ AI models. One platform. Create stunning videos, images, and audio in seconds.
+          World's most powerful models. Video. Image. Audio. One place.
         </p>
 
         {/* CTAs */}

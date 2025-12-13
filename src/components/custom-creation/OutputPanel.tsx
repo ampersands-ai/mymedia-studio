@@ -270,7 +270,9 @@ export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => 
     prevProps.generationState.generationCompleteTime === nextProps.generationState.generationCompleteTime &&
     prevProps.generationState.generatedOutput === nextProps.generationState.generatedOutput &&
     prevProps.captionData === nextProps.captionData &&
-    prevProps.childVideoGenerations.length === nextProps.childVideoGenerations.length
+    prevProps.childVideoGenerations.length === nextProps.childVideoGenerations.length &&
+    prevProps.failedGenerationError === nextProps.failedGenerationError &&
+    prevProps.connectionTier === nextProps.connectionTier
   );
 });
 

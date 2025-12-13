@@ -9,12 +9,16 @@ export async function downloadSingleOutput(
   contentType: string,
   onDownloadSuccess?: () => void
 ) {
+  // Instant feedback - show loading toast immediately
+  const toastId = toast.loading('Preparing download...');
+  
   try {
     const { data, error } = await supabase.storage
       .from('generated-content')
       .createSignedUrl(storagePath, 60);
     
     if (error || !data?.signedUrl) {
+      toast.dismiss(toastId);
       toast.error('Failed to create download link');
       return;
     }
@@ -30,8 +34,10 @@ export async function downloadSingleOutput(
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+    toast.dismiss(toastId);
     onDownloadSuccess?.();
   } catch (error) {
+    toast.dismiss(toastId);
     logger.error('Single output download failed', error as Error, {
       utility: 'download-utils',
       storagePath: storagePath.substring(0, 50),
@@ -53,6 +59,9 @@ export async function downloadMultipleOutputs(
     await downloadSingleOutput(outputs[0].storage_path, outputs[0].output_index, contentType, onDownloadSuccess);
     return;
   }
+
+  // Instant feedback - show loading toast immediately
+  const toastId = toast.loading(`Preparing ${outputs.length} files...`);
 
   // Multiple outputs - create ZIP using signed URLs
   try {
@@ -94,8 +103,10 @@ export async function downloadMultipleOutputs(
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
     
+    toast.dismiss(toastId);
     onDownloadSuccess?.();
   } catch (error) {
+    toast.dismiss(toastId);
     logger.error('Batch outputs download failed', error as Error, {
       utility: 'download-utils',
       outputCount: outputs.length,

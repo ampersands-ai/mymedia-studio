@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Mail, CheckCircle2, Info } from "lucide-react";
 import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { toast } from "sonner";
 
 interface ProfileData {
   full_name: string;
@@ -28,7 +30,32 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
   const { user } = useAuth();
   const { execute } = useErrorHandler();
   const [loading, setLoading] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    
+    setSendingVerification(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard/settings`
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Verification email sent! Check your inbox.");
+    } catch (error) {
+      logger.error('Failed to resend verification email', error instanceof Error ? error : new Error(String(error)));
+      toast.error("Failed to send verification email. Please try again.");
+    } finally {
+      setSendingVerification(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,11 +252,66 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Label>Verification Status:</Label>
-            <Badge variant={profileData.email_verified ? "default" : "secondary"}>
-              {profileData.email_verified ? "Verified" : "Not Verified"}
-            </Badge>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Label>Email Verification:</Label>
+              <Badge variant={profileData.email_verified ? "default" : "destructive"}>
+                {profileData.email_verified ? (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Not Verified
+                  </span>
+                )}
+              </Badge>
+            </div>
+            
+            {!profileData.email_verified && (
+              <Alert className="bg-amber-500/10 border-amber-500/30">
+                <Info className="h-4 w-4 text-amber-500" />
+                <AlertDescription className="text-sm">
+                  <p className="font-medium text-foreground mb-2">Your email is not verified</p>
+                  <p className="text-muted-foreground mb-3">
+                    Please verify your email address to unlock all features and ensure account security.
+                  </p>
+                  <div className="space-y-2 text-muted-foreground">
+                    <p className="font-medium text-foreground">How to verify:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                      <li>Check your inbox for <span className="font-medium text-foreground">{user?.email}</span></li>
+                      <li>Look for an email from <span className="font-medium text-foreground">Artifio</span> with subject "Confirm your email"</li>
+                      <li>Click the verification link in the email</li>
+                      <li>Check your spam/junk folder if you don't see it</li>
+                    </ol>
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleResendVerification}
+                      disabled={sendingVerification}
+                      className="gap-2"
+                    >
+                      {sendingVerification ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          Resend Verification Email
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
           <Button type="submit" disabled={loading} aria-label="Save profile changes">
             {loading ? (

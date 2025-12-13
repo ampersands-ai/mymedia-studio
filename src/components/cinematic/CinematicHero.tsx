@@ -156,8 +156,8 @@ export const CinematicHero = () => {
           <span className="text-white/90">Stop Overpaying!</span>
         </h1>
         <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl">
-          One Platform. Unlimited Creativity.<br />
-          Why Pay Them When You Can Pay Less?
+          World&apos;s most powerful models.<br />
+          For a fraction of what you&apos;d pay elsewhere.
         </p>
 
         {/* CTAs */}

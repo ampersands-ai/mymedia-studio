@@ -28,8 +28,7 @@ export const AboutSection = () => {
                 Generate stunning videos, images, and audio content without switching between tools.
               </p>
               <p className="text-lg text-white/60 leading-relaxed">
-                From Sora and Kling to Midjourney and beyond — access 30+ cutting-edge AI models 
-                with a single subscription. No API keys. No complexity. Just create.
+                Cutting-edge models. One place. Fraction of what you'd pay elsewhere. No compromises. No Exceptions.
               </p>
             </div>
           </AnimatedSection>

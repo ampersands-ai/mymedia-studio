@@ -154,7 +154,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
               </div>
               
               <div style="text-align: center;">
-                <a href="${Deno.env.get("SUPABASE_URL")?.replace('/supabase', '')}/history" class="button">
+                <a href="https://artifio.ai/dashboard/history" class="button">
                   View Your Generation
                 </a>
               </div>

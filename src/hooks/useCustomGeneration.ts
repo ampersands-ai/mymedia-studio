@@ -146,20 +146,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       return;
     }
 
-    // Prompt moderation check (before any other processing)
-    if (state.prompt?.trim()) {
-      const moderationResult = await checkPrompt(state.prompt);
-      if (moderationResult?.flagged && !moderationResult.exempt) {
-        const flaggedCategories = moderationResult.flaggedCategories?.join(', ') || 'content policy';
-        toast.error("Content policy violation", {
-          description: `Your prompt contains content that violates our guidelines: ${flaggedCategories}. Please revise and try again.`,
-          duration: 8000,
-        });
-        return;
-      }
-    }
-
-    // Credit balance check
+    // Credit balance check (synchronous - no delay)
     const creditBalance = userTokens?.tokens_remaining || 0;
     if (creditBalance && estimatedTokens > creditBalance) {
       toast.error("Insufficient credits", {
@@ -178,21 +165,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       return;
     }
 
-    // Get max prompt length for current model/config
-    // currentModel comes from AIModel[] which has required provider and content_type
-    if (!currentModel.provider || !currentModel.content_type) {
-      throw new Error('Model missing required provider or content_type');
-    }
-    // Ensure provider and content_type are present for ModelSchema type
-    const modelSchema = {
-      provider: currentModel.provider,
-      content_type: currentModel.content_type,
-      input_schema: currentModel.input_schema,
-      max_images: currentModel.max_images ?? undefined,
-    };
-    const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
-
-    // Start generation - clear any previous error state
+    // INSTANT feedback - set generating state immediately before any async operations
     updateState({ 
       localGenerating: true, 
       generationStartTime: Date.now(),
@@ -205,8 +178,33 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     });
 
     try {
+      // Prompt moderation check (async but now runs AFTER UI shows "generating")
+      if (state.prompt?.trim()) {
+        const moderationResult = await checkPrompt(state.prompt);
+        if (moderationResult?.flagged && !moderationResult.exempt) {
+          const flaggedCategories = moderationResult.flaggedCategories?.join(', ') || 'content policy';
+          toast.error("Content policy violation", {
+            description: `Your prompt contains content that violates our guidelines: ${flaggedCategories}. Please revise and try again.`,
+            duration: 8000,
+          });
+          updateState({ localGenerating: false, generationStartTime: null });
+          return;
+        }
+      }
+
+      // Get max prompt length for current model/config
+      if (!currentModel.provider || !currentModel.content_type) {
+        throw new Error('Model missing required provider or content_type');
+      }
+      const modelSchema = {
+        provider: currentModel.provider,
+        content_type: currentModel.content_type,
+        input_schema: currentModel.input_schema,
+        max_images: currentModel.max_images ?? undefined,
+      };
+      const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
+
       // Use shared generation pipeline
-      // TypeScript note: currentModel is guaranteed to be defined after null check above
       const genId = await executeGeneration({
         model: {
           record_id: currentModel.record_id,

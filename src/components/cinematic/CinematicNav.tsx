@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
@@ -93,17 +93,7 @@ export const CinematicNav = () => {
                   />
                   <span className="text-lg font-bold text-white">artifio.ai</span>
                 </Link>
-                <div className="flex items-center gap-2">
-                  <ThemeToggle />
-                  <SheetClose asChild>
-                    <button
-                      className="p-2 text-white/60 hover:text-white transition-colors"
-                      aria-label="Close menu"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </SheetClose>
-                </div>
+                <ThemeToggle />
               </div>
 
               {/* Nav Links */}

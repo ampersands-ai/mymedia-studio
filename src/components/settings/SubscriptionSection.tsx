@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, DollarSign, TrendingDown } from "lucide-react";
+import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText } from "lucide-react";
 import { useTokenUsage } from "@/hooks/useTokenUsage";
 
 interface Subscription {
@@ -15,30 +14,11 @@ interface Subscription {
   current_period_end?: string;
 }
 
-interface SavingsData {
-  userPlanPrice: number;
-  competitorTotal: number;
-  monthlySavings: number;
-  totalSavings: number;
-  monthsAsMember: number;
-  savingsPercentage: number;
-}
-
-interface SavingsData {
-  userPlanPrice: number;
-  competitorTotal: number;
-  monthlySavings: number;
-  totalSavings: number;
-  monthsAsMember: number;
-  savingsPercentage: number;
-}
-
 interface SubscriptionSectionProps {
   subscription: Subscription | null;
-  savings: SavingsData | null;
 }
 
-export function SubscriptionSection({ subscription, savings }: SubscriptionSectionProps) {
+export function SubscriptionSection({ subscription }: SubscriptionSectionProps) {
   const {
     currentMonth,
     isLoadingCurrent,
@@ -109,101 +89,6 @@ export function SubscriptionSection({ subscription, savings }: SubscriptionSecti
           </CardContent>
         </Card>
 
-        {savings && savings.monthlySavings > 0 && (
-          <Card className="border-2 border-green-500/30 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                <DollarSign className="h-6 w-6" />
-                Your Savings
-              </CardTitle>
-              <CardDescription>See how much you're saving with Artifio</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center p-6 bg-white/50 dark:bg-black/20 rounded-lg border-2 border-green-500/30">
-                <p className="text-sm font-semibold text-muted-foreground mb-2">
-                  You're Saving
-                </p>
-                <p className="text-5xl font-black text-green-600 dark:text-green-400 mb-1">
-                  ${savings.monthlySavings}
-                </p>
-                <p className="text-lg font-bold text-green-700 dark:text-green-500">
-                  per month
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
-                  Competitor Pricing
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
-                    <span className="text-sm font-semibold">Runway ML</span>
-                    <span className="font-mono text-sm text-muted-foreground">$35/mo</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
-                    <span className="text-sm font-semibold">Midjourney</span>
-                    <span className="font-mono text-sm text-muted-foreground">$30/mo</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
-                    <span className="text-sm font-semibold">ElevenLabs</span>
-                    <span className="font-mono text-sm text-muted-foreground">$22/mo</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30 rounded-lg border-2 border-red-300 dark:border-red-800">
-                    <span className="text-sm font-bold">Total Competitor Cost</span>
-                    <span className="font-mono text-lg font-black text-red-700 dark:text-red-400">
-                      ${savings.competitorTotal}/mo
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-950/30 dark:to-emerald-900/30 rounded-lg border-2 border-green-500">
-                    <div className="flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <span className="text-sm font-bold">Your Artifio Plan</span>
-                    </div>
-                    <span className="font-mono text-lg font-black text-green-700 dark:text-green-400">
-                      ${savings.userPlanPrice}/mo
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-muted-foreground">Your Plan vs Competitors</span>
-                  <span className="font-bold text-green-600 dark:text-green-400">
-                    {savings.savingsPercentage.toFixed(0)}% savings
-                  </span>
-                </div>
-                <Progress
-                  value={100 - savings.savingsPercentage}
-                  className="h-3 bg-red-200 dark:bg-red-950"
-                />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Your cost: ${savings.userPlanPrice}</span>
-                  <span>Competitors: ${savings.competitorTotal}</span>
-                </div>
-              </div>
-
-              <div className="p-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950/40 dark:to-emerald-950/40 rounded-lg border-2 border-green-500/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
-                      Total Saved Since Signup
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {savings.monthsAsMember} month{savings.monthsAsMember !== 1 ? 's' : ''} as a member
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-black text-green-600 dark:text-green-400">
-                      ${savings.totalSavings}
-                    </p>
-                    <p className="text-xs text-muted-foreground">and counting!</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>

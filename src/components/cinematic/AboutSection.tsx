@@ -1,5 +1,4 @@
 import { AnimatedSection } from "./AnimatedSection";
-import { PartnerLogosCarousel } from "@/components/homepage/PartnerLogosCarousel";
 
 const stats = [
   { value: "10,000+", label: "Creators" },
@@ -53,11 +52,6 @@ export const AboutSection = () => {
               ))}
             </div>
           </AnimatedSection>
-        </div>
-
-        {/* Partner Logo Carousel */}
-        <div className="mt-20">
-          <PartnerLogosCarousel />
         </div>
       </div>
     </section>

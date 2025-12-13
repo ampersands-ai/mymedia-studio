@@ -3,11 +3,9 @@ import { useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { differenceInMonths } from "date-fns";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
-import { useConfetti } from "@/hooks/useConfetti";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 const Settings = () => {
@@ -23,89 +21,16 @@ const Settings = () => {
   });
   
   const [subscription, setSubscription] = useState<any>(null);
-  const [userCreatedAt, setUserCreatedAt] = useState<Date | null>(null);
-  const confetti = useConfetti();
 
   useEffect(() => {
     document.title = "Settings - Artifio.ai";
     if (user) {
       fetchProfile();
       fetchSubscription();
-      fetchUserCreatedDate();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const fetchUserCreatedDate = async () => {
-    await execute(
-      async () => {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("created_at")
-          .eq("id", user?.id)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (data?.created_at) {
-          setUserCreatedAt(new Date(data.created_at));
-        }
-      },
-      {
-        showSuccessToast: false,
-        showErrorToast: false,
-        context: {
-          component: 'Settings',
-          operation: 'fetchUserCreatedDate',
-          userId: user?.id
-        }
-      }
-    );
-  };
-
-  const getPlanPrice = (plan: string): number => {
-    const prices: Record<string, number> = {
-      freemium: 0,
-      explorer: 29,
-      professional: 59,
-      enterprise: 149,
-    };
-    return prices[plan?.toLowerCase()] || 0;
-  };
-
-  const calculateSavings = () => {
-    if (!subscription || !userCreatedAt) return null;
-
-    const competitorTotal = 87;
-    const userPlanPrice = getPlanPrice(subscription.plan);
-    const monthlySavings = competitorTotal - userPlanPrice;
-    const monthsAsMember = Math.max(1, differenceInMonths(new Date(), userCreatedAt));
-    const totalSavings = monthlySavings * monthsAsMember;
-    const savingsPercentage = userPlanPrice > 0 ? ((monthlySavings / competitorTotal) * 100) : 100;
-
-    return {
-      userPlanPrice,
-      competitorTotal,
-      monthlySavings,
-      totalSavings,
-      monthsAsMember,
-      savingsPercentage,
-    };
-  };
-
-  const savings = calculateSavings();
-
-  useEffect(() => {
-    if (savings && savings.monthlySavings > 0) {
-      const hasSeenSavings = localStorage.getItem('hasSeenSavingsConfetti');
-      if (!hasSeenSavings) {
-        setTimeout(() => {
-          confetti.fireCelebration();
-          localStorage.setItem('hasSeenSavingsConfetti', 'true');
-        }, 500);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savings]);
 
   const fetchProfile = async () => {
     await execute(
@@ -181,10 +106,7 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-4 mt-6">
-            <SubscriptionSection
-              subscription={subscription}
-              savings={savings}
-            />
+            <SubscriptionSection subscription={subscription} />
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-4 mt-6">

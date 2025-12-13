@@ -21,7 +21,7 @@ export const AboutSection = () => {
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-8">
                 Why Pay Them
                 <br />
-                When You Can Pay Less
+                When You Can Pay Less?
               </h2>
               <p className="text-lg text-white/60 mb-6 leading-relaxed">
                 Artifio brings together the world's most powerful AI models in one seamless platform. 

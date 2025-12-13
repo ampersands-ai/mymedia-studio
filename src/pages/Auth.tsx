@@ -571,6 +571,7 @@ const Auth = () => {
                     id="password"
                     type="password"
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -595,6 +596,7 @@ const Auth = () => {
                     id="confirmPassword"
                     type="password"
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
@@ -739,6 +741,7 @@ const Auth = () => {
                     id="password"
                     type="password"
                     placeholder="••••••••"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);

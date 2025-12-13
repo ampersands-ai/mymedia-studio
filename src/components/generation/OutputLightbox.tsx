@@ -35,6 +35,7 @@ interface OutputLightboxProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onNavigate: (direction: 'prev' | 'next') => void;
+  onDownloadSuccess?: () => void;
 }
 
 export const OutputLightbox = ({
@@ -43,7 +44,8 @@ export const OutputLightbox = ({
   contentType,
   open,
   onOpenChange,
-  onNavigate
+  onNavigate,
+  onDownloadSuccess
 }: OutputLightboxProps) => {
   const currentOutput = outputs[selectedIndex];
   const { shareFile, canShare } = useNativeShare();
@@ -176,6 +178,9 @@ export const OutputLightbox = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      // Track onboarding download
+      onDownloadSuccess?.();
     } catch (error) {
       logger.error('Output download failed', error as Error, {
         component: 'OutputLightbox',
@@ -185,7 +190,7 @@ export const OutputLightbox = ({
       });
       toast.error('Failed to download image');
     }
-  }, [getCurrentEntry, currentOutput, currentIndex, contentType]);
+  }, [getCurrentEntry, currentOutput, currentIndex, contentType, onDownloadSuccess]);
 
   const handleNavigate = useCallback((direction: 'prev' | 'next') => {
     onNavigate(direction);

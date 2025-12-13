@@ -172,7 +172,7 @@ export const CinematicHero = () => {
             onClick={scrollToPortfolio}
             className="px-6 sm:px-8 py-3 sm:py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors text-sm sm:text-base rounded-2xl"
           >
-            View Work
+            Use Cases
           </button>
         </div>
       </div>

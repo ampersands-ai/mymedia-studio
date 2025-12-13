@@ -76,6 +76,7 @@ const ComprehensiveModelTester = lazy(() => import("./pages/admin/ComprehensiveM
 const VaultSetup = lazy(() => import("./pages/admin/VaultSetup"));
 const ModelPricing = lazy(() => import("./pages/admin/ModelPricing"));
 const CinematicTest = lazy(() => import("./pages/CinematicTest"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -206,6 +207,7 @@ const AppContent = () => {
             <Route path="/custom-creation" element={<Navigate to="/dashboard/custom-creation" replace />} />
             <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
             <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
+            <Route path="/verify-email" element={<RouteErrorBoundary routeName="Verify Email"><VerifyEmail /></RouteErrorBoundary>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />

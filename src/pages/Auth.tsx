@@ -356,13 +356,32 @@ const Auth = () => {
             });
             // Don't block signup if email fails
           }
+
+          // Send verification email
+          try {
+            await supabase.functions.invoke('send-verification-email', {
+              body: {
+                userId: data.user.id,
+                email: data.user.email,
+                fullName: `${firstName} ${lastName}`.trim(),
+              }
+            });
+          } catch (verifyError) {
+            logger.error('Failed to send verification email', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
+              component: 'Auth',
+              operation: 'send_verification_email',
+              userId: data.user.id,
+              email: data.user.email
+            });
+            // Don't block signup if verification email fails
+          }
         }
         
         const hasAllFields = phoneNumber && zipcode;
         if (hasAllFields) {
-          toast.success("Account created! You've received 5 free credits. Email auto-confirmed!");
+          toast.success("Account created! Check your email to verify your account.");
         } else {
-          toast.success("Account created! You've received 5 free credits. Complete your profile for 2 bonus credits!");
+          toast.success("Account created! Check your email to verify and complete your profile for 2 bonus credits!");
         }
         navigate("/dashboard/custom-creation");
       }

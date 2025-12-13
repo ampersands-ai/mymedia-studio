@@ -38,19 +38,24 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
     
     setSendingVerification(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: user.email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard/settings`
-        }
+      const { data, error } = await supabase.functions.invoke('send-verification-email', {
+        body: {}
       });
       
       if (error) throw error;
       
+      if (data?.error) {
+        if (data.retryAfter) {
+          toast.error(`Please wait ${data.retryAfter} seconds before requesting another verification email.`);
+        } else {
+          toast.error(data.message || data.error);
+        }
+        return;
+      }
+      
       toast.success("Verification email sent! Check your inbox.");
     } catch (error) {
-      logger.error('Failed to resend verification email', error instanceof Error ? error : new Error(String(error)));
+      logger.error('Failed to send verification email', error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to send verification email. Please try again.");
     } finally {
       setSendingVerification(false);

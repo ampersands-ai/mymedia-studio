@@ -157,7 +157,7 @@ export const CinematicHero = () => {
         </h1>
         <p className="text-xl md:text-2xl text-white/70 mb-8 max-w-xl">
           World&apos;s most powerful models.{" "}
-          <span className="story-link inline-block relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bottom-0 after:left-0 after:bg-primary-orange after:origin-bottom-left after:animate-[underline-grow_1s_ease-out_forwards]">
+          <span className="inline-block relative after:content-[''] after:absolute after:w-full after:h-0.5 after:bottom-0 after:left-0 after:bg-primary-orange after:origin-left after:animate-[underline-loop_2s_ease-in-out_infinite]">
             Disruptive Pricing.
           </span>
         </p>

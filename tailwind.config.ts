@@ -157,6 +157,12 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        "underline-loop": {
+          "0%": { transform: "scaleX(0)", transformOrigin: "left" },
+          "50%": { transform: "scaleX(1)", transformOrigin: "left" },
+          "51%": { transformOrigin: "right" },
+          "100%": { transform: "scaleX(0)", transformOrigin: "right" }
+        },
         "accordion-down": {
           from: {
             height: "0",

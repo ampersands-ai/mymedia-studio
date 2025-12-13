@@ -27,7 +27,7 @@ export const PartnerLogosCarousel = () => {
   return (
     <div className="w-full space-y-4">
       {/* Label */}
-      <p className="text-sm text-white/70 text-center md:text-left font-medium tracking-wide">
+      <p className="text-sm text-white/70 text-center md:text-left md:pl-4 font-medium tracking-wide">
         Powered by 17+ leading AI providers
       </p>
 

@@ -389,18 +389,29 @@ Deno.serve(async (req) => {
       }
 
       // Check concurrent generation limit
-      const { count: concurrentCount } = await supabase
+      // Build query to count pending/processing generations
+      let concurrentQuery = supabase
         .from('generations')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('status', GENERATION_STATUS.PENDING);
+        .in('status', [GENERATION_STATUS.PENDING, GENERATION_STATUS.PROCESSING]);
+
+      // Exclude the current generation ID to avoid self-blocking race condition
+      // The client creates the generation record before calling this edge function,
+      // so we need to exclude it from the concurrent count
+      if (existingGenerationId) {
+        concurrentQuery = concurrentQuery.neq('id', existingGenerationId);
+      }
+
+      const { count: concurrentCount } = await concurrentQuery;
 
       if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
         logger.error('Concurrent generation limit exceeded', undefined, {
           userId: user.id,
           metadata: { 
             current: concurrentCount,
-            limit: tierLimits.max_concurrent_generations 
+            limit: tierLimits.max_concurrent_generations,
+            excluded_generation_id: existingGenerationId
           }
         });
         return new Response(

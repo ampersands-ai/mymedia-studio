@@ -524,6 +524,23 @@ Deno.serve(async (req) => {
       // === WORKFLOW ORCHESTRATION ===
       await orchestrateWorkflow(generation, storagePath, isMultiOutput, supabase);
 
+      // === SEND COMPLETION NOTIFICATION ===
+      try {
+        const generationDuration = Math.floor((Date.now() - new Date(generation.created_at).getTime()) / 1000);
+        await supabase.functions.invoke('notify-generation-complete', {
+          body: {
+            generation_id: generation.id,
+            user_id: generation.user_id,
+            generation_duration_seconds: generationDuration
+          }
+        });
+        logger.info('Notification triggered', { metadata: { generationId: generation.id, duration: generationDuration } });
+      } catch (notifyError) {
+        logger.warn('Failed to send notification (non-critical)', { 
+          metadata: { error: String(notifyError), generationId: generation.id } 
+        });
+      }
+
       // === AUDIT LOG ===
       await supabase.from('audit_logs').insert({
         user_id: generation.user_id,

@@ -138,7 +138,6 @@ const History = () => {
 
   const handleRefresh = async () => {
     await refetch();
-    toast.success('History refreshed!');
   };
 
   const handleDownloadWithOnboarding = (storagePath: string | null, type: string, outputUrl?: string | null) => {

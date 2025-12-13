@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2, Download, Play, CheckCircle, AlertCircle, Sparkles, Coins } from 'lucide-react';
 import { useVideoUrl } from '@/hooks/media';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -21,6 +22,7 @@ interface VideoJobDetailsProps {
 export function VideoJobDetails({ job, onPreview, onGenerateCaption, isGeneratingCaption, availableCredits }: VideoJobDetailsProps) {
   const [videoError, setVideoError] = useState(false);
   const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
+  const { progress, updateProgress } = useOnboarding();
 
   const { url: videoSignedUrl, isLoading: isLoadingVideoUrl, error: videoUrlError } = useVideoUrl(
     job.final_video_url ?? null,
@@ -55,6 +57,11 @@ export function VideoJobDetails({ job, onPreview, onGenerateCaption, isGeneratin
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
+      
+      // Track onboarding download
+      if (progress && !progress.checklist.downloadedResult) {
+        updateProgress({ downloadedResult: true });
+      }
     } catch (error) {
       componentLogger.error('Download error', error as Error, { jobId: job.id } as any);
       toast.error(

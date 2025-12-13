@@ -167,6 +167,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                 open={generationState.showLightbox}
                 onOpenChange={onCloseLightbox}
                 onNavigate={onNavigateLightbox}
+                onDownloadSuccess={onDownloadSuccess}
               />
 
               {/* Caption display */}

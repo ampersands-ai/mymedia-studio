@@ -26,6 +26,7 @@ import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useVideoUrl } from '@/hooks/media';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { logger } from '@/lib/logger';
 
 const componentLogger = logger.child({ component: 'VideoPreviewModal' });
@@ -52,6 +53,7 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
   const isMobile = useIsMobile();
   const { generateCaption, isGeneratingCaption } = useVideoJobs();
   const { availableCredits } = useUserCredits();
+  const { progress, updateProgress } = useOnboarding();
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
   const [showCaptionConfirm, setShowCaptionConfirm] = useState(false);
@@ -159,6 +161,11 @@ export function VideoPreviewModal({ job, open, onOpenChange }: VideoPreviewModal
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
+      
+      // Track onboarding download
+      if (progress && !progress.checklist.downloadedResult) {
+        updateProgress({ downloadedResult: true });
+      }
     } catch (error) {
       componentLogger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
         operation: 'handleDownload',

@@ -32,7 +32,7 @@ export const MODEL_CONFIG = {
   costMultipliers: null,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/infinitalk.png",
+  logoUrl: "/logos/artifio.png",
   modelFamily: "Infinitalk",
   variantName: "from-audio",
   displayOrderInFamily: 1,
@@ -135,7 +135,17 @@ export function calculateCost(inputs: Record<string, any>, audioDurationSeconds?
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, uploadedImages, uploadedAudios, userId, uploadImagesToStorage, uploadAudiosToStorage, startPolling, getAudioDuration } = params;
+  const {
+    prompt,
+    modelParameters,
+    uploadedImages,
+    uploadedAudios,
+    userId,
+    uploadImagesToStorage,
+    uploadAudiosToStorage,
+    startPolling,
+    getAudioDuration,
+  } = params;
   const inputs: Record<string, any> = { prompt, ...modelParameters };
 
   // Upload image

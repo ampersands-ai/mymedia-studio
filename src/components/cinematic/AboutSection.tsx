@@ -19,9 +19,9 @@ export const AboutSection = () => {
                 About Us
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-8">
-                One Platform.
+                Why Pay Them
                 <br />
-                Unlimited Creativity.
+                When You Can Pay Less
               </h2>
               <p className="text-lg text-white/60 mb-6 leading-relaxed">
                 Artifio brings together the world's most powerful AI models in one seamless platform. 

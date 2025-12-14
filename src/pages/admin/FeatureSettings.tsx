@@ -42,15 +42,7 @@ export default function FeatureSettings() {
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5" />
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Templates
-                    {flags.templates.coming_soon && flags.templates.enabled && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle>Templates</CardTitle>
                   <CardDescription>Pre-built generation templates</CardDescription>
                 </div>
               </div>
@@ -64,25 +56,6 @@ export default function FeatureSettings() {
             <CardContent>
               <Separator className="mb-4" />
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="templates-coming-soon" className="text-sm">
-                      Show as "Coming Soon"
-                    </Label>
-                  </div>
-                  <Switch
-                    id="templates-coming-soon"
-                    checked={flags.templates.coming_soon}
-                    onCheckedChange={(checked) => toggleFlag('templates.coming_soon', checked)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground ml-6">
-                  Feature will appear disabled with "Coming soon" label
-                </p>
-                
-                <Separator className="my-4" />
-                
                 <div className="flex items-center justify-between">
                   <Label htmlFor="all-templates" className="text-sm">
                     Enable All Templates
@@ -108,15 +81,7 @@ export default function FeatureSettings() {
               <div className="flex items-center gap-3">
                 <Palette className="h-5 w-5" />
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Custom Creation
-                    {flags.custom_creation.coming_soon && flags.custom_creation.enabled && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle>Custom Creation</CardTitle>
                   <CardDescription>AI-powered content generation</CardDescription>
                 </div>
               </div>
@@ -130,24 +95,6 @@ export default function FeatureSettings() {
             <CardContent>
               <Separator className="mb-4" />
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="custom-creation-coming-soon" className="text-sm">
-                      Show as "Coming Soon"
-                    </Label>
-                  </div>
-                  <Switch
-                    id="custom-creation-coming-soon"
-                    checked={flags.custom_creation.coming_soon}
-                    onCheckedChange={(checked) => toggleFlag('custom_creation.coming_soon', checked)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground ml-6">
-                  Entire Custom Creation section will appear disabled
-                </p>
-                
-                <Separator className="my-4" />
                 <p className="text-sm font-medium">Creation Groups</p>
                 
                 {Object.entries(CREATION_GROUP_LABELS).map(([key, { label, icon }]) => {
@@ -163,6 +110,7 @@ export default function FeatureSettings() {
                             {label}
                             {group.coming_soon && group.enabled && (
                               <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                <Clock className="h-3 w-3 mr-1" />
                                 Coming Soon
                               </Badge>
                             )}
@@ -201,15 +149,7 @@ export default function FeatureSettings() {
               <div className="flex items-center gap-3">
                 <Video className="h-5 w-5" />
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Faceless Videos
-                    {flags.faceless_videos.coming_soon && flags.faceless_videos.enabled && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle>Faceless Videos</CardTitle>
                   <CardDescription>Generate professional faceless videos with AI</CardDescription>
                 </div>
               </div>
@@ -219,27 +159,6 @@ export default function FeatureSettings() {
               />
             </div>
           </CardHeader>
-          {flags.faceless_videos.enabled && (
-            <CardContent>
-              <Separator className="mb-4" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="faceless-coming-soon" className="text-sm">
-                    Show as "Coming Soon"
-                  </Label>
-                </div>
-                <Switch
-                  id="faceless-coming-soon"
-                  checked={flags.faceless_videos.coming_soon}
-                  onCheckedChange={(checked) => toggleFlag('faceless_videos.coming_soon', checked)}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 ml-6">
-                Feature will appear disabled with "Coming soon" label
-              </p>
-            </CardContent>
-          )}
         </Card>
 
         {/* Storyboard Section */}
@@ -249,15 +168,7 @@ export default function FeatureSettings() {
               <div className="flex items-center gap-3">
                 <Layout className="h-5 w-5" />
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Storyboard
-                    {flags.storyboard.coming_soon && flags.storyboard.enabled && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle>Storyboard</CardTitle>
                   <CardDescription>AI-powered storyboard generator</CardDescription>
                 </div>
               </div>
@@ -267,27 +178,6 @@ export default function FeatureSettings() {
               />
             </div>
           </CardHeader>
-          {flags.storyboard.enabled && (
-            <CardContent>
-              <Separator className="mb-4" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="storyboard-coming-soon" className="text-sm">
-                    Show as "Coming Soon"
-                  </Label>
-                </div>
-                <Switch
-                  id="storyboard-coming-soon"
-                  checked={flags.storyboard.coming_soon}
-                  onCheckedChange={(checked) => toggleFlag('storyboard.coming_soon', checked)}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 ml-6">
-                Feature will appear disabled with "Coming soon" label
-              </p>
-            </CardContent>
-          )}
         </Card>
       </div>
     </div>

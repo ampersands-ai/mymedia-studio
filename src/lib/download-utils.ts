@@ -19,7 +19,7 @@ export async function downloadSingleOutput(
     
     if (error || !data?.signedUrl) {
       toast.dismiss(toastId);
-      toast.error('Failed to create download link');
+      toast.error(`Failed to create download link: ${error?.message || 'No signed URL returned'}`);
       return;
     }
     
@@ -45,7 +45,7 @@ export async function downloadSingleOutput(
       outputIndex,
       operation: 'downloadSingleOutput'
     });
-    toast.error('Failed to download');
+    toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -113,6 +113,6 @@ export async function downloadMultipleOutputs(
       contentType,
       operation: 'downloadMultipleOutputs'
     });
-    toast.error('Failed to download files. Try downloading individually from History.');
+    toast.error(`Failed to download files: ${error instanceof Error ? error.message : 'Unknown error'}. Try downloading individually from History.`);
   }
 }

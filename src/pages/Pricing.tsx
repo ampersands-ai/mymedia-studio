@@ -159,7 +159,7 @@ const Pricing = () => {
             error.message?.includes('temporarily unavailable')) {
           toast.error('Payment service is temporarily unavailable. Please try again in a few seconds.');
         } else {
-          toast.error('Failed to create payment session. Please try again.');
+          toast.error(`Failed to create payment session: ${error.message || 'Please try again'}`);
         }
         
         setIsCreatingPayment(null);
@@ -183,7 +183,7 @@ const Pricing = () => {
         planName,
         isAnnual
       });
-      toast.error('Failed to create payment session. Please try again.');
+      toast.error(`Failed to create payment session: ${error instanceof Error ? error.message : 'Please try again'}`);
       setIsCreatingPayment(null);
     }
   };

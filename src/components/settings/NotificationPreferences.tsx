@@ -51,7 +51,7 @@ export const NotificationPreferences = () => {
         userId: user?.id,
         operation: 'fetchPreferences'
       });
-      toast.error('Failed to load notification preferences');
+      toast.error(`Failed to load notification preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ export const NotificationPreferences = () => {
         preferences,
         operation: 'savePreferences'
       });
-      toast.error('Failed to save preferences');
+      toast.error(`Failed to save preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

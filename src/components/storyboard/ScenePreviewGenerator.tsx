@@ -84,7 +84,7 @@ export const ScenePreviewGenerator = ({
       try {
         const { data, error } = await supabase
           .from('generations')
-          .select('status, output_url, is_batch_output')
+          .select('status, output_url, is_batch_output, provider_response')
           .eq('id', pendingGenerationId)
           .single();
 
@@ -130,7 +130,10 @@ export const ScenePreviewGenerator = ({
             pollIntervalRef.current = null;
           }
         } else if (data.status === 'failed') {
-          toast.error('Generation failed');
+          const providerResponse = data.provider_response as Record<string, unknown> | null;
+          const responseData = providerResponse?.data as Record<string, unknown> | undefined;
+          const failMsg = responseData?.failMsg || providerResponse?.error_message || 'Unknown error';
+          toast.error(`Generation failed: ${failMsg}`);
           setPollStatus('failed');
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);

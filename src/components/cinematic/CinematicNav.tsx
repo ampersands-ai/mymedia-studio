@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
@@ -14,6 +15,7 @@ const navItems = [
 export const CinematicNav = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,12 +62,21 @@ export const CinematicNav = () => {
         {/* Desktop CTA + Theme Toggle */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            to="/dashboard/custom-creation"
-            className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
-          >
-            Dashboard
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard/custom-creation"
+              className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -114,20 +125,32 @@ export const CinematicNav = () => {
 
               {/* CTA */}
               <div className="p-6 border-t border-white/10">
-                <Link
-                  to="/dashboard/custom-creation"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all rounded-2xl"
-                >
-                  Sign Up Free
-                </Link>
+                {user ? (
+                  <Link
+                    to="/dashboard/custom-creation"
+                    onClick={() => setIsOpen(false)}
+                    className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/auth"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/auth"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all rounded-2xl"
+                    >
+                      Sign Up Free
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </SheetContent>

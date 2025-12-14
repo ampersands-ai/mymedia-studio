@@ -479,22 +479,9 @@ async function getBackgroundVideos(
     return [customVideoUrl];
   }
 
-  // Use topic for search if available, otherwise fall back to style
-  let searchQuery: string;
-  if (topic && topic.trim()) {
-    // Extract key terms from topic (remove filler words, limit length)
-    searchQuery = extractSearchTerms(topic);
-    logger?.info("Using topic-based search", { metadata: { searchQuery, topic } });
-  } else {
-    // Fallback to style-based queries
-    const queries: Record<string, string> = {
-      modern: 'technology abstract motion',
-      tech: 'digital technology futuristic',
-      educational: 'books learning study',
-      dramatic: 'cinematic nature dramatic'
-    };
-    searchQuery = queries[style] || 'abstract motion background';
-    logger?.info("Using style-based search", { metadata: { searchQuery, style } });
+  const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
+  if (!pixabayApiKey) {
+    throw new Error('Pixabay API key not configured');
   }
 
   // Determine target orientation for filtering
@@ -505,44 +492,101 @@ async function getBackgroundVideos(
     '1:1': 'square'
   };
   const targetOrientation = orientationMap[aspectRatio] || 'portrait';
+
+  // Build search queries - primary based on topic, then fallbacks
+  const searchQueries: string[] = [];
   
-  // Request more videos (40 instead of 20) to have enough variety
-  const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
-  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=40`;
-  const requestSentAt = new Date();
-
-  const response = await fetch(endpoint);
-
-  const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
-
-  // Log the API call
-  logApiCall(
-    supabase,
-    {
-      videoJobId,
-      userId,
-      serviceName: 'pixabay',
-      endpoint: endpoint.replace(pixabayApiKey || '', 'REDACTED'),
-      httpMethod: 'GET',
-      stepName: 'fetch_background_videos',
-      requestPayload: { query: searchQuery, per_page: 40 },
-      additionalMetadata: { style, duration, topic: topic || 'none', targetOrientation }
-    },
-    requestSentAt,
-    {
-      statusCode: response.status,
-      payload: data,
-      isError: !response.ok,
-      errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
-    }
-  ).catch(e => logger?.error('Failed to log API call', e as Error));
-
-  if (!response.ok) {
-    throw new Error('Pixabay API error');
+  if (topic && topic.trim()) {
+    // Primary: topic-based search
+    searchQueries.push(extractSearchTerms(topic));
+    logger?.info("Using topic-based search", { metadata: { searchQuery: searchQueries[0], topic } });
+  } else {
+    // Primary: style-based search
+    const styleQueries: Record<string, string> = {
+      modern: 'technology abstract motion',
+      tech: 'digital technology futuristic',
+      educational: 'books learning study',
+      dramatic: 'cinematic nature dramatic'
+    };
+    searchQueries.push(styleQueries[style] || 'abstract motion background');
+    logger?.info("Using style-based search", { metadata: { searchQuery: searchQueries[0], style } });
   }
+
+  // Add fallback search queries for more variety
+  const fallbackQueries = [
+    'abstract motion background',
+    'cinematic background loop',
+    `${style} visual aesthetic`,
+    'smooth gradient animation'
+  ];
+  searchQueries.push(...fallbackQueries);
+
+  // Fetch videos from multiple queries, deduplicate by Pixabay ID
+  const uniqueVideosMap = new Map<number, PixabayVideo>();
   
-  if (!data || !data.hits?.length) {
+  for (const searchQuery of searchQueries) {
+    // Stop if we have enough unique videos (target: 30+ for good variety)
+    if (uniqueVideosMap.size >= 30) break;
+
+    const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=100`;
+    const requestSentAt = new Date();
+
+    try {
+      const response = await fetch(endpoint);
+      const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
+
+      // Log the API call (only for first query to avoid spam)
+      if (searchQuery === searchQueries[0]) {
+        logApiCall(
+          supabase,
+          {
+            videoJobId,
+            userId,
+            serviceName: 'pixabay',
+            endpoint: endpoint.replace(pixabayApiKey, 'REDACTED'),
+            httpMethod: 'GET',
+            stepName: 'fetch_background_videos',
+            requestPayload: { query: searchQuery, per_page: 100 },
+            additionalMetadata: { style, duration, topic: topic || 'none', targetOrientation }
+          },
+          requestSentAt,
+          {
+            statusCode: response.status,
+            payload: { totalHits: data?.hits?.length || 0 },
+            isError: !response.ok,
+            errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
+          }
+        ).catch(e => logger?.error('Failed to log API call', e as Error));
+      }
+
+      if (response.ok && data?.hits) {
+        for (const video of data.hits) {
+          if (video.id && !uniqueVideosMap.has(video.id)) {
+            uniqueVideosMap.set(video.id, video);
+          }
+        }
+        logger?.debug("Fetched videos from query", { 
+          metadata: { query: searchQuery, newVideos: data.hits.length, totalUnique: uniqueVideosMap.size }
+        });
+      }
+    } catch (e) {
+      logger?.warn("Failed to fetch from query, continuing with next", { 
+        metadata: { query: searchQuery, error: (e as Error).message }
+      });
+    }
+  }
+
+  const allVideos = Array.from(uniqueVideosMap.values());
+  
+  if (allVideos.length === 0) {
     throw new Error('No background videos found');
+  }
+
+  // Log warning if low variety
+  if (allVideos.length < 10) {
+    logger?.warn("Low video variety - may cause repeats", {
+      metadata: { uniqueCount: allVideos.length, topic: topic || 'none', style }
+    });
   }
 
   // Filter videos by orientation based on aspect ratio
@@ -573,42 +617,50 @@ async function getBackgroundVideos(
   };
 
   // Filter videos that match orientation and are long enough (at least 10s for variety)
-  const orientationFiltered = data.hits.filter(filterByOrientation);
+  const orientationFiltered = allVideos.filter(filterByOrientation);
   const suitable = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
-  const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : data.hits);
+  const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : allVideos);
   
   // Calculate how many clips we need (aim for 3-5 second clips, average 4s)
   const averageClipDuration = 4;
   const numberOfClips = Math.min(30, Math.ceil(duration / averageClipDuration));
 
   logger?.info("Selecting background videos for duration", {
-    metadata: { numberOfClips, duration, averageClipDuration }
+    metadata: { numberOfClips, duration, averageClipDuration, availableVideos: videosToUse.length }
   });
+
+  // Shuffle videos array for variety instead of sequential selection
+  const shuffledVideos = [...videosToUse].sort(() => Math.random() - 0.5);
   
-  // Randomly select different videos (allow wrapping for long videos)
+  // Select videos, cycling through shuffled array
   const selectedVideos: string[] = [];
-  const usedIndices = new Set<number>();
+  let videoIndex = 0;
   
   for (let i = 0; i < numberOfClips; i++) {
-    // Reset used indices if we've used all available videos (for long videos)
-    if (usedIndices.size >= videosToUse.length) {
-      usedIndices.clear();
+    // Reshuffle if we've exhausted the pool (for very long videos)
+    if (videoIndex >= shuffledVideos.length) {
+      shuffledVideos.sort(() => Math.random() - 0.5);
+      videoIndex = 0;
+      logger?.warn("Video pool exhausted, reshuffling for long video", {
+        metadata: { clipIndex: i, totalClips: numberOfClips }
+      });
     }
     
-    let randomIndex;
-    do {
-      randomIndex = Math.floor(Math.random() * videosToUse.length);
-    } while (usedIndices.has(randomIndex) && usedIndices.size < videosToUse.length);
-    
-    usedIndices.add(randomIndex);
-    const video = videosToUse[randomIndex];
+    const video = shuffledVideos[videoIndex];
     const videoUrl = selectVideoUrl(video);
     if (videoUrl) {
       selectedVideos.push(videoUrl);
     }
+    videoIndex++;
   }
   
-  logger?.info("Background videos selected", { metadata: { videoCount: selectedVideos.length, targetClips: numberOfClips } });
+  logger?.info("Background videos selected", { 
+    metadata: { 
+      videoCount: selectedVideos.length, 
+      targetClips: numberOfClips,
+      uniquePoolSize: videosToUse.length
+    } 
+  });
   return selectedVideos;
 }
 

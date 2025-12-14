@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { VideoJob } from '@/types/video';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,13 @@ interface VideoJobScriptProps {
 export function VideoJobScript({ job, onApprove, onCancel, isApproving, isCancelling }: VideoJobScriptProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedScript, setEditedScript] = useState(job.script || '');
+
+  // Sync editedScript when job.script changes (e.g., after generation completes)
+  useEffect(() => {
+    if (job.script) {
+      setEditedScript(job.script);
+    }
+  }, [job.script]);
 
   if (job.status !== 'awaiting_script_approval' || !job.script) {
     return null;

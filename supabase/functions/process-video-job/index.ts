@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     if (!script) {
       logger.info('Generating script', { userId: job.user_id, metadata: { job_id } });
       await updateJobStatus(supabaseClient, job_id, VIDEO_JOB_STATUS.GENERATING_SCRIPT);
-      script = await generateScript(supabaseClient, logger, job.topic, job.duration, job.style, job_id, job.user_id);
+      script = await generateScriptWithValidation(supabaseClient, logger, job.topic, job.duration, job.style, job_id, job.user_id);
       await supabaseClient.from('video_jobs').update({ script }).eq('id', job_id);
       logger.info('Script generated successfully', { userId: job.user_id, metadata: { job_id } });
     } else {
@@ -322,7 +322,8 @@ IMPORTANT: This is a long video. Take your time to fully develop each section. D
   }
 }
 
-async function generateScript(
+// Script validation with retry logic
+async function generateScriptWithValidation(
   supabase: SupabaseClient,
   logger: EdgeLogger,
   topic: string,
@@ -330,6 +331,129 @@ async function generateScript(
   style: string,
   videoJobId: string,
   userId: string
+): Promise<string> {
+  const wordsPerSecond = 2.5;
+  const targetWords = Math.floor(duration * wordsPerSecond);
+  const tolerancePercent = 0.15; // ±15%
+  const minWords = Math.floor(targetWords * (1 - tolerancePercent));
+  const maxWords = Math.ceil(targetWords * (1 + tolerancePercent));
+  const maxRetries = 2;
+  
+  let attempt = 0;
+  let lastScript = '';
+  let lastWordCount = 0;
+  
+  while (attempt <= maxRetries) {
+    attempt++;
+    
+    // Build retry instructions if this is a retry
+    let retryInstructions = '';
+    if (attempt > 1) {
+      const tooShort = lastWordCount < minWords;
+      const difference = tooShort ? (minWords - lastWordCount) : (lastWordCount - maxWords);
+      
+      retryInstructions = `
+
+## CRITICAL RETRY NOTICE (Attempt ${attempt}/${maxRetries + 1})
+Your previous script was ${lastWordCount} words, which is ${tooShort ? 'TOO SHORT' : 'TOO LONG'}.
+Target: ${targetWords} words (acceptable range: ${minWords}-${maxWords} words)
+You need ${tooShort ? `AT LEAST ${difference} MORE words` : `to remove about ${difference} words`}.
+
+${tooShort ? `To add more content:
+- Expand on each main point with more examples
+- Add more vivid descriptions and details  
+- Include additional supporting arguments
+- Don't rush to the conclusion
+- This is a ${Math.floor(duration / 60)} minute ${duration % 60} second video - fill the time with valuable content` : 
+`To reduce content:
+- Focus on fewer main points
+- Be more concise in descriptions
+- Remove redundant examples`}
+
+DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturally fits the target length.`;
+    }
+    
+    logger.info('Generating script', { 
+      userId, 
+      metadata: { 
+        jobId: videoJobId, 
+        attempt,
+        targetWords,
+        minWords,
+        maxWords,
+        hasRetryInstructions: attempt > 1
+      } 
+    });
+    
+    const script = await generateScript(supabase, logger, topic, duration, style, videoJobId, userId, retryInstructions);
+    const wordCount = script.split(/\s+/).length;
+    
+    lastScript = script;
+    lastWordCount = wordCount;
+    
+    logger.info('Script validation check', { 
+      userId, 
+      metadata: { 
+        jobId: videoJobId, 
+        attempt,
+        targetWords,
+        actualWords: wordCount,
+        minWords,
+        maxWords,
+        isValid: wordCount >= minWords && wordCount <= maxWords
+      } 
+    });
+    
+    // Check if within tolerance
+    if (wordCount >= minWords && wordCount <= maxWords) {
+      logger.info('Script passed validation', { 
+        userId, 
+        metadata: { jobId: videoJobId, attempt, wordCount, targetWords } 
+      });
+      return script;
+    }
+    
+    // If max retries reached, proceed with warning
+    if (attempt > maxRetries) {
+      logger.warn('Script length out of tolerance after max retries, proceeding with warning', { 
+        userId, 
+        metadata: { 
+          jobId: videoJobId, 
+          attempts: attempt,
+          targetWords,
+          actualWords: wordCount,
+          deviation: `${Math.round(Math.abs(wordCount - targetWords) / targetWords * 100)}%`
+        } 
+      });
+      return script;
+    }
+    
+    logger.info('Script failed validation, retrying', { 
+      userId, 
+      metadata: { 
+        jobId: videoJobId, 
+        attempt,
+        targetWords,
+        actualWords: wordCount,
+        tooShort: wordCount < minWords,
+        difference: wordCount < minWords ? (minWords - wordCount) : (wordCount - maxWords)
+      } 
+    });
+  }
+  
+  // Fallback (should never reach here)
+  return lastScript;
+}
+
+async function generateScript(
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
+  topic: string,
+  duration: number,
+  style: string,
+  videoJobId: string,
+  userId: string,
+  retryInstructions: string = ''
 ): Promise<string> {
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
@@ -385,6 +509,7 @@ ${structureGuidance}
    - Hook the viewer in the first line
    - Maintain engagement throughout
    - End memorably
+${retryInstructions}
 
 Begin the script now:`;
 

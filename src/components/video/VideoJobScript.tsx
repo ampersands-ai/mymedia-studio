@@ -87,6 +87,11 @@ export function VideoJobScript({ job, onApprove, onCancel, isApproving, isCancel
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Generating...
             </>
+          ) : isEditing ? (
+            <>
+              <Volume2 className="w-4 h-4 mr-2" />
+              Save & Generate Voiceover
+            </>
           ) : (
             <>
               <Volume2 className="w-4 h-4 mr-2" />

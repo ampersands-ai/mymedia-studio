@@ -888,6 +888,27 @@ async function assembleVideo(
   // Use 3-5 second clips for dynamic background changes
   const getRandomClipDuration = () => 3 + Math.random() * 2; // 3-5 seconds
   
+  // Available Shotstack transitions for variety
+  const TRANSITIONS_IN = [
+    'fade', 'fadeFast', 'fadeSlow', 'reveal',
+    'wipeLeft', 'wipeRight', 'slideLeft', 'slideRight', 'slideUp', 'slideDown',
+    'carouselLeft', 'carouselRight', 'carouselUp', 'carouselDown',
+    'shuffleTopRight', 'shuffleRightTop', 'shuffleRightBottom', 'shuffleBottomRight',
+    'shuffleBottomLeft', 'shuffleLeftBottom', 'shuffleLeftTop', 'shuffleTopLeft', 'zoom'
+  ];
+  const TRANSITIONS_OUT = [
+    'fade', 'fadeFast', 'fadeSlow', 'reveal',
+    'wipeLeft', 'wipeRight', 'slideLeft', 'slideRight', 'slideUp', 'slideDown',
+    'carouselLeft', 'carouselRight', 'carouselUp', 'carouselDown',
+    'shuffleTopRight', 'shuffleRightTop', 'shuffleRightBottom', 'shuffleBottomRight',
+    'shuffleBottomLeft', 'shuffleLeftBottom', 'shuffleLeftTop', 'shuffleTopLeft', 'zoom'
+  ];
+  
+  const getRandomTransition = () => ({
+    in: TRANSITIONS_IN[Math.floor(Math.random() * TRANSITIONS_IN.length)],
+    out: TRANSITIONS_OUT[Math.floor(Math.random() * TRANSITIONS_OUT.length)]
+  });
+  
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     const imageClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
@@ -906,7 +927,7 @@ async function assembleVideo(
         length: clipDuration,
         fit: 'cover',
         scale: 1.05,
-        ...(imageClips.length > 0 && { transition: { in: 'fade', out: 'fade' } })
+        ...(imageClips.length > 0 && { transition: getRandomTransition() })
       });
       
       currentTime += clipDuration;
@@ -914,7 +935,7 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: imageClips });
-    logger?.info("Added background image clips with 3-5s duration", { metadata: { clipCount: imageClips.length, totalDuration: assets.duration } });
+    logger?.info("Added background image clips with 3-5s duration and random transitions", { metadata: { clipCount: imageClips.length, totalDuration: assets.duration } });
   } else {
     const videoClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
@@ -933,7 +954,7 @@ async function assembleVideo(
         length: clipDuration,
         fit: 'cover',
         scale: 1.05,
-        ...(videoClips.length > 0 && { transition: { in: 'fade', out: 'fade' } })
+        ...(videoClips.length > 0 && { transition: getRandomTransition() })
       });
       
       currentTime += clipDuration;
@@ -941,7 +962,7 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: videoClips });
-    logger?.info("Added background video clips with 3-5s duration", { metadata: { clipCount: videoClips.length, totalDuration: assets.duration } });
+    logger?.info("Added background video clips with 3-5s duration and random transitions", { metadata: { clipCount: videoClips.length, totalDuration: assets.duration } });
   }
 
   // Debug: Log track order before submission

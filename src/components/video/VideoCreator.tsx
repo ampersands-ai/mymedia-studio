@@ -147,6 +147,9 @@ export function VideoCreator() {
       <CardHeader className="space-y-2">
         <CardTitle className="text-xl sm:text-2xl font-black break-words">
           CREATE FACELESS VIDEO
+          <span className="block text-sm font-medium text-muted-foreground mt-1">
+            Starting from 0.3 credits per second
+          </span>
         </CardTitle>
         <CardDescription className="text-sm">
           Generate professional videos with AI in minutes

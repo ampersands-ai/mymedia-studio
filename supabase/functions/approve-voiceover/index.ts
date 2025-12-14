@@ -185,7 +185,9 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized: not your job');
     }
 
-    if (job.status !== 'awaiting_voice_approval' && job.status !== GENERATION_STATUS.FAILED) {
+    // Allow retry if job is stuck in assembling/fetching_video (e.g., previous timeout)
+    const allowedStatuses = ['awaiting_voice_approval', 'assembling', 'fetching_video', GENERATION_STATUS.FAILED];
+    if (!allowedStatuses.includes(job.status)) {
       logger.error("Invalid job status for approval", undefined, { 
         metadata: { jobId: job_id, status: job.status }
       });

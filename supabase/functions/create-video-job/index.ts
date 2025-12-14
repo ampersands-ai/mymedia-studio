@@ -59,47 +59,34 @@ Deno.serve(async (req) => {
     // Calculate dynamic cost based on duration (15 credits per second)
     const costTokens = duration * 15;
 
-    // Check credit balance
-    const { data: subscription, error: subError } = await supabaseClient
-      .from('user_subscriptions')
-      .select('tokens_remaining')
-      .eq('user_id', user.id)
-      .single();
-
-    if (subError || !subscription) {
-      throw new Error('Could not fetch subscription data');
-    }
-
-    if (subscription.tokens_remaining < costTokens) {
-      throw new Error(`Insufficient credits. ${costTokens} credits required for ${duration}s video.`);
-    }
-
-    // Deduct credits atomically with row count verification
-    const { data: updateResult, error: deductError } = await supabaseClient
-      .from('user_subscriptions')
-      .update({ tokens_remaining: subscription.tokens_remaining - costTokens })
-      .eq('user_id', user.id)
-      .eq('tokens_remaining', subscription.tokens_remaining)
-      .select('tokens_remaining');
+    // Deduct credits atomically using RPC (prevents race conditions)
+    const { data: deductResult, error: deductError } = await supabaseClient
+      .rpc('deduct_user_tokens', {
+        p_user_id: user.id,
+        p_cost: costTokens
+      });
 
     if (deductError) {
-      logger.error('Credit deduction error', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), { userId: user.id, metadata: { costTokens } });
+      logger.error('Credit deduction RPC error', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), { userId: user.id, metadata: { costTokens } });
       throw new Error('Failed to deduct credits - database error');
     }
 
-    if (!updateResult || updateResult.length === 0) {
-      logger.error('Optimistic lock failed - concurrent update', undefined, {
-        userId: user.id,
-        metadata: { expected_tokens: subscription.tokens_remaining, cost: costTokens }
-      });
-      throw new Error('Failed to deduct credits - concurrent update detected. Please retry.');
+    const deductRow = deductResult?.[0];
+    if (!deductRow?.success) {
+      const errorMsg = deductRow?.error_message || 'Unknown error';
+      if (errorMsg.includes('Insufficient')) {
+        throw new Error(`Insufficient credits. ${costTokens} credits required for ${duration}s video.`);
+      }
+      throw new Error(`Failed to deduct credits: ${errorMsg}`);
     }
+
+    const tokensAfterDeduction = deductRow.tokens_remaining;
 
     logger.info('Credits deducted successfully', {
       userId: user.id,
       metadata: { 
         tokens_deducted: costTokens,
-        new_balance: updateResult[0]?.tokens_remaining,
+        new_balance: tokensAfterDeduction,
         duration 
       }
     });
@@ -110,7 +97,7 @@ Deno.serve(async (req) => {
       action: 'tokens_deducted',
       metadata: {
         tokens_deducted: costTokens,
-        tokens_remaining: updateResult[0]?.tokens_remaining,
+        tokens_remaining: tokensAfterDeduction,
         operation: 'video_job_creation',
         duration
       }
@@ -148,11 +135,11 @@ Deno.serve(async (req) => {
 
     if (jobError) {
       logger.error('Job creation error', jobError instanceof Error ? jobError : undefined, { userId: user.id });
-      // Refund credits on failure
-      await supabaseClient
-        .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining })
-        .eq('user_id', user.id);
+      // Refund credits on failure using increment_tokens RPC
+      await supabaseClient.rpc('increment_tokens', {
+        user_id_param: user.id,
+        amount: costTokens
+      });
       throw new Error('Failed to create video job');
     }
 

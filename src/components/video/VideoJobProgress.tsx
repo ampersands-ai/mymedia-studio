@@ -38,6 +38,7 @@ interface VideoJobProgressProps {
   job: VideoJob;
   onCancel: () => void;
   isCancelling: boolean;
+  actionStartTime?: number | null;
 }
 
 const getEstimatedTime = (status: VideoJob['status'], audioDuration?: number): number => {
@@ -63,7 +64,7 @@ const getStageDescription = (status: VideoJob['status']): string => {
   return descriptions[status as keyof typeof descriptions] || 'Processing...';
 };
 
-export function VideoJobProgress({ job, onCancel, isCancelling }: VideoJobProgressProps) {
+export function VideoJobProgress({ job, onCancel, isCancelling, actionStartTime }: VideoJobProgressProps) {
   if (!['generating_voice', 'fetching_video', 'assembling'].includes(job.status)) {
     return null;
   }
@@ -89,7 +90,7 @@ export function VideoJobProgress({ job, onCancel, isCancelling }: VideoJobProgre
       </div>
 
       <GenerationProgress
-        startTime={new Date(job.updated_at).getTime()}
+        startTime={actionStartTime || new Date(job.updated_at).getTime()}
         isComplete={false}
         estimatedTimeSeconds={getEstimatedTime(job.status, job.actual_audio_duration)}
       />

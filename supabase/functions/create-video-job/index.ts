@@ -150,31 +150,69 @@ Deno.serve(async (req) => {
     const processJob = async () => {
       try {
         logger.debug('Triggering processing for job', { userId: user.id, metadata: { job_id } });
-        const { error } = await supabaseClient.functions.invoke('process-video-job', {
+        const { data, error } = await supabaseClient.functions.invoke('process-video-job', {
           body: { job_id: job.id },
         });
         
         if (error) {
+          // Extract specific error message from response if available
+          let specificError = error.message;
+          
+          // Try to get more specific error from the response data
+          if (data?.error) {
+            specificError = data.error;
+          } else if (error.context?.body) {
+            try {
+              const bodyText = await error.context.body.text?.() || error.context.body;
+              const parsed = typeof bodyText === 'string' ? JSON.parse(bodyText) : bodyText;
+              if (parsed?.error) {
+                specificError = parsed.error;
+              }
+            } catch {
+              // Keep original error message
+            }
+          }
+          
+          // Map known API errors to user-friendly messages
+          if (specificError.includes('overloaded') || specificError.includes('Overloaded')) {
+            specificError = 'AI service temporarily busy. Please try again in a moment.';
+          } else if (specificError.includes('rate limit') || specificError.includes('429')) {
+            specificError = 'Too many requests. Please wait a moment and try again.';
+          } else if (specificError.includes('timeout') || specificError.includes('Timeout')) {
+            specificError = 'Request timed out. Please try again.';
+          }
+          
           logger.error('Failed to invoke process-video-job', error instanceof Error ? error : undefined, { 
             userId: user.id, 
-            metadata: { job_id } 
+            metadata: { job_id, specificError } 
           });
-          // Mark job as failed if we can't even start processing
+          
+          // Mark job as failed with specific error
           await supabaseClient
             .from('video_jobs')
             .update({ 
               status: VIDEO_JOB_STATUS.FAILED, 
-              error_message: `Failed to start processing: ${error.message}` 
+              error_message: specificError 
             })
             .eq('id', job.id);
         } else {
           logger.info('Successfully triggered processing', { userId: user.id, metadata: { job_id } });
         }
       } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
         logger.error('Error triggering processing', err instanceof Error ? err : undefined, { 
           userId: user.id, 
           metadata: { job_id } 
         });
+        
+        // Update job with specific error
+        await supabaseClient
+          .from('video_jobs')
+          .update({ 
+            status: VIDEO_JOB_STATUS.FAILED, 
+            error_message: `Processing error: ${errorMsg}` 
+          })
+          .eq('id', job.id);
       }
     };
 

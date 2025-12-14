@@ -2,7 +2,8 @@ import { CREATION_GROUPS, type CreationGroup } from "@/constants/creation-groups
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
-import { Clock } from "lucide-react";
+import { useAdminRole } from "@/hooks/useAdminRole";
+import { Clock, Shield } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -26,25 +27,34 @@ export const CreationGroupSelector: React.FC<CreationGroupSelectorProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { isGroupEnabled, isGroupComingSoon } = useFeatureFlags();
+  const { isAdmin } = useAdminRole();
 
-  // Filter groups based on feature flags
-  const visibleGroups = CREATION_GROUPS.filter((group) => isGroupEnabled(group.id));
+  // Filter groups based on feature flags (admins see all groups)
+  const visibleGroups = CREATION_GROUPS.filter((group) => 
+    isAdmin || isGroupEnabled(group.id)
+  );
 
   const renderGroupButton = (group: typeof CREATION_GROUPS[number]) => {
     const isComingSoon = isGroupComingSoon(group.id);
+    const groupEnabled = isGroupEnabled(group.id);
     const isSelected = selectedGroup === group.id;
+    
+    // Admin can click through coming soon/disabled states
+    const isDisabledForUser = !isAdmin && isComingSoon;
+    // Show admin indicator when bypassing disabled/coming soon
+    const showAdminIndicator = isAdmin && (!groupEnabled || isComingSoon);
 
     const buttonContent = (
       <button
         key={group.id}
-        onClick={() => !isComingSoon && onGroupChange(group.id)}
-        disabled={isComingSoon}
+        onClick={() => !isDisabledForUser && onGroupChange(group.id)}
+        disabled={isDisabledForUser}
         className={cn(
-          "rounded-xl transition-all duration-200 flex items-center group shrink-0 snap-start",
+          "rounded-xl transition-all duration-200 flex items-center group shrink-0 snap-start relative",
           isMobile 
             ? "p-2 gap-2 h-12 px-3"
             : "p-1.5 md:p-2 flex-col gap-1 w-[115px] md:w-[130px] h-[80px] md:h-[90px]",
-          isComingSoon
+          isDisabledForUser
             ? "bg-neutral-100 border border-gray-200 text-neutral-400 cursor-not-allowed opacity-60"
             : isSelected
               ? "bg-primary-500 shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)] text-neutral-900 font-bold border-2 border-primary"
@@ -79,13 +89,20 @@ export const CreationGroupSelector: React.FC<CreationGroupSelectorProps> = ({
             </span>
           )}
         </div>
-        {isMobile && isComingSoon && (
+        {isMobile && isDisabledForUser && (
           <Clock className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+        )}
+        {showAdminIndicator && (
+          <Shield className={cn(
+            "text-muted-foreground",
+            isMobile ? "h-3 w-3 ml-1" : "absolute top-1 right-1 h-3 w-3"
+          )} />
         )}
       </button>
     );
 
-    if (isComingSoon) {
+    // Show tooltip for disabled state (non-admin coming soon)
+    if (isDisabledForUser) {
       return (
         <TooltipProvider key={group.id}>
           <Tooltip>

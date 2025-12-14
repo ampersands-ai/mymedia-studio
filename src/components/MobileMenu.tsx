@@ -61,9 +61,11 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
     const enabled = isFeatureEnabled(featureId);
     const comingSoon = isFeatureComingSoon(featureId);
 
-    if (!enabled) return null;
+    // Admin bypass: always show features even if disabled/coming soon
+    if (!enabled && !isAdmin) return null;
 
-    if (comingSoon) {
+    // For non-admins, show disabled coming soon state
+    if (comingSoon && !isAdmin) {
       return (
         <button
           key={path}
@@ -82,6 +84,9 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
       );
     }
 
+    // Admin indicator for disabled/coming soon features
+    const showAdminIndicator = isAdmin && (!enabled || comingSoon);
+
     return (
       <button
         key={path}
@@ -95,6 +100,9 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
       >
         {icon}
         <span>{label}</span>
+        {showAdminIndicator && (
+          <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+        )}
       </button>
     );
   };

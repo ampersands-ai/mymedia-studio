@@ -65,6 +65,19 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     return emojis[style] || '🎬';
   };
 
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes === 0) {
+      return `${seconds}s`;
+    } else if (remainingSeconds === 0) {
+      return `${seconds}s (${minutes} min)`;
+    } else {
+      return `${seconds}s (${minutes}m ${remainingSeconds}s)`;
+    }
+  };
+
   const isProcessing = ['pending', 'generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(job.status);
   const isApproachingTimeout = ['assembling', 'fetching_video'].includes(job.status);
   const elapsedMs = Date.now() - new Date(job.created_at).getTime();
@@ -149,18 +162,24 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
       <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
         <div className="flex items-start justify-between gap-2 md:gap-3">
           <div className="flex-1 min-w-0 overflow-hidden">
-            <h4 className="font-bold text-base md:text-lg truncate">
+            <h4 className="font-bold text-base md:text-lg break-words">
               {getStyleEmoji(job.style)} {job.topic}
             </h4>
             <div className="flex items-center gap-1.5 md:gap-2 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
               <Clock className="h-3 w-3 shrink-0" />
-              <span>{job.duration}s</span>
+              <span>{formatDuration(job.duration)}</span>
               <span>•</span>
               <span className="capitalize">{job.style}</span>
               {job.voice_name && (
                 <>
                   <span>•</span>
                   <span className="truncate">🎙️ {job.voice_name}</span>
+                </>
+              )}
+              {job.aspect_ratio && (
+                <>
+                  <span>•</span>
+                  <span>📐 {job.aspect_ratio}</span>
                 </>
               )}
             </div>

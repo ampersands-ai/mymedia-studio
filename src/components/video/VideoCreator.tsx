@@ -230,6 +230,18 @@ export function VideoCreator() {
               <SelectItem value="tech">💻 Tech - Futuristic & Digital</SelectItem>
               <SelectItem value="educational">📚 Educational - Learning Focused</SelectItem>
               <SelectItem value="dramatic">🎬 Dramatic - Cinematic & Bold</SelectItem>
+              <SelectItem value="documentary">🎞️ Documentary - Objective & Engaging</SelectItem>
+              <SelectItem value="storytelling">📖 Storytelling - Narrative & Compelling</SelectItem>
+              <SelectItem value="horror">👻 Horror - Dark & Eerie</SelectItem>
+              <SelectItem value="vintage">📽️ Vintage - Classic Retro</SelectItem>
+              <SelectItem value="cyberpunk">🌃 Cyberpunk - Neon & Futuristic</SelectItem>
+              <SelectItem value="fantasy">🧙 Fantasy - Magical & Ethereal</SelectItem>
+              <SelectItem value="noir">🎩 Noir - Dramatic Shadows</SelectItem>
+              <SelectItem value="anime">🎌 Anime - Japanese Animation Style</SelectItem>
+              <SelectItem value="watercolor">🎨 Watercolor - Soft & Artistic</SelectItem>
+              <SelectItem value="pop-art">💥 Pop Art - Bold & Comic-Inspired</SelectItem>
+              <SelectItem value="minimalist">⬜ Minimalist - Clean & Simple</SelectItem>
+              <SelectItem value="surreal">🌀 Surreal - Dreamlike & Abstract</SelectItem>
             </SelectContent>
           </Select>
         </div>

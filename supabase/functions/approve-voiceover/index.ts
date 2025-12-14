@@ -211,8 +211,8 @@ Deno.serve(async (req) => {
       }
     });
 
-    const backgroundMediaType = (job.background_media_type || 'video') as 'video' | 'image';
-    logger.info("Background media type determined", { metadata: { backgroundMediaType } });
+    let backgroundMediaType: 'video' | 'image' = (job.background_media_type || 'video') as 'video' | 'image';
+    logger.info("Initial background media type", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
     await updateJobStatus(supabaseClient, job_id, 'fetching_video', logger);
@@ -236,18 +236,52 @@ Deno.serve(async (req) => {
         metadata: { imageCount: backgroundImageUrls.length, jobId: job_id }
       });
     } else {
-      // For videos: Use existing logic
-      backgroundVideoUrls = await getBackgroundVideos(
-        supabaseClient,
-        job.style,
-        videoDuration,
-        job_id,
-        user.id,
-        job.aspect_ratio || '4:5',
-        job.custom_background_video,
-        job.topic,
-        logger
-      );
+      // For videos: Try to fetch, fall back to images if insufficient variety
+      try {
+        backgroundVideoUrls = await getBackgroundVideos(
+          supabaseClient,
+          job.style,
+          videoDuration,
+          job_id,
+          user.id,
+          job.aspect_ratio || '4:5',
+          job.custom_background_video,
+          job.topic,
+          logger
+        );
+      } catch (videoError) {
+        logger.warn("Video fetch failed, will try images", { 
+          metadata: { error: (videoError as Error).message } 
+        });
+        backgroundVideoUrls = [];
+      }
+      
+      // Fallback to images if videos insufficient (<3 unique)
+      if (backgroundVideoUrls.length < 3) {
+        logger.warn("Insufficient video variety, falling back to images", {
+          metadata: { videoCount: backgroundVideoUrls.length }
+        });
+        
+        try {
+          backgroundImageUrls = await getBackgroundImages(
+            supabaseClient,
+            job.style,
+            job_id,
+            user.id,
+            job.aspect_ratio || '4:5',
+            job.custom_background_video,
+            job.topic,
+            logger
+          );
+          backgroundMediaType = 'image'; // Switch to image assembly
+          logger.info("Image fallback successful", { 
+            metadata: { imageCount: backgroundImageUrls.length, newMediaType: 'image' } 
+          });
+        } catch (imageError) {
+          // If both fail, throw error
+          throw new Error(`No background media available: videos=${backgroundVideoUrls.length}, images failed: ${(imageError as Error).message}`);
+        }
+      }
     }
     
     await supabaseClient.from('video_jobs').update({ 
@@ -616,10 +650,59 @@ async function getBackgroundVideos(
     }
   };
 
-  // Filter videos that match orientation and are long enough (at least 10s for variety)
+  // Tiered filtering to ensure video variety (at least 5 unique videos)
+  let videosToUse: PixabayVideo[] = [];
+  
+  // Tier 1: Strict - matching orientation + 10s minimum duration
   const orientationFiltered = allVideos.filter(filterByOrientation);
-  const suitable = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
-  const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : allVideos);
+  const tier1 = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
+  
+  if (tier1.length >= 5) {
+    videosToUse = tier1;
+    logger?.debug("Using Tier 1: orientation + 10s duration", { metadata: { count: tier1.length } });
+  } else {
+    // Tier 2: Relax duration - matching orientation + 5s minimum
+    const tier2 = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 5);
+    
+    if (tier2.length >= 5) {
+      videosToUse = tier2;
+      logger?.debug("Using Tier 2: orientation + 5s duration", { metadata: { count: tier2.length } });
+    } else {
+      // Tier 3: Relax orientation - any orientation + 10s minimum
+      const tier3 = allVideos.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
+      
+      if (tier3.length >= 5) {
+        videosToUse = tier3;
+        logger?.warn("Using Tier 3: any orientation + 10s (portrait videos scarce)", { 
+          metadata: { count: tier3.length } 
+        });
+      } else {
+        // Tier 4: Relax duration further - any orientation + 3s minimum
+        const tier4 = allVideos.filter((v: PixabayVideo) => (v.duration || 0) >= 3);
+        
+        if (tier4.length >= 3) {
+          videosToUse = tier4;
+          logger?.warn("Using Tier 4: any orientation + 3s duration", { 
+            metadata: { count: tier4.length } 
+          });
+        } else {
+          // Tier 5: No restrictions - use all available
+          videosToUse = allVideos;
+          logger?.warn("Using Tier 5: no filtering (video pool very limited)", { 
+            metadata: { count: allVideos.length } 
+          });
+        }
+      }
+    }
+  }
+  
+  // If still insufficient, return empty to trigger image fallback
+  if (videosToUse.length < 3) {
+    logger?.warn("Insufficient video variety, will trigger image fallback", {
+      metadata: { uniqueCount: videosToUse.length, topic: topic || 'none', style }
+    });
+    return [];
+  }
   
   // Calculate how many clips we need (aim for 3-5 second clips, average 4s)
   const averageClipDuration = 4;

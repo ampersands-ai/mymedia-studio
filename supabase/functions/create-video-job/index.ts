@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
       throw new Error('Duration must be between 15 and 180 seconds');
     }
 
-    // Calculate dynamic cost based on duration (15 credits per second)
-    const costTokens = duration * 15;
+    // Calculate dynamic cost based on duration (0.3 credits per second)
+    const costTokens = duration * 0.3;
 
     // Deduct credits atomically using RPC (prevents race conditions)
     const { data: deductResult, error: deductError } = await supabaseClient

@@ -81,7 +81,15 @@ export default function FeatureSettings() {
               <div className="flex items-center gap-3">
                 <Palette className="h-5 w-5" />
                 <div>
-                  <CardTitle>Custom Creation</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Custom Creation
+                    {flags.custom_creation.enabled && flags.custom_creation.coming_soon && (
+                      <Badge variant="outline" className="text-[10px] px-1 py-0">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Coming Soon
+                      </Badge>
+                    )}
+                  </CardTitle>
                   <CardDescription>AI-powered content generation</CardDescription>
                 </div>
               </div>
@@ -95,6 +103,18 @@ export default function FeatureSettings() {
             <CardContent>
               <Separator className="mb-4" />
               <div className="space-y-4">
+                {/* Master Coming Soon Toggle */}
+                <div className="flex items-center justify-between pb-3 border-b border-muted">
+                  <Label htmlFor="custom-creation-coming-soon" className="text-sm">
+                    Show entire section as "Coming Soon"
+                  </Label>
+                  <Switch
+                    id="custom-creation-coming-soon"
+                    checked={flags.custom_creation.coming_soon}
+                    onCheckedChange={(checked) => toggleFlag('custom_creation.coming_soon', checked)}
+                  />
+                </div>
+
                 <p className="text-sm font-medium">Creation Groups</p>
                 
                 {Object.entries(CREATION_GROUP_LABELS).map(([key, { label, icon }]) => {

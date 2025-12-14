@@ -212,36 +212,38 @@ Deno.serve(async (req) => {
         throw new Error(`Insufficient credits. ${voiceoverCost} credits required to regenerate voiceover.`);
       }
 
-      // Deduct tokens atomically with row count verification
-      const { data: updateResult, error: deductError } = await supabaseClient
-        .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining - voiceoverCost })
-        .eq('user_id', user.id)
-        .eq('tokens_remaining', subscription.tokens_remaining)
-        .select('tokens_remaining');
+      // Deduct tokens using atomic RPC function (avoids floating-point precision issues)
+      const { data: rpcResult, error: rpcError } = await supabaseClient
+        .rpc('deduct_user_tokens', { 
+          p_user_id: user.id, 
+          p_cost: voiceoverCost 
+        });
 
-      if (deductError) {
-        logger.error('Token deduction failed', deductError instanceof Error ? deductError : undefined, {
+      if (rpcError) {
+        logger.error('Token deduction RPC failed', rpcError instanceof Error ? rpcError : undefined, {
           userId: user.id,
           metadata: { jobId: job_id, cost: voiceoverCost }
         });
-        throw new Error('Failed to deduct tokens - database error');
+        throw new Error('Failed to deduct tokens - please try again');
       }
 
-      if (!updateResult || updateResult.length === 0) {
-        logger.error('Optimistic lock failed - concurrent update', undefined, {
+      const deductResult = rpcResult?.[0];
+      if (!deductResult?.success) {
+        logger.error('Token deduction failed', undefined, {
           userId: user.id,
-          metadata: { jobId: job_id, expected_tokens: subscription.tokens_remaining, cost: voiceoverCost }
+          metadata: { jobId: job_id, cost: voiceoverCost, reason: deductResult?.error_message }
         });
-        throw new Error('Failed to deduct tokens - concurrent update detected. Please retry.');
+        throw new Error(deductResult?.error_message || 'Failed to deduct tokens');
       }
+
+      const newBalance = deductResult.tokens_remaining;
 
       logger.info('Tokens deducted successfully for voiceover regeneration', {
         userId: user.id,
         metadata: { 
           jobId: job_id, 
           tokensDeducted: voiceoverCost,
-          new_balance: updateResult[0]?.tokens_remaining 
+          new_balance: newBalance 
         }
       });
 
@@ -251,7 +253,7 @@ Deno.serve(async (req) => {
         action: 'tokens_deducted',
         metadata: {
           tokens_deducted: voiceoverCost,
-          tokens_remaining: updateResult[0]?.tokens_remaining,
+          tokens_remaining: newBalance,
           video_job_id: job_id,
           operation: 'voiceover_regeneration'
         }

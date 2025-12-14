@@ -452,7 +452,6 @@ export function useVideoJobs() {
     onSuccess: async () => {
       // Clear the pinned job so it doesn't reappear in UI
       clearPinnedJob();
-      toast.success('Video job cancelled successfully');
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
   });

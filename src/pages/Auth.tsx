@@ -273,7 +273,6 @@ const Auth = () => {
           });
         }
         
-        toast.success("Welcome back!");
         navigate("/dashboard/custom-creation");
       } else {
         const { error, data } = await supabase.auth.signUp({

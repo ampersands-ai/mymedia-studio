@@ -322,7 +322,7 @@ IMPORTANT: This is a long video. Take your time to fully develop each section. D
   }
 }
 
-// Script validation with retry logic
+// Script validation with retry logic and timeout awareness
 async function generateScriptWithValidation(
   supabase: SupabaseClient,
   logger: EdgeLogger,
@@ -332,6 +332,9 @@ async function generateScriptWithValidation(
   videoJobId: string,
   userId: string
 ): Promise<string> {
+  const functionStartTime = Date.now();
+  const maxFunctionDuration = 250000; // 250 seconds - leave 50s buffer before 300s timeout
+  
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
   const tolerancePercent = 0.15; // ±15%
@@ -345,6 +348,23 @@ async function generateScriptWithValidation(
   
   while (attempt <= maxRetries) {
     attempt++;
+    
+    // Check if we're approaching timeout before attempting another generation
+    const elapsedTime = Date.now() - functionStartTime;
+    if (attempt > 1 && elapsedTime > maxFunctionDuration) {
+      logger.warn('Approaching timeout limit, proceeding with current script', { 
+        userId, 
+        metadata: { 
+          jobId: videoJobId, 
+          elapsedMs: elapsedTime,
+          attempt,
+          targetWords,
+          actualWords: lastWordCount,
+          deviation: `${Math.round(Math.abs(lastWordCount - targetWords) / targetWords * 100)}%`
+        } 
+      });
+      return lastScript;
+    }
     
     // Build retry instructions if this is a retry
     let retryInstructions = '';
@@ -381,6 +401,7 @@ DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturall
         targetWords,
         minWords,
         maxWords,
+        elapsedMs: Date.now() - functionStartTime,
         hasRetryInstructions: attempt > 1
       } 
     });
@@ -400,6 +421,7 @@ DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturall
         actualWords: wordCount,
         minWords,
         maxWords,
+        elapsedMs: Date.now() - functionStartTime,
         isValid: wordCount >= minWords && wordCount <= maxWords
       } 
     });
@@ -484,7 +506,7 @@ You always hit the target word count because you understand that the video durat
 ## Specifications
 - Duration: ${duration} seconds
 - Style: ${style}
-- Target Length: ${targetWords} words (CRITICAL: Your script MUST be approximately this length)
+- STRICT Target Length: EXACTLY ${targetWords} words (±15% = ${Math.floor(targetWords * 0.85)}-${Math.ceil(targetWords * 1.15)} words)
 
 ## Style Guidance
 ${styleGuidance}
@@ -492,12 +514,23 @@ ${styleGuidance}
 ## Structure
 ${structureGuidance}
 
-## Critical Requirements
-1. LENGTH: Your script MUST be approximately ${targetWords} words. This is non-negotiable.
-   - This is a ${Math.floor(duration / 60)} minute ${duration % 60} second video
-   - Do NOT cut the script short under any circumstances
-   - If the main topic feels covered, elaborate with examples, stories, or deeper insights
-   - Count your words mentally as you write
+## CRITICAL WORD COUNT REQUIREMENTS (READ CAREFULLY)
+⚠️ YOUR SCRIPT WILL BE REJECTED IF NOT WITHIN ${Math.floor(targetWords * 0.85)}-${Math.ceil(targetWords * 1.15)} WORDS ⚠️
+
+1. EXACT LENGTH REQUIRED: You MUST write approximately ${targetWords} words.
+   - Minimum: ${Math.floor(targetWords * 0.85)} words
+   - Maximum: ${Math.ceil(targetWords * 1.15)} words
+   - This is a ${Math.floor(duration / 60)} minute ${duration % 60} second video at 2.5 words/second
+   
+2. DO NOT GO OVER: If you find yourself exceeding ${Math.ceil(targetWords * 1.15)} words, STOP and be more concise.
+
+3. DO NOT GO UNDER: If you're finishing early, you MUST add more content:
+   - More examples and stories
+   - Deeper explanations
+   - Additional perspectives
+   - Vivid descriptions
+
+4. COUNT AS YOU WRITE: Mentally track your word count. Aim for exactly ${targetWords} words.
 
 2. FORMAT: Write ONLY the narration text
    - No stage directions like [pause] or (dramatic music)

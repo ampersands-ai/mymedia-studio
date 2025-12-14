@@ -1,30 +1,51 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-const TOPIC_SUGGESTIONS = [
-  'Why octopuses have 3 hearts and blue blood',
-  'The science behind lucid dreaming',
-  'How ancient pyramids were actually built',
-  'The hidden psychology of social media addiction',
-  'Why we forget our dreams seconds after waking up',
-  'The butterfly effect in quantum physics',
-  'How your brain creates false memories',
-  'The secret language of dolphins',
-  'Why time feels faster as you get older',
-  'The truth about the Bermuda Triangle',
-  'How honey never expires',
-  'The science of déjà vu',
-  'Why cats always land on their feet',
-  'The mystery of dark matter',
-  'How trees communicate underground',
-  'The real reason we yawn',
-  'Why we get goosebumps',
-  'The hidden power of your subconscious mind',
-  'How artificial intelligence dreams',
-  'The science behind love at first sight',
-];
+const STORAGE_KEY = 'faceless_video_recent_topics';
+const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
+interface RecentTopic {
+  topic: string;
+  timestamp: number;
+}
+
+function getRecentTopics(): RecentTopic[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    const topics: RecentTopic[] = JSON.parse(stored);
+    const twoWeeksAgo = Date.now() - TWO_WEEKS_MS;
+    return topics.filter(t => t.timestamp > twoWeeksAgo);
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentTopic(topic: string): void {
+  try {
+    const recent = getRecentTopics();
+    recent.push({ topic: topic.toLowerCase().trim(), timestamp: Date.now() });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function isTopicSimilar(newTopic: string, recentTopics: RecentTopic[]): boolean {
+  const normalizedNew = newTopic.toLowerCase().trim();
+  return recentTopics.some(recent => {
+    const normalizedRecent = recent.topic;
+    // Check for exact match or significant overlap
+    return normalizedNew === normalizedRecent ||
+      normalizedNew.includes(normalizedRecent) ||
+      normalizedRecent.includes(normalizedNew);
+  });
+}
 
 interface TopicSectionProps {
   topic: string;
@@ -33,9 +54,57 @@ interface TopicSectionProps {
 }
 
 export function TopicSection({ topic, onTopicChange, disabled }: TopicSectionProps) {
-  const handleSurpriseMe = () => {
-    const randomTopic = TOPIC_SUGGESTIONS[Math.floor(Math.random() * TOPIC_SUGGESTIONS.length)];
-    onTopicChange(randomTopic);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleSurpriseMe = async () => {
+    setIsGenerating(true);
+    const recentTopics = getRecentTopics();
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    try {
+      while (attempts < maxAttempts) {
+        attempts++;
+        
+        const { data, error } = await supabase.functions.invoke('generate-video-topic');
+        
+        if (error) {
+          throw error;
+        }
+
+        if (data?.error) {
+          if (data.error.includes('Rate limit')) {
+            toast.error('Please wait a moment before generating another topic');
+            return;
+          }
+          throw new Error(data.error);
+        }
+
+        const generatedTopic = data?.topic;
+        if (!generatedTopic) {
+          throw new Error('No topic generated');
+        }
+
+        // Check if topic is similar to recent ones
+        if (!isTopicSimilar(generatedTopic, recentTopics)) {
+          saveRecentTopic(generatedTopic);
+          onTopicChange(generatedTopic);
+          return;
+        }
+
+        // If similar and we have more attempts, retry
+        if (attempts >= maxAttempts) {
+          // Use it anyway after max attempts
+          saveRecentTopic(generatedTopic);
+          onTopicChange(generatedTopic);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to generate topic:', error);
+      toast.error('Failed to generate topic. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -56,11 +125,15 @@ export function TopicSection({ topic, onTopicChange, disabled }: TopicSectionPro
         variant="outline"
         size="sm"
         onClick={handleSurpriseMe}
-        disabled={disabled}
+        disabled={disabled || isGenerating}
         className="gap-2"
       >
-        <Sparkles className="w-3.5 h-3.5" />
-        Surprise Me
+        {isGenerating ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="w-3.5 h-3.5" />
+        )}
+        {isGenerating ? 'Generating...' : 'Surprise Me'}
       </Button>
     </div>
   );

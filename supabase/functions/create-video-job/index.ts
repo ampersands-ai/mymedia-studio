@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
       throw new Error('Topic must be at least 5 characters');
     }
 
-    if (duration < 15 || duration > 180) {
-      throw new Error('Duration must be between 15 and 180 seconds');
+    if (duration < 15 || duration > 1080) {
+      throw new Error('Duration must be between 15 and 1080 seconds');
     }
 
     // Calculate dynamic cost based on duration (0.3 credits per second)

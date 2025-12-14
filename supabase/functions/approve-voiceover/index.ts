@@ -1000,7 +1000,9 @@ async function assembleVideo(
 }
 
 async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderId: string, userId: string, logger?: EdgeLogger) {
-  const maxAttempts = 120;
+  // Max 20 minutes for very long videos (render time ≈ audio_duration / 2)
+  // 240 attempts × 5 seconds = 1200 seconds = 20 minutes
+  const maxAttempts = 240;
   let attempts = 0;
 
   while (attempts < maxAttempts) {
@@ -1174,5 +1176,5 @@ async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderI
     attempts++;
   }
 
-  throw new Error('Render timeout after 10 minutes');
+  throw new Error('Render timeout after 20 minutes');
 }

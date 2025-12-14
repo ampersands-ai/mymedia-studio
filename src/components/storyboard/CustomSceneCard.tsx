@@ -78,7 +78,6 @@ export function CustomSceneCard({
 
       if (data?.enhanced_prompt) {
         onUpdate('imagePrompt', data.enhanced_prompt);
-        toast.success('Prompt enhanced! (0.1 credits used)');
         refetchCredits();
       }
     } catch (error) {

@@ -1,6 +1,7 @@
 import { VideoJob } from '@/types/video';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect } from 'react';
@@ -166,20 +167,42 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               {getStyleEmoji(job.style)} {job.topic}
             </h4>
             <div className="flex items-center gap-1.5 md:gap-2 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
-              <Clock className="h-3 w-3 shrink-0" />
-              <span>{formatDuration(job.duration)}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center gap-1 cursor-help">
+                    <Clock className="h-3 w-3 shrink-0" />
+                    {formatDuration(job.duration)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Duration</TooltipContent>
+              </Tooltip>
               <span>•</span>
-              <span className="capitalize">{job.style}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="capitalize cursor-help">{job.style}</span>
+                </TooltipTrigger>
+                <TooltipContent>Style</TooltipContent>
+              </Tooltip>
               {job.voice_name && (
                 <>
                   <span>•</span>
-                  <span className="truncate">🎙️ {job.voice_name}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="truncate cursor-help">🎙️ {job.voice_name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>Voice</TooltipContent>
+                  </Tooltip>
                 </>
               )}
               {job.aspect_ratio && (
                 <>
                   <span>•</span>
-                  <span>📐 {job.aspect_ratio}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help">📐 {job.aspect_ratio}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>Aspect Ratio</TooltipContent>
+                  </Tooltip>
                 </>
               )}
             </div>

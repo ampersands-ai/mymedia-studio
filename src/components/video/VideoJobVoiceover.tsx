@@ -75,6 +75,41 @@ export function VideoJobVoiceover({
     }
   }, [job.status]);
 
+  // useCallback hooks must be called before early return to follow Rules of Hooks
+  const handleDownloadAudio = useCallback(async () => {
+    if (!voiceoverSignedUrl) {
+      toast.error('Voiceover URL not ready');
+      return;
+    }
+    
+    try {
+      const response = await fetch(voiceoverSignedUrl);
+      if (!response.ok) throw new Error('Failed to fetch audio');
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${job.id}_voiceover.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      componentLogger.error('Failed to download audio', err as Error, { jobId: job.id } as any);
+      toast.error('Failed to download voiceover');
+    }
+  }, [voiceoverSignedUrl, job.id]);
+
+  const handleApproveClick = useCallback(() => {
+    // Pause audio if playing before starting render
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    }
+    onApprove();
+  }, [onApprove]);
+
   if (job.status !== 'awaiting_voice_approval' || !job.script || !job.voiceover_url) {
     return null;
   }
@@ -177,40 +212,6 @@ export function VideoJobVoiceover({
     setDuration(0);
     onRegenerate(editedScript);
   };
-
-  const handleDownloadAudio = useCallback(async () => {
-    if (!voiceoverSignedUrl) {
-      toast.error('Voiceover URL not ready');
-      return;
-    }
-    
-    try {
-      const response = await fetch(voiceoverSignedUrl);
-      if (!response.ok) throw new Error('Failed to fetch audio');
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${job.id}_voiceover.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      componentLogger.error('Failed to download audio', err as Error, { jobId: job.id } as any);
-      toast.error('Failed to download voiceover');
-    }
-  }, [voiceoverSignedUrl, job.id]);
-
-  const handleApproveClick = useCallback(() => {
-    // Pause audio if playing before starting render
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlayingAudio(false);
-    }
-    onApprove();
-  }, [onApprove]);
 
   return (
     <div className="space-y-3 pt-2 border-t">

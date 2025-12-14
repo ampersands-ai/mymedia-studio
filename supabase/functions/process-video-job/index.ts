@@ -546,6 +546,54 @@ ${retryInstructions}
 
 Begin the script now:`;
 
+  // Try Claude first, fall back to OpenAI if Claude fails
+  try {
+    return await generateScriptWithClaude(
+      supabase, logger, systemPrompt, userPrompt, maxTokens,
+      topic, duration, style, targetWords, videoJobId, userId
+    );
+  } catch (claudeError) {
+    const errorMsg = claudeError instanceof Error ? claudeError.message : String(claudeError);
+    
+    // Check if it's a transient error that warrants fallback
+    const isTransientError = errorMsg.includes('overloaded') || 
+                             errorMsg.includes('Overloaded') ||
+                             errorMsg.includes('529') ||
+                             errorMsg.includes('rate limit') ||
+                             errorMsg.includes('timeout') ||
+                             errorMsg.includes('503') ||
+                             errorMsg.includes('502');
+    
+    if (isTransientError) {
+      logger.warn('Claude API failed with transient error, falling back to OpenAI', {
+        userId,
+        metadata: { jobId: videoJobId, error: errorMsg }
+      });
+      
+      return await generateScriptWithOpenAI(
+        supabase, logger, systemPrompt, userPrompt, maxTokens,
+        topic, duration, style, targetWords, videoJobId, userId
+      );
+    }
+    
+    // Non-transient error - rethrow
+    throw claudeError;
+  }
+}
+
+async function generateScriptWithClaude(
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number,
+  topic: string,
+  duration: number,
+  style: string,
+  targetWords: number,
+  videoJobId: string,
+  userId: string
+): Promise<string> {
   const requestPayload = {
     model: 'claude-sonnet-4-5',
     max_tokens: maxTokens,
@@ -559,7 +607,7 @@ Begin the script now:`;
   const endpoint = `${API_ENDPOINTS.ANTHROPIC.fullUrl}/messages`;
   const requestSentAt = new Date();
 
-  logger.info('Generating script with enhanced prompt', { 
+  logger.info('Generating script with Claude', { 
     userId, 
     metadata: { 
       jobId: videoJobId, 
@@ -596,7 +644,6 @@ Begin the script now:`;
       requestPayload: {
         model: requestPayload.model,
         max_tokens: requestPayload.max_tokens,
-        // Don't log full prompts, just metadata
         prompt_length: userPrompt.length,
         system_prompt_length: systemPrompt.length
       },
@@ -629,7 +676,111 @@ Begin the script now:`;
   const generatedScript = data.content[0].text.trim();
   const actualWordCount = generatedScript.split(/\s+/).length;
   
-  logger.info('Script generated', { 
+  logger.info('Script generated with Claude', { 
+    userId, 
+    metadata: { 
+      jobId: videoJobId, 
+      targetWords, 
+      actualWords: actualWordCount,
+      wordDifference: actualWordCount - targetWords
+    } 
+  });
+
+  return generatedScript;
+}
+
+async function generateScriptWithOpenAI(
+  supabase: SupabaseClient,
+  logger: EdgeLogger,
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number,
+  topic: string,
+  duration: number,
+  style: string,
+  targetWords: number,
+  videoJobId: string,
+  userId: string
+): Promise<string> {
+  const endpoint = 'https://api.openai.com/v1/chat/completions';
+  const requestSentAt = new Date();
+
+  logger.info('Generating script with OpenAI (fallback)', { 
+    userId, 
+    metadata: { 
+      jobId: videoJobId, 
+      targetWords, 
+      duration, 
+      style,
+      maxTokens 
+    } 
+  });
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY') ?? ''}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: maxTokens,
+    })
+  });
+
+  const data = response.ok ? await response.json() : null;
+
+  // Log the API call
+  logApiCall(
+    supabase,
+    logger,
+    {
+      videoJobId,
+      userId,
+      serviceName: 'openai',
+      endpoint,
+      httpMethod: 'POST',
+      stepName: 'generate_script_fallback',
+      requestPayload: {
+        model: 'gpt-4o',
+        max_tokens: maxTokens,
+        prompt_length: userPrompt.length,
+        system_prompt_length: systemPrompt.length
+      },
+      additionalMetadata: {
+        topic,
+        duration,
+        style,
+        target_words: targetWords,
+        fallback_reason: 'claude_transient_error'
+      }
+    },
+    requestSentAt,
+    {
+      statusCode: response.status,
+      payload: data ? { 
+        content_length: data.choices?.[0]?.message?.content?.length,
+        finish_reason: data.choices?.[0]?.finish_reason,
+        usage: data.usage
+      } : null,
+      isError: !response.ok,
+      errorMessage: response.ok ? undefined : `OpenAI returned ${response.status}`
+    }
+  ).catch(e => logger.error('Failed to log API call', e instanceof Error ? e : undefined));
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${error}`);
+  }
+
+  const generatedScript = data.choices[0].message.content.trim();
+  const actualWordCount = generatedScript.split(/\s+/).length;
+  
+  logger.info('Script generated with OpenAI fallback', { 
     userId, 
     metadata: { 
       jobId: videoJobId, 

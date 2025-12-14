@@ -198,7 +198,7 @@ export function VideoCreator() {
 
         <div className="space-y-2">
           <Label htmlFor="duration" className="text-sm font-bold">
-            Duration: {duration} seconds
+            Duration: {duration} seconds {duration >= 60 && `(~${Math.round(duration / 60)} min${Math.round(duration / 60) !== 1 ? 's' : ''})`}
           </Label>
           <div className="overflow-x-hidden px-1">
             <Slider

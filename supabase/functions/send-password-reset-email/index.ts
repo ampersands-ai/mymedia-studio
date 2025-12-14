@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { normalizeGmailDots } from "../_shared/email-validation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -39,8 +40,10 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const canonicalEmail = normalizeGmailDots(normalizedEmail);
 
     // Find user by email using admin API
+    // For Gmail addresses, also check canonical form (without dots)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (userError) {
@@ -52,7 +55,13 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const user = userData.users.find(u => u.email?.toLowerCase() === normalizedEmail);
+    // Match by exact email OR canonical Gmail form
+    const user = userData.users.find(u => {
+      if (!u.email) return false;
+      const userEmail = u.email.toLowerCase();
+      const userCanonical = normalizeGmailDots(userEmail);
+      return userEmail === normalizedEmail || userCanonical === canonicalEmail;
+    });
     
     if (!user) {
       // Return success to prevent email enumeration

@@ -238,7 +238,12 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       const appError = handleError(error);
       
       // Enhanced user-friendly error messages
-      if (appError.message.includes('API key not configured') || appError.message.includes('not configured')) {
+      if (appError.message.includes('EMAIL_NOT_VERIFIED') || appError.message.includes('Email verification required')) {
+        toast.error('Please verify your email', {
+          description: 'Check your inbox for the verification email before generating content.',
+          duration: 8000,
+        });
+      } else if (appError.message.includes('API key not configured') || appError.message.includes('not configured')) {
         toast.error('Model temporarily unavailable. Please contact support.');
       } else if (appError.message.includes('Unauthorized') || appError.message.includes('Session expired')) {
         toast.error('Session expired. Please log in again.');

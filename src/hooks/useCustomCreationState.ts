@@ -173,6 +173,7 @@ export const useCustomCreationState = () => {
       ...INITIAL_STATE,
       selectedGroup: prev.selectedGroup, // Keep selected group
       selectedModel: prev.selectedModel, // Keep selected model
+      modelParameters: prev.modelParameters, // Keep parameters with schema defaults
     }));
   }, []);
 

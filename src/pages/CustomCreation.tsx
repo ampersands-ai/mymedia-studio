@@ -78,7 +78,7 @@ const CustomCreation = () => {
   // Get model schema (locked models load from file, unlocked from database)
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);
 
-  // Initialize model parameters with schema defaults when model changes
+  // Initialize model parameters with schema defaults when model changes or parameters are empty
   useEffect(() => {
     if (!modelSchema) return;
     
@@ -88,7 +88,7 @@ const CustomCreation = () => {
     if (JSON.stringify(initialized) !== JSON.stringify(state.modelParameters)) {
       updateState({ modelParameters: initialized });
     }
-  }, [currentModel?.record_id, modelSchema]);
+  }, [currentModel?.record_id, modelSchema, state.modelParameters]);
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();

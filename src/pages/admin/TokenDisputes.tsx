@@ -209,7 +209,7 @@ export const TokenDisputes = () => {
       setNewStatus("");
     },
     onError: (error) => {
-      toast.error('Failed to update dispute');
+      toast.error(`Failed to update dispute: ${error instanceof Error ? error.message : 'Unknown error'}`);
       logger.error('Failed to update dispute', error as Error, { 
         component: 'TokenDisputes',
         operation: 'updateDispute'

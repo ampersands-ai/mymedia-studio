@@ -98,7 +98,7 @@ export const OutputLightbox = ({
             operation: 'loadOriginal',
             generationId: currentOutput.id
           });
-          toast.error('Failed to load original image');
+          toast.error(`Failed to load original image: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
       })();
 
@@ -188,7 +188,7 @@ export const OutputLightbox = ({
         contentType,
         operation: 'handleDownload'
       });
-      toast.error('Failed to download image');
+      toast.error(`Failed to download image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [getCurrentEntry, currentOutput, currentIndex, contentType, onDownloadSuccess]);
 
@@ -405,7 +405,7 @@ export const OutputLightbox = ({
         templateName: template.name,
         operation: 'handleApplyTemplate'
       });
-      toast.error('Failed to apply template');
+      toast.error(`Failed to apply template: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [getCurrentEntry, addToHistory, currentOutput]);
 

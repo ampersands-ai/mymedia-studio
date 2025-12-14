@@ -155,7 +155,7 @@ export function useFeatureFlags() {
     },
     onError: (err, _newFlags, context) => {
       queryClient.setQueryData(['feature-flags'], context?.previousFlags);
-      toast.error('Failed to update feature flags');
+      toast.error(`Failed to update feature flags: ${err instanceof Error ? err.message : 'Unknown error'}`);
       console.error('Error updating feature flags:', err);
     },
     onSettled: () => {

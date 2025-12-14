@@ -15,7 +15,7 @@ export const useGenerationActions = (userId: string | undefined) => {
       .eq("id", id);
 
     if (error) {
-      toast.error("Failed to delete generation");
+      toast.error(`Failed to delete generation: ${error.message}`);
       return;
     }
 
@@ -58,7 +58,7 @@ export const useGenerationActions = (userId: string | undefined) => {
           operation: 'handleDownload',
           outputUrl: outputUrl.substring(0, 100)
         });
-        toast.error('Failed to download file', { id: 'download-toast' });
+        toast.error(`Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'download-toast' });
         return;
       }
     }
@@ -75,7 +75,7 @@ export const useGenerationActions = (userId: string | undefined) => {
         .createSignedUrl(storagePath, 60); // 1 minute expiry
 
       if (error || !data?.signedUrl) {
-        toast.error('Failed to create download link', { id: 'download-toast' });
+        toast.error(`Failed to create download link: ${error?.message || 'No signed URL returned'}`, { id: 'download-toast' });
         return;
       }
 
@@ -111,7 +111,7 @@ export const useGenerationActions = (userId: string | undefined) => {
         storagePath,
         type
       });
-      toast.error('Failed to download file', { id: 'download-toast' });
+      toast.error(`Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'download-toast' });
     }
   };
 
@@ -207,7 +207,7 @@ export const useGenerationActions = (userId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["generations", userId] });
     },
     onError: (error) => {
-      toast.error("Failed to submit report. Please try again.");
+      toast.error(`Failed to submit report: ${error instanceof Error ? error.message : 'Please try again'}`);
       logger.error('Failed to submit token issue report', error as Error, {
         component: 'History',
         operation: 'reportTokenIssue'

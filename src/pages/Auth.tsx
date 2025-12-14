@@ -16,6 +16,7 @@ import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { isDisposableEmail, getCanonicalEmail } from "@/lib/email-validation";
 
 
 const countryCodes = [
@@ -275,6 +276,22 @@ const Auth = () => {
         
         navigate("/dashboard/custom-creation");
       } else {
+        // Check for disposable/temporary email addresses
+        if (isDisposableEmail(email)) {
+          throw new Error("Temporary or disposable email addresses are not allowed. Please use a permanent email address.");
+        }
+
+        // Check for duplicate Gmail accounts (with dot trick)
+        const canonicalEmail = getCanonicalEmail(email);
+        const { data: duplicateCheck, error: duplicateError } = await supabase.functions.invoke(
+          'check-email-duplicate',
+          { body: { email, canonicalEmail } }
+        );
+        
+        if (!duplicateError && duplicateCheck?.isDuplicate) {
+          throw new Error("An account with this email already exists. Gmail ignores dots in addresses, so try logging in instead.");
+        }
+
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
@@ -285,6 +302,7 @@ const Auth = () => {
               last_name: lastName,
               phone_number: phoneNumber ? `${countryCode}${phoneNumber}` : null,
               zipcode: zipcode || null,
+              canonical_email: canonicalEmail, // Store for future duplicate detection
             },
             emailRedirectTo: `${window.location.origin}/dashboard/custom-creation`,
           },

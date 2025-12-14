@@ -224,6 +224,30 @@ Deno.serve(async (req) => {
     }
     const authenticatedUser = user; // Now guaranteed non-null
 
+    // Check email verification status - block generation for unverified users
+    // (Skip check for service role/test mode)
+    if (!isServiceRole) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email_verified')
+        .eq('id', authenticatedUser.id)
+        .single();
+      
+      if (profileError) {
+        logger.warn('Failed to check email verification status', { userId: authenticatedUser.id, metadata: { error: profileError.message } });
+      } else if (!profile?.email_verified) {
+        logger.info('Generation blocked - email not verified', { userId: authenticatedUser.id });
+        return new Response(
+          JSON.stringify({ 
+            error: 'Email verification required',
+            message: 'Please verify your email address before generating content. Check your inbox for the verification email.',
+            code: 'EMAIL_NOT_VERIFIED'
+          }),
+          { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Verify admin status for test_mode
     let isTestMode = false;
     let testLogger: TestExecutionLogger | null = null;

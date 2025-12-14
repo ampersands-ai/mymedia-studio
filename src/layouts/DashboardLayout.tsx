@@ -1,8 +1,9 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Clock } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Clock, Shield } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
@@ -32,6 +33,7 @@ export const DashboardLayout = () => {
   const navigate = useNavigate();
   const { data: tokenData } = useUserTokens();
   const { isFeatureEnabled, isFeatureComingSoon } = useFeatureFlags();
+  const { isAdmin } = useAdminRole();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -49,9 +51,11 @@ export const DashboardLayout = () => {
     const enabled = isFeatureEnabled(featureId);
     const comingSoon = isFeatureComingSoon(featureId);
 
-    if (!enabled) return null;
+    // Admin bypass: always show features even if disabled/coming soon
+    if (!enabled && !isAdmin) return null;
 
-    if (comingSoon) {
+    // For non-admins, show disabled coming soon state
+    if (comingSoon && !isAdmin) {
       return (
         <TooltipProvider key={path}>
           <Tooltip>
@@ -74,6 +78,9 @@ export const DashboardLayout = () => {
       );
     }
 
+    // Admin indicator for disabled/coming soon features
+    const showAdminIndicator = isAdmin && (!enabled || comingSoon);
+
     return (
       <Link to={path} key={path}>
         <Button
@@ -87,6 +94,9 @@ export const DashboardLayout = () => {
         >
           {icon}
           {label}
+          {showAdminIndicator && (
+            <Shield className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+          )}
         </Button>
       </Link>
     );

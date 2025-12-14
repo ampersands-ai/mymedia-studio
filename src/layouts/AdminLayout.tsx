@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 
@@ -45,6 +45,7 @@ export const AdminLayout = () => {
             { path: "/admin/blog/create", label: "Create Blog", icon: PenSquare },
             { path: "/admin/models", label: "AI Models", icon: Database },
               { path: "/admin/model-pricing", label: "Model Pricing", icon: DollarSign },
+              { path: "/admin/feature-settings", label: "Feature Settings", icon: ToggleLeft },
             { path: "/admin/templates", label: "Templates", icon: FileText },
             { path: "/admin/users", label: "Users", icon: Users },
               { path: "/admin/generations", label: "All Generations", icon: Image },

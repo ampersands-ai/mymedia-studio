@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { VideoJob, VideoJobInput } from '@/types/video';
 import { logger } from '@/lib/logger';
-
+import { extractEdgeFunctionError } from '@/lib/utils/edge-function-error';
 const PINNED_JOB_KEY = 'pinnedVideoJobId';
 const CLEARED_FLAG_KEY = 'videoJobsCleared';
 
@@ -181,7 +181,10 @@ export function useVideoJobs() {
         body: input,
       });
       
-      if (error) throw error;
+      if (error) {
+        const message = await extractEdgeFunctionError(error);
+        throw new Error(message);
+      }
       if (data.error) throw new Error(data.error);
       return data;
     },
@@ -208,7 +211,7 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create video job');
+      toast.error(error.message);
       // Refetch to restore accurate state after error
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
@@ -233,7 +236,10 @@ export function useVideoJobs() {
             },
           });
 
-          if (error) throw error;
+          if (error) {
+            const message = await extractEdgeFunctionError(error);
+            throw new Error(message);
+          }
           if (data?.error) throw new Error(data.error);
           return data;
         } catch (err) {
@@ -262,20 +268,7 @@ export function useVideoJobs() {
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: Error) => {
-      const message = error.message || 'Failed to approve script';
-
-      // Surface helpful messages
-      if (message.includes('sign in')) {
-        toast.error('Please sign in to continue');
-      } else if (message.includes('429') || message.includes('rate limit')) {
-        toast.error('Service temporarily busy. Please try again in a moment.');
-      } else if (message.includes('timeout') || message.includes('timed out')) {
-        toast.error('Request timed out. Please try again.');
-      } else if (message.includes('quota') || message.includes('limit exceeded')) {
-        toast.error('API quota exceeded. Please contact support.');
-      } else {
-        toast.error(message);
-      }
+      toast.error(error.message);
     },
   });
 
@@ -325,7 +318,8 @@ export function useVideoJobs() {
               operation: 'approveVoiceover',
               jobId
             });
-            throw error;
+            const message = await extractEdgeFunctionError(error);
+            throw new Error(message);
           }
           if (data?.error) {
             logger.error('Function returned error', new Error(data.error), {
@@ -384,23 +378,7 @@ export function useVideoJobs() {
         component: 'useVideoJobs',
         operation: 'approveVoiceover'
       });
-      const message = error.message || 'Failed to approve voiceover';
-
-      // Parse specific error types for better user feedback
-      if (message.includes('sign in')) {
-        toast.error('Please sign in to continue');
-      } else if (message.includes('Shotstack')) {
-        toast.error('Video assembly failed. Please try again or contact support.');
-      } else if (message.includes('Pixabay')) {
-        toast.error('Failed to fetch background media. Please try again.');
-      } else if (message.includes('timeout') || message.includes('timed out')) {
-        toast.error('Request timed out. Please try again.');
-      } else if (message.includes('429') || message.includes('rate limit')) {
-        toast.error('Service temporarily busy. Please try again in a moment.');
-      } else {
-        toast.error(message);
-      }
-
+      toast.error(error.message);
       // Refresh job data to show updated error state
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
@@ -466,7 +444,10 @@ export function useVideoJobs() {
           content_type: 'video'
         }
       });
-      if (error) throw error;
+      if (error) {
+        const message = await extractEdgeFunctionError(error);
+        throw new Error(message);
+      }
       return data;
     },
     onSuccess: () => {
@@ -478,7 +459,7 @@ export function useVideoJobs() {
         component: 'useVideoJobs',
         operation: 'generateCaption'
       });
-      toast.error(error.message || 'Failed to generate caption');
+      toast.error(error.message);
     }
   });
 

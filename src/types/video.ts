@@ -68,6 +68,7 @@ export interface VideoJob {
   ai_caption?: string;
   ai_hashtags?: string[];
   caption_generated_at?: string;
+  actual_audio_duration?: number; // Actual voiceover duration in seconds
 }
 
 export interface VideoAssets {

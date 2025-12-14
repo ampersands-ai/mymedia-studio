@@ -40,11 +40,16 @@ interface VideoJobProgressProps {
   isCancelling: boolean;
 }
 
-const getEstimatedTime = (status: VideoJob['status']): number => {
+const getEstimatedTime = (status: VideoJob['status'], audioDuration?: number): number => {
+  // For assembling: render time ≈ audio duration / 2
+  if (status === 'assembling' && audioDuration) {
+    return Math.ceil(audioDuration / 2);
+  }
+  
   const estimates = {
     generating_voice: 180,
     fetching_video: 60,
-    assembling: 120
+    assembling: 120 // Default fallback if no audio duration
   };
   return estimates[status as keyof typeof estimates] || 180;
 };
@@ -86,7 +91,7 @@ export function VideoJobProgress({ job, onCancel, isCancelling }: VideoJobProgre
       <GenerationProgress
         startTime={new Date(job.updated_at).getTime()}
         isComplete={false}
-        estimatedTimeSeconds={getEstimatedTime(job.status)}
+        estimatedTimeSeconds={getEstimatedTime(job.status, job.actual_audio_duration)}
       />
 
       <Alert>

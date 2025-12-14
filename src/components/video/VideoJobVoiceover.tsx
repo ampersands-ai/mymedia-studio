@@ -328,27 +328,52 @@ export function VideoJobVoiceover({
             const errorDetails = job.error_details as { message?: string; step?: string; timestamp?: string } | null;
             if (!errorDetails) return null;
             
+            // Map technical errors to user-friendly messages
+            const getUserFriendlyMessage = (message: string): { title: string; description: string; tip: string } => {
+              const lowerMessage = message.toLowerCase();
+              
+              if (lowerMessage.includes('downloading assets failed') || lowerMessage.includes('transcript')) {
+                return {
+                  title: 'Caption Processing Issue',
+                  description: 'We had trouble processing the captions for your video. This is usually a temporary issue.',
+                  tip: 'Try clicking "Render Video" again. If it persists, try selecting a different background video.'
+                };
+              }
+              
+              if (lowerMessage.includes('timeout') || lowerMessage.includes('timed out')) {
+                return {
+                  title: 'Processing Timeout',
+                  description: 'The video took too long to render. This can happen with longer videos.',
+                  tip: 'Try again or consider using a shorter script.'
+                };
+              }
+              
+              if (lowerMessage.includes('voiceover') || lowerMessage.includes('audio')) {
+                return {
+                  title: 'Audio Processing Issue',
+                  description: 'There was a problem processing the voiceover audio.',
+                  tip: 'Try regenerating the voiceover with the "Edit Script" button.'
+                };
+              }
+              
+              return {
+                title: 'Video Rendering Failed',
+                description: 'Something went wrong while creating your video.',
+                tip: 'Try again. If the issue persists, try editing the script or selecting a different background.'
+              };
+            };
+            
+            const friendly = getUserFriendlyMessage(errorDetails.message || '');
+            
             return (
               <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-2">
                 <AlertCircle className="h-5 w-5" />
-                <AlertTitle className="text-base font-semibold">Video Rendering Failed</AlertTitle>
+                <AlertTitle className="text-base font-semibold">{friendly.title}</AlertTitle>
                 <AlertDescription className="space-y-3 mt-2">
-                  <p className="text-sm leading-relaxed">{errorDetails.message || 'An unknown error occurred'}</p>
-
-                  {errorDetails.step && (
-                    <p className="text-xs text-muted-foreground">
-                      Failed during: <span className="font-medium">{errorDetails.step}</span>
-                    </p>
-                  )}
-
-                  {errorDetails.timestamp && (
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(errorDetails.timestamp).toLocaleString()}
-                    </p>
-                  )}
+                  <p className="text-sm leading-relaxed">{friendly.description}</p>
 
                   <p className="text-xs text-muted-foreground mt-2">
-                    💡 If the issue persists, try editing the script or selecting a different background.
+                    💡 {friendly.tip}
                   </p>
                 </AlertDescription>
               </Alert>

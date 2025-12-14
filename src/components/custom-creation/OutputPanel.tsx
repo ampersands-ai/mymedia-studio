@@ -1,6 +1,6 @@
 import { forwardRef, memo } from "react";
 import { Card } from "@/components/ui/card";
-import { ImageIcon, Loader2, Wifi, WifiOff } from "lucide-react";
+import { ImageIcon, Loader2 } from "lucide-react";
 import { GenerationConsole } from "./GenerationConsole";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
@@ -8,7 +8,6 @@ import { useActiveGenerations } from "@/hooks/useActiveGenerations";
 import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OutputPanelProps {
   generationState: {
@@ -95,7 +94,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       templateAfterImage,
       modelProvider: _modelProvider,
       modelName: _modelName,
-      connectionTier = 'disconnected',
+      connectionTier: _connectionTier = 'disconnected',
       realtimeConnected: _realtimeConnected = false,
       failedGenerationError,
       onClearError,
@@ -128,42 +127,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
         <Card ref={ref} className="h-full flex flex-col border-border/40 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
           <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
-                {(isPolling || pollingGenerationId) && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge 
-                          variant={connectionTier === 'realtime' ? 'default' : 'secondary'}
-                          className="gap-1 text-xs"
-                        >
-                          {connectionTier === 'realtime' ? (
-                            <>
-                              <Wifi className="h-3 w-3" />
-                              Live
-                            </>
-                          ) : connectionTier === 'polling' ? (
-                            <>
-                              <WifiOff className="h-3 w-3" />
-                              Slow
-                            </>
-                          ) : null}
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {connectionTier === 'realtime' 
-                            ? 'Real-time updates active' 
-                            : connectionTier === 'polling'
-                            ? 'Using slower polling mode'
-                            : 'Connecting to status updates'}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
+              <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
               {activeGenerations.length > 0 && (
                 <Badge 
                   variant="secondary" 

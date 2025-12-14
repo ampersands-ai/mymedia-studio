@@ -15,7 +15,7 @@ export const useConfetti = () => {
     });
   };
 
-  const fireCelebration = () => {
+  const fireCelebration = (): (() => void) => {
     const duration = 3000;
     const animationEnd = Date.now() + duration;
     const defaults = { 
@@ -34,7 +34,8 @@ export const useConfetti = () => {
       const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
-        return clearInterval(interval);
+        clearInterval(interval);
+        return;
       }
 
       const particleCount = 50 * (timeLeft / duration);
@@ -53,6 +54,9 @@ export const useConfetti = () => {
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
       });
     }, 250);
+
+    // Return cleanup function
+    return () => clearInterval(interval);
   };
 
   return { fireConfetti, fireCelebration };

@@ -21,6 +21,10 @@ verify_jwt = false
 [functions.moderate-prompt]
 verify_jwt = true
 
+[functions.process-video-job]
+verify_jwt = true
+max_duration_seconds = 300
+
 [functions.send-verification-email]
 verify_jwt = false
 

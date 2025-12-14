@@ -308,7 +308,7 @@ IMPORTANT: This is a long video. Take your time to fully develop each section. D
   }
 }
 
-// Script validation with retry logic and timeout awareness
+// Script validation with retry logic, timeout awareness, and graceful degradation
 async function generateScriptWithValidation(
   supabase: SupabaseClient,
   logger: EdgeLogger,
@@ -319,14 +319,20 @@ async function generateScriptWithValidation(
   userId: string
 ): Promise<string> {
   const functionStartTime = Date.now();
-  const maxFunctionDuration = 250000; // 250 seconds - leave 50s buffer before 300s timeout
+  const maxFunctionDuration = 180000; // 180 seconds - trigger earlier fallback for 400s timeout
   
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
-  const tolerancePercent = 0.15; // ±15%
-  const minWords = Math.floor(targetWords * (1 - tolerancePercent));
-  const maxWords = Math.ceil(targetWords * (1 + tolerancePercent));
-  const maxRetries = 2;
+  
+  // Dynamic tolerance based on duration (longer videos = harder to hit exact count)
+  const baseTolerance = duration >= 360 ? 0.20 : 0.15; // 6+ min = 20%, else 15%
+  const relaxedTolerance = 0.20; // ±20% after 1 failed retry
+  const gracefulTolerance = 0.25; // ±25% when approaching timeout
+  
+  let currentTolerance = baseTolerance;
+  const minWords = Math.floor(targetWords * (1 - currentTolerance));
+  const maxWords = Math.ceil(targetWords * (1 + currentTolerance));
+  const maxRetries = 1; // Reduced from 2 - after 1 retry with relaxed tolerance, proceed
   
   let attempt = 0;
   let lastScript = '';
@@ -337,8 +343,30 @@ async function generateScriptWithValidation(
     
     // Check if we're approaching timeout before attempting another generation
     const elapsedTime = Date.now() - functionStartTime;
-    if (attempt > 1 && elapsedTime > maxFunctionDuration) {
-      logger.warn('Approaching timeout limit, proceeding with current script', { 
+    
+    // Graceful degradation: if approaching timeout, check with graceful tolerance
+    if (elapsedTime > maxFunctionDuration && lastScript) {
+      const gracefulMin = Math.floor(targetWords * (1 - gracefulTolerance));
+      const gracefulMax = Math.ceil(targetWords * (1 + gracefulTolerance));
+      
+      if (lastWordCount >= gracefulMin && lastWordCount <= gracefulMax) {
+        logger.warn('Approaching timeout, accepting script within graceful tolerance (±25%)', { 
+          userId, 
+          metadata: { 
+            jobId: videoJobId, 
+            elapsedMs: elapsedTime,
+            attempt,
+            targetWords,
+            actualWords: lastWordCount,
+            deviation: `${Math.round(Math.abs(lastWordCount - targetWords) / targetWords * 100)}%`,
+            toleranceUsed: 'graceful_25%'
+          } 
+        });
+        return lastScript;
+      }
+      
+      // Even if outside graceful tolerance, proceed with warning rather than timeout
+      logger.warn('Approaching timeout limit, proceeding with current script to prevent failure', { 
         userId, 
         metadata: { 
           jobId: videoJobId, 
@@ -346,23 +374,32 @@ async function generateScriptWithValidation(
           attempt,
           targetWords,
           actualWords: lastWordCount,
-          deviation: `${Math.round(Math.abs(lastWordCount - targetWords) / targetWords * 100)}%`
+          deviation: `${Math.round(Math.abs(lastWordCount - targetWords) / targetWords * 100)}%`,
+          reason: 'TIMEOUT_PREVENTION'
         } 
       });
       return lastScript;
     }
     
+    // Use relaxed tolerance after first attempt
+    if (attempt > 1) {
+      currentTolerance = relaxedTolerance;
+    }
+    
+    const dynamicMinWords = Math.floor(targetWords * (1 - currentTolerance));
+    const dynamicMaxWords = Math.ceil(targetWords * (1 + currentTolerance));
+    
     // Build retry instructions if this is a retry
     let retryInstructions = '';
     if (attempt > 1) {
-      const tooShort = lastWordCount < minWords;
-      const difference = tooShort ? (minWords - lastWordCount) : (lastWordCount - maxWords);
+      const tooShort = lastWordCount < dynamicMinWords;
+      const difference = tooShort ? (dynamicMinWords - lastWordCount) : (lastWordCount - dynamicMaxWords);
       
       retryInstructions = `
 
 ## CRITICAL RETRY NOTICE (Attempt ${attempt}/${maxRetries + 1})
 Your previous script was ${lastWordCount} words, which is ${tooShort ? 'TOO SHORT' : 'TOO LONG'}.
-Target: ${targetWords} words (acceptable range: ${minWords}-${maxWords} words)
+Target: ${targetWords} words (acceptable range: ${dynamicMinWords}-${dynamicMaxWords} words)
 You need ${tooShort ? `AT LEAST ${difference} MORE words` : `to remove about ${difference} words`}.
 
 ${tooShort ? `To add more content:
@@ -385,8 +422,9 @@ DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturall
         jobId: videoJobId, 
         attempt,
         targetWords,
-        minWords,
-        maxWords,
+        minWords: dynamicMinWords,
+        maxWords: dynamicMaxWords,
+        tolerance: `${currentTolerance * 100}%`,
         elapsedMs: Date.now() - functionStartTime,
         hasRetryInstructions: attempt > 1
       } 
@@ -398,6 +436,10 @@ DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturall
     lastScript = script;
     lastWordCount = wordCount;
     
+    // Calculate percentage deviation for detailed logging
+    const percentageDeviation = Math.round(Math.abs(wordCount - targetWords) / targetWords * 100);
+    const isValid = wordCount >= dynamicMinWords && wordCount <= dynamicMaxWords;
+    
     logger.info('Script validation check', { 
       userId, 
       metadata: { 
@@ -405,46 +447,68 @@ DO NOT truncate or cut the story short. Write a COMPLETE narrative that naturall
         attempt,
         targetWords,
         actualWords: wordCount,
-        minWords,
-        maxWords,
+        minWords: dynamicMinWords,
+        maxWords: dynamicMaxWords,
+        percentageDeviation: `${percentageDeviation}%`,
+        tolerance: `${currentTolerance * 100}%`,
         elapsedMs: Date.now() - functionStartTime,
-        isValid: wordCount >= minWords && wordCount <= maxWords
+        isValid,
+        reason: !isValid ? (wordCount < dynamicMinWords ? 'TOO_SHORT' : 'TOO_LONG') : 'VALID'
       } 
     });
     
     // Check if within tolerance
-    if (wordCount >= minWords && wordCount <= maxWords) {
+    if (isValid) {
       logger.info('Script passed validation', { 
         userId, 
-        metadata: { jobId: videoJobId, attempt, wordCount, targetWords } 
+        metadata: { jobId: videoJobId, attempt, wordCount, targetWords, tolerance: `${currentTolerance * 100}%` } 
       });
       return script;
     }
     
-    // If max retries reached, proceed with warning
+    // If max retries reached, check if close enough with graceful tolerance
     if (attempt > maxRetries) {
-      logger.warn('Script length out of tolerance after max retries, proceeding with warning', { 
-        userId, 
-        metadata: { 
-          jobId: videoJobId, 
-          attempts: attempt,
-          targetWords,
-          actualWords: wordCount,
-          deviation: `${Math.round(Math.abs(wordCount - targetWords) / targetWords * 100)}%`
-        } 
-      });
+      const gracefulMin = Math.floor(targetWords * (1 - gracefulTolerance));
+      const gracefulMax = Math.ceil(targetWords * (1 + gracefulTolerance));
+      
+      if (wordCount >= gracefulMin && wordCount <= gracefulMax) {
+        logger.warn('Script within graceful tolerance (±25%) after retries, proceeding', { 
+          userId, 
+          metadata: { 
+            jobId: videoJobId, 
+            attempts: attempt,
+            targetWords,
+            actualWords: wordCount,
+            deviation: `${percentageDeviation}%`,
+            toleranceUsed: 'graceful_25%'
+          } 
+        });
+      } else {
+        logger.warn('Script outside tolerance after max retries, proceeding to prevent failure', { 
+          userId, 
+          metadata: { 
+            jobId: videoJobId, 
+            attempts: attempt,
+            targetWords,
+            actualWords: wordCount,
+            deviation: `${percentageDeviation}%`,
+            reason: 'MAX_RETRIES_EXCEEDED'
+          } 
+        });
+      }
       return script;
     }
     
-    logger.info('Script failed validation, retrying', { 
+    logger.info('Script failed validation, retrying with relaxed tolerance', { 
       userId, 
       metadata: { 
         jobId: videoJobId, 
         attempt,
         targetWords,
         actualWords: wordCount,
-        tooShort: wordCount < minWords,
-        difference: wordCount < minWords ? (minWords - wordCount) : (wordCount - maxWords)
+        tooShort: wordCount < dynamicMinWords,
+        difference: wordCount < dynamicMinWords ? (dynamicMinWords - wordCount) : (wordCount - dynamicMaxWords),
+        nextTolerance: `${relaxedTolerance * 100}%`
       } 
     });
   }
@@ -517,7 +581,15 @@ ${structureGuidance}
    - Vivid descriptions
 
 4. COUNT AS YOU WRITE: Mentally track your word count. Aim for exactly ${targetWords} words.
-
+${targetWords > 500 ? `
+## WORD COUNT CHECKPOINTS (for ${targetWords} word script)
+Track your progress against these milestones:
+- After introduction: ~${Math.floor(targetWords * 0.15)} words (${Math.floor(targetWords * 0.15)} cumulative)
+- After first section: ~${Math.floor(targetWords * 0.20)} words (${Math.floor(targetWords * 0.35)} cumulative)
+- After second section: ~${Math.floor(targetWords * 0.20)} words (${Math.floor(targetWords * 0.55)} cumulative)
+- After third section: ~${Math.floor(targetWords * 0.20)} words (${Math.floor(targetWords * 0.75)} cumulative)
+- Conclusion + ending: ~${Math.floor(targetWords * 0.25)} words remaining to reach ${targetWords}
+` : ''}
 2. FORMAT: Write ONLY the narration text
    - No stage directions like [pause] or (dramatic music)
    - No timestamps or section headers

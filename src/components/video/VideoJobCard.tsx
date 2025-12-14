@@ -19,6 +19,7 @@ interface VideoJobCardProps {
 
 export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   const [timeoutCountdown, setTimeoutCountdown] = useState<number | null>(null);
+  const [actionStartTime, setActionStartTime] = useState<number | null>(null);
   const { approveScript, isApprovingScript, approveVoiceover, isApprovingVoiceover, cancelJob, isCancelling, recoverJob, isRecoveringJob, generateCaption, isGeneratingCaption } = useVideoJobs();
   const { availableCredits } = useUserCredits();
 
@@ -94,7 +95,19 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
     setTimeoutCountdown(null);
   }, [job.id, job.status]);
 
+  // Reset actionStartTime when entering processing states or clear when done
+  useEffect(() => {
+    if (['generating_script', 'generating_voice', 'fetching_video', 'assembling'].includes(job.status)) {
+      if (!actionStartTime) {
+        setActionStartTime(Date.now());
+      }
+    } else {
+      setActionStartTime(null);
+    }
+  }, [job.status]);
+
   const handleApproveScript = (editedScript?: string) => {
+    setActionStartTime(Date.now());
     approveScript.mutate({
       jobId: job.id,
       editedScript
@@ -102,6 +115,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
   };
 
   const handleApproveVoiceover = () => {
+    setActionStartTime(Date.now());
     approveVoiceover.mutate(job.id);
   };
 
@@ -185,6 +199,7 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
           job={job}
           onCancel={handleCancel}
           isCancelling={isCancelling}
+          actionStartTime={actionStartTime}
         />
 
         <VideoJobDetails

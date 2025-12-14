@@ -246,6 +246,67 @@ async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: 
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
 }
 
+// Style-specific writing guidance
+function getStyleGuidance(style: string): string {
+  const styleGuides: Record<string, string> = {
+    horror: "Build tension gradually. Use short, punchy sentences during scary moments. Include sensory details that create unease. End with a lingering sense of dread or an unexpected twist.",
+    educational: "Start with a hook question or surprising fact. Break complex topics into digestible chunks. Use analogies and real-world examples. End with a memorable takeaway that reinforces the main lesson.",
+    documentary: "Present facts objectively while maintaining engagement. Include specific details, dates, or statistics where relevant. Build toward a meaningful conclusion that gives perspective.",
+    motivational: "Open with relatability - acknowledge the struggle. Build through challenges and insights. Use powerful, rhythmic language. End with an inspiring call to action.",
+    storytelling: "Create compelling characters or scenarios. Build conflict and tension. Include vivid descriptions that paint pictures. Deliver a satisfying resolution or cliffhanger.",
+    comedy: "Lead with unexpected observations. Use timing and rhythm in your writing. Build to punchlines naturally. Keep energy high throughout.",
+    tech: "Explain complex concepts simply. Use analogies to everyday objects. Build excitement about possibilities. End with practical implications or future outlook.",
+    lifestyle: "Be relatable and conversational. Share insights as if talking to a friend. Include actionable tips. End with encouragement or a thought-provoking question.",
+    news: "Lead with the most important information. Provide context and background. Include multiple perspectives where relevant. End with implications or next steps.",
+    dramatic: "Use powerful, evocative language. Build emotional intensity. Create atmosphere through word choice. End with impact - leave the viewer thinking."
+  };
+  return styleGuides[style.toLowerCase()] || "Write in an engaging, conversational style appropriate for the topic. Hook the viewer early and maintain interest throughout.";
+}
+
+// Structure guidance based on target length
+function getStructureGuidance(targetWords: number, duration: number): string {
+  const minutes = Math.floor(duration / 60);
+  const seconds = duration % 60;
+  const durationStr = minutes > 0 ? `${minutes} minute${minutes > 1 ? 's' : ''}${seconds > 0 ? ` ${seconds} seconds` : ''}` : `${seconds} seconds`;
+  
+  if (targetWords < 150) {
+    return `Structure for this ${durationStr} short-form video:
+• Hook (first 3 seconds): Grab attention immediately
+• Core message (middle): One clear, focused point
+• Conclusion: End with impact or call-to-action`;
+  } else if (targetWords < 400) {
+    return `Structure for this ${durationStr} video:
+• Hook (first 5 seconds): Surprising fact, question, or bold statement
+• Setup: Brief context or problem statement
+• Main content: 2-3 key points with examples
+• Conclusion: Memorable takeaway or call-to-action`;
+  } else if (targetWords < 800) {
+    return `Structure for this ${durationStr} video:
+• Hook (first 5-10 seconds): Compelling opening that promises value
+• Introduction: Set up what the viewer will learn/experience
+• Section 1: First major point with supporting details
+• Section 2: Second major point with examples
+• Section 3: Third major point or deeper dive
+• Climax: The "aha" moment or key revelation
+• Conclusion: Summarize value and call-to-action`;
+  } else {
+    const chapters = Math.ceil(targetWords / 350);
+    return `Structure for this ${durationStr} long-form video (aim for ${chapters} distinct sections):
+• Hook (first 10 seconds): Powerful opening that promises transformation
+• Introduction: Preview the journey and set expectations
+• ${chapters} Main Sections: Each with its own mini-arc:
+  - Each section should have a clear focus
+  - Include transitions between sections
+  - Use varied pacing to maintain interest
+  - Build toward the overall narrative
+• Climax: Major revelation or turning point
+• Resolution: Tie everything together
+• Call-to-action: Clear next step for the viewer
+
+IMPORTANT: This is a long video. Take your time to fully develop each section. Do NOT rush or skip content. The viewer expects substantial value for the duration.`;
+  }
+}
+
 async function generateScript(
   supabase: SupabaseClient,
   logger: EdgeLogger,
@@ -258,34 +319,83 @@ async function generateScript(
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
   
-  // Calculate tokens needed: ~1.3 tokens per word, plus 20% buffer
+  // Calculate tokens needed: ~1.3 tokens per word, plus 30% buffer for longer scripts
   // Clamp between 1024 (minimum) and 16000 (Claude's practical limit)
-  const estimatedTokens = Math.ceil(targetWords * 1.3 * 1.2);
+  const bufferMultiplier = targetWords > 500 ? 1.4 : 1.25;
+  const estimatedTokens = Math.ceil(targetWords * 1.3 * bufferMultiplier);
   const maxTokens = Math.min(Math.max(estimatedTokens, 1024), 16000);
+
+  // System prompt for consistent quality
+  const systemPrompt = `You are an expert scriptwriter for short-form and long-form video content. You write engaging, well-paced narration scripts that captivate audiences from start to finish.
+
+Your scripts are:
+- Conversational and natural when read aloud
+- Properly paced for the target duration (approximately 2.5 words per second of audio)
+- Structured with clear narrative arcs appropriate to the length
+- Free of stage directions, timestamps, or technical notes
+- Written as pure narration text only - just the words that will be spoken
+
+You always hit the target word count because you understand that the video duration is fixed. If a topic seems exhausted, you go deeper with examples, elaboration, and compelling details rather than ending early.`;
+
+  const styleGuidance = getStyleGuidance(style);
+  const structureGuidance = getStructureGuidance(targetWords, duration);
+
+  const userPrompt = `Write a video script about: ${topic}
+
+## Specifications
+- Duration: ${duration} seconds
+- Style: ${style}
+- Target Length: ${targetWords} words (CRITICAL: Your script MUST be approximately this length)
+
+## Style Guidance
+${styleGuidance}
+
+## Structure
+${structureGuidance}
+
+## Critical Requirements
+1. LENGTH: Your script MUST be approximately ${targetWords} words. This is non-negotiable.
+   - This is a ${Math.floor(duration / 60)} minute ${duration % 60} second video
+   - Do NOT cut the script short under any circumstances
+   - If the main topic feels covered, elaborate with examples, stories, or deeper insights
+   - Count your words mentally as you write
+
+2. FORMAT: Write ONLY the narration text
+   - No stage directions like [pause] or (dramatic music)
+   - No timestamps or section headers
+   - No speaker labels
+   - Just the words that will be spoken aloud
+
+3. QUALITY: Every sentence must earn its place
+   - Hook the viewer in the first line
+   - Maintain engagement throughout
+   - End memorably
+
+Begin the script now:`;
 
   const requestPayload = {
     model: 'claude-sonnet-4-5',
     max_tokens: maxTokens,
+    system: systemPrompt,
     messages: [{
       role: 'user',
-      content: `Write a ${duration}-second video script about: ${topic}
-
-Style: ${style}
-Target: ~${targetWords} words
-
-Requirements:
-- Engaging hook in first 3 seconds
-- Clear, conversational tone
-- No fluff, straight to value
-- End with CTA or thought-provoking question
-- Format: Just narration text, no stage directions
-
-Script:`
+      content: userPrompt
     }]
   };
 
   const endpoint = `${API_ENDPOINTS.ANTHROPIC.fullUrl}/messages`;
   const requestSentAt = new Date();
+
+  logger.info('Generating script with enhanced prompt', { 
+    userId, 
+    metadata: { 
+      jobId: videoJobId, 
+      targetWords, 
+      duration, 
+      style,
+      maxTokens 
+    } 
+  });
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -310,18 +420,29 @@ Script:`
       endpoint,
       httpMethod: 'POST',
       stepName: 'generate_script',
-      requestPayload,
+      requestPayload: {
+        model: requestPayload.model,
+        max_tokens: requestPayload.max_tokens,
+        // Don't log full prompts, just metadata
+        prompt_length: userPrompt.length,
+        system_prompt_length: systemPrompt.length
+      },
       additionalMetadata: {
         topic,
         duration,
         style,
-        target_words: targetWords
+        target_words: targetWords,
+        style_guidance: style.toLowerCase()
       }
     },
     requestSentAt,
     {
       statusCode: response.status,
-      payload: data,
+      payload: data ? { 
+        content_length: data.content?.[0]?.text?.length,
+        stop_reason: data.stop_reason,
+        usage: data.usage
+      } : null,
       isError: !response.ok,
       errorMessage: response.ok ? undefined : `Anthropic returned ${response.status}`
     }
@@ -332,7 +453,20 @@ Script:`
     throw new Error(`Claude API error: ${error}`);
   }
 
-  return data.content[0].text.trim();
+  const generatedScript = data.content[0].text.trim();
+  const actualWordCount = generatedScript.split(/\s+/).length;
+  
+  logger.info('Script generated', { 
+    userId, 
+    metadata: { 
+      jobId: videoJobId, 
+      targetWords, 
+      actualWords: actualWordCount,
+      wordDifference: actualWordCount - targetWords
+    } 
+  });
+
+  return generatedScript;
 }
 
 function extractSearchTerms(topic: string): string {

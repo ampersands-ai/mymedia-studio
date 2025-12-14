@@ -30,14 +30,17 @@ export const SuccessConfetti = ({
       // Mark as shown for this session
       sessionStorage.setItem(SESSION_KEY, 'true');
       setIsVisible(true);
-      fireCelebration();
+      const cleanupConfetti = fireCelebration();
       
       const timer = setTimeout(() => {
         setIsVisible(false);
         onComplete?.();
       }, 3000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        cleanupConfetti();
+      };
     }
     return undefined;
   }, [trigger, hasShownThisSession, onComplete, fireCelebration]);

@@ -165,7 +165,7 @@ export const useOnboarding = () => {
 
       const { error } = await supabase
         .from('user_onboarding_progress')
-        .update({ is_complete: true })
+        .update({ is_complete: true, bonus_awarded: true })
         .eq('user_id', user.id);
 
       if (error) throw error;

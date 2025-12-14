@@ -42,9 +42,25 @@ export const OutputGrid = ({
     return (
       <div className="space-y-3">
         <div 
-          className="relative bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors"
+          className="relative bg-background rounded-lg overflow-hidden border cursor-pointer hover:border-primary transition-colors group"
           onClick={() => onSelectOutput(0)}
         >
+          {/* Download button for single output */}
+          <Button
+            variant="secondary"
+            size="icon"
+            className={cn(
+              "absolute top-2 left-2 z-10 h-10 w-10 min-h-[44px] min-w-[44px] transition-opacity",
+              isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadSingleOutput(outputs[0].storage_path, outputs[0].output_index, contentType, onDownloadSuccess);
+            }}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          
           <OptimizedGenerationPreview
             storagePath={outputs[0].storage_path}
             contentType={contentType}

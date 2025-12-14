@@ -249,7 +249,22 @@ async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: 
 // Style-specific writing guidance
 function getStyleGuidance(style: string): string {
   const styleGuides: Record<string, string> = {
+    'hyper-realistic': "Write with precise, grounded descriptions. Focus on authentic details and realistic scenarios. Use language that feels true-to-life and immersive.",
+    cinematic: "Use dramatic, sweeping language. Build scenes with strong visual imagery. Include moments of tension and release. Write as if directing a blockbuster film.",
+    animated: "Keep energy high and fun. Use playful, expressive language. Include moments of wonder and whimsy. Appeal to imagination and creativity.",
+    cartoon: "Be lighthearted and energetic. Use exaggerated descriptions and fun language. Keep the tone playful and accessible to all ages.",
+    natural: "Write with authentic, grounded prose. Focus on real-world beauty and everyday wonder. Use organic, flowing language that feels genuine.",
+    sketch: "Use artistic, expressive language. Focus on form, line, and texture. Create atmosphere through careful word choice and visual metaphors.",
     horror: "Build tension gradually. Use short, punchy sentences during scary moments. Include sensory details that create unease. End with a lingering sense of dread or an unexpected twist.",
+    vintage: "Write with a nostalgic, classic feel. Reference timeless themes and golden-era aesthetics. Use elegant, measured pacing that evokes old Hollywood charm.",
+    cyberpunk: "Embrace technological themes and urban dystopia. Use sharp, punchy language with digital references. Explore human-technology relationships in neon-lit settings.",
+    fantasy: "Create wonder and magic through vivid descriptions. Build rich, imaginative worlds. Include mythical elements and epic moments that transport viewers.",
+    noir: "Write with a brooding, mysterious tone. Use stark contrasts and moral ambiguity. Include atmospheric, shadowy descriptions with a detective-story feel.",
+    anime: "Use expressive, dynamic language. Include dramatic moments and emotional peaks. Embrace bold, larger-than-life storytelling with vibrant energy.",
+    watercolor: "Write with soft, flowing prose. Use gentle transitions and artistic descriptions. Create a dreamy, artistic atmosphere with delicate imagery.",
+    'pop-art': "Use bold, punchy language. Include pop culture references and vibrant energy. Keep things eye-catching with colorful, impactful descriptions.",
+    minimalist: "Use clean, concise language. Focus on essential elements only. Let simplicity create impact through careful, deliberate word choice.",
+    surreal: "Embrace the unexpected and dreamlike. Blend reality with imagination. Use abstract concepts and surprising imagery that defies logic.",
     educational: "Start with a hook question or surprising fact. Break complex topics into digestible chunks. Use analogies and real-world examples. End with a memorable takeaway that reinforces the main lesson.",
     documentary: "Present facts objectively while maintaining engagement. Include specific details, dates, or statistics where relevant. Build toward a meaningful conclusion that gives perspective.",
     motivational: "Open with relatability - acknowledge the struggle. Build through challenges and insights. Use powerful, rhythmic language. End with an inspiring call to action.",

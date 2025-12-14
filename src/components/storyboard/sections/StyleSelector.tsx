@@ -11,6 +11,16 @@ import animatedImg from '@/assets/styles/animated.jpg';
 import cartoonImg from '@/assets/styles/cartoon.jpg';
 import naturalImg from '@/assets/styles/natural.jpg';
 import sketchImg from '@/assets/styles/sketch.jpg';
+import horrorImg from '@/assets/styles/horror.jpg';
+import vintageImg from '@/assets/styles/vintage.jpg';
+import cyberpunkImg from '@/assets/styles/cyberpunk.jpg';
+import fantasyImg from '@/assets/styles/fantasy.jpg';
+import noirImg from '@/assets/styles/noir.jpg';
+import animeImg from '@/assets/styles/anime.jpg';
+import watercolorImg from '@/assets/styles/watercolor.jpg';
+import popArtImg from '@/assets/styles/pop-art.jpg';
+import minimalistImg from '@/assets/styles/minimalist.jpg';
+import surrealImg from '@/assets/styles/surreal.jpg';
 
 const STYLES = [
   { 
@@ -54,6 +64,76 @@ const STYLES = [
     emoji: '✏️',
     image: sketchImg,
     description: 'Hand-drawn, artistic pencil sketch'
+  },
+  { 
+    value: 'horror', 
+    label: 'Horror', 
+    emoji: '👻',
+    image: horrorImg,
+    description: 'Dark, eerie, atmospheric visuals'
+  },
+  { 
+    value: 'vintage', 
+    label: 'Vintage', 
+    emoji: '📽️',
+    image: vintageImg,
+    description: 'Classic retro film aesthetic'
+  },
+  { 
+    value: 'cyberpunk', 
+    label: 'Cyberpunk', 
+    emoji: '🌃',
+    image: cyberpunkImg,
+    description: 'Neon-lit futuristic cityscape'
+  },
+  { 
+    value: 'fantasy', 
+    label: 'Fantasy', 
+    emoji: '🧙',
+    image: fantasyImg,
+    description: 'Magical, ethereal world visuals'
+  },
+  { 
+    value: 'noir', 
+    label: 'Noir', 
+    emoji: '🎩',
+    image: noirImg,
+    description: 'Black & white, dramatic shadows'
+  },
+  { 
+    value: 'anime', 
+    label: 'Anime', 
+    emoji: '🎌',
+    image: animeImg,
+    description: 'Japanese animation style'
+  },
+  { 
+    value: 'watercolor', 
+    label: 'Watercolor', 
+    emoji: '🖌️',
+    image: watercolorImg,
+    description: 'Soft, painted artistic look'
+  },
+  { 
+    value: 'pop-art', 
+    label: 'Pop Art', 
+    emoji: '💥',
+    image: popArtImg,
+    description: 'Bold colors, comic-book inspired'
+  },
+  { 
+    value: 'minimalist', 
+    label: 'Minimalist', 
+    emoji: '⬜',
+    image: minimalistImg,
+    description: 'Clean, simple, modern aesthetic'
+  },
+  { 
+    value: 'surreal', 
+    label: 'Surreal', 
+    emoji: '🌀',
+    image: surrealImg,
+    description: 'Dreamlike, abstract visuals'
   },
 ];
 
@@ -113,7 +193,7 @@ export function StyleSelector({ style, onStyleChange, disabled }: StyleSelectorP
           </ScrollArea>
 
           {/* Desktop Card Grid */}
-          <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
+          <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[calc(90vh-140px)] overflow-y-auto px-2 py-1">
             {STYLES.map((styleOption) => (
               <div
                 key={styleOption.value}

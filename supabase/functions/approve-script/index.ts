@@ -80,12 +80,13 @@ async function logApiCall(
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  maxRetries = 3
+  maxRetries = 3,
+  timeoutMs = 120000 // 120s timeout for voice generation (long scripts)
 ): Promise<Response> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
       const response = await fetch(url, {
         ...options,
@@ -97,8 +98,7 @@ async function fetchWithRetry(
       // Retry on 429 or 5xx
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
-        const delay = Math.pow(2, attempt) * 1000; // 0s, 1s, 2s
-          // Note: Cannot use logger here as it's not in scope
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -107,11 +107,10 @@ async function fetchWithRetry(
       return response;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timeout after 30 seconds');
+        throw new Error(`Request timeout after ${timeoutMs / 1000} seconds`);
       }
       if (attempt < maxRetries - 1) {
         const delay = Math.pow(2, attempt) * 1000;
-        // Note: Cannot use logger here as it's not in scope
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -172,7 +171,8 @@ Deno.serve(async (req) => {
       throw new Error('Job not found or access denied');
     }
 
-    const allowedStatuses = ['awaiting_script_approval', 'awaiting_voice_approval'];
+    // Allow retry if job is stuck in generating_voice (e.g., previous timeout)
+    const allowedStatuses = ['awaiting_script_approval', 'awaiting_voice_approval', 'generating_voice'];
     if (!allowedStatuses.includes(job.status)) {
       throw new Error(
         `Job is in ${job.status} status, expected one of: ${allowedStatuses.join(', ')}`

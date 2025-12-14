@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
+    sourcemap: false, // Disable source maps in production for security
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -76,34 +77,31 @@ export default defineConfig(({ mode }) => ({
           'console.trace',
         ],
       },
-      mangle: {
-        // Don't mangle event handler names for debugging
-        reserved: ['onClick', 'onSurpriseMe', 'onGenerate', 'handleClick']
-      }
     },
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
-          'query-vendor': ['@tanstack/react-query'],
-          'ui-vendor': ['lucide-react'],
-          'carousel': ['swiper', 'swiper/react', 'swiper/modules'],
-          'embla': ['embla-carousel-react', 'embla-carousel-autoplay'],
-          'radix-dialog': ['@radix-ui/react-dialog'],
-          'radix-dropdown': ['@radix-ui/react-dropdown-menu'],
-          'radix-select': ['@radix-ui/react-select'],
-          'radix-tabs': ['@radix-ui/react-tabs'],
-          'radix-accordion': ['@radix-ui/react-accordion'],
-          'radix-toast': ['@radix-ui/react-toast'],
-          'admin-vendor': [
+          // Anonymized chunk names for production security
+          'v0': ['react', 'react-dom', 'react-router-dom'],
+          'v1': ['@supabase/supabase-js'],
+          'v2': ['@tanstack/react-query'],
+          'v3': ['lucide-react'],
+          'v4': ['swiper', 'swiper/react', 'swiper/modules'],
+          'v5': ['embla-carousel-react', 'embla-carousel-autoplay'],
+          'v6': ['@radix-ui/react-dialog'],
+          'v7': ['@radix-ui/react-dropdown-menu'],
+          'v8': ['@radix-ui/react-select'],
+          'v9': ['@radix-ui/react-tabs'],
+          'v10': ['@radix-ui/react-accordion'],
+          'v11': ['@radix-ui/react-toast'],
+          'v12': [
             '@radix-ui/react-slider',
             '@radix-ui/react-popover',
           ],
         },
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+        chunkFileNames: 'assets/js/[hash].js',
+        entryFileNames: 'assets/js/[hash].js',
+        assetFileNames: 'assets/[ext]/[hash].[ext]',
       },
     },
     chunkSizeWarningLimit: 1000,

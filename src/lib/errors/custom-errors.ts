@@ -220,7 +220,32 @@ export function getUserErrorMessage(error: unknown): string {
   }
 
   if (error instanceof Error) {
-    // Don't expose technical error details to users
+    // Check if message appears to be technical (not user-friendly)
+    const technicalPatterns = [
+      /^TypeError:/i,
+      /^ReferenceError:/i,
+      /^SyntaxError:/i,
+      /^RangeError:/i,
+      /undefined is not/i,
+      /cannot read propert/i,
+      /is not a function/i,
+      /is not defined/i,
+      /at \w+\.\w+\s*\(/,  // Stack trace patterns
+      /Object\.<anonymous>/,
+      /Module not found/i,
+      /ENOENT/i,
+      /ECONNREFUSED/i,
+    ];
+    
+    const isTechnical = technicalPatterns.some(pattern => 
+      pattern.test(error.message)
+    );
+    
+    // Pass through user-friendly messages, mask technical ones
+    if (!isTechnical && error.message) {
+      return error.message;
+    }
+    
     return 'An unexpected error occurred. Please try again.';
   }
 

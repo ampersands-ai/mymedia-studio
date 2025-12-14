@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,7 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ import { logger } from "@/lib/logger";
 export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: number }) => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
+  const { isFeatureEnabled, isFeatureComingSoon } = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -50,6 +52,53 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   const isActive = (path: string) => location.pathname === path;
   const isDashboard = location.pathname.startsWith("/dashboard");
 
+  const renderFeatureButton = (
+    path: string,
+    label: string,
+    icon: React.ReactNode,
+    featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard'
+  ) => {
+    const enabled = isFeatureEnabled(featureId);
+    const comingSoon = isFeatureComingSoon(featureId);
+
+    if (!enabled) return null;
+
+    if (comingSoon) {
+      return (
+        <button
+          key={path}
+          disabled
+          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-muted-foreground"
+        >
+          <div className="flex items-center gap-3">
+            {icon}
+            <span>{label}</span>
+          </div>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            Soon
+          </span>
+        </button>
+      );
+    }
+
+    return (
+      <button
+        key={path}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
+          isActive(path) 
+            ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+            : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
+        )}
+        onClick={() => handleNavigation(path)}
+      >
+        {icon}
+        <span>{label}</span>
+      </button>
+    );
+  };
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -69,31 +118,19 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
               <>
                 <div className="text-xs font-bold text-foreground/60 mb-2 px-2">DASHBOARD</div>
                 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                    isActive("/dashboard/custom-creation") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/custom-creation")}
-                >
-                  <Sparkles className="h-5 w-5" />
-                  <span>Custom Creation</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/custom-creation",
+                  "Custom Creation",
+                  <Sparkles className="h-5 w-5" />,
+                  "custom_creation"
+                )}
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                    isActive("/dashboard/templates") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/templates")}
-                >
-                  <Layout className="h-5 w-5" />
-                  <span>Templates</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/templates",
+                  "Templates",
+                  <Layout className="h-5 w-5" />,
+                  "templates"
+                )}
 
                 <button
                   className={cn(
@@ -108,31 +145,19 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>My Creations</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/video-studio") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/video-studio")}
-                >
-                  <Video className="h-5 w-5" />
-                  <span>Faceless Videos</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/video-studio",
+                  "Faceless Videos",
+                  <Video className="h-5 w-5" />,
+                  "faceless_videos"
+                )}
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/storyboard") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/storyboard")}
-                >
-                  <span className="text-xl">🎬</span>
-                  <span>Storyboard</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/storyboard",
+                  "Storyboard",
+                  <span className="text-xl">🎬</span>,
+                  "storyboard"
+                )}
 
                 <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
                 
@@ -234,31 +259,19 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   </button>
                 )}
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/templates") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/templates")}
-                >
-                  <Layout className="h-5 w-5" />
-                  <span>Templates</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/templates",
+                  "Templates",
+                  <Layout className="h-5 w-5" />,
+                  "templates"
+                )}
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/custom-creation") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/custom-creation")}
-                >
-                  <Wand2 className="h-5 w-5" />
-                  <span>Custom Creation</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/custom-creation",
+                  "Custom Creation",
+                  <Wand2 className="h-5 w-5" />,
+                  "custom_creation"
+                )}
 
                 <button
                   className={cn(
@@ -273,31 +286,19 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>Pricing</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/storyboard") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/storyboard")}
-                >
-                  <span className="text-xl">🎬</span>
-                  <span>Storyboard</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/storyboard",
+                  "Storyboard",
+                  <span className="text-xl">🎬</span>,
+                  "storyboard"
+                )}
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/video-studio") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/video-studio")}
-                >
-                  <Video className="h-5 w-5" />
-                  <span>Faceless Videos</span>
-                </button>
+                {renderFeatureButton(
+                  "/dashboard/video-studio",
+                  "Faceless Videos",
+                  <Video className="h-5 w-5" />,
+                  "faceless_videos"
+                )}
 
                 <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
                 
@@ -387,24 +388,18 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     <span>Admin Panel</span>
                   </button>
                 )}
+
+                <button
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
               </>
             )}
           </div>
         </ScrollArea>
-
-        {/* Sign Out - Fixed at bottom */}
-        {user && (
-          <div className="p-6 pt-4 border-t mt-auto">
-            <Button
-              variant="outline"
-              className="w-full justify-start h-12 text-base"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-5 w-5 mr-3" />
-              Sign Out
-            </Button>
-          </div>
-        )}
       </SheetContent>
     </Sheet>
   );

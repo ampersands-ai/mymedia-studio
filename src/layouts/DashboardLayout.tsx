@@ -1,7 +1,8 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Clock } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
@@ -15,6 +16,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
  * DashboardLayout - Layout component for authenticated dashboard pages.
@@ -24,12 +31,65 @@ export const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: tokenData } = useUserTokens();
+  const { isFeatureEnabled, isFeatureComingSoon } = useFeatureFlags();
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
+  };
+
+  const renderNavButton = (
+    path: string,
+    label: string,
+    icon: React.ReactNode,
+    featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard'
+  ) => {
+    const enabled = isFeatureEnabled(featureId);
+    const comingSoon = isFeatureComingSoon(featureId);
+
+    if (!enabled) return null;
+
+    if (comingSoon) {
+      return (
+        <TooltipProvider key={path}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                disabled
+                className="text-base px-6 py-5 rounded-full opacity-50 cursor-not-allowed"
+              >
+                {icon}
+                <span className="mr-1">{label}</span>
+                <Clock className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Coming soon</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+      <Link to={path} key={path}>
+        <Button
+          variant={isActive(path) ? "default" : "ghost"}
+          className={cn(
+            "text-base px-6 py-5 rounded-full",
+            isActive(path) 
+              ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+              : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+          )}
+        >
+          {icon}
+          {label}
+        </Button>
+      </Link>
+    );
   };
 
   return (
@@ -49,34 +109,18 @@ export const DashboardLayout = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-2">
-              <Link to="/dashboard/templates">
-                <Button
-                  variant={isActive("/dashboard/templates") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/templates") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Templates
-                </Button>
-              </Link>
-              <Link to="/dashboard/custom-creation">
-                <Button
-                  variant={isActive("/dashboard/custom-creation") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/custom-creation") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Custom Creation
-                </Button>
-              </Link>
+              {renderNavButton(
+                "/dashboard/templates",
+                "Templates",
+                <Sparkles className="h-5 w-5 mr-2" />,
+                "templates"
+              )}
+              {renderNavButton(
+                "/dashboard/custom-creation",
+                "Custom Creation",
+                <Sparkles className="h-5 w-5 mr-2" />,
+                "custom_creation"
+              )}
               <Link to="/dashboard/history">
                 <Button
                   variant={isActive("/dashboard/history") ? "default" : "ghost"}
@@ -91,34 +135,18 @@ export const DashboardLayout = () => {
                   My Creations
                 </Button>
               </Link>
-              <Link to="/dashboard/video-studio">
-                <Button
-                  variant={isActive("/dashboard/video-studio") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/video-studio") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <Video className="h-5 w-5 mr-2" />
-                  Faceless Videos
-                </Button>
-              </Link>
-              <Link to="/dashboard/storyboard">
-                <Button
-                  variant={isActive("/dashboard/storyboard") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/storyboard") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <span className="mr-2">🎬</span>
-                  Storyboard
-                </Button>
-              </Link>
+              {renderNavButton(
+                "/dashboard/video-studio",
+                "Faceless Videos",
+                <Video className="h-5 w-5 mr-2" />,
+                "faceless_videos"
+              )}
+              {renderNavButton(
+                "/dashboard/storyboard",
+                "Storyboard",
+                <span className="mr-2">🎬</span>,
+                "storyboard"
+              )}
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">

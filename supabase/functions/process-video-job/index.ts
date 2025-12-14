@@ -257,10 +257,15 @@ async function generateScript(
 ): Promise<string> {
   const wordsPerSecond = 2.5;
   const targetWords = Math.floor(duration * wordsPerSecond);
+  
+  // Calculate tokens needed: ~1.3 tokens per word, plus 20% buffer
+  // Clamp between 1024 (minimum) and 16000 (Claude's practical limit)
+  const estimatedTokens = Math.ceil(targetWords * 1.3 * 1.2);
+  const maxTokens = Math.min(Math.max(estimatedTokens, 1024), 16000);
 
   const requestPayload = {
     model: 'claude-sonnet-4-5',
-    max_tokens: 1024,
+    max_tokens: maxTokens,
     messages: [{
       role: 'user',
       content: `Write a ${duration}-second video script about: ${topic}

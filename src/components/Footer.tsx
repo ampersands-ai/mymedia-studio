@@ -1,18 +1,21 @@
 import { Link } from "react-router-dom";
-import { Twitter, Linkedin, Youtube, Instagram, Facebook } from "lucide-react";
+import { Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { logger } from "@/lib/logger";
+import { useState } from "react";
+import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 
 export const Footer = () => {
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState("");
+  const { subscribe, isLoading } = useNewsletterSubscribe();
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Integrate with email service (Mailchimp/ConvertKit/Loops)
-    logger.debug('Newsletter signup attempted', {
-      component: 'Footer',
-      operation: 'handleNewsletterSubmit'
-    });
+    const success = await subscribe(email, "footer");
+    if (success) {
+      setEmail("");
+    }
   };
 
   return (
@@ -197,10 +200,13 @@ export const Footer = () => {
                 type="email" 
                 placeholder="Enter your email" 
                 className="flex-1"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <Button type="submit" className="bg-primary hover:bg-primary/90">
-                Subscribe
+              <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isLoading ? "..." : "Subscribe"}
               </Button>
             </form>
           </div>

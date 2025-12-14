@@ -1,7 +1,8 @@
 import { AnimatedSection } from "./AnimatedSection";
 import { Link } from "react-router-dom";
-import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook } from "lucide-react";
+import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 
 const footerLinks = {
   product: [
@@ -39,12 +40,14 @@ const socialLinks = [
 
 export const ContactSection = () => {
   const [email, setEmail] = useState("");
+  const { subscribe, isLoading } = useNewsletterSubscribe();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle newsletter subscription
-    console.log("Subscribe:", email);
-    setEmail("");
+    const success = await subscribe(email, "homepage-footer");
+    if (success) {
+      setEmail("");
+    }
   };
 
   return (
@@ -228,9 +231,11 @@ export const ContactSection = () => {
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all whitespace-nowrap rounded-2xl"
+                  disabled={isLoading}
+                  className="px-6 py-3 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold text-sm uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all whitespace-nowrap rounded-2xl disabled:opacity-50 flex items-center gap-2"
                 >
-                  Subscribe
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {isLoading ? "Subscribing..." : "Subscribe"}
                 </button>
               </form>
             </div>

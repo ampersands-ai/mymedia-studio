@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -264,6 +264,9 @@ export function VideoCreator() {
             <DialogContent className="max-w-5xl max-h-[85vh] p-6">
               <DialogHeader className="pb-4">
                 <DialogTitle className="text-lg md:text-xl">Choose a Voice</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Browse and select a professional AI voice for your video
+                </DialogDescription>
               </DialogHeader>
               <VoiceSelector
                 selectedValue={voiceId}

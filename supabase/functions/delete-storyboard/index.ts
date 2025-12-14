@@ -6,18 +6,12 @@ import {
   validateRequest,
   createValidationErrorResponse 
 } from '../_shared/validation.ts';
-import { 
-  corsHeaders, 
-  handleOptionsRequest, 
-  createJsonResponse, 
-  createErrorResponse 
-} from '../_shared/cors-headers.ts';
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
   if (req.method === 'OPTIONS') {
-    return handleOptionsRequest();
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -38,7 +32,10 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       logger.error('Unauthorized access attempt');
-      return createErrorResponse('Unauthorized', 401);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const body = await req.json();
@@ -46,7 +43,7 @@ Deno.serve(async (req) => {
     // Validate request
     const validation = validateRequest(DeleteStoryboardSchema, body, logger, 'delete-storyboard');
     if (!validation.success) {
-      return createValidationErrorResponse(validation.formattedErrors, corsHeaders);
+      return createValidationErrorResponse(validation.formattedErrors, responseHeaders);
     }
     
     const { storyboardId } = validation.data;
@@ -68,7 +65,10 @@ Deno.serve(async (req) => {
       logger.error('Storyboard not found or unauthorized', verifyError, { 
         metadata: { storyboardId } 
       });
-      return createErrorResponse('Storyboard not found or unauthorized', 404);
+      return new Response(JSON.stringify({ error: 'Storyboard not found or unauthorized' }), {
+        status: 404,
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Delete all scenes first (foreign key constraint)
@@ -79,7 +79,10 @@ Deno.serve(async (req) => {
 
     if (scenesError) {
       logger.error('Error deleting scenes', scenesError instanceof Error ? scenesError : new Error(String(scenesError) || 'Database error'));
-      return createErrorResponse('Failed to delete storyboard scenes', 500);
+      return new Response(JSON.stringify({ error: 'Failed to delete storyboard scenes' }), {
+        status: 500,
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Delete the storyboard
@@ -90,7 +93,10 @@ Deno.serve(async (req) => {
 
     if (storyboardError) {
       logger.error('Error deleting storyboard', storyboardError instanceof Error ? storyboardError : new Error(String(storyboardError) || 'Database error'));
-      return createErrorResponse('Failed to delete storyboard', 500);
+      return new Response(JSON.stringify({ error: 'Failed to delete storyboard' }), {
+        status: 500,
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     logger.logDuration('delete-storyboard', startTime, { 
@@ -99,11 +105,16 @@ Deno.serve(async (req) => {
     });
     logger.info('Successfully deleted storyboard and scenes');
 
-    return createJsonResponse({ success: true });
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     const err = error as Error;
     logger.error('Delete storyboard failed', err);
-    return createErrorResponse(err.message, 500);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

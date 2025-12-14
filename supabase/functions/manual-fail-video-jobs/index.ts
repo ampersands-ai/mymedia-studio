@@ -6,19 +6,13 @@ import {
   validateRequest,
   createValidationErrorResponse 
 } from "../_shared/validation.ts";
-import {
-  handleOptionsRequest,
-  createJsonResponse,
-  createErrorResponse,
-  corsHeaders
-} from "../_shared/cors-headers.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
   if (req.method === 'OPTIONS') {
-    return handleOptionsRequest();
+    return handleCorsPreflight(req);
   }
 
   const requestId = crypto.randomUUID();
@@ -42,14 +36,17 @@ Deno.serve(async (req) => {
     );
 
     if (!validation.success) {
-      return createValidationErrorResponse(validation.formattedErrors, corsHeaders);
+      return createValidationErrorResponse(validation.formattedErrors, responseHeaders);
     }
 
     const { video_job_ids } = validation.data;
 
     if (!video_job_ids || video_job_ids.length === 0) {
       logger.warn('Invalid request: missing or invalid video_job_ids', { requestId });
-      return createErrorResponse('video_job_ids array is required', 400);
+      return new Response(JSON.stringify({ error: 'video_job_ids array is required' }), {
+        status: 400,
+        headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     logger.info('Starting manual video job failure', {
@@ -76,14 +73,19 @@ Deno.serve(async (req) => {
     });
     logger.logDuration('Manual video job failure', startTime, { requestId });
 
-    return createJsonResponse({
+    return new Response(JSON.stringify({
       success: true,
       failed_count: updatedJobs?.length || 0,
       jobs: updatedJobs
+    }), {
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     const err = error as Error;
     logger.error('Error in manual-fail-video-jobs', err, { requestId });
-    return createErrorResponse(err.message, 500);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

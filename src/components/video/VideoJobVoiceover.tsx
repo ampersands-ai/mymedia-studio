@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { VideoJob } from '@/types/video';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Slider } from '@/components/ui/slider';
-import { Loader2, AlertCircle, Volume2, XCircle, Edit, Play, Pause, RotateCcw, Eye, Coins } from 'lucide-react';
+import { Loader2, AlertCircle, Volume2, XCircle, Edit, Play, Pause, RotateCcw, Eye, Coins, Download } from 'lucide-react';
 import { useAudioUrl } from '@/hooks/media';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -178,6 +178,40 @@ export function VideoJobVoiceover({
     onRegenerate(editedScript);
   };
 
+  const handleDownloadAudio = useCallback(async () => {
+    if (!voiceoverSignedUrl) {
+      toast.error('Voiceover URL not ready');
+      return;
+    }
+    
+    try {
+      const response = await fetch(voiceoverSignedUrl);
+      if (!response.ok) throw new Error('Failed to fetch audio');
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${job.id}_voiceover.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      componentLogger.error('Failed to download audio', err as Error, { jobId: job.id } as any);
+      toast.error('Failed to download voiceover');
+    }
+  }, [voiceoverSignedUrl, job.id]);
+
+  const handleApproveClick = useCallback(() => {
+    // Pause audio if playing before starting render
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    }
+    onApprove();
+  }, [onApprove]);
+
   return (
     <div className="space-y-3 pt-2 border-t">
       <div className="flex items-center justify-between">
@@ -305,6 +339,17 @@ export function VideoJobVoiceover({
                 <RotateCcw className="w-4 h-4" />
               </Button>
 
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownloadAudio}
+                disabled={isLoadingVoiceUrl || !voiceoverSignedUrl}
+                className="shrink-0"
+                title="Download voiceover"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+
               <div className="flex-1 flex items-center gap-2">
                 <span className="text-xs font-mono tabular-nums shrink-0">
                   {formatTime(currentTime)}
@@ -384,7 +429,7 @@ export function VideoJobVoiceover({
             <Button
               size="sm"
               className="flex-1"
-              onClick={onApprove}
+              onClick={handleApproveClick}
               disabled={isApproving || isCancelling}
             >
               {isApproving ? (

@@ -349,13 +349,20 @@ Deno.serve(async (req) => {
     const audioBlob = await voiceResponse.blob();
     const audioBuffer = await audioBlob.arrayBuffer();
 
-    // Calculate actual audio duration based on script word count
-    const words = finalScript.split(' ').filter((w: string) => w.trim().length > 0);
-    const wordsPerSecond = 2.5;
-    const actualAudioDuration = words.length / wordsPerSecond;
-    logger.info('Audio duration calculated', {
+    // Calculate actual audio duration from MP3 file size
+    // ElevenLabs uses 128kbps MP3 by default: duration = (bytes * 8) / (bitrate)
+    const audioBytes = audioBuffer.byteLength;
+    const bitrate = 128000; // 128kbps in bits per second
+    const actualAudioDuration = Math.ceil((audioBytes * 8) / bitrate);
+    
+    logger.info('Audio duration extracted from MP3', {
       userId: user.id,
-      metadata: { jobId: job_id, duration: actualAudioDuration, wordCount: words.length }
+      metadata: { 
+        jobId: job_id, 
+        durationSeconds: actualAudioDuration,
+        fileSizeBytes: audioBytes,
+        calculationMethod: 'mp3_bitrate_128kbps'
+      }
     });
 
     // Upload voiceover to storage

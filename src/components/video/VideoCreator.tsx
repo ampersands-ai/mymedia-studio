@@ -13,7 +13,7 @@ import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useSavedCaptionPresets } from '@/hooks/useSavedCaptionPresets';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Coins, Sparkles, Volume2, Clock, ChevronDown, Save, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Volume2, Clock, ChevronDown, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceSelector } from '../generation/VoiceSelector';
 import { BackgroundMediaSelector, SelectedMedia } from './BackgroundMediaSelector';
@@ -889,22 +889,13 @@ export function VideoCreator() {
           </Alert>
         )}
 
-        <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-3 md:p-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Coins className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <span className="font-bold text-sm md:text-base">Cost: {Number(estimatedCost).toFixed(2)} credits</span>
-            </div>
-            <div className="text-xs md:text-sm text-muted-foreground">
-              Balance: {availableCredits.toFixed(2)} credits
-            </div>
-          </div>
-          {!canAfford && (
-            <p className="mt-2 text-xs md:text-sm text-destructive font-medium">
+        {!canAfford && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <p className="text-xs md:text-sm text-destructive font-medium">
               Insufficient credits. Reduce duration to {maxAffordableDuration}s or purchase more credits.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         <Button 
           onClick={handleStartGeneration} 

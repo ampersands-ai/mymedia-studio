@@ -219,29 +219,24 @@ export function VideoCreator() {
 
         <div className="space-y-2">
           <Label htmlFor="style" className="text-sm font-bold">
-            Video Style
+            Story Tone
           </Label>
           <Select value={style} onValueChange={setStyle} disabled={isDisabled}>
             <SelectTrigger id="style">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="modern">🎨 Modern - Clean & Professional</SelectItem>
-              <SelectItem value="tech">💻 Tech - Futuristic & Digital</SelectItem>
-              <SelectItem value="educational">📚 Educational - Learning Focused</SelectItem>
+              <SelectItem value="educational">📚 Educational - Informative & Clear</SelectItem>
+              <SelectItem value="storytelling">📖 Storytelling - Narrative & Compelling</SelectItem>
               <SelectItem value="dramatic">🎬 Dramatic - Cinematic & Bold</SelectItem>
               <SelectItem value="documentary">🎞️ Documentary - Objective & Engaging</SelectItem>
-              <SelectItem value="storytelling">📖 Storytelling - Narrative & Compelling</SelectItem>
-              <SelectItem value="horror">👻 Horror - Dark & Eerie</SelectItem>
-              <SelectItem value="vintage">📽️ Vintage - Classic Retro</SelectItem>
-              <SelectItem value="cyberpunk">🌃 Cyberpunk - Neon & Futuristic</SelectItem>
-              <SelectItem value="fantasy">🧙 Fantasy - Magical & Ethereal</SelectItem>
-              <SelectItem value="noir">🎩 Noir - Dramatic Shadows</SelectItem>
-              <SelectItem value="anime">🎌 Anime - Japanese Animation Style</SelectItem>
-              <SelectItem value="watercolor">🎨 Watercolor - Soft & Artistic</SelectItem>
-              <SelectItem value="pop-art">💥 Pop Art - Bold & Comic-Inspired</SelectItem>
-              <SelectItem value="minimalist">⬜ Minimalist - Clean & Simple</SelectItem>
-              <SelectItem value="surreal">🌀 Surreal - Dreamlike & Abstract</SelectItem>
+              <SelectItem value="horror">👻 Horror - Dark & Suspenseful</SelectItem>
+              <SelectItem value="tech">💻 Tech - Futuristic & Innovative</SelectItem>
+              <SelectItem value="fantasy">🧙 Fantasy - Magical & Mythical</SelectItem>
+              <SelectItem value="comedy">😄 Comedy - Humorous & Entertaining</SelectItem>
+              <SelectItem value="inspirational">💡 Inspirational - Motivating & Uplifting</SelectItem>
+              <SelectItem value="investigative">🔍 Investigative - Mystery & Discovery</SelectItem>
+              <SelectItem value="emotional">❤️ Emotional - Heartfelt & Moving</SelectItem>
             </SelectContent>
           </Select>
         </div>

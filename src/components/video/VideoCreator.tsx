@@ -46,9 +46,9 @@ export function VideoCreator() {
   const { availableCredits } = useUserCredits();
   const { presets, savePreset, deletePreset } = useSavedCaptionPresets();
 
-  // Calculate dynamic cost based on duration (0.5 credits per second)
-  const estimatedCost = duration * 0.5;
-  const maxAffordableDuration = Math.floor(availableCredits / 0.5);
+  // Calculate dynamic cost based on duration (0.3 credits per second)
+  const estimatedCost = duration * 0.3;
+  const maxAffordableDuration = Math.floor(availableCredits / 0.3);
 
   const handleSurpriseMe = async () => {
     setIsGeneratingTopic(true);
@@ -210,7 +210,7 @@ export function VideoCreator() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Approximate only: final length of the video to be determined by the audio time (1s = 0.5 credits)
+            Approximate only: final length of the video to be determined by the audio time (1s = 0.3 credits)
           </p>
         </div>
 

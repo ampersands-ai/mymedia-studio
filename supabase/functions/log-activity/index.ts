@@ -1,17 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-import {
-  handleOptionsRequest,
-  createJsonResponse,
-  createErrorResponse
-} from "../_shared/cors-headers.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
   if (req.method === 'OPTIONS') {
-    return handleOptionsRequest();
+    return handleCorsPreflight(req);
   }
 
   const startTime = Date.now();
@@ -68,11 +63,16 @@ Deno.serve(async (req) => {
 
     logger.logDuration('log_activity', startTime, { userId: userId || undefined, requestId });
 
-    return createJsonResponse({ success: true });
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     const err = error as Error;
     logger.error('Error in log-activity function', err, { requestId });
     
-    return createErrorResponse(err.message, 500);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, Image, Video, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -225,6 +225,9 @@ export function BackgroundMediaSelector({
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
+            <DialogDescription className="sr-only">
+              Search and select background media from Pixabay for your video
+            </DialogDescription>
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
               <span>Powered by</span>
               <a 

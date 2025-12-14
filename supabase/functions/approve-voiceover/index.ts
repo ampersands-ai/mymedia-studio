@@ -413,8 +413,8 @@ async function getBackgroundImages(
     throw new Error('Pixabay API key not configured');
   }
 
-  // Request 6 images from Pixabay
-  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&image_type=photo&orientation=${orientation}&per_page=6`;
+  // Request 30 images from Pixabay for variety with 3-5s clips
+  const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&image_type=photo&orientation=${orientation}&per_page=30`;
   const requestSentAt = new Date();
 
   const response = await fetch(endpoint);
@@ -577,19 +577,24 @@ async function getBackgroundVideos(
   const suitable = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
   const videosToUse = suitable.length >= 5 ? suitable : (orientationFiltered.length ? orientationFiltered : data.hits);
   
-  // Calculate how many clips we need (aim for 8-12 second clips)
-  const averageClipDuration = 10;
-  const numberOfClips = Math.min(5, Math.ceil(duration / averageClipDuration));
+  // Calculate how many clips we need (aim for 3-5 second clips, average 4s)
+  const averageClipDuration = 4;
+  const numberOfClips = Math.min(30, Math.ceil(duration / averageClipDuration));
 
   logger?.info("Selecting background videos for duration", {
-    metadata: { numberOfClips, duration }
+    metadata: { numberOfClips, duration, averageClipDuration }
   });
   
-  // Randomly select different videos (no duplicates)
+  // Randomly select different videos (allow wrapping for long videos)
   const selectedVideos: string[] = [];
   const usedIndices = new Set<number>();
   
-  for (let i = 0; i < numberOfClips && selectedVideos.length < videosToUse.length; i++) {
+  for (let i = 0; i < numberOfClips; i++) {
+    // Reset used indices if we've used all available videos (for long videos)
+    if (usedIndices.size >= videosToUse.length) {
+      usedIndices.clear();
+    }
+    
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * videosToUse.length);
@@ -603,7 +608,7 @@ async function getBackgroundVideos(
     }
   }
   
-  logger?.info("Background videos selected", { metadata: { videoCount: selectedVideos.length } });
+  logger?.info("Background videos selected", { metadata: { videoCount: selectedVideos.length, targetClips: numberOfClips } });
   return selectedVideos;
 }
 
@@ -745,36 +750,63 @@ async function assembleVideo(
   logger?.info("Using rich caption styling with custom font and alignment");
 
   // Track 2: Background media (bottom layer)
+  // Use 3-5 second clips for dynamic background changes
+  const getRandomClipDuration = () => 3 + Math.random() * 2; // 3-5 seconds
+  
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
-    const clipDuration = Math.ceil(assets.duration / assets.backgroundImageUrls.length);
-    const imageClips = assets.backgroundImageUrls.map((imageUrl, index) => ({
-      asset: {
-        type: 'image',
-        src: imageUrl
-      },
-      start: index * clipDuration,
-      length: Math.min(clipDuration, assets.duration - (index * clipDuration)),
-      fit: 'cover',
-      scale: 1.05,
-      ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
-    }));
+    const imageClips: Array<Record<string, unknown>> = [];
+    let currentTime = 0;
+    let imageIndex = 0;
+    
+    while (currentTime < assets.duration) {
+      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
+      const imageUrl = assets.backgroundImageUrls[imageIndex % assets.backgroundImageUrls.length];
+      
+      imageClips.push({
+        asset: {
+          type: 'image',
+          src: imageUrl
+        },
+        start: currentTime,
+        length: clipDuration,
+        fit: 'cover',
+        scale: 1.05,
+        ...(imageClips.length > 0 && { transition: { in: 'fade', out: 'fade' } })
+      });
+      
+      currentTime += clipDuration;
+      imageIndex++;
+    }
+    
     edit.timeline.tracks.push({ clips: imageClips });
-    logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length } });
+    logger?.info("Added background image clips with 3-5s duration", { metadata: { clipCount: imageClips.length, totalDuration: assets.duration } });
   } else {
-    const clipDuration = Math.ceil(assets.duration / assets.backgroundVideoUrls.length);
-    const videoClips = assets.backgroundVideoUrls.map((videoUrl, index) => ({
-      asset: {
-        type: 'video',
-        src: videoUrl
-      },
-      start: index * clipDuration,
-      length: Math.min(clipDuration, assets.duration - (index * clipDuration)),
-      fit: 'cover',
-      scale: 1.05,
-      ...(index > 0 && { transition: { in: 'fade', out: 'fade' } })
-    }));
+    const videoClips: Array<Record<string, unknown>> = [];
+    let currentTime = 0;
+    let videoIndex = 0;
+    
+    while (currentTime < assets.duration) {
+      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
+      const videoUrl = assets.backgroundVideoUrls[videoIndex % assets.backgroundVideoUrls.length];
+      
+      videoClips.push({
+        asset: {
+          type: 'video',
+          src: videoUrl
+        },
+        start: currentTime,
+        length: clipDuration,
+        fit: 'cover',
+        scale: 1.05,
+        ...(videoClips.length > 0 && { transition: { in: 'fade', out: 'fade' } })
+      });
+      
+      currentTime += clipDuration;
+      videoIndex++;
+    }
+    
     edit.timeline.tracks.push({ clips: videoClips });
-    logger?.info("Added background video clips", { metadata: { clipCount: videoClips.length } });
+    logger?.info("Added background video clips with 3-5s duration", { metadata: { clipCount: videoClips.length, totalDuration: assets.duration } });
   }
 
   // Debug: Log track order before submission

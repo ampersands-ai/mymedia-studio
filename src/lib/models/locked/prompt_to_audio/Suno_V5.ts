@@ -70,12 +70,13 @@ export const SCHEMA = Object.freeze({
       description:
         "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
       maxLength: 5000,
-      renderer: "textarea",
+      renderer: "prompt",
     },
     customMode: {
       type: "boolean",
       title: "Custom Mode",
-      default: false,
+      default: true,
+      showToUser: false,
       description: "Enable detailed control with style and title fields. Disable for simplified mode.",
     },
     instrumental: {

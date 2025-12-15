@@ -882,6 +882,12 @@ Deno.serve(async (req) => {
           // Will fall through to create new record
         } else {
           // Update the existing record
+          // IMPORTANT: merge existing settings to preserve linkage metadata (e.g., video_job_id)
+          const mergedSettings: Record<string, unknown> = {
+            ...(typeof existingGen.settings === 'object' && existingGen.settings !== null ? existingGen.settings as Record<string, unknown> : {}),
+            ...(generationSettings as Record<string, unknown>),
+          };
+
           const { data: updatedGen, error: updateError } = await supabase
             .from('generations')
             .update({
@@ -892,7 +898,7 @@ Deno.serve(async (req) => {
               original_prompt: originalPrompt,
               enhanced_prompt: enhance_prompt ? finalPrompt : null,
               enhancement_provider: usedEnhancementProvider,
-              settings: generationSettings,
+              settings: mergedSettings,
               tokens_used: tokenCost,
               actual_token_cost: tokenCost,
               status: 'pending',

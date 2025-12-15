@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -141,6 +141,17 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzur
   const [countryFilter, setCountryFilter] = useState<string>('United States');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup audio on unmount (fixes audio playing after dialog closes)
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingVoiceId(null);
+    };
+  }, []);
 
   // Fetch Azure voices
   const { data: azureVoices, isLoading: azureLoading } = useAzureVoices();

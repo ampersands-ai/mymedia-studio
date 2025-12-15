@@ -1,5 +1,20 @@
 import { CaptionStyle } from '@/types/video';
 
+export interface CaptionFont {
+  name: string;
+  family: string;
+  url: string | null;
+}
+
+export const CAPTION_FONTS: CaptionFont[] = [
+  { name: 'Space Grotesk Bold', family: 'Space Grotesk Bold', url: 'https://github.com/floriankarsten/space-grotesk/raw/master/fonts/SpaceGrotesk-Bold.ttf' },
+  { name: 'Montserrat Bold', family: 'Montserrat Bold', url: 'https://github.com/google/fonts/raw/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf' },
+  { name: 'Permanent Marker', family: 'Permanent Marker', url: 'https://github.com/google/fonts/raw/main/apache/permanentmarker/PermanentMarker-Regular.ttf' },
+  { name: 'Open Sans Bold', family: 'Open Sans Bold', url: 'https://github.com/google/fonts/raw/main/ofl/opensans/OpenSans%5Bwdth%2Cwght%5D.ttf' },
+  { name: 'Clear Sans', family: 'Clear Sans', url: null },
+  { name: 'Didact Gothic', family: 'Didact Gothic', url: null },
+];
+
 export const captionPresets: Record<string, CaptionStyle> = {
   modern: {
     position: 'bottom',

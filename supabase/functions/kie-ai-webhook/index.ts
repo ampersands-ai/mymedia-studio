@@ -579,6 +579,43 @@ Deno.serve(async (req) => {
         });
       }
 
+      // === CHECK IF THIS IS A FACELESS VIDEO VOICEOVER ===
+      // If generation.settings has video_job_id, update the video_jobs table
+      const generationSettings = generation.settings as Record<string, unknown> | null;
+      const videoJobId = generationSettings?.video_job_id as string | undefined;
+      if (videoJobId && storagePath) {
+        logger.info('Linking voiceover to video job', { 
+          metadata: { videoJobId, generationId: generation.id, storagePath } 
+        });
+        
+        // Get public URL for the voiceover
+        const voiceoverPublicUrl = publicUrl || `${supabaseUrl}/storage/v1/object/public/generated-content/${storagePath.split('/').pop()}`;
+        
+        // Calculate audio duration from file size (128kbps MP3)
+        const bitrate = 128000;
+        const actualAudioDuration = fileSize ? Math.ceil((fileSize * 8) / bitrate) : null;
+        
+        const { error: videoJobUpdateError } = await supabase
+          .from('video_jobs')
+          .update({
+            voiceover_url: voiceoverPublicUrl,
+            actual_audio_duration: actualAudioDuration,
+            status: 'awaiting_voice_approval',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', videoJobId);
+        
+        if (videoJobUpdateError) {
+          logger.error('Failed to update video job with voiceover', videoJobUpdateError instanceof Error ? videoJobUpdateError : undefined, {
+            metadata: { videoJobId, generationId: generation.id }
+          });
+        } else {
+          logger.info('Video job updated with voiceover', {
+            metadata: { videoJobId, voiceoverUrl: voiceoverPublicUrl, audioDuration: actualAudioDuration }
+          });
+        }
+      }
+
       // === AUDIT LOG ===
       await supabase.from('audit_logs').insert({
         user_id: generation.user_id,
@@ -592,6 +629,7 @@ Deno.serve(async (req) => {
           total_outputs: resultUrls.length,
           webhook_callback: true,
           workflow_execution_id: generation.workflow_execution_id || null,
+          video_job_id: videoJobId || null,
         }
       });
 

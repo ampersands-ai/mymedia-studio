@@ -252,18 +252,18 @@ export function VideoCreator() {
   };
 
   // Handle Regenerate Voiceover
-  const handleRegenerateVoiceover = async () => {
+  const handleRegenerateVoiceover = async (tier: 'standard' | 'pro') => {
     if (!state.jobId) return;
 
     setError(null);
-    setState((prev) => ({ ...prev, step: 'voiceover_generating' }));
+    setState((prev) => ({ ...prev, step: 'voiceover_generating', voiceoverTier: tier }));
 
     try {
       const { error } = await supabase.functions.invoke('approve-script', {
         body: {
           job_id: state.jobId,
           regenerate: true,
-          voiceover_tier: state.voiceoverTier,
+          voiceover_tier: tier,
         },
       });
 
@@ -448,7 +448,6 @@ export function VideoCreator() {
           {state.voiceoverUrl && (
             <VoiceoverReviewStep
               voiceoverUrl={state.voiceoverUrl}
-              voiceoverTier={state.voiceoverTier}
               onRegenerate={handleRegenerateVoiceover}
               onContinue={handleVoiceoverContinue}
               isRegenerating={state.step === 'voiceover_generating'}

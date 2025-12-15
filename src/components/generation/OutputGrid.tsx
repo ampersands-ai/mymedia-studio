@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { downloadSingleOutput } from "@/lib/download-utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -16,10 +16,7 @@ interface OutputGridProps {
   contentType: string;
   onSelectOutput: (index: number) => void;
   onDownloadAll?: () => void;
-  onGenerateVideo?: (outputIndex: number) => void;
-  generatingVideoIndex?: number | null;
   onDownloadSuccess?: () => void;
-  userTokensRemaining?: number;
 }
 
 export const OutputGrid = ({ 
@@ -27,16 +24,10 @@ export const OutputGrid = ({
   contentType, 
   onSelectOutput, 
   onDownloadAll,
-  onGenerateVideo,
-  generatingVideoIndex,
-  onDownloadSuccess,
-  userTokensRemaining
+  onDownloadSuccess
 }: OutputGridProps) => {
   const isMobile = useIsMobile();
   const isAudio = contentType === 'audio';
-  const MP4_TOKEN_COST = 1;
-  const hasInsufficientCredits = userTokensRemaining !== undefined && userTokensRemaining < MP4_TOKEN_COST;
-  const isButtonDisabled = (index: number) => generatingVideoIndex === index || hasInsufficientCredits;
   // Single output - show full size
   if (outputs.length === 1) {
     return (
@@ -68,41 +59,6 @@ export const OutputGrid = ({
           />
         </div>
         
-        {/* Generate Video button for single audio output */}
-        {isAudio && onGenerateVideo && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Button
-                    onClick={() => onGenerateVideo(0)}
-                    disabled={isButtonDisabled(0)}
-                    variant="outline"
-                    className="w-full"
-                    size="sm"
-                  >
-                    {generatingVideoIndex === 0 ? (
-                      <>
-                        <Download className="h-4 w-4 mr-2 animate-spin" />
-                        Generating Video...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        🎬 Generate Video
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              {hasInsufficientCredits && (
-                <TooltipContent>
-                  <p>You need {MP4_TOKEN_COST} credits to generate a video</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        )}
       </div>
     );
   }
@@ -177,41 +133,6 @@ export const OutputGrid = ({
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none" />
             </div>
 
-            {/* Generate Video button for each audio output */}
-            {isAudio && onGenerateVideo && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        onClick={() => onGenerateVideo(index)}
-                        disabled={isButtonDisabled(index)}
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                      >
-                        {generatingVideoIndex === index ? (
-                          <>
-                            <Download className="h-4 w-4 mr-2 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-4 w-4 mr-2" />
-                            🎬 Video
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {hasInsufficientCredits && (
-                    <TooltipContent>
-                      <p>You need {MP4_TOKEN_COST} credits to generate a video</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
         ))}
       </div>

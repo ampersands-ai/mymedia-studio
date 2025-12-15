@@ -2730,6 +2730,8 @@ export type Database = {
           user_id: string
           voice_id: string
           voice_name: string | null
+          voiceover_regeneration_count: number
+          voiceover_tier: string
           voiceover_url: string | null
         }
         Insert: {
@@ -2762,6 +2764,8 @@ export type Database = {
           user_id: string
           voice_id?: string
           voice_name?: string | null
+          voiceover_regeneration_count?: number
+          voiceover_tier?: string
           voiceover_url?: string | null
         }
         Update: {
@@ -2794,6 +2798,8 @@ export type Database = {
           user_id?: string
           voice_id?: string
           voice_name?: string | null
+          voiceover_regeneration_count?: number
+          voiceover_tier?: string
           voiceover_url?: string | null
         }
         Relationships: []

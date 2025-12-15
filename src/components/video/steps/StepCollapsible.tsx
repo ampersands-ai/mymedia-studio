@@ -32,7 +32,7 @@ export function StepCollapsible({
     if (isActive && stepRef.current) {
       stepRef.current.scrollIntoView({
         behavior: 'smooth',
-        block: 'start',
+        block: 'nearest',
         inline: 'nearest',
       });
     }

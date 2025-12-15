@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
   let job_id: string | undefined;
 
   try {
-    const { job_id: jobIdParam, edited_script } = await req.json();
+    const { job_id: jobIdParam, edited_script, voiceover_tier } = await req.json();
     job_id = jobIdParam;
 
     if (!job_id) {
@@ -281,14 +281,31 @@ Deno.serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY not configured');
     }
 
-    const requestPayload = {
+    // Determine model based on voiceover tier
+    // Standard: ElevenLabs Turbo V2.5 (fast) with English language
+    // Pro: ElevenLabs Multilingual V2 (higher quality, no language_code param)
+    const tier = voiceover_tier || 'standard';
+    const modelId = tier === 'pro' ? 'eleven_multilingual_v2' : 'eleven_turbo_v2_5';
+
+    logger.info('Voiceover configuration', {
+      userId: user.id,
+      metadata: { jobId: job_id, tier, modelId }
+    });
+
+    const requestPayload: Record<string, unknown> = {
       text: finalScript,
-      model_id: 'eleven_turbo_v2_5',
+      model_id: modelId,
       voice_settings: {
         stability: 0.5,
         similarity_boost: 0.75,
       },
     };
+
+    // Only add language_code for Turbo V2.5 (standard tier)
+    // Multilingual V2 (pro) does NOT support language_code parameter
+    if (tier === 'standard') {
+      requestPayload.language_code = 'en';
+    }
 
     const endpoint = `${API_ENDPOINTS.ELEVENLABS.fullUrl}/text-to-speech/${job.voice_id}`;
     const requestSentAt = new Date();

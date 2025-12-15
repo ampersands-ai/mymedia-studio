@@ -79,6 +79,18 @@ export function VoiceoverReviewStep({
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || duration === 0) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percent = clickX / rect.width;
+    const newTime = percent * duration;
+    
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
   const handleContinue = () => {
     // Pause audio when continuing
     if (audioRef.current) {
@@ -108,10 +120,13 @@ export function VoiceoverReviewStep({
           </Button>
 
           <div className="flex-1 space-y-1">
-            {/* Progress Bar */}
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
+            {/* Progress Bar - Clickable for seeking */}
+            <div 
+              className="h-2 bg-muted rounded-full overflow-hidden cursor-pointer"
+              onClick={handleSeek}
+            >
               <div
-                className="h-full bg-primary transition-all duration-200"
+                className="h-full bg-primary transition-all duration-200 pointer-events-none"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

@@ -210,7 +210,6 @@ export const SCHEMA = Object.freeze({
       step: 0.01,
       isAdvanced: true,
       description: "Style exaggeration (0-1). Higher = more expressive style.",
-      isAdvanced: true,
     },
     speed: {
       type: "number",

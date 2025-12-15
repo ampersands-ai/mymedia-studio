@@ -321,14 +321,9 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   const { error: functionError } = await supabase.functions.invoke("generate-content", {
     body: {
-      generation_id: generationId,
-      user_id: userId,
-      model_id: MODEL_CONFIG.modelId,
-      model_record_id: MODEL_CONFIG.recordId,
+      generationId: generationId,
       prompt: allInputs.prompt,
       custom_parameters: preparePayload(allInputs),
-      cost: cost,
-      use_api_key: MODEL_CONFIG.use_api_key,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
     },

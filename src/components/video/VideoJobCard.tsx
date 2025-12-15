@@ -167,41 +167,41 @@ export function VideoJobCard({ job, onPreview }: VideoJobCardProps) {
               {getStyleEmoji(job.style)} {job.topic}
             </h4>
             <div className="flex items-center gap-1.5 md:gap-2 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
-              <Tooltip>
+              <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <span className="flex items-center gap-1 cursor-help">
+                  <span className="flex items-center gap-1 cursor-help" onClick={(e) => e.preventDefault()}>
                     <Clock className="h-3 w-3 shrink-0" />
                     {formatDuration(job.duration)}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>Duration</TooltipContent>
+                <TooltipContent onPointerDownOutside={(e) => e.preventDefault()}>Duration</TooltipContent>
               </Tooltip>
               <span>•</span>
-              <Tooltip>
+              <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <span className="capitalize cursor-help">{job.style}</span>
+                  <span className="capitalize cursor-help" onClick={(e) => e.preventDefault()}>{job.style}</span>
                 </TooltipTrigger>
-                <TooltipContent>Style</TooltipContent>
+                <TooltipContent onPointerDownOutside={(e) => e.preventDefault()}>Style</TooltipContent>
               </Tooltip>
               {job.voice_name && (
                 <>
                   <span>•</span>
-                  <Tooltip>
+                  <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                      <span className="truncate cursor-help">🎙️ {job.voice_name}</span>
+                      <span className="truncate cursor-help" onClick={(e) => e.preventDefault()}>🎙️ {job.voice_name}</span>
                     </TooltipTrigger>
-                    <TooltipContent>Voice</TooltipContent>
+                    <TooltipContent onPointerDownOutside={(e) => e.preventDefault()}>Voice</TooltipContent>
                   </Tooltip>
                 </>
               )}
               {job.aspect_ratio && (
                 <>
                   <span>•</span>
-                  <Tooltip>
+                  <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                      <span className="cursor-help">📐 {job.aspect_ratio}</span>
+                      <span className="cursor-help" onClick={(e) => e.preventDefault()}>📐 {job.aspect_ratio}</span>
                     </TooltipTrigger>
-                    <TooltipContent>Aspect Ratio</TooltipContent>
+                    <TooltipContent onPointerDownOutside={(e) => e.preventDefault()}>Aspect Ratio</TooltipContent>
                   </Tooltip>
                 </>
               )}

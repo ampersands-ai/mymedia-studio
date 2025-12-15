@@ -4,8 +4,7 @@ import { Play, Pause, Download, RefreshCw, Loader2 } from 'lucide-react';
 
 interface VoiceoverReviewStepProps {
   voiceoverUrl: string;
-  voiceoverTier: 'standard' | 'pro';
-  onRegenerate: () => void;
+  onRegenerate: (tier: 'standard' | 'pro') => void;
   onContinue: () => void;
   isRegenerating: boolean;
   isDisabled: boolean;
@@ -14,7 +13,6 @@ interface VoiceoverReviewStepProps {
 
 export function VoiceoverReviewStep({
   voiceoverUrl,
-  voiceoverTier,
   onRegenerate,
   onContinue,
   isRegenerating,
@@ -28,9 +26,11 @@ export function VoiceoverReviewStep({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // Regeneration cost: 3 for standard, 6 for pro
-  const regenerateCost = voiceoverTier === 'pro' ? 6 : 3;
-  const canAffordRegenerate = availableCredits >= regenerateCost;
+  // Regeneration costs
+  const standardCost = 3;
+  const proCost = 6;
+  const canAffordStandard = availableCredits >= standardCost;
+  const canAffordPro = availableCredits >= proCost;
 
   useEffect(() => {
     const audio = new Audio(voiceoverUrl);
@@ -194,28 +194,42 @@ export function VoiceoverReviewStep({
         </div>
       </div>
 
-      {/* Regenerate Button */}
-      <Button
-        variant="outline"
-        onClick={onRegenerate}
-        disabled={isDisabled || isRegenerating || !canAffordRegenerate}
-        className="w-full min-h-[44px]"
-      >
-        {isRegenerating ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Regenerating...
-          </>
-        ) : (
-          <>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Regenerate Voiceover ({regenerateCost} credits)
-          </>
-        )}
-      </Button>
-      {!canAffordRegenerate && (
+      {/* Regenerate Buttons */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          onClick={() => onRegenerate('standard')}
+          disabled={isDisabled || isRegenerating || !canAffordStandard}
+          className="min-h-[44px]"
+        >
+          {isRegenerating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <RefreshCw className="mr-1.5 h-4 w-4" />
+              Standard ({standardCost})
+            </>
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => onRegenerate('pro')}
+          disabled={isDisabled || isRegenerating || !canAffordPro}
+          className="min-h-[44px]"
+        >
+          {isRegenerating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <RefreshCw className="mr-1.5 h-4 w-4" />
+              Pro ({proCost})
+            </>
+          )}
+        </Button>
+      </div>
+      {!canAffordStandard && (
         <p className="text-xs text-destructive text-center">
-          Insufficient credits to regenerate ({availableCredits} available)
+          Insufficient credits ({availableCredits} available)
         </p>
       )}
 

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Coins, Image as ImageIcon, ChevronDown, ChevronRight, Check } from "lucide-react";
+import { Coins, Image as ImageIcon, Music, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AIModel } from "@/hooks/useModels";
@@ -25,6 +25,14 @@ interface ModelFamilySelectorProps {
   selectedGroup: CreationGroup;
   isLoading: boolean;
 }
+
+// Helper to get appropriate icon based on content type
+const getOutputIcon = (contentType: string | undefined) => {
+  if (contentType === 'prompt_to_audio') {
+    return Music;
+  }
+  return ImageIcon;
+};
 
 export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
   models,
@@ -141,7 +149,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                   </div>
                   {currentModel.default_outputs && currentModel.default_outputs > 1 && (
                     <div className="flex items-center gap-0.5">
-                      <ImageIcon className="w-3 h-3" />
+                      {(() => { const Icon = getOutputIcon(currentModel.content_type); return <Icon className="w-3 h-3" />; })()}
                       <span>×{currentModel.default_outputs}</span>
                     </div>
                   )}
@@ -204,7 +212,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                               </div>
                               {stats.outputs && stats.outputs > 1 && (
                                 <div className="flex items-center gap-0.5">
-                                  <ImageIcon className="w-3 h-3" />
+                                  {(() => { const Icon = getOutputIcon(model.content_type); return <Icon className="w-3 h-3" />; })()}
                                   <span>×{stats.outputs}</span>
                                 </div>
                               )}
@@ -247,11 +255,11 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                                     <Coins className="w-3 h-3" />
                                     <span>{stats.cost}+</span>
                                   </div>
-                                  {stats.outputs && stats.outputs > 1 && (
-                                    <div className="flex items-center gap-0.5">
-                                      <ImageIcon className="w-3 h-3" />
-                                      <span>×{stats.outputs}</span>
-                                    </div>
+                                {stats.outputs && stats.outputs > 1 && (
+                                  <div className="flex items-center gap-0.5">
+                                    {(() => { const Icon = getOutputIcon(familyModels[0]?.content_type); return <Icon className="w-3 h-3" />; })()}
+                                    <span>×{stats.outputs}</span>
+                                  </div>
                                   )}
                                 </div>
                               )}
@@ -285,9 +293,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                                     <Coins className="w-3 h-3" />
                                     <span>{model.base_token_cost}</span>
                                   </div>
-                                  {model.default_outputs && model.default_outputs > 1 && (
+                                {model.default_outputs && model.default_outputs > 1 && (
                                     <div className="flex items-center gap-0.5">
-                                      <ImageIcon className="w-3 h-3" />
+                                      {(() => { const Icon = getOutputIcon(model.content_type); return <Icon className="w-3 h-3" />; })()}
                                       <span>×{model.default_outputs}</span>
                                     </div>
                                   )}
@@ -341,7 +349,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                     </div>
                     {currentModel.default_outputs && currentModel.default_outputs > 1 && (
                       <div className="flex items-center gap-0.5">
-                        <ImageIcon className="w-3 h-3" />
+                        {(() => { const Icon = getOutputIcon(currentModel.content_type); return <Icon className="w-3 h-3" />; })()}
                         <span>×{currentModel.default_outputs}</span>
                       </div>
                     )}
@@ -399,7 +407,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                           </div>
                           {stats.outputs && stats.outputs > 1 && (
                             <div className="flex items-center gap-0.5">
-                              <ImageIcon className="w-3 h-3" />
+                              {(() => { const Icon = getOutputIcon(model.content_type); return <Icon className="w-3 h-3" />; })()}
                               <span>×{stats.outputs}</span>
                             </div>
                           )}
@@ -438,7 +446,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                             </div>
                             {stats.outputs && stats.outputs > 1 && (
                               <div className="flex items-center gap-0.5">
-                                <ImageIcon className="w-3 h-3" />
+                                {(() => { const Icon = getOutputIcon(familyModels[0]?.content_type); return <Icon className="w-3 h-3" />; })()}
                                 <span>×{stats.outputs}</span>
                               </div>
                             )}
@@ -472,7 +480,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                               </div>
                               {model.default_outputs && model.default_outputs > 1 && (
                                 <div className="flex items-center gap-0.5">
-                                  <ImageIcon className="w-3 h-3" />
+                                  {(() => { const Icon = getOutputIcon(model.content_type); return <Icon className="w-3 h-3" />; })()}
                                   <span>×{model.default_outputs}</span>
                                 </div>
                               )}

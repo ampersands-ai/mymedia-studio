@@ -176,7 +176,7 @@ export const HeroSection = () => {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="bottom" 
-                    className="bg-black/90 backdrop-blur-md border-white/20 text-white"
+                    className="backdrop-blur-md border border-border"
                   >
                     <p className="text-sm">{model.description}</p>
                   </TooltipContent>

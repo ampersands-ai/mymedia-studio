@@ -144,10 +144,10 @@ export const SCHEMA = Object.freeze({
     language_code: {
       type: "string",
       title: "Language",
-      default: "",
-      enum: ["", ...LANGUAGE_CODES],
+      default: "auto",
+      enum: ["auto", ...LANGUAGE_CODES],
       enumLabels: {
-        "": "Auto-detect",
+        auto: "Auto-detect",
         en: "English",
         es: "Spanish",
         fr: "French",
@@ -315,8 +315,8 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   if (inputs.previous_text) payload.previous_text = inputs.previous_text;
   if (inputs.next_text) payload.next_text = inputs.next_text;
 
-  // Turbo v2.5 SUPPORTS language_code
-  if (inputs.language_code && inputs.language_code !== "") {
+  // Turbo v2.5 SUPPORTS language_code (skip "auto" - let API auto-detect)
+  if (inputs.language_code && inputs.language_code !== "auto" && inputs.language_code !== "") {
     payload.language_code = inputs.language_code;
   }
 

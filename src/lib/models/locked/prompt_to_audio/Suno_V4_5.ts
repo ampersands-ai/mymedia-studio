@@ -1,15 +1,15 @@
 /**
  * Suno Generation V4.5
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * AI Music Generation with or without lyrics
  * - Endpoint: /api/v1/generate (NOT /api/v1/jobs/createTask)
  * - Payload: FLAT structure
  * - Smarter prompts, faster generations
  * - Max 8 minutes per generation
  * - V4.5 limits: prompt 5000 chars, style 1000 chars
- * 
+ *
  * @locked
  * @model suno/music-v4-5
  * @provider kie.ai
@@ -34,7 +34,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
-  baseCreditCost: 15,
+  baseCreditCost: 6,
   estimatedTimeSeconds: 180,
   costMultipliers: {},
   apiEndpoint: "/api/v1/generate",
@@ -69,7 +69,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Prompt / Lyrics",
       default: "",
-      description: "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
+      description:
+        "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
       maxLength: 5000,
       renderer: "textarea",
     },
@@ -194,7 +195,10 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
   if (inputs.styleWeight !== undefined && ((inputs.styleWeight as number) < 0 || (inputs.styleWeight as number) > 1)) {
     return { valid: false, error: "Style weight must be between 0 and 1" };
   }
-  if (inputs.weirdnessConstraint !== undefined && ((inputs.weirdnessConstraint as number) < 0 || (inputs.weirdnessConstraint as number) > 1)) {
+  if (
+    inputs.weirdnessConstraint !== undefined &&
+    ((inputs.weirdnessConstraint as number) < 0 || (inputs.weirdnessConstraint as number) > 1)
+  ) {
     return { valid: false, error: "Weirdness constraint must be between 0 and 1" };
   }
   if (inputs.audioWeight !== undefined && ((inputs.audioWeight as number) < 0 || (inputs.audioWeight as number) > 1)) {
@@ -227,7 +231,8 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
 
   if (inputs.negativeTags) payload.negativeTags = inputs.negativeTags;
   if (inputs.styleWeight !== undefined && inputs.styleWeight !== 0.5) payload.styleWeight = inputs.styleWeight;
-  if (inputs.weirdnessConstraint !== undefined && inputs.weirdnessConstraint !== 0.5) payload.weirdnessConstraint = inputs.weirdnessConstraint;
+  if (inputs.weirdnessConstraint !== undefined && inputs.weirdnessConstraint !== 0.5)
+    payload.weirdnessConstraint = inputs.weirdnessConstraint;
   if (inputs.audioWeight !== undefined && inputs.audioWeight !== 0.5) payload.audioWeight = inputs.audioWeight;
 
   return payload;

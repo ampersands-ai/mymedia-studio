@@ -1,14 +1,14 @@
 /**
  * Suno Generation V5
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * AI Music Generation with or without lyrics
  * - Endpoint: /api/v1/generate (NOT /api/v1/jobs/createTask)
  * - Payload: FLAT structure
  * - Superior musical expression, faster generation
  * - V5 limits: prompt 5000 chars, style 1000 chars
- * 
+ *
  * @locked
  * @model suno/music-v5
  * @provider kie.ai
@@ -33,7 +33,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
-  baseCreditCost: 20,
+  baseCreditCost: 6,
   estimatedTimeSeconds: 90,
   costMultipliers: {},
   apiEndpoint: "/api/v1/generate",
@@ -67,7 +67,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Prompt / Lyrics",
       default: "",
-      description: "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
+      description:
+        "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
       maxLength: 5000,
       renderer: "textarea",
     },

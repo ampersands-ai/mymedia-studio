@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
         background_video_thumbnail: background_video_thumbnail || null,
         voiceover_tier: voiceover_tier || 'standard',
         status: VIDEO_JOB_STATUS.PENDING,
+        cost_tokens: costTokens,
       })
       .select()
       .single();

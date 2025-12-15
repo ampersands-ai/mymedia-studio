@@ -4,12 +4,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, Loader2, Video } from 'lucide-react';
+import { ChevronDown, Loader2, Video, Check } from 'lucide-react';
 import { BackgroundMediaSelector, SelectedMedia } from '../BackgroundMediaSelector';
-import { captionPresets, aspectRatioConfig, textEffectPresets } from '@/config/captionStyles';
+import { captionPresets, aspectRatioConfig, CAPTION_FONTS } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
+import { cn } from '@/lib/utils';
 
 interface RenderSetupStepProps {
   aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
@@ -40,18 +40,18 @@ export function RenderSetupStep({
 }: RenderSetupStepProps) {
   const [captionCustomizationOpen, setCaptionCustomizationOpen] = useState(false);
   const [presetName, setPresetName] = useState('modern');
-  const [textEffect, setTextEffect] = useState('none');
 
   const handlePresetChange = (value: string) => {
     setPresetName(value);
     onCaptionStyleChange(captionPresets[value]);
   };
 
-  const handleTextEffectChange = (value: string) => {
-    setTextEffect(value);
+  const handleFontChange = (fontFamily: string) => {
+    const font = CAPTION_FONTS.find(f => f.family === fontFamily);
     onCaptionStyleChange({
       ...captionStyle,
-      ...textEffectPresets[value],
+      fontFamily,
+      fontUrl: font?.url || undefined,
     });
   };
 
@@ -130,80 +130,85 @@ export function RenderSetupStep({
           </div>
         </div>
 
-        <CollapsibleContent className="space-y-3 pt-2">
-          {/* Preset selector */}
+        <CollapsibleContent className="space-y-4 pt-2">
+          {/* Visual Preset Grid */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Start with a Preset</Label>
-            <Select value={presetName} onValueChange={handlePresetChange} disabled={isDisabled}>
+            <Label className="text-xs text-muted-foreground">Select Style</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(captionPresets).map(([name, preset]) => (
+                <button
+                  key={name}
+                  onClick={() => handlePresetChange(name)}
+                  disabled={isDisabled}
+                  className={cn(
+                    "p-3 rounded-lg border-2 transition-all text-left relative",
+                    presetName === name 
+                      ? "border-primary bg-primary/10" 
+                      : "border-muted hover:border-primary/50",
+                    isDisabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {presetName === name && (
+                    <div className="absolute top-1.5 right-1.5">
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  )}
+                  {/* Mini preview */}
+                  <div 
+                    className="h-8 rounded flex items-center justify-center text-xs mb-1.5"
+                    style={{ 
+                      backgroundColor: preset.backgroundColor, 
+                      color: preset.textColor,
+                      opacity: preset.backgroundOpacity ?? 0.95,
+                    }}
+                  >
+                    Aa
+                  </div>
+                  <p className="text-xs capitalize text-center font-medium">{name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font Selector */}
+          <div className="space-y-2">
+            <Label className="text-xs">Font</Label>
+            <Select 
+              value={captionStyle.fontFamily || 'Space Grotesk Bold'} 
+              onValueChange={handleFontChange} 
+              disabled={isDisabled}
+            >
               <SelectTrigger className="min-h-[44px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="modern">Modern</SelectItem>
-                <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="bold">Bold</SelectItem>
-                <SelectItem value="elegant">Elegant</SelectItem>
+                {CAPTION_FONTS.map((font) => (
+                  <SelectItem key={font.family} value={font.family}>
+                    {font.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Text Effect Presets */}
+          {/* Text Size */}
           <div className="space-y-2">
-            <Label className="text-xs font-bold">✨ Text Effects</Label>
-            <Select value={textEffect} onValueChange={handleTextEffectChange} disabled={isDisabled}>
-              <SelectTrigger className="min-h-[44px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">🚫 No Effect</SelectItem>
-                <SelectItem value="classicShadow">🌑 Classic Shadow</SelectItem>
-                <SelectItem value="softShadow">☁️ Soft Shadow</SelectItem>
-                <SelectItem value="boldOutline">⚫ Bold Outline</SelectItem>
-                <SelectItem value="neonGlow">💚 Neon Glow</SelectItem>
-                <SelectItem value="dramaticGlow">💖 Dramatic Glow</SelectItem>
-                <SelectItem value="goldLuxury">✨ Gold Luxury</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Font Size */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs">Font Size</Label>
-              <Input
-                type="number"
-                min={30}
-                max={80}
-                step={1}
-                value={captionStyle.fontSize}
-                onChange={(e) =>
-                  onCaptionStyleChange({
-                    ...captionStyle,
-                    fontSize: Math.max(30, Math.min(80, Number(e.target.value))),
-                  })
-                }
-                disabled={isDisabled}
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">BG Opacity</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step={5}
-                value={Math.round((captionStyle.backgroundOpacity ?? 0.95) * 100)}
-                onChange={(e) =>
-                  onCaptionStyleChange({
-                    ...captionStyle,
-                    backgroundOpacity: Math.max(0, Math.min(100, Number(e.target.value))) / 100,
-                  })
-                }
-                disabled={isDisabled}
-                className="h-10"
-              />
-            </div>
+            <Label className="text-xs">Text Size</Label>
+            <Input
+              type="number"
+              min={30}
+              max={80}
+              step={1}
+              value={captionStyle.fontSize}
+              onChange={(e) =>
+                onCaptionStyleChange({
+                  ...captionStyle,
+                  fontSize: Math.max(30, Math.min(80, Number(e.target.value))),
+                })
+              }
+              disabled={isDisabled}
+              className="h-10"
+            />
           </div>
 
           {/* Text Color */}
@@ -262,24 +267,6 @@ export function RenderSetupStep({
                 />
               </PopoverContent>
             </Popover>
-          </div>
-
-          {/* Shadow Blur */}
-          <div className="space-y-2">
-            <Label className="text-xs">Shadow Blur: {captionStyle.shadowBlur ?? 0}px</Label>
-            <Slider
-              min={0}
-              max={20}
-              step={1}
-              value={[captionStyle.shadowBlur ?? 0]}
-              onValueChange={(value) =>
-                onCaptionStyleChange({
-                  ...captionStyle,
-                  shadowBlur: value[0],
-                })
-              }
-              disabled={isDisabled}
-            />
           </div>
         </CollapsibleContent>
       </Collapsible>

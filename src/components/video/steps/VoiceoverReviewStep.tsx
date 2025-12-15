@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Download, RefreshCw, Loader2 } from 'lucide-react';
+import { Play, Pause, Download, RefreshCw, Loader2, Coins } from 'lucide-react';
 
 interface VoiceoverReviewStepProps {
   voiceoverUrl: string;
@@ -205,12 +205,12 @@ export function VoiceoverReviewStep({
           disabled={isDisabled || isRegenerating || !canAffordStandard}
           className="min-h-[44px]"
         >
-          {isRegenerating ? (
+        {isRegenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <>
               <RefreshCw className="mr-1.5 h-4 w-4" />
-              Standard ({standardCost})
+              Standard (<Coins className="inline h-3 w-3 mx-0.5" />{standardCost})
             </>
           )}
         </Button>
@@ -225,7 +225,7 @@ export function VoiceoverReviewStep({
           ) : (
             <>
               <RefreshCw className="mr-1.5 h-4 w-4" />
-              Pro ({proCost})
+              Pro (<Coins className="inline h-3 w-3 mx-0.5" />{proCost})
             </>
           )}
         </Button>

@@ -136,7 +136,7 @@ export const SCHEMA = Object.freeze({
     voice: {
       type: "string",
       title: "Voice",
-      default: "Rachel",
+      default: "Brian",
       enum: VOICES,
       enumLabels: Object.fromEntries(VOICES.map((v) => [v, v])),
       description: "The voice to use for speech generation",

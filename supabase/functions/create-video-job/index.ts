@@ -45,7 +45,8 @@ Deno.serve(async (req) => {
       aspect_ratio = '4:5',
       caption_style,
       background_video_url,
-      background_video_thumbnail
+      background_video_thumbnail,
+      voiceover_tier = 'standard'
     } = await req.json();
 
     if (!topic || topic.trim().length < 5) {
@@ -128,6 +129,7 @@ Deno.serve(async (req) => {
         caption_style: caption_style || null,
         custom_background_video: background_video_url || null,
         background_video_thumbnail: background_video_thumbnail || null,
+        voiceover_tier: voiceover_tier || 'standard',
         status: VIDEO_JOB_STATUS.PENDING,
       })
       .select()

@@ -146,9 +146,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Language",
       default: "en",
-      enum: ["auto", ...LANGUAGE_CODES],
+      enum: [...LANGUAGE_CODES],
       enumLabels: {
-        auto: "Auto-detect",
         en: "English",
         es: "Spanish",
         fr: "French",

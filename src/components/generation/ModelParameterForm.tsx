@@ -52,7 +52,13 @@ export const ModelParameterForm = ({
       if (!schemaProp) return;
       const schema = schemaProp as JsonSchemaProperty;
       const val = currentValues[key];
+
+      const enumValues = Array.isArray(schema.enum) ? (schema.enum as readonly unknown[]) : null;
+      const isEnumValueValid = !enumValues || enumValues.includes(val as unknown);
+
       if ((val === "" || val === undefined || val === null) && schema.default !== undefined) {
+        rehydrated[key] = schema.default as ModelParameterValue;
+      } else if (!isEnumValueValid && schema.default !== undefined) {
         rehydrated[key] = schema.default as ModelParameterValue;
       } else {
         rehydrated[key] = val;

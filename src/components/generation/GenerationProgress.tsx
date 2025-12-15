@@ -69,8 +69,8 @@ export const GenerationProgress = ({
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>{elapsedTime.toFixed(1)}s</span>
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span className="tabular-nums min-w-[3.5rem] text-right">{elapsedTime.toFixed(1)}s</span>
           </div>
           {!isComplete && onViewHistory && (
             <Button

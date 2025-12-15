@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
@@ -304,19 +304,7 @@ export function VideoCreator() {
 
   return (
     <Card className="border-2 w-full overflow-hidden">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-xl sm:text-2xl font-black break-words">
-          CREATE FACELESS VIDEO
-          <span className="block text-sm font-medium text-muted-foreground mt-1">
-            Starting from 0.3 credits per second
-          </span>
-        </CardTitle>
-        <CardDescription className="text-sm">
-          Generate professional videos with AI in minutes
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-3 min-w-0 pb-6">
+      <CardContent className="space-y-3 min-w-0 py-6">
         {/* Error Display */}
         {error && (
           <Alert variant="destructive">

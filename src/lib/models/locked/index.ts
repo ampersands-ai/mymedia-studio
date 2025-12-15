@@ -94,10 +94,15 @@ import * as Wan22TurboNew_ImageToVideo from "./image_to_video/Wan_2_2_Turbo_I2V"
 import * as Wan25_ImageToVideo from "./image_to_video/Wan_2_5_I2V";
 import * as SeedanceV1ProFastRunware from "./image_to_video/Seedance_V1_0_Pro_Fast_runware";
 
-// Prompt to Audio Models (3)
+// Prompt to Audio Models (8)
 import * as ElevenLabsFast from "./prompt_to_audio/ElevenLabs_Fast";
 import * as ElevenLabsTTS from "./prompt_to_audio/ElevenLabs_TTS";
 import * as Suno from "./prompt_to_audio/Suno";
+import * as SunoV4 from "./prompt_to_audio/Suno_V4";
+import * as SunoV4_5 from "./prompt_to_audio/Suno_V4_5";
+import * as SunoV4_5_Plus from "./prompt_to_audio/Suno_V4_5_Plus";
+import * as SunoV4_5_All from "./prompt_to_audio/Suno_V4_5_All";
+import * as SunoV5 from "./prompt_to_audio/Suno_V5";
 
 // Prompt to Image Models (32)
 import * as ChatGPT4oImage_PromptToImage from "./prompt_to_image/ChatGPT_4o_Image";
@@ -259,11 +264,16 @@ export const MODEL_REGISTRY: Record<string, ModelModule> = {
  */
 export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO AUDIO MODELS (3 total)
+  // PROMPT TO AUDIO MODELS (8 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "379f8945-bd7f-48f3-a1bb-9d2e2413234c": ElevenLabsFast as ModelModule,                    // Eleven Labs Fast
   "45fc7e71-0174-48eb-998d-547e8d2476db": ElevenLabsTTS as ModelModule,                     // Eleven Labs TTS
   "5c544c90-9344-4acb-9129-0acb9a6a915a": Suno as ModelModule,                              // Suno
+  "6a7b8c9d-0e1f-2a3b-4c5d-5e6f7a8b9c0d": SunoV4 as ModelModule,                            // Suno V4
+  "7b8c9d0e-1f2a-3b4c-5d6e-6f7a8b9c0d1e": SunoV4_5 as ModelModule,                          // Suno V4.5
+  "8c9d0e1f-2a3b-4c5d-6e7f-7a8b9c0d1e2f": SunoV4_5_Plus as ModelModule,                     // Suno V4.5+
+  "9d0e1f2a-3b4c-5d6e-7f8a-8b9c0d1e2f3a": SunoV4_5_All as ModelModule,                      // Suno V4.5ALL
+  "0e1f2a3b-4c5d-6e7f-8a9b-9c0d1e2f3a4b": SunoV5 as ModelModule,                            // Suno V5
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE EDITING MODELS (20 total)

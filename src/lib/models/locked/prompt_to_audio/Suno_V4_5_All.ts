@@ -1,5 +1,5 @@
 /**
- * Suno Generation V4.5
+ * Suno Generation V4.5ALL
  * 
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
  * 
@@ -8,10 +8,10 @@
  * - Payload: FLAT structure
  * - Smarter prompts, faster generations
  * - Max 8 minutes per generation
- * - V4.5 limits: prompt 5000 chars, style 1000 chars
+ * - V4.5ALL limits: prompt 5000 chars, style 1000 chars
  * 
  * @locked
- * @model suno/music-v4-5
+ * @model suno/music-v4-5-all
  * @provider kie.ai
  * @version 1.0.0
  */
@@ -28,20 +28,20 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 // ============================================================================
 
 export const MODEL_CONFIG = {
-  modelId: "suno/music-v4-5",
-  recordId: "", // TODO: Add record ID from database
-  modelName: "Suno V4.5",
+  modelId: "suno/music-v4-5-all",
+  recordId: "9d0e1f2a-3b4c-5d6e-7f8a-8b9c0d1e2f3a",
+  modelName: "Suno V4.5ALL",
   provider: "kie_ai",
-  contentType: "text_to_music",
-  use_api_key: "KIE_AI_API_KEY_TEXT_TO_MUSIC",
-  baseCreditCost: 15,
+  contentType: "prompt_to_audio",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
+  baseCreditCost: 20,
   estimatedTimeSeconds: 180,
   costMultipliers: {},
   apiEndpoint: "/api/v1/generate",
   payloadStructure: "flat",
   maxImages: 0,
   defaultOutputs: 2,
-  // V4.5 specific limits
+  // V4.5ALL specific limits
   maxPromptLength: 5000,
   maxStyleLength: 1000,
   maxTitleLength: 80,
@@ -50,11 +50,11 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/suno.png",
   modelFamily: "Suno",
-  variantName: "V4.5",
-  displayOrderInFamily: 2,
+  variantName: "V4.5ALL",
+  displayOrderInFamily: 4,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/text_to_music/Suno_V4_5.ts",
+  lockedFilePath: "src/lib/models/locked/prompt_to_audio/Suno_V4_5_All.ts",
 } as const;
 
 // ============================================================================
@@ -215,7 +215,7 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     prompt: inputs.prompt || "",
     customMode: customMode,
     instrumental: inputs.instrumental === true,
-    model: "V4_5",
+    model: "V4_5ALL",
   };
 
   if (customMode) {

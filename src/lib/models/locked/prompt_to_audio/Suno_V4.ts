@@ -1,16 +1,17 @@
 /**
- * Suno Generation V5
+ * Suno Music Generation V4
  * 
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
  * 
  * AI Music Generation with or without lyrics
  * - Endpoint: /api/v1/generate (NOT /api/v1/jobs/createTask)
  * - Payload: FLAT structure
- * - Superior musical expression, faster generation
- * - V5 limits: prompt 5000 chars, style 1000 chars
+ * - Two modes: Custom Mode (detailed control) and Non-custom Mode (simple)
+ * - Max 4 minutes per generation
+ * - V4 limits: prompt 3000 chars, style 200 chars
  * 
  * @locked
- * @model suno/music-v5
+ * @model suno/music-v4
  * @provider kie.ai
  * @version 1.0.0
  */
@@ -27,32 +28,33 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 // ============================================================================
 
 export const MODEL_CONFIG = {
-  modelId: "suno/music-v5",
-  recordId: "", // TODO: Add record ID from database
-  modelName: "Suno V5",
+  modelId: "suno/music-v4",
+  recordId: "6a7b8c9d-0e1f-2a3b-4c5d-5e6f7a8b9c0d",
+  modelName: "Suno V4",
   provider: "kie_ai",
-  contentType: "text_to_music",
-  use_api_key: "KIE_AI_API_KEY_TEXT_TO_MUSIC",
-  baseCreditCost: 20,
-  estimatedTimeSeconds: 90, // Faster than V4.5
+  contentType: "prompt_to_audio",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
+  baseCreditCost: 10,
+  estimatedTimeSeconds: 120,
   costMultipliers: {},
-  apiEndpoint: "/api/v1/generate", // UNIQUE: Not /api/v1/jobs/createTask
-  payloadStructure: "flat", // FLAT, not wrapper
+  apiEndpoint: "/api/v1/generate",
+  payloadStructure: "flat",
   maxImages: 0,
-  defaultOutputs: 2, // Multiple variations generated
-  // V5 specific limits
-  maxPromptLength: 5000,
-  maxStyleLength: 1000,
+  defaultOutputs: 2,
+  // V4 specific limits
+  maxPromptLength: 3000,
+  maxStyleLength: 200,
   maxTitleLength: 80,
+  maxDuration: "4 min",
   // UI metadata
   isActive: true,
   logoUrl: "/logos/suno.png",
   modelFamily: "Suno",
-  variantName: "V5 (Latest)",
-  displayOrderInFamily: 3,
+  variantName: "V4",
+  displayOrderInFamily: 1,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/text_to_music/Suno_V5.ts",
+  lockedFilePath: "src/lib/models/locked/prompt_to_audio/Suno_V4.ts",
 } as const;
 
 // ============================================================================
@@ -67,8 +69,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Prompt / Lyrics",
       default: "",
-      description: "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
-      maxLength: 5000,
+      description: "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 3000 chars (Custom) or 500 chars (Non-custom).",
+      maxLength: 3000,
       renderer: "textarea",
     },
     customMode: {
@@ -87,8 +89,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Style",
       default: "",
-      maxLength: 1000,
-      description: "Music style (e.g., Jazz, Classical, Pop). Required in Custom Mode. Max 1000 chars.",
+      maxLength: 200,
+      description: "Music style (e.g., Jazz, Classical, Pop). Required in Custom Mode. Max 200 chars for V4.",
     },
     title: {
       type: "string",
@@ -175,8 +177,8 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 
   // Validate prompt length based on mode
   if (customMode) {
-    if (prompt.length > 5000) {
-      return { valid: false, error: "Prompt must be 5000 characters or less in Custom Mode (V5)" };
+    if (prompt.length > 3000) {
+      return { valid: false, error: "Prompt must be 3000 characters or less in Custom Mode (V4)" };
     }
   } else {
     if (prompt.length > 500) {
@@ -190,8 +192,8 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
     if (!inputs.style || (typeof inputs.style === "string" && inputs.style.trim() === "")) {
       return { valid: false, error: "Style is required in Custom Mode" };
     }
-    if (typeof inputs.style === "string" && inputs.style.length > 1000) {
-      return { valid: false, error: "Style must be 1000 characters or less (V5)" };
+    if (typeof inputs.style === "string" && inputs.style.length > 200) {
+      return { valid: false, error: "Style must be 200 characters or less (V4)" };
     }
 
     // Title is always required in Custom Mode
@@ -201,6 +203,8 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
     if (typeof inputs.title === "string" && inputs.title.length > 80) {
       return { valid: false, error: "Title must be 80 characters or less" };
     }
+
+    // If not instrumental, prompt is used as lyrics (already validated above)
   }
 
   // Validate numeric ranges
@@ -237,7 +241,7 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     prompt: inputs.prompt || "",
     customMode: customMode,
     instrumental: inputs.instrumental === true,
-    model: "V5", // V5 model version
+    model: "V4", // V4 model version
   };
 
   // Custom Mode fields

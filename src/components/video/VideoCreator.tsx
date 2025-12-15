@@ -448,6 +448,7 @@ export function VideoCreator() {
           {state.voiceoverUrl && (
             <VoiceoverReviewStep
               voiceoverUrl={state.voiceoverUrl}
+              scriptLength={state.script.length}
               onRegenerate={handleRegenerateVoiceover}
               onContinue={handleVoiceoverContinue}
               isRegenerating={state.step === 'voiceover_generating'}

@@ -4,6 +4,7 @@ import { Play, Pause, Download, RefreshCw, Loader2 } from 'lucide-react';
 
 interface VoiceoverReviewStepProps {
   voiceoverUrl: string;
+  scriptLength: number;
   onRegenerate: (tier: 'standard' | 'pro') => void;
   onContinue: () => void;
   isRegenerating: boolean;
@@ -13,6 +14,7 @@ interface VoiceoverReviewStepProps {
 
 export function VoiceoverReviewStep({
   voiceoverUrl,
+  scriptLength,
   onRegenerate,
   onContinue,
   isRegenerating,
@@ -26,9 +28,10 @@ export function VoiceoverReviewStep({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // Regeneration costs
-  const standardCost = 3;
-  const proCost = 6;
+  // Regeneration costs: 3/6 credits per 1000 characters
+  const charBlocks = Math.max(1, Math.ceil(scriptLength / 1000));
+  const standardCost = charBlocks * 3;
+  const proCost = charBlocks * 6;
   const canAffordStandard = availableCredits >= standardCost;
   const canAffordPro = availableCredits >= proCost;
 

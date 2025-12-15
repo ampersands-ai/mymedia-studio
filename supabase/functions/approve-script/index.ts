@@ -76,12 +76,14 @@ Deno.serve(async (req) => {
     const isScriptEdited = edited_script && edited_script !== job.script;
     const isRegeneration = regenerate === true || isScriptEdited;
 
-    // If regenerating voiceover, charge fixed tier-based cost (matches UI: 3 for standard, 6 for pro)
+    // If regenerating voiceover, charge per 1000 characters: 3 for standard, 6 for pro
     if (isRegeneration) {
-      const voiceoverCost = tier === 'pro' ? 6 : 3;
+      const scriptCharCount = finalScript.length;
+      const charBlocks = Math.max(1, Math.ceil(scriptCharCount / 1000));
+      const voiceoverCost = tier === 'pro' ? (charBlocks * 6) : (charBlocks * 3);
       logger.info('Regenerating voiceover', {
         userId: user.id,
-        metadata: { jobId: job_id, cost: voiceoverCost, tier, isExplicitRegenerate: regenerate === true, isScriptEdited }
+        metadata: { jobId: job_id, cost: voiceoverCost, tier, scriptCharCount, charBlocks, isExplicitRegenerate: regenerate === true, isScriptEdited }
       });
 
       // Check token balance

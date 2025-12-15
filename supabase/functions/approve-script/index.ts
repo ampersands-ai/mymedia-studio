@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   let job_id: string | undefined;
 
   try {
-    const { job_id: jobIdParam, edited_script, voiceover_tier } = await req.json();
+    const { job_id: jobIdParam, edited_script, voiceover_tier, regenerate } = await req.json();
     job_id = jobIdParam;
 
     if (!job_id) {
@@ -71,12 +71,17 @@ Deno.serve(async (req) => {
       metadata: { jobId: job_id, status: job.status, hasEditedScript: !!edited_script }
     });
 
-    // If regenerating voiceover (edited_script provided), calculate and deduct tokens
-    if (edited_script && edited_script !== job.script) {
-      const voiceoverCost = Math.ceil((edited_script.length / 1000) * 144);
+    // Determine if this is a regeneration (explicit flag OR edited script)
+    const tier = voiceover_tier || 'standard';
+    const isScriptEdited = edited_script && edited_script !== job.script;
+    const isRegeneration = regenerate === true || isScriptEdited;
+
+    // If regenerating voiceover, charge fixed tier-based cost (matches UI: 3 for standard, 6 for pro)
+    if (isRegeneration) {
+      const voiceoverCost = tier === 'pro' ? 6 : 3;
       logger.info('Regenerating voiceover', {
         userId: user.id,
-        metadata: { jobId: job_id, cost: voiceoverCost, scriptLength: edited_script.length }
+        metadata: { jobId: job_id, cost: voiceoverCost, tier, isExplicitRegenerate: regenerate === true, isScriptEdited }
       });
 
       // Check token balance
@@ -94,7 +99,7 @@ Deno.serve(async (req) => {
         throw new Error(`Insufficient credits. ${voiceoverCost} credits required to regenerate voiceover.`);
       }
 
-      // Deduct tokens using atomic RPC function (avoids floating-point precision issues)
+      // Deduct tokens using atomic RPC function
       const { data: rpcResult, error: rpcError } = await supabaseClient
         .rpc('deduct_user_tokens', { 
           p_user_id: user.id, 
@@ -125,6 +130,7 @@ Deno.serve(async (req) => {
         metadata: { 
           jobId: job_id, 
           tokensDeducted: voiceoverCost,
+          tier,
           new_balance: newBalance 
         }
       });
@@ -137,7 +143,8 @@ Deno.serve(async (req) => {
           tokens_deducted: voiceoverCost,
           tokens_remaining: newBalance,
           video_job_id: job_id,
-          operation: 'voiceover_regeneration'
+          operation: 'voiceover_regeneration',
+          tier
         }
       });
     }
@@ -162,10 +169,9 @@ Deno.serve(async (req) => {
     // Routes through generate-content edge function like Audio Studio models
     // ========================================================================
     
-    // Determine model based on voiceover tier
+    // Determine model based on voiceover tier (tier already declared above)
     // Standard: ElevenLabs Turbo V2.5 (fast) with English language
     // Pro: ElevenLabs Multilingual V2 (higher quality, no language_code param)
-    const tier = voiceover_tier || 'standard';
     
     // Model configs matching ElevenLabs_Fast.ts and ElevenLabs_TTS.ts
     const MODEL_CONFIGS = {

@@ -66,14 +66,56 @@ const initialState: VideoCreatorState = {
   selectedBackgroundMedia: [],
 };
 
+const FACELESS_VIDEO_DRAFT_KEY = 'faceless_video_draft';
+const DRAFT_EXPIRY_HOURS = 24;
+
 export function VideoCreator() {
   const [state, setState] = useState<VideoCreatorState>(initialState);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const queryClient = useQueryClient();
   const { createJob, isCreating } = useVideoJobs();
   const { availableCredits, refetch: refetchCredits } = useUserCredits();
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
+      if (saved) {
+        const { state: savedState, timestamp } = JSON.parse(saved);
+        const hoursSinceCreation = (Date.now() - timestamp) / (1000 * 60 * 60);
+        if (hoursSinceCreation < DRAFT_EXPIRY_HOURS && savedState.jobId) {
+          setState(savedState);
+          // Resume polling if job was in a processing state
+          if (['script_generating', 'voiceover_generating', 'rendering'].includes(savedState.step)) {
+            setIsPolling(true);
+          }
+        } else {
+          localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save state to localStorage on changes (debounced)
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (state.jobId) {
+      const timeout = setTimeout(() => {
+        localStorage.setItem(FACELESS_VIDEO_DRAFT_KEY, JSON.stringify({
+          state,
+          timestamp: Date.now()
+        }));
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [state, isLoaded]);
 
   // Poll for job status updates
   useEffect(() => {
@@ -297,6 +339,7 @@ export function VideoCreator() {
 
   // Reset to create new video
   const handleReset = () => {
+    localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
     setState(initialState);
     setError(null);
     setIsPolling(false);

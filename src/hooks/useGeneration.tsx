@@ -192,6 +192,29 @@ export const useGeneration = () => {
           );
         }
 
+        // Handle 403 specifically for email verification and other forbidden errors
+        if (errorStatus === 403) {
+          // Try to extract the error code from the response
+          const errorCodeMatch = error.message?.match(/"code"[:\s]*"([^"]+)"/i);
+          const errorMsgMatch = error.message?.match(/"message"[:\s]*"([^"]+)"/i);
+          const errorCode = errorCodeMatch ? errorCodeMatch[1] : null;
+          const errorMsg = errorMsgMatch ? errorMsgMatch[1] : error.message;
+          
+          if (errorCode === 'EMAIL_NOT_VERIFIED') {
+            throw new GenerationError(
+              GenerationErrorCode.INVALID_REQUEST,
+              "EMAIL_NOT_VERIFIED: Please verify your email address before generating content.",
+              { recoverable: true }
+            );
+          }
+          
+          throw new GenerationError(
+            GenerationErrorCode.INVALID_REQUEST,
+            errorMsg || "Access forbidden",
+            { recoverable: true }
+          );
+        }
+
         if (errorStatus === 400) {
           // Try to extract specific error and details from edge function response
           try {

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Check, ChevronDown } from 'lucide-react';
@@ -26,6 +26,17 @@ export function StepCollapsible({
   children,
 }: StepCollapsibleProps) {
   const stepRef = useRef<HTMLDivElement>(null);
+  const [isManuallyOpen, setIsManuallyOpen] = useState(false);
+
+  // Open state: active steps are always open, completed steps can be toggled
+  const isOpen = isActive || isManuallyOpen;
+
+  // Reset manual open when step becomes active
+  useEffect(() => {
+    if (isActive) {
+      setIsManuallyOpen(false);
+    }
+  }, [isActive]);
 
   // Smooth scroll to active step
   useEffect(() => {
@@ -38,10 +49,18 @@ export function StepCollapsible({
     }
   }, [isActive]);
 
+  const handleToggle = () => {
+    // Only allow toggling on completed, non-active steps
+    if (isComplete && !isActive) {
+      setIsManuallyOpen(!isManuallyOpen);
+    }
+  };
+
   return (
     <div ref={stepRef}>
       <Collapsible
-        open={isActive}
+        open={isOpen}
+        onOpenChange={handleToggle}
         className={cn(
           "border rounded-lg transition-all",
           isActive && "border-primary/50 bg-card shadow-sm",
@@ -51,7 +70,7 @@ export function StepCollapsible({
       >
         <CollapsibleTrigger
           className="w-full p-3 sm:p-4 flex items-center justify-between gap-3 min-h-[52px] sm:min-h-[56px] touch-manipulation"
-          disabled={isDisabled}
+          disabled={isDisabled || (!isActive && !isComplete)}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Badge
@@ -74,7 +93,7 @@ export function StepCollapsible({
               )}>
                 {title}
               </span>
-              {subtitle && !isActive && (
+              {subtitle && !isOpen && (
                 <span className="text-xs text-muted-foreground block truncate">
                   {subtitle}
                 </span>
@@ -82,7 +101,7 @@ export function StepCollapsible({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isComplete && summary && !isActive && (
+            {isComplete && summary && !isOpen && (
               <div className="hidden sm:block text-xs text-muted-foreground max-w-[200px] truncate">
                 {summary}
               </div>
@@ -90,7 +109,7 @@ export function StepCollapsible({
             <ChevronDown
               className={cn(
                 "h-4 w-4 transition-transform text-muted-foreground",
-                isActive && "rotate-180"
+                isOpen && "rotate-180"
               )}
             />
           </div>

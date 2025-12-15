@@ -29,22 +29,11 @@ interface OutputPanelProps {
   onCloseLightbox: () => void;
   onDownloadAll: () => Promise<void>;
   onViewHistory: () => void;
-  onGenerateVideo?: (outputIndex: number) => void;
-  generatingVideoIndex: number | null;
-  userTokensRemaining: number;
   captionData: CaptionData | null;
   isGeneratingCaption: boolean;
   onRegenerateCaption: () => Promise<void>;
   onCopyCaption: () => void;
   onCopyHashtags: () => void;
-  childVideoGenerations: Array<{ 
-    id: string; 
-    status: string; 
-    storage_path?: string; 
-    output_index: number; 
-    type?: string;
-  }>;
-  parentGenerationId: string | null;
   onDownloadSuccess: () => void;
   templateBeforeImage: string | null;
   templateAfterImage: string | null;
@@ -79,16 +68,11 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       onCloseLightbox,
       onDownloadAll,
       onViewHistory,
-      onGenerateVideo,
-      generatingVideoIndex,
-      userTokensRemaining,
       captionData,
       isGeneratingCaption,
       onRegenerateCaption,
       onCopyCaption,
       onCopyHashtags,
-      childVideoGenerations,
-      parentGenerationId,
       onDownloadSuccess,
       templateBeforeImage,
       templateAfterImage,
@@ -109,7 +93,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       localGenerating || isGenerating || isPolling || pollingGenerationId || 
       generationState.generatedOutput || 
       generationState.generatedOutputs.length > 0 ||
-      (childVideoGenerations && childVideoGenerations.length > 0) ||
+      
       !!generationState.generationStartTime ||
       !!failedGenerationError;
 
@@ -212,8 +196,6 @@ export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => 
     prevProps.localGenerating === nextProps.localGenerating &&
     prevProps.isGenerating === nextProps.isGenerating &&
     prevProps.pollingGenerationId === nextProps.pollingGenerationId &&
-    prevProps.generatingVideoIndex === nextProps.generatingVideoIndex &&
-    prevProps.userTokensRemaining === nextProps.userTokensRemaining &&
     prevProps.contentType === nextProps.contentType &&
     prevProps.estimatedTimeSeconds === nextProps.estimatedTimeSeconds &&
     prevProps.isGeneratingCaption === nextProps.isGeneratingCaption &&
@@ -221,7 +203,7 @@ export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => 
     prevProps.templateAfterImage === nextProps.templateAfterImage &&
     prevProps.modelProvider === nextProps.modelProvider &&
     prevProps.modelName === nextProps.modelName &&
-    prevProps.parentGenerationId === nextProps.parentGenerationId &&
+    
     prevProps.generationState.generatedOutputs.length === nextProps.generationState.generatedOutputs.length &&
     prevProps.generationState.selectedOutputIndex === nextProps.generationState.selectedOutputIndex &&
     prevProps.generationState.showLightbox === nextProps.generationState.showLightbox &&
@@ -229,7 +211,7 @@ export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => 
     prevProps.generationState.generationCompleteTime === nextProps.generationState.generationCompleteTime &&
     prevProps.generationState.generatedOutput === nextProps.generationState.generatedOutput &&
     prevProps.captionData === nextProps.captionData &&
-    prevProps.childVideoGenerations.length === nextProps.childVideoGenerations.length &&
+    
     prevProps.failedGenerationError === nextProps.failedGenerationError &&
     prevProps.connectionTier === nextProps.connectionTier
   );

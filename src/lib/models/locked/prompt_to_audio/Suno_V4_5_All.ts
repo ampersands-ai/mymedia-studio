@@ -63,7 +63,7 @@ export const MODEL_CONFIG = {
 
 export const SCHEMA = Object.freeze({
   type: "object",
-  required: ["prompt", "customMode", "instrumental"],
+  required: ["prompt", "customMode", "instrumental", "style", "title"],
   properties: {
     prompt: {
       type: "string",

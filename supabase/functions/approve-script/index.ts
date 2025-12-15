@@ -1,124 +1,6 @@
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from '../_shared/edge-logger.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
-
-// Inlined helper: sanitize sensitive data
-function sanitizeData(data: unknown): unknown {
-  if (!data || typeof data !== 'object') return data;
-  const sanitized = { ...(data as Record<string, unknown>) };
-  const sensitiveKeys = ['api_key', 'authorization', 'token', 'secret', 'apiKey', 'xi-api-key'];
-  sensitiveKeys.forEach(key => delete sanitized[key]);
-  if (sanitized.headers && typeof sanitized.headers === 'object') {
-    const headers = sanitized.headers as Record<string, unknown>;
-    sensitiveKeys.forEach(key => delete headers[key]);
-  }
-  return sanitized;
-}
-
-// Inlined helper: log API call with EdgeLogger integration
-async function logApiCall(
-  supabase: SupabaseClient,
-  logger: EdgeLogger,
-  request: {
-    videoJobId: string;
-    userId: string;
-    serviceName: string;
-    endpoint: string;
-    httpMethod: string;
-    stepName: string;
-    requestPayload?: unknown;
-    additionalMetadata?: Record<string, unknown>;
-  },
-  requestSentAt: Date,
-  response: {
-    statusCode: number;
-    payload?: unknown;
-    isError: boolean;
-    errorMessage?: string;
-  }
-) {
-  try {
-    await supabase.from('api_call_logs').insert({
-      video_job_id: request.videoJobId,
-      user_id: request.userId,
-      service_name: request.serviceName,
-      endpoint: request.endpoint,
-      http_method: request.httpMethod,
-      step_name: request.stepName,
-      request_payload: sanitizeData(request.requestPayload),
-      request_sent_at: requestSentAt.toISOString(),
-      response_received_at: new Date().toISOString(),
-      response_status_code: response.statusCode,
-      response_payload: sanitizeData(response.payload),
-      is_error: response.isError,
-      error_message: response.errorMessage,
-      additional_metadata: request.additionalMetadata,
-    });
-    
-    if (response.isError) {
-      logger.error(`API call failed: ${request.serviceName}`, undefined, {
-        userId: request.userId,
-        metadata: { step: request.stepName, status: response.statusCode, error: response.errorMessage }
-      });
-    } else {
-      logger.debug(`API call succeeded: ${request.serviceName}`, {
-        userId: request.userId,
-        metadata: { step: request.stepName, status: response.statusCode }
-      });
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.warn('Failed to log API call', { 
-      userId: request.userId,
-      metadata: { videoJobId: request.videoJobId, serviceName: request.serviceName, error: errorMessage }
-    });
-  }
-}
-
-// Retry with exponential backoff
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries = 3,
-  timeoutMs = 120000 // 120s timeout for voice generation (long scripts)
-): Promise<Response> {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      
-      // Retry on 429 or 5xx
-      if (response.status === 429 || response.status >= 500) {
-        if (attempt < maxRetries - 1) {
-          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-      }
-
-      return response;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${timeoutMs / 1000} seconds`);
-      }
-      if (attempt < maxRetries - 1) {
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -275,205 +157,157 @@ Deno.serve(async (req) => {
       })
       .eq('id', job_id);
 
-    // Generate voiceover
-    const elevenLabsKey = Deno.env.get('ELEVENLABS_API_KEY');
-    if (!elevenLabsKey) {
-      throw new Error('ELEVENLABS_API_KEY not configured');
-    }
-
+    // ========================================================================
+    // VOICEOVER GENERATION VIA KIE.AI (NOT DIRECT ELEVENLABS)
+    // Routes through generate-content edge function like Audio Studio models
+    // ========================================================================
+    
     // Determine model based on voiceover tier
     // Standard: ElevenLabs Turbo V2.5 (fast) with English language
     // Pro: ElevenLabs Multilingual V2 (higher quality, no language_code param)
     const tier = voiceover_tier || 'standard';
-    const modelId = tier === 'pro' ? 'eleven_multilingual_v2' : 'eleven_turbo_v2_5';
+    
+    // Model configs matching ElevenLabs_Fast.ts and ElevenLabs_TTS.ts
+    const MODEL_CONFIGS = {
+      standard: {
+        modelId: "elevenlabs/text-to-speech-turbo-2-5",
+        recordId: "379f8945-bd7f-48f3-a1bb-9d2e2413234c",
+        modelName: "ElevenLabs Turbo V2.5",
+        provider: "kie_ai",
+        contentType: "prompt_to_audio",
+        use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
+        apiEndpoint: "/api/v1/jobs/createTask",
+        payloadStructure: "wrapper",
+      },
+      pro: {
+        modelId: "elevenlabs/text-to-speech-multilingual-v2",
+        recordId: "45fc7e71-0174-48eb-998d-547e8d2476db",
+        modelName: "ElevenLabs Multilingual V2",
+        provider: "kie_ai",
+        contentType: "prompt_to_audio",
+        use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
+        apiEndpoint: "/api/v1/jobs/createTask",
+        payloadStructure: "wrapper",
+      }
+    };
 
-    logger.info('Voiceover configuration', {
+    const modelConfig = tier === 'pro' ? MODEL_CONFIGS.pro : MODEL_CONFIGS.standard;
+
+    logger.info('Voiceover configuration via Kie.ai', {
       userId: user.id,
-      metadata: { jobId: job_id, tier, modelId }
+      metadata: { jobId: job_id, tier, modelId: modelConfig.modelId, voiceName: job.voice_name }
     });
 
-    const requestPayload: Record<string, unknown> = {
+    // Prepare payload matching ElevenLabs model files (preparePayload format)
+    const inputPayload: Record<string, unknown> = {
       text: finalScript,
-      model_id: modelId,
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-      },
+      voice: job.voice_name || 'Brian', // Voice NAME not ID
+      stability: 0.5,
+      similarity_boost: 0.75,
     };
 
     // Only add language_code for Turbo V2.5 (standard tier)
     // Multilingual V2 (pro) does NOT support language_code parameter
     if (tier === 'standard') {
-      requestPayload.language_code = 'en';
+      inputPayload.language_code = 'en';
     }
 
-    const endpoint = `${API_ENDPOINTS.ELEVENLABS.fullUrl}/text-to-speech/${job.voice_id}`;
-    const requestSentAt = new Date();
+    const customParameters = {
+      model: modelConfig.modelId,
+      input: inputPayload,
+    };
 
-    const voiceResponse = await fetchWithRetry(endpoint, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': elevenLabsKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestPayload),
+    // Create a generation record to track the voiceover
+    // Store video_job_id in settings so webhook can link them
+    const { data: generation, error: genInsertError } = await supabaseClient
+      .from('generations')
+      .insert({
+        user_id: user.id,
+        prompt: finalScript,
+        model_id: modelConfig.modelId,
+        model_record_id: modelConfig.recordId,
+        type: 'audio',
+        status: 'processing',
+        tokens_used: 0, // Voiceover cost already handled above if regenerating
+        settings: {
+          video_job_id: job_id, // Link back to video job for webhook
+          voice_name: job.voice_name,
+          tier: tier,
+        },
+      })
+      .select('id')
+      .single();
+
+    if (genInsertError || !generation) {
+      logger.error('Failed to create generation record', genInsertError instanceof Error ? genInsertError : undefined, {
+        userId: user.id,
+        metadata: { jobId: job_id }
+      });
+      throw new Error(`Failed to create generation record: ${genInsertError?.message}`);
+    }
+
+    logger.info('Generation record created for voiceover', {
+      userId: user.id,
+      metadata: { jobId: job_id, generationId: generation.id }
     });
 
-    // Log the API call
-    const voiceResponseClone = voiceResponse.clone();
-    logApiCall(
-      supabaseClient,
-      logger,
-      {
-        videoJobId: job_id,
-        userId: user.id,
-        serviceName: 'elevenlabs',
-        endpoint,
-        httpMethod: 'POST',
-        stepName: 'generate_voiceover',
-        requestPayload,
-        additionalMetadata: {
-          voice_id: job.voice_id,
-          script_length: finalScript.length
-        }
+    // Call generate-content edge function (routes through Kie.ai)
+    const { error: functionError } = await supabaseClient.functions.invoke('generate-content', {
+      body: {
+        generationId: generation.id,
+        prompt: finalScript,
+        custom_parameters: customParameters,
+        model_config: modelConfig,
+        model_schema: {
+          type: "object",
+          properties: {
+            text: { type: "string" },
+            voice: { type: "string" },
+            stability: { type: "number" },
+            similarity_boost: { type: "number" },
+            language_code: { type: "string" },
+          }
+        },
       },
-      requestSentAt,
-      {
-        statusCode: voiceResponse.status,
-        payload: voiceResponse.ok ? { success: true } : await voiceResponseClone.text(),
-        isError: !voiceResponse.ok,
-        errorMessage: voiceResponse.ok ? undefined : `ElevenLabs returned ${voiceResponse.status}`
-      }
-    ).catch(e => logger.error('Failed to log API call', e instanceof Error ? e : undefined, { 
-      userId: user.id, 
-      metadata: { jobId: job_id } 
-    }));
+    });
 
-    if (!voiceResponse.ok) {
-      const errorText = await voiceResponse.text();
+    if (functionError) {
+      logger.error('generate-content failed', functionError instanceof Error ? functionError : undefined, {
+        userId: user.id,
+        metadata: { jobId: job_id, generationId: generation.id }
+      });
+      
+      // Mark generation as failed
+      await supabaseClient
+        .from('generations')
+        .update({ status: 'failed' })
+        .eq('id', generation.id);
       
       // Update job back to awaiting_script_approval so user can retry
       await supabaseClient
         .from('video_jobs')
         .update({ 
           status: 'awaiting_script_approval',
-          error_message: `Voiceover generation failed: ${errorText}. Please try approving the script again.`,
+          error_message: `Voiceover generation failed: ${functionError.message}. Please try again.`,
           updated_at: new Date().toISOString()
         })
         .eq('id', job_id);
       
-      throw new Error(`ElevenLabs API error (${voiceResponse.status}): ${errorText}`);
+      throw new Error(`Voiceover generation failed: ${functionError.message}`);
     }
 
-    const audioBlob = await voiceResponse.blob();
-    const audioBuffer = await audioBlob.arrayBuffer();
-
-    // Calculate actual audio duration from MP3 file size
-    // ElevenLabs uses 128kbps MP3 by default: duration = (bytes * 8) / (bitrate)
-    const audioBytes = audioBuffer.byteLength;
-    const bitrate = 128000; // 128kbps in bits per second
-    const actualAudioDuration = Math.ceil((audioBytes * 8) / bitrate);
-    
-    logger.info('Audio duration extracted from MP3', {
+    logger.logDuration('approve-script submitted to Kie.ai', startTime, {
       userId: user.id,
-      metadata: { 
-        jobId: job_id, 
-        durationSeconds: actualAudioDuration,
-        fileSizeBytes: audioBytes,
-        calculationMethod: 'mp3_bitrate_128kbps'
-      }
+      metadata: { jobId: job_id, generationId: generation.id, status: 'generating_voice' }
     });
 
-    // Upload voiceover to storage
-    const voiceFileName = `${job_id}_voiceover.mp3`;
-    const { error: uploadError } = await supabaseClient.storage
-      .from('generated-content')
-      .upload(voiceFileName, audioBuffer, {
-        contentType: 'audio/mpeg',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      throw new Error(`Failed to upload voiceover: ${uploadError.message}`);
-    }
-
-    // Construct full public URL for voiceover (bucket is public)
-    const voiceoverPublicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${voiceFileName}`;
-    logger.info('Voiceover uploaded to storage', {
-      userId: user.id,
-      metadata: { jobId: job_id, fileName: voiceFileName, url: voiceoverPublicUrl }
-    });
-
-    // Update job with FULL PUBLIC URL, actual duration, and new status
-    const { error: updateError } = await supabaseClient
-      .from('video_jobs')
-      .update({
-        voiceover_url: voiceoverPublicUrl, // Store full public URL
-        actual_audio_duration: actualAudioDuration,
-        status: 'awaiting_voice_approval',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', job_id);
-
-    if (updateError) {
-      logger.error('Failed to update job with voiceover', updateError instanceof Error ? updateError : undefined, {
-        userId: user.id,
-        metadata: { jobId: job_id }
-      });
-      throw new Error(`Failed to update job with voiceover: ${updateError.message}`);
-    }
-
-    logger.debug('Job updated, verifying database storage', {
-      userId: user.id,
-      metadata: { jobId: job_id }
-    });
-    
-    // Verify the URL was stored correctly
-    const { data: verifyJob, error: verifyError } = await supabaseClient
-      .from('video_jobs')
-      .select('voiceover_url')
-      .eq('id', job_id)
-      .single();
-
-    if (verifyError) {
-      logger.error('Failed to verify voiceover URL', verifyError instanceof Error ? verifyError : undefined, {
-        userId: user.id,
-        metadata: { jobId: job_id }
-      });
-      throw new Error('Failed to verify voiceover URL was saved');
-    }
-
-    logger.debug('URL verification check', {
-      userId: user.id,
-      metadata: { 
-        jobId: job_id, 
-        expectedUrl: voiceoverPublicUrl, 
-        actualUrl: verifyJob?.voiceover_url 
-      }
-    });
-
-    if (verifyJob?.voiceover_url !== voiceoverPublicUrl) {
-      logger.error('URL mismatch detected', new Error('URL mismatch'), {
-        userId: user.id,
-        metadata: { 
-          jobId: job_id, 
-          expectedUrl: voiceoverPublicUrl, 
-          actualUrl: verifyJob?.voiceover_url 
-        }
-      });
-      throw new Error('Voiceover URL was not stored correctly in database');
-    }
-
-    logger.logDuration('approve-script completed', startTime, {
-      userId: user.id,
-      metadata: { jobId: job_id, status: 'awaiting_voice_approval', duration: actualAudioDuration }
-    });
-
+    // Return immediately - webhook will handle completion and update video_jobs
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Voiceover generated successfully',
-        status: 'awaiting_voice_approval'
+        message: 'Voiceover generation started',
+        status: 'generating_voice',
+        generationId: generation.id
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

@@ -378,7 +378,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
           outlineColor: '#000000',
           outlineWidth: 8,
         },
-        subtitle_language: subtitleSettings?.language || 'auto',
+        subtitle_language: subtitleSettings?.language || 'en',
         subtitle_model: subtitleSettings?.model || 'default',
         subtitle_style: subtitleSettings?.style || 'boxed-word',
         subtitle_font_family: subtitleSettings?.['font-family'] || 'Oswald Bold',

@@ -255,6 +255,59 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzur
     onSelectVoice(voice.voice_id, voice.voice_name);
   };
 
+  // Single provider mode - show ElevenLabs directly without tabs
+  if (showElevenLabs && !showAzureVoices) {
+    return (
+      <div className="space-y-4">
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input 
+            placeholder="Search voices..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+            disabled={disabled}
+          />
+        </div>
+        
+        {/* Filters */}
+        <div className="flex gap-2 flex-wrap">
+          {filters.map(f => (
+            <Button 
+              key={f.value}
+              size="sm" 
+              variant={filter === f.value ? 'default' : 'outline'} 
+              onClick={() => setFilter(f.value)}
+              disabled={disabled}
+              className="text-xs"
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Voice grid */}
+        <ScrollArea className="h-[500px] pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+            {filteredElevenLabsVoices.map(voice => (
+              <VoiceCard
+                key={voice.voice_id}
+                voice={voice}
+                isSelected={selectedVoice?.voice_id === voice.voice_id}
+                isPlaying={playingVoiceId === voice.voice_id}
+                onSelect={handleSelect}
+                onPreview={handlePreview}
+                disabled={disabled || false}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  // Multi-provider mode - use tabs
   return (
     <div className="space-y-4">
       <Tabs value={provider} onValueChange={(v) => setProvider(v as 'elevenlabs' | 'azure')}>
@@ -267,11 +320,7 @@ export function VoiceSelector({ selectedValue, onSelectVoice, disabled, showAzur
           <TabsList className="w-full">
             <TabsTrigger value="azure" className="flex-1">Azure Voices ({azureVoices?.length || 0})</TabsTrigger>
           </TabsList>
-        ) : (
-          <TabsList className="w-full">
-            <TabsTrigger value="elevenlabs" className="flex-1">ElevenLabs Voices ({elevenLabsVoices.length})</TabsTrigger>
-          </TabsList>
-        )}
+        ) : null}
 
         {/* ElevenLabs Tab */}
         {showElevenLabs && <TabsContent value="elevenlabs" className="space-y-4 mt-4">

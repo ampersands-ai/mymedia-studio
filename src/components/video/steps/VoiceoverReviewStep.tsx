@@ -24,7 +24,9 @@ export function VoiceoverReviewStep({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const progressRef = useRef<HTMLDivElement | null>(null);
 
   // Regeneration cost: 3 for standard, 6 for pro
   const regenerateCost = voiceoverTier === 'pro' ? 6 : 3;
@@ -79,17 +81,53 @@ export function VoiceoverReviewStep({
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || duration === 0) return;
+  const seekToPosition = (clientX: number) => {
+    if (!audioRef.current || !progressRef.current || duration === 0) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const rect = progressRef.current.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percent = clickX / rect.width;
     const newTime = percent * duration;
     
     audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    seekToPosition(e.clientX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    seekToPosition(e.touches[0].clientX);
+  };
+
+  // Add/remove global listeners for dragging
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging) return;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      seekToPosition(clientX);
+    };
+
+    const handleEnd = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove);
+      window.addEventListener('touchend', handleEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging, duration]);
 
   const handleContinue = () => {
     // Pause audio when continuing
@@ -120,14 +158,21 @@ export function VoiceoverReviewStep({
           </Button>
 
           <div className="flex-1 space-y-1">
-            {/* Progress Bar - Clickable for seeking */}
+            {/* Progress Bar - Click and drag to seek */}
             <div 
-              className="h-2 bg-muted rounded-full overflow-hidden cursor-pointer"
-              onClick={handleSeek}
+              ref={progressRef}
+              className="h-3 bg-muted rounded-full overflow-hidden cursor-pointer relative select-none touch-none"
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
             >
               <div
-                className="h-full bg-primary transition-all duration-200 pointer-events-none"
+                className="h-full bg-primary transition-[width] duration-75 pointer-events-none"
                 style={{ width: `${progressPercent}%` }}
+              />
+              {/* Seek handle */}
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary rounded-full shadow-md pointer-events-none"
+                style={{ left: `calc(${progressPercent}% - 8px)` }}
               />
             </div>
             {/* Time Display */}

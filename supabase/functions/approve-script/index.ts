@@ -178,6 +178,8 @@ Deno.serve(async (req) => {
         use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
         apiEndpoint: "/api/v1/jobs/createTask",
         payloadStructure: "wrapper",
+        baseCreditCost: 0, // Cost already handled by video job, not double-charged
+        estimatedTimeSeconds: 15,
       },
       pro: {
         modelId: "elevenlabs/text-to-speech-multilingual-v2",
@@ -188,6 +190,8 @@ Deno.serve(async (req) => {
         use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
         apiEndpoint: "/api/v1/jobs/createTask",
         payloadStructure: "wrapper",
+        baseCreditCost: 0, // Cost already handled by video job, not double-charged
+        estimatedTimeSeconds: 30,
       }
     };
 

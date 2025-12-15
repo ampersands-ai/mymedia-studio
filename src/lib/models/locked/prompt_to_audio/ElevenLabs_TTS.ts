@@ -103,6 +103,7 @@ export const SCHEMA = Object.freeze({
       enum: VOICES,
       enumLabels: Object.fromEntries(VOICES.map((v) => [v, v])),
       description: "The voice to use for speech generation",
+      renderer: "voice",
     },
     stability: {
       type: "number",

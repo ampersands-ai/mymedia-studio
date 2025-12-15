@@ -43,6 +43,7 @@ interface VideoCreatorState {
   voiceName: string;
   voiceoverTier: 'standard' | 'pro';
   voiceoverUrl: string;
+  videoUrl: string;
   aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
   captionStyle: CaptionStyle;
   selectedBackgroundMedia: SelectedMedia[];
@@ -59,6 +60,7 @@ const initialState: VideoCreatorState = {
   voiceName: 'Brian',
   voiceoverTier: 'standard',
   voiceoverUrl: '',
+  videoUrl: '',
   aspectRatio: '4:5',
   captionStyle: captionPresets.modern,
   selectedBackgroundMedia: [],
@@ -106,7 +108,7 @@ export function VideoCreator() {
         setIsPolling(false);
         refetchCredits();
       } else if (job.status === 'completed' && state.step === 'rendering') {
-        setState((prev) => ({ ...prev, step: 'complete' }));
+        setState((prev) => ({ ...prev, step: 'complete', videoUrl: job.video_url || '' }));
         setIsPolling(false);
         queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
         refetchCredits();
@@ -448,17 +450,28 @@ export function VideoCreator() {
         {/* Complete State */}
         {state.step === 'complete' && (
           <Alert className="bg-primary/10 border-primary/30">
-            <AlertDescription className="text-center py-2">
-              <p className="font-bold text-primary mb-2">🎉 Video Created Successfully!</p>
-              <p className="text-sm text-muted-foreground mb-3">
-                Your video is ready. You can find it in the list below.
-              </p>
-              <button
-                onClick={handleReset}
-                className="text-primary underline text-sm hover:no-underline"
-              >
-                Create Another Video
-              </button>
+            <AlertDescription className="py-4">
+              <p className="font-bold text-primary mb-4 text-center">🎉 Video Created Successfully!</p>
+              
+              {state.videoUrl && (
+                <div className="mb-4 rounded-lg overflow-hidden bg-black/50">
+                  <video 
+                    src={state.videoUrl} 
+                    controls 
+                    className="w-full max-h-[400px] object-contain"
+                    autoPlay={false}
+                  />
+                </div>
+              )}
+              
+              <div className="text-center">
+                <button
+                  onClick={handleReset}
+                  className="text-primary underline text-sm hover:no-underline"
+                >
+                  Create Another Video
+                </button>
+              </div>
             </AlertDescription>
           </Alert>
         )}

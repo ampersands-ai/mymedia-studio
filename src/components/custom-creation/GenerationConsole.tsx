@@ -7,7 +7,7 @@ import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { CaptionDisplay } from "./CaptionDisplay";
-import { VideoGenerationList } from "./VideoGenerationList";
+
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
 
 interface GenerationConsoleProps {
@@ -28,22 +28,11 @@ interface GenerationConsoleProps {
   onCloseLightbox: () => void;
   onDownloadAll: () => Promise<void>;
   onViewHistory: () => void;
-  onGenerateVideo?: (outputIndex: number) => void;
-  generatingVideoIndex: number | null;
-  userTokensRemaining: number;
   captionData: CaptionData | null;
   isGeneratingCaption: boolean;
   onRegenerateCaption: () => Promise<void>;
   onCopyCaption: () => void;
   onCopyHashtags: () => void;
-  childVideoGenerations: Array<{
-    id: string;
-    status: string;
-    storage_path?: string;
-    output_index: number;
-    type?: string;
-  }>;
-  parentGenerationId: string | null;
   onDownloadSuccess: () => void;
   failedGenerationError?: {
     message: string;
@@ -67,16 +56,11 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   onCloseLightbox,
   onDownloadAll,
   onViewHistory,
-  onGenerateVideo,
-  generatingVideoIndex,
-  userTokensRemaining,
   captionData,
   isGeneratingCaption,
   onRegenerateCaption,
   onCopyCaption,
   onCopyHashtags,
-  childVideoGenerations,
-  parentGenerationId,
   onDownloadSuccess,
   failedGenerationError,
   onClearError,
@@ -153,9 +137,6 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                 contentType={contentType}
                 onSelectOutput={onOpenLightbox}
                 onDownloadAll={onDownloadAll}
-                onGenerateVideo={onGenerateVideo}
-                generatingVideoIndex={generatingVideoIndex}
-                userTokensRemaining={userTokensRemaining}
                 onDownloadSuccess={onDownloadSuccess}
               />
 
@@ -203,15 +184,6 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
             </div>
           ) : null}
 
-          {/* Generated videos (shown even if no primary outputs) */}
-          {childVideoGenerations.filter(v => v.type === 'video').length > 0 && (
-            <VideoGenerationList
-              videoGenerations={childVideoGenerations.filter(v => v.type === 'video')}
-              parentGenerationId={parentGenerationId}
-              onRegenerate={onGenerateVideo}
-              generatingVideoIndex={generatingVideoIndex}
-            />
-          )}
             </>
           )}
         </CardContent>

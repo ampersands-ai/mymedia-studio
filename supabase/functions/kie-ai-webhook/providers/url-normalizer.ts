@@ -3,6 +3,7 @@
  */
 
 import { isMidjourneyModel } from "./midjourney-handler.ts";
+import { isSunoModel, extractSunoAudioUrls } from "./suno-handler.ts";
 import { webhookLogger } from "../../_shared/logger.ts";
 
 interface WebhookPayload {
@@ -70,6 +71,17 @@ export function normalizeResultUrls(
         urls.push(singleUrl);
         webhookLogger.info('Normalized single URL from data.info');
       }
+    }
+  }
+  
+  // SUNO SPECIFIC: Extract stream_audio_url from data.data items
+  if (urls.length === 0 && generationType === 'audio' && isSunoModel(modelId)) {
+    const sunoUrls = extractSunoAudioUrls(payload);
+    if (sunoUrls.length > 0) {
+      urls.push(...sunoUrls);
+      webhookLogger.info('[SUNO] Normalized audio URLs from stream_audio_url', { 
+        metadata: { count: urls.length, modelId } 
+      });
     }
   }
   

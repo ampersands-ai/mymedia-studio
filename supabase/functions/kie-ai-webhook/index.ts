@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
           );
         }
         
-        const fileExtension = determineFileExtension(downloadResult.contentType || '', resultUrls[0]);
+        const fileExtension = determineFileExtension(downloadResult.contentType || '', resultUrls[0], generation.type);
         const uploadResult = await uploadToStorage(
           supabase,
           generation.user_id,
@@ -400,24 +400,29 @@ Deno.serve(async (req) => {
         
         const existingIndexes = new Set(existingChildren?.map(c => c.output_index) || []);
         
+        let successCount = 0;
+        let failureCount = 0;
+        
         for (let i = 0; i < resultUrls.length; i++) {
           if (existingIndexes.has(i)) {
             logger.info(`Output ${i + 1} already exists, skipping`, { 
               metadata: { generationId: generation.id, outputIndex: i + 1 } 
             });
+            successCount++; // Count existing as success
             continue;
           }
           
           try {
             const downloadResult = await downloadContent(resultUrls[i]);
             if (!downloadResult.success || !downloadResult.data) {
-            logger.error(`Output ${i + 1} download failed`, new Error(downloadResult.error || 'Download failed'), {
-              metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrls[i] }
-            });
+              logger.error(`Output ${i + 1} download failed`, new Error(downloadResult.error || 'Download failed'), {
+                metadata: { generationId: generation.id, outputIndex: i + 1, url: resultUrls[i] }
+              });
+              failureCount++;
               continue;
             }
             
-            const fileExtension = determineFileExtension(downloadResult.contentType || '', resultUrls[i]);
+            const fileExtension = determineFileExtension(downloadResult.contentType || '', resultUrls[i], generation.type);
             const childId = crypto.randomUUID();
             const uploadResult = await uploadToStorage(
               supabase,
@@ -432,6 +437,7 @@ Deno.serve(async (req) => {
               logger.error(`Output ${i + 1} upload failed`, new Error(uploadResult.error || 'Upload failed'), { 
                 metadata: { generationId: generation.id, outputIndex: i + 1 } 
               });
+              failureCount++;
               continue;
             }
             
@@ -459,15 +465,47 @@ Deno.serve(async (req) => {
               is_batch_output: true
             });
             
+            successCount++;
             logger.info(`Output ${i + 1} child generation created`, {
               metadata: { generationId: generation.id, childId, outputIndex: i + 1 }
             });
           } catch (error) {
+            failureCount++;
             logger.error(`Output ${i + 1} child creation failed`, error instanceof Error ? error : new Error(String(error)), {
               metadata: { generationId: generation.id, outputIndex: i + 1 }
             });
           }
         }
+        
+        // If ALL outputs failed, mark generation as failed and refund
+        if (successCount === 0 && failureCount > 0) {
+          logger.error('All multi-output downloads failed', undefined, {
+            metadata: { generationId: generation.id, failureCount }
+          });
+          
+          await supabase.from('generations').update({
+            status: GENERATION_STATUS.FAILED,
+            provider_response: { 
+              error: 'All audio downloads failed',
+              failureCount,
+              timestamp: new Date().toISOString()
+            }
+          }).eq('id', generation.id);
+          
+          // Refund credits
+          await supabase.functions.invoke('settle-generation-credits', {
+            body: { generationId: generation.id, status: GENERATION_STATUS.FAILED }
+          });
+          
+          return new Response(
+            JSON.stringify({ success: true, message: 'All outputs failed - user refunded' }),
+            { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        logger.info('Multi-output processing complete', {
+          metadata: { generationId: generation.id, successCount, failureCount }
+        });
       }
 
       // === UPDATE PARENT ===

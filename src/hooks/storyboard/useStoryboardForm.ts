@@ -69,7 +69,7 @@ const getInitialState = (): StoryboardFormState => {
     videoQuality: draftQuality,
     customWidth: draft?.customWidth || 1920,
     customHeight: draft?.customHeight || 1080,
-    subtitleLanguage: draft?.subtitleLanguage || 'auto',
+    subtitleLanguage: draft?.subtitleLanguage || 'en',
     subtitleModel: draft?.subtitleModel || 'default',
     subtitleStyle: draft?.subtitleStyle || 'boxed-word',
     subtitleFontFamily: draft?.subtitleFontFamily || 'Oswald Bold',

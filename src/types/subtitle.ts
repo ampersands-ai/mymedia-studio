@@ -77,5 +77,5 @@ export const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
   
   // Language
   subtitlesModel: 'default',
-  language: 'auto',
+  language: 'en',
 };

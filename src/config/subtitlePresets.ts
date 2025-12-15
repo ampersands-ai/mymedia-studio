@@ -23,7 +23,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   },
   boxedModern: {
@@ -48,7 +48,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   },
   minimalWhite: {
@@ -73,7 +73,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   },
   highContrastBox: {
@@ -98,7 +98,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   },
   tiktokStyle: {
@@ -123,7 +123,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   },
   netflixStyle: {
@@ -148,7 +148,7 @@ export const SUBTITLE_PRESETS: Record<string, SubtitlePreset> = {
       replace: {},
       fontUrl: '',
       subtitlesModel: 'default',
-      language: 'auto',
+      language: 'en',
     }
   }
 };
@@ -229,7 +229,6 @@ export const SUBTITLE_POSITIONS = [
 ];
 
 export const LANGUAGES = [
-  { value: "auto", label: "Auto Detect" },
   { value: "en", label: "English" },
   { value: "es", label: "Spanish" },
   { value: "fr", label: "French" },

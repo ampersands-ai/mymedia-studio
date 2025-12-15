@@ -38,35 +38,62 @@ serve(async (req: Request): Promise<Response> => {
     let email: string;
     let fullName: string = "";
 
-    const body: VerificationEmailRequest = await req.json().catch(() => ({}));
+    const body: VerificationEmailRequest = await req.json().catch(
+      () => ({}) as VerificationEmailRequest
+    );
 
     if (authHeader) {
       // Authenticated user requesting verification
-      const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
+      const supabaseClient = createClient(
+        supabaseUrl,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        {
+          global: { headers: { Authorization: authHeader } },
+          auth: { autoRefreshToken: false, persistSession: false },
+        },
+      );
 
-      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabaseClient.auth.getUser();
+
       if (authError || !user) {
-        console.error("[send-verification-email] Auth error:", authError);
-        return new Response(
-          JSON.stringify({ error: "Unauthorized" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        console.warn(
+          "[send-verification-email] Auth error, falling back to body params if provided:",
+          authError,
         );
+
+        if (body.userId && body.email) {
+          userId = body.userId;
+          email = body.email;
+          fullName = body.fullName || "";
+        } else {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized" }),
+            {
+              status: 401,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+      } else {
+        userId = user.id;
+        email = user.email!;
+        fullName = user.user_metadata?.full_name || "";
       }
-      userId = user.id;
-      email = user.email!;
-      fullName = user.user_metadata?.full_name || "";
     } else if (body.userId && body.email) {
-      // Service-to-service call (e.g., from signup flow)
+      // Service-to-service call (e.g., from signup flow or profile page)
       userId = body.userId;
       email = body.email;
       fullName = body.fullName || "";
     } else {
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 

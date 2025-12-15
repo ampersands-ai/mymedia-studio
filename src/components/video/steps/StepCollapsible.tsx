@@ -27,13 +27,18 @@ export function StepCollapsible({
 }: StepCollapsibleProps) {
   const stepRef = useRef<HTMLDivElement>(null);
   const [isManuallyOpen, setIsManuallyOpen] = useState(false);
+  const prevIsActiveRef = useRef(isActive);
 
   // Open state: active steps are always open, completed steps can be toggled
   const isOpen = isActive || isManuallyOpen;
 
-  // Reset manual open when step becomes active
+  // Reset manual open when step becomes active OR when step transitions from active to inactive (completes)
   useEffect(() => {
-    if (isActive) {
+    const wasActive = prevIsActiveRef.current;
+    prevIsActiveRef.current = isActive;
+    
+    // Reset when becoming active or when transitioning from active to inactive
+    if (isActive || (wasActive && !isActive)) {
       setIsManuallyOpen(false);
     }
   }, [isActive]);

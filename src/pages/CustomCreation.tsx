@@ -17,7 +17,7 @@ import { useCustomGeneration } from "@/hooks/useCustomGeneration";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useAudioUpload } from "@/hooks/useAudioUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
-import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
 import { InputPanel } from "@/components/custom-creation/InputPanel";
@@ -234,12 +234,6 @@ const CustomCreation = () => {
     filteredModels
   );
 
-  // Video generation
-  const {
-    childVideoGenerations,
-    generatingVideoIndex,
-    handleGenerateVideo,
-  } = useVideoGeneration(state.parentGenerationId);
 
   // Custom generation logic
   const {
@@ -633,16 +627,11 @@ const CustomCreation = () => {
               onCloseLightbox={() => updateState({ showLightbox: false })}
               onDownloadAll={handleDownloadAll}
               onViewHistory={() => navigate('/dashboard/history')}
-              onGenerateVideo={handleGenerateVideo}
-              generatingVideoIndex={generatingVideoIndex}
-              userTokensRemaining={userTokens?.tokens_remaining || 0}
               captionData={captionData}
               isGeneratingCaption={isGeneratingCaption}
               onRegenerateCaption={regenerateCaption}
               onCopyCaption={copyCaptionToClipboard}
               onCopyHashtags={copyHashtagsToClipboard}
-              childVideoGenerations={childVideoGenerations}
-              parentGenerationId={state.parentGenerationId}
               onDownloadSuccess={() => {
                 if (progress && !progress.checklist.downloadedResult) {
                   updateProgress({ downloadedResult: true });

@@ -1,17 +1,16 @@
 /**
- * Suno Generation V4.5ALL
+ * Suno Generation V5
  * 
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
  * 
  * AI Music Generation with or without lyrics
  * - Endpoint: /api/v1/generate (NOT /api/v1/jobs/createTask)
  * - Payload: FLAT structure
- * - Smarter prompts, faster generations
- * - Max 8 minutes per generation
- * - V4.5ALL limits: prompt 5000 chars, style 1000 chars
+ * - Superior musical expression, faster generation
+ * - V5 limits: prompt 5000 chars, style 1000 chars
  * 
  * @locked
- * @model suno/music-v4-5-all
+ * @model suno/music-v5
  * @provider kie.ai
  * @version 1.0.0
  */
@@ -28,33 +27,32 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 // ============================================================================
 
 export const MODEL_CONFIG = {
-  modelId: "suno/music-v4-5-all",
-  recordId: "", // TODO: Add record ID from database
-  modelName: "Suno V4.5ALL",
+  modelId: "suno/music-v5",
+  recordId: "0e1f2a3b-4c5d-6e7f-8a9b-9c0d1e2f3a4b",
+  modelName: "Suno V5",
   provider: "kie_ai",
-  contentType: "text_to_music",
-  use_api_key: "KIE_AI_API_KEY_TEXT_TO_MUSIC",
+  contentType: "prompt_to_audio",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
   baseCreditCost: 20,
-  estimatedTimeSeconds: 180,
+  estimatedTimeSeconds: 90,
   costMultipliers: {},
   apiEndpoint: "/api/v1/generate",
   payloadStructure: "flat",
   maxImages: 0,
   defaultOutputs: 2,
-  // V4.5ALL specific limits
+  // V5 specific limits
   maxPromptLength: 5000,
   maxStyleLength: 1000,
   maxTitleLength: 80,
-  maxDuration: "8 min",
   // UI metadata
   isActive: true,
   logoUrl: "/logos/suno.png",
   modelFamily: "Suno",
-  variantName: "V4.5ALL",
-  displayOrderInFamily: 4,
+  variantName: "V5 (Latest)",
+  displayOrderInFamily: 5,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/text_to_music/Suno_V4_5_All.ts",
+  lockedFilePath: "src/lib/models/locked/prompt_to_audio/Suno_V5.ts",
 } as const;
 
 // ============================================================================
@@ -77,7 +75,7 @@ export const SCHEMA = Object.freeze({
       type: "boolean",
       title: "Custom Mode",
       default: false,
-      description: "Enable detailed control with style and title fields.",
+      description: "Enable detailed control with style and title fields. Disable for simplified mode.",
     },
     instrumental: {
       type: "boolean",
@@ -111,8 +109,12 @@ export const SCHEMA = Object.freeze({
       title: "Vocal Gender",
       default: "",
       enum: ["", "m", "f"],
-      enumLabels: { "": "Auto", m: "Male", f: "Female" },
-      description: "Vocal gender preference. Only effective in Custom Mode.",
+      enumLabels: {
+        "": "Auto",
+        m: "Male",
+        f: "Female",
+      },
+      description: "Vocal gender preference. Only effective in Custom Mode. Not guaranteed.",
       isAdvanced: true,
     },
     styleWeight: {
@@ -157,33 +159,24 @@ export const SCHEMA = Object.freeze({
 });
 
 // ============================================================================
-// VALIDATION
+// VALIDATION - COMPLEX MODE-BASED RULES
 // ============================================================================
 
 export function validate(inputs: Record<string, unknown>): { valid: boolean; error?: string } {
   const customMode = inputs.customMode === true;
+  // instrumental is used in preparePayload, not validation
 
+  // Prompt is always required
   if (!inputs.prompt || (typeof inputs.prompt === "string" && inputs.prompt.trim() === "")) {
     return { valid: false, error: "Prompt is required" };
   }
 
   const prompt = inputs.prompt as string;
 
+  // Validate prompt length based on mode
   if (customMode) {
     if (prompt.length > 5000) {
-      return { valid: false, error: "Prompt must be 5000 characters or less in Custom Mode" };
-    }
-    if (!inputs.style || (typeof inputs.style === "string" && inputs.style.trim() === "")) {
-      return { valid: false, error: "Style is required in Custom Mode" };
-    }
-    if (typeof inputs.style === "string" && inputs.style.length > 1000) {
-      return { valid: false, error: "Style must be 1000 characters or less" };
-    }
-    if (!inputs.title || (typeof inputs.title === "string" && inputs.title.trim() === "")) {
-      return { valid: false, error: "Title is required in Custom Mode" };
-    }
-    if (typeof inputs.title === "string" && inputs.title.length > 80) {
-      return { valid: false, error: "Title must be 80 characters or less" };
+      return { valid: false, error: "Prompt must be 5000 characters or less in Custom Mode (V5)" };
     }
   } else {
     if (prompt.length > 500) {
@@ -191,21 +184,50 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
     }
   }
 
-  if (inputs.styleWeight !== undefined && ((inputs.styleWeight as number) < 0 || (inputs.styleWeight as number) > 1)) {
-    return { valid: false, error: "Style weight must be between 0 and 1" };
+  // Custom Mode validations
+  if (customMode) {
+    // Style is always required in Custom Mode
+    if (!inputs.style || (typeof inputs.style === "string" && inputs.style.trim() === "")) {
+      return { valid: false, error: "Style is required in Custom Mode" };
+    }
+    if (typeof inputs.style === "string" && inputs.style.length > 1000) {
+      return { valid: false, error: "Style must be 1000 characters or less (V5)" };
+    }
+
+    // Title is always required in Custom Mode
+    if (!inputs.title || (typeof inputs.title === "string" && inputs.title.trim() === "")) {
+      return { valid: false, error: "Title is required in Custom Mode" };
+    }
+    if (typeof inputs.title === "string" && inputs.title.length > 80) {
+      return { valid: false, error: "Title must be 80 characters or less" };
+    }
   }
-  if (inputs.weirdnessConstraint !== undefined && ((inputs.weirdnessConstraint as number) < 0 || (inputs.weirdnessConstraint as number) > 1)) {
-    return { valid: false, error: "Weirdness constraint must be between 0 and 1" };
+
+  // Validate numeric ranges
+  if (inputs.styleWeight !== undefined) {
+    const sw = inputs.styleWeight as number;
+    if (sw < 0 || sw > 1) {
+      return { valid: false, error: "Style weight must be between 0 and 1" };
+    }
   }
-  if (inputs.audioWeight !== undefined && ((inputs.audioWeight as number) < 0 || (inputs.audioWeight as number) > 1)) {
-    return { valid: false, error: "Audio weight must be between 0 and 1" };
+  if (inputs.weirdnessConstraint !== undefined) {
+    const wc = inputs.weirdnessConstraint as number;
+    if (wc < 0 || wc > 1) {
+      return { valid: false, error: "Weirdness constraint must be between 0 and 1" };
+    }
+  }
+  if (inputs.audioWeight !== undefined) {
+    const aw = inputs.audioWeight as number;
+    if (aw < 0 || aw > 1) {
+      return { valid: false, error: "Audio weight must be between 0 and 1" };
+    }
   }
 
   return { valid: true };
 }
 
 // ============================================================================
-// PAYLOAD PREPARATION
+// PAYLOAD PREPARATION - FLAT STRUCTURE
 // ============================================================================
 
 export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
@@ -215,9 +237,10 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     prompt: inputs.prompt || "",
     customMode: customMode,
     instrumental: inputs.instrumental === true,
-    model: "V4_5ALL",
+    model: "V5", // V5 model version
   };
 
+  // Custom Mode fields
   if (customMode) {
     if (inputs.style) payload.style = inputs.style;
     if (inputs.title) payload.title = inputs.title;
@@ -225,10 +248,17 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     if (inputs.personaId) payload.personaId = inputs.personaId;
   }
 
+  // Optional fields (both modes)
   if (inputs.negativeTags) payload.negativeTags = inputs.negativeTags;
-  if (inputs.styleWeight !== undefined && inputs.styleWeight !== 0.5) payload.styleWeight = inputs.styleWeight;
-  if (inputs.weirdnessConstraint !== undefined && inputs.weirdnessConstraint !== 0.5) payload.weirdnessConstraint = inputs.weirdnessConstraint;
-  if (inputs.audioWeight !== undefined && inputs.audioWeight !== 0.5) payload.audioWeight = inputs.audioWeight;
+  if (inputs.styleWeight !== undefined && inputs.styleWeight !== 0.5) {
+    payload.styleWeight = inputs.styleWeight;
+  }
+  if (inputs.weirdnessConstraint !== undefined && inputs.weirdnessConstraint !== 0.5) {
+    payload.weirdnessConstraint = inputs.weirdnessConstraint;
+  }
+  if (inputs.audioWeight !== undefined && inputs.audioWeight !== 0.5) {
+    payload.audioWeight = inputs.audioWeight;
+  }
 
   return payload;
 }
@@ -254,9 +284,12 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   };
 
   const validation = validate(allInputs);
-  if (!validation.valid) throw new Error(validation.error || "Validation failed");
+  if (!validation.valid) {
+    throw new Error(validation.error || "Validation failed");
+  }
 
   const cost = calculateCost(allInputs);
+
   await reserveCredits(userId, cost);
 
   const { data: generation, error: insertError } = await supabase
@@ -274,11 +307,15 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     .select("id")
     .single();
 
-  if (insertError || !generation) throw new Error(`Failed to create generation record: ${insertError?.message}`);
+  if (insertError || !generation) {
+    throw new Error(`Failed to create generation record: ${insertError?.message}`);
+  }
+
+  const generationId = generation.id;
 
   const { error: functionError } = await supabase.functions.invoke("generate-content", {
     body: {
-      generation_id: generation.id,
+      generation_id: generationId,
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,
@@ -291,10 +328,20 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     },
   });
 
-  if (functionError) throw new Error(`Generation failed: ${functionError.message}`);
+  if (functionError) {
+    throw new Error(`Generation failed: ${functionError.message}`);
+  }
 
-  startPolling(generation.id);
-  return generation.id;
+  startPolling(generationId);
+
+  return generationId;
 }
 
-export default { MODEL_CONFIG, SCHEMA, preparePayload, calculateCost, validate, execute };
+export default {
+  MODEL_CONFIG,
+  SCHEMA,
+  preparePayload,
+  calculateCost,
+  validate,
+  execute,
+};

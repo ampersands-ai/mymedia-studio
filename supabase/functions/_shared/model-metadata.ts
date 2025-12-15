@@ -30,7 +30,7 @@ export interface ModelMetadata {
  */
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO AUDIO MODELS (3 total)
+  // PROMPT TO AUDIO MODELS (8 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "379f8945-bd7f-48f3-a1bb-9d2e2413234c": {
     recordId: "379f8945-bd7f-48f3-a1bb-9d2e2413234c",
@@ -60,6 +60,56 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_audio",
     baseCreditCost: 6,
     estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "6a7b8c9d-0e1f-2a3b-4c5d-5e6f7a8b9c0d": {
+    recordId: "6a7b8c9d-0e1f-2a3b-4c5d-5e6f7a8b9c0d",
+    modelId: "suno/music-v4",
+    modelName: "Suno V4",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 120,
+    isActive: true,
+  },
+  "7b8c9d0e-1f2a-3b4c-5d6e-6f7a8b9c0d1e": {
+    recordId: "7b8c9d0e-1f2a-3b4c-5d6e-6f7a8b9c0d1e",
+    modelId: "suno/music-v4-5",
+    modelName: "Suno V4.5",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "8c9d0e1f-2a3b-4c5d-6e7f-7a8b9c0d1e2f": {
+    recordId: "8c9d0e1f-2a3b-4c5d-6e7f-7a8b9c0d1e2f",
+    modelId: "suno/music-v4-5-plus",
+    modelName: "Suno V4.5+",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "9d0e1f2a-3b4c-5d6e-7f8a-8b9c0d1e2f3a": {
+    recordId: "9d0e1f2a-3b4c-5d6e-7f8a-8b9c0d1e2f3a",
+    modelId: "suno/music-v4-5-all",
+    modelName: "Suno V4.5ALL",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "0e1f2a3b-4c5d-6e7f-8a9b-9c0d1e2f3a4b": {
+    recordId: "0e1f2a3b-4c5d-6e7f-8a9b-9c0d1e2f3a4b",
+    modelId: "suno/music-v5",
+    modelName: "Suno V5",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 20,
+    estimatedTimeSeconds: 90,
     isActive: true,
   },
 

@@ -1,15 +1,15 @@
 /**
  * ElevenLabs Text-to-Speech Multilingual V2
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * High-quality multilingual text-to-speech generation
  * - 21 voice options
  * - Stability, similarity boost, and style controls
  * - Speed adjustment (0.7-1.2)
  * - Context continuity with previous/next text
  * - Note: language_code NOT supported (only Turbo/Flash v2.5)
- * 
+ *
  * @locked
  * @model elevenlabs/text-to-speech-multilingual-v2
  * @provider kie.ai
@@ -57,9 +57,27 @@ export const MODEL_CONFIG = {
 // ============================================================================
 
 const VOICES = [
-  "Rachel", "Aria", "Roger", "Sarah", "Laura", "Charlie", "George",
-  "Callum", "River", "Liam", "Charlotte", "Alice", "Matilda", "Will",
-  "Jessica", "Eric", "Chris", "Brian", "Daniel", "Lily", "Bill"
+  "Rachel",
+  "Aria",
+  "Roger",
+  "Sarah",
+  "Laura",
+  "Charlie",
+  "George",
+  "Callum",
+  "River",
+  "Liam",
+  "Charlotte",
+  "Alice",
+  "Matilda",
+  "Will",
+  "Jessica",
+  "Eric",
+  "Chris",
+  "Brian",
+  "Daniel",
+  "Lily",
+  "Bill",
 ] as const;
 
 // ============================================================================
@@ -81,9 +99,9 @@ export const SCHEMA = Object.freeze({
     voice: {
       type: "string",
       title: "Voice",
-      default: "Rachel",
+      default: "Brian",
       enum: VOICES,
-      enumLabels: Object.fromEntries(VOICES.map(v => [v, v])),
+      enumLabels: Object.fromEntries(VOICES.map((v) => [v, v])),
       description: "The voice to use for speech generation",
     },
     stability: {
@@ -93,6 +111,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Voice stability (0-1). Higher = more consistent, lower = more expressive.",
     },
     similarity_boost: {
@@ -102,6 +121,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Similarity boost (0-1). Higher = closer to original voice.",
     },
     style: {
@@ -111,6 +131,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Style exaggeration (0-1). Higher = more expressive style.",
       isAdvanced: true,
     },
@@ -121,12 +142,14 @@ export const SCHEMA = Object.freeze({
       minimum: 0.7,
       maximum: 1.2,
       step: 0.01,
+      isAdvanced: true,
       description: "Speech speed (0.7-1.2). Below 1 = slower, above 1 = faster.",
     },
     timestamps: {
       type: "boolean",
       title: "Return Timestamps",
       default: false,
+      showToUser: false,
       description: "Whether to return timestamps for each word",
       isAdvanced: true,
     },
@@ -135,6 +158,7 @@ export const SCHEMA = Object.freeze({
       title: "Previous Text",
       default: "",
       maxLength: 5000,
+      showToUser: false,
       description: "Text before current request for continuity when concatenating",
       isAdvanced: true,
     },
@@ -142,6 +166,7 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Next Text",
       default: "",
+      showToUser: false,
       maxLength: 5000,
       description: "Text after current request for continuity when concatenating",
       isAdvanced: true,

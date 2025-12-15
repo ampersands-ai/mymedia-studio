@@ -1,15 +1,15 @@
 /**
  * ElevenLabs Text-to-Speech Turbo V2.5
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Fast, high-quality text-to-speech generation
  * - 21 voice options
  * - Stability, similarity boost, and style controls
  * - Speed adjustment (0.7-1.2)
  * - Context continuity with previous/next text
  * - SUPPORTS language_code enforcement (ISO 639-1)
- * 
+ *
  * @locked
  * @model elevenlabs/text-to-speech-turbo-2-5
  * @provider kie.ai
@@ -57,9 +57,27 @@ export const MODEL_CONFIG = {
 // ============================================================================
 
 const VOICES = [
-  "Rachel", "Aria", "Roger", "Sarah", "Laura", "Charlie", "George",
-  "Callum", "River", "Liam", "Charlotte", "Alice", "Matilda", "Will",
-  "Jessica", "Eric", "Chris", "Brian", "Daniel", "Lily", "Bill"
+  "Rachel",
+  "Aria",
+  "Roger",
+  "Sarah",
+  "Laura",
+  "Charlie",
+  "George",
+  "Callum",
+  "River",
+  "Liam",
+  "Charlotte",
+  "Alice",
+  "Matilda",
+  "Will",
+  "Jessica",
+  "Eric",
+  "Chris",
+  "Brian",
+  "Daniel",
+  "Lily",
+  "Bill",
 ] as const;
 
 // ============================================================================
@@ -67,9 +85,36 @@ const VOICES = [
 // ============================================================================
 
 const LANGUAGE_CODES = [
-  "en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl",
-  "cs", "ar", "zh", "ja", "ko", "hi", "sv", "da", "fi", "no",
-  "id", "ms", "vi", "th", "el", "he", "hu", "ro", "bg", "uk"
+  "en",
+  "es",
+  "fr",
+  "de",
+  "it",
+  "pt",
+  "pl",
+  "tr",
+  "ru",
+  "nl",
+  "cs",
+  "ar",
+  "zh",
+  "ja",
+  "ko",
+  "hi",
+  "sv",
+  "da",
+  "fi",
+  "no",
+  "id",
+  "ms",
+  "vi",
+  "th",
+  "el",
+  "he",
+  "hu",
+  "ro",
+  "bg",
+  "uk",
 ] as const;
 
 // ============================================================================
@@ -93,7 +138,7 @@ export const SCHEMA = Object.freeze({
       title: "Voice",
       default: "Rachel",
       enum: VOICES,
-      enumLabels: Object.fromEntries(VOICES.map(v => [v, v])),
+      enumLabels: Object.fromEntries(VOICES.map((v) => [v, v])),
       description: "The voice to use for speech generation",
     },
     language_code: {
@@ -143,6 +188,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Voice stability (0-1). Higher = more consistent, lower = more expressive.",
     },
     similarity_boost: {
@@ -152,6 +198,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Similarity boost (0-1). Higher = closer to original voice.",
     },
     style: {
@@ -161,6 +208,7 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 1,
       step: 0.01,
+      isAdvanced: true,
       description: "Style exaggeration (0-1). Higher = more expressive style.",
       isAdvanced: true,
     },
@@ -171,12 +219,14 @@ export const SCHEMA = Object.freeze({
       minimum: 0.7,
       maximum: 1.2,
       step: 0.01,
+      isAdvanced: true,
       description: "Speech speed (0.7-1.2). Below 1 = slower, above 1 = faster.",
     },
     timestamps: {
       type: "boolean",
       title: "Return Timestamps",
       default: false,
+      showToUser: false,
       description: "Whether to return timestamps for each word",
       isAdvanced: true,
     },
@@ -184,6 +234,7 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Previous Text",
       default: "",
+      showToUser: false,
       maxLength: 5000,
       description: "Text before current request for continuity when concatenating",
       isAdvanced: true,
@@ -192,6 +243,7 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Next Text",
       default: "",
+      showToUser: false,
       maxLength: 5000,
       description: "Text after current request for continuity when concatenating",
       isAdvanced: true,

@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import { captionPresets } from '@/config/captionStyles';
@@ -125,7 +126,7 @@ export function VideoCreator() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [state.jobId, state.step, isPolling, refetch, refetchCredits]);
+  }, [state.jobId, state.step, isPolling, refetchCredits, queryClient]);
 
   // Handle Generate Script
   const handleGenerateScript = async () => {

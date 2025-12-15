@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceSelector } from "./VoiceSelector";
+import { getVoiceIdFromName } from "@/lib/voice-mapping";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -663,7 +664,7 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
               <DialogTitle>Choose a Voice</DialogTitle>
             </DialogHeader>
             <VoiceSelector 
-              selectedValue={String(value || schema.default || 'nPczCjzI2devNBz1zQrb')}
+              selectedValue={getVoiceIdFromName(String(value || schema.default || 'Brian')) || 'nPczCjzI2devNBz1zQrb'}
               onSelectVoice={(_voiceId, voiceName) => onChange(voiceName)}
             />
           </DialogContent>

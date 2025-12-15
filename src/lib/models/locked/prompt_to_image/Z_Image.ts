@@ -23,8 +23,8 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/qwen.png",
-  modelFamily: "Qwen",
+  logoUrl: "/logos/artifio.png",
+  modelFamily: "Z-Image",
   variantName: "Z-Image",
   displayOrderInFamily: 1,
   // Lock system

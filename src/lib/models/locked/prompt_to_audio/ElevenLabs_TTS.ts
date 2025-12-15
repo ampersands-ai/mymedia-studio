@@ -34,7 +34,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
-  baseCreditCost: 3,
+  baseCreditCost: 6,
   estimatedTimeSeconds: 30,
   costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -94,7 +94,7 @@ export const SCHEMA = Object.freeze({
       default: "",
       description: "The text to convert to speech",
       maxLength: 5000,
-      renderer: "textarea",
+      renderer: "prompt",
     },
     voice: {
       type: "string",

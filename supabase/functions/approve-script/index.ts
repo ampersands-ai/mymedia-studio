@@ -256,9 +256,11 @@ Deno.serve(async (req) => {
     });
 
     // Call generate-content edge function (routes through Kie.ai)
+    // user_id is required when using service role authentication
     const { error: functionError } = await supabaseClient.functions.invoke('generate-content', {
       body: {
         generationId: generation.id,
+        user_id: user.id, // Required for service role auth
         prompt: finalScript,
         custom_parameters: customParameters,
         model_config: modelConfig,

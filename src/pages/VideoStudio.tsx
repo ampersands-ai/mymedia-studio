@@ -7,17 +7,17 @@ export default function VideoStudio() {
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
             <div className="p-2 rounded-lg bg-primary/10 shrink-0">
               <Video className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black break-words">
-              FACELESS VIDEOS.
-              <span className="text-sm sm:text-base md:text-lg font-medium text-muted-foreground ml-2">
-                from (ℂ)0.3/s
-              </span>
+              FACELESS VIDEOS
             </h1>
           </div>
+          <p className="text-sm md:text-base lg:text-lg text-muted-foreground">
+            Generate professional faceless videos with AI-powered script writing, voiceover, and video assembly
+          </p>
         </div>
 
         {/* Main Content */}

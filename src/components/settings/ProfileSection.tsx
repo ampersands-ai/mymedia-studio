@@ -34,12 +34,16 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleResendVerification = async () => {
-    if (!user?.email) return;
+    if (!user?.id || !user?.email) return;
     
     setSendingVerification(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-verification-email', {
-        body: {}
+        body: {
+          userId: user.id,
+          email: user.email,
+          fullName: user.user_metadata?.full_name || profileData.full_name || ""
+        }
       });
       
       if (error) throw error;

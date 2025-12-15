@@ -211,19 +211,22 @@ export function getDefaultValue(property: JsonSchemaProperty | null): ModelParam
 
 /**
  * Gets the order of fields from schema
+ * Returns x-order fields first, then any remaining properties not in x-order
  */
 export function getFieldOrder(schema: ModelJsonSchema | null | undefined): string[] {
   if (!schema) return [];
   
+  const allKeys = schema.properties ? Object.keys(schema.properties) : [];
+  
   if (Array.isArray(schema['x-order'])) {
-    return schema['x-order'] as string[];
+    const xOrder = schema['x-order'] as string[];
+    // Get fields not in x-order
+    const remaining = allKeys.filter(key => !xOrder.includes(key));
+    // Return x-order fields first, then remaining fields
+    return [...xOrder, ...remaining];
   }
   
-  if (schema.properties) {
-    return Object.keys(schema.properties);
-  }
-  
-  return [];
+  return allKeys;
 }
 
 /**

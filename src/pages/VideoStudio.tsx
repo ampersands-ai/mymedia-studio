@@ -1,5 +1,5 @@
 import { VideoCreator } from '@/components/video/VideoCreator';
-import { Video } from 'lucide-react';
+import { Video, Coins } from 'lucide-react';
 
 export default function VideoStudio() {
   return (
@@ -13,7 +13,8 @@ export default function VideoStudio() {
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black break-words">
               FACELESS VIDEOS
-              <span className="text-sm md:text-base font-medium text-muted-foreground ml-2">
+              <span className="inline-flex items-center gap-1 text-sm md:text-base font-medium text-muted-foreground ml-2">
+                <Coins className="w-4 h-4" />
                 from 0.3/s
               </span>
             </h1>

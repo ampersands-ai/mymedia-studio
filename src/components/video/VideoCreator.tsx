@@ -150,7 +150,7 @@ export function VideoCreator() {
         setIsPolling(false);
         refetchCredits();
       } else if (job.status === 'completed' && state.step === 'rendering') {
-        setState((prev) => ({ ...prev, step: 'complete', videoUrl: job.video_url || '' }));
+        setState((prev) => ({ ...prev, step: 'complete', videoUrl: job.final_video_url || '' }));
         setIsPolling(false);
         queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
         refetchCredits();

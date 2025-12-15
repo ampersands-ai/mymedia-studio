@@ -243,9 +243,28 @@ export function VideoCreator() {
     if (!state.jobId) return;
 
     setError(null);
-    setState((prev) => ({ ...prev, step: 'rendering' }));
 
     try {
+      // Verify job is in correct status before proceeding
+      const { data: job, error: jobError } = await supabase
+        .from('video_jobs')
+        .select('status, voiceover_url')
+        .eq('id', state.jobId)
+        .single();
+
+      if (jobError || !job) {
+        throw new Error('Failed to verify job status');
+      }
+
+      // Check if voiceover has been generated
+      if (job.status !== 'awaiting_voice_approval' || !job.voiceover_url) {
+        setError('Please generate a voiceover before rendering the video');
+        setState((prev) => ({ ...prev, step: 'voiceover_setup' }));
+        return;
+      }
+
+      setState((prev) => ({ ...prev, step: 'rendering' }));
+
       // Update job with final settings
       await supabase
         .from('video_jobs')

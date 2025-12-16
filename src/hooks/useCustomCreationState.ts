@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import type { CustomCreationState } from "@/types/custom-creation";
+import type { CustomCreationState, GenerationOutput } from "@/types/custom-creation";
 import type { CreationGroup } from "@/constants/creation-groups";
 import { logger } from "@/lib/logger";
+import { saveCriticalId, loadCriticalId, clearCriticalId, verifyGeneration } from "@/lib/state-persistence";
 
 const STORAGE_VERSION = '1.1'; // Bumped to invalidate cached invalid UUIDs
 const MAX_STORAGE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const POLLING_ID_KEY = 'customCreation_pollingId';
+const POLLING_EXPIRY_HOURS = 24;
 
 interface StoredState {
   selectedGroup: CreationGroup;
@@ -142,6 +145,62 @@ export const useCustomCreationState = () => {
       ...loadedState,
     };
   });
+
+  // Recover polling generation on mount
+  useEffect(() => {
+    const recoverPollingGeneration = async () => {
+      const savedPollingId = loadCriticalId(POLLING_ID_KEY, POLLING_EXPIRY_HOURS);
+      if (!savedPollingId) return;
+      
+      try {
+        const genState = await verifyGeneration(savedPollingId);
+        
+        if (genState.exists) {
+          if (genState.status === 'PENDING' || genState.status === 'PROCESSING') {
+            // Resume polling
+            setState(prev => ({
+              ...prev,
+              pollingGenerationId: savedPollingId,
+              localGenerating: true,
+              generationStartTime: Date.now(),
+            }));
+          } else if (genState.status === 'COMPLETED' && genState.storagePath) {
+            // Generation completed while away - set output with proper structure
+            const output: GenerationOutput = {
+              id: savedPollingId,
+              storage_path: genState.storagePath,
+              output_index: 0,
+            };
+            setState(prev => ({
+              ...prev,
+              generatedOutput: genState.outputUrl || null,
+              generatedOutputs: [output],
+              pollingGenerationId: null,
+              localGenerating: false,
+            }));
+            clearCriticalId(POLLING_ID_KEY);
+          } else {
+            // Failed or unknown status
+            clearCriticalId(POLLING_ID_KEY);
+          }
+        } else {
+          // Generation doesn't exist
+          logger.info('Polling generation not found in database, clearing local state');
+          clearCriticalId(POLLING_ID_KEY);
+        }
+      } catch (e) {
+        logger.error('Failed to recover polling generation', e instanceof Error ? e : new Error(String(e)));
+        clearCriticalId(POLLING_ID_KEY);
+      }
+    };
+    
+    recoverPollingGeneration();
+  }, []);
+
+  // Save polling ID immediately when it changes
+  useEffect(() => {
+    saveCriticalId(POLLING_ID_KEY, state.pollingGenerationId);
+  }, [state.pollingGenerationId]);
 
   // Persist selectedGroup and selectedModel to localStorage with validation
   useEffect(() => {

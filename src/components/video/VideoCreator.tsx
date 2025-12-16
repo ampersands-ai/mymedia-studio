@@ -13,6 +13,13 @@ import { CaptionStyle } from '@/types/video';
 import type { VideoJobInput } from '@/types/video';
 import { SelectedMedia } from './BackgroundMediaSelector';
 import { downloadFromUrl } from '@/lib/downloads/downloadManager';
+import { 
+  saveCriticalId, 
+  loadCriticalId, 
+  clearCriticalId, 
+  verifyVideoJob, 
+  mapVideoStatusToStep 
+} from '@/lib/state-persistence';
 
 // Step Components
 import { StepCollapsible } from './steps/StepCollapsible';
@@ -73,6 +80,7 @@ const initialState: VideoCreatorState = {
 };
 
 const FACELESS_VIDEO_DRAFT_KEY = 'faceless_video_draft';
+const FACELESS_VIDEO_JOB_KEY = 'faceless_video_job_id'; // Critical ID key
 const DRAFT_EXPIRY_HOURS = 24;
 
 export function VideoCreator() {
@@ -88,42 +96,95 @@ export function VideoCreator() {
   const { createJob, isCreating } = useVideoJobs();
   const { availableCredits, refetch: refetchCredits } = useUserCredits();
 
-  // Load state from localStorage on mount
+  // Load and verify state from localStorage on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
-      if (saved) {
-        const { state: savedState, timestamp } = JSON.parse(saved);
-        const hoursSinceCreation = (Date.now() - timestamp) / (1000 * 60 * 60);
-        if (hoursSinceCreation < DRAFT_EXPIRY_HOURS && savedState.jobId) {
-          setState(savedState);
-          // Resume polling if job was in a processing state
-          if (['script_generating', 'voiceover_generating', 'rendering'].includes(savedState.step)) {
-            setIsPolling(true);
+    const loadAndVerifyState = async () => {
+      try {
+        // First check for critical job ID
+        const savedJobId = loadCriticalId(FACELESS_VIDEO_JOB_KEY, DRAFT_EXPIRY_HOURS);
+        
+        if (savedJobId) {
+          // Verify job exists in database
+          const jobState = await verifyVideoJob(savedJobId);
+          
+          if (jobState.exists) {
+            // Load full draft state for non-critical fields
+            const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
+            const savedDraft = saved ? JSON.parse(saved).state : {};
+            
+            // Sync state with database (DB is source of truth)
+            const step = mapVideoStatusToStep(jobState.status || 'pending') as VideoCreatorStep;
+            
+            setState({
+              ...initialState,
+              ...savedDraft,
+              jobId: savedJobId,
+              script: jobState.script || savedDraft.script || '',
+              voiceoverUrl: jobState.voiceoverUrl || savedDraft.voiceoverUrl || '',
+              videoUrl: jobState.videoUrl || savedDraft.videoUrl || '',
+              step,
+            });
+            
+            // Resume polling if in processing state
+            if (['script_generating', 'voiceover_generating', 'rendering'].includes(step)) {
+              setIsPolling(true);
+            }
+          } else {
+            // Job doesn't exist in DB, clear localStorage
+            logger.info('Video job not found in database, clearing local state');
+            clearCriticalId(FACELESS_VIDEO_JOB_KEY);
+            localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
           }
         } else {
-          localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+          // No job ID, try loading draft for form inputs only
+          const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
+          if (saved) {
+            const { state: savedState, timestamp } = JSON.parse(saved);
+            const hoursSince = (Date.now() - timestamp) / (1000 * 60 * 60);
+            
+            if (hoursSince < DRAFT_EXPIRY_HOURS && !savedState.jobId) {
+              // Only restore form inputs, not job state
+              setState(prev => ({
+                ...prev,
+                topic: savedState.topic || '',
+                duration: savedState.duration || 60,
+                style: savedState.style || 'educational',
+                voiceId: savedState.voiceId || prev.voiceId,
+                voiceName: savedState.voiceName || prev.voiceName,
+                aspectRatio: savedState.aspectRatio || '4:5',
+              }));
+            } else {
+              localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+            }
+          }
         }
+      } catch (e) {
+        logger.error('Failed to load video state', e instanceof Error ? e : new Error(String(e)));
+        clearCriticalId(FACELESS_VIDEO_JOB_KEY);
+        localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
       }
-    } catch (e) {
-      localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    };
+
+    loadAndVerifyState();
   }, []);
 
-  // Save state to localStorage on changes (debounced)
+  // Save critical job ID immediately when it changes
   useEffect(() => {
     if (!isLoaded) return;
-    if (state.jobId) {
-      const timeout = setTimeout(() => {
-        localStorage.setItem(FACELESS_VIDEO_DRAFT_KEY, JSON.stringify({
-          state,
-          timestamp: Date.now()
-        }));
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-    return undefined;
+    saveCriticalId(FACELESS_VIDEO_JOB_KEY, state.jobId);
+  }, [state.jobId, isLoaded]);
+
+  // Save full state to localStorage on changes (debounced for non-critical fields)
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timeout = setTimeout(() => {
+      localStorage.setItem(FACELESS_VIDEO_DRAFT_KEY, JSON.stringify({
+        state,
+        timestamp: Date.now()
+      }));
+    }, 500);
+    return () => clearTimeout(timeout);
   }, [state, isLoaded]);
 
   // Poll for job status updates
@@ -348,6 +409,7 @@ export function VideoCreator() {
 
   // Reset to create new video
   const handleReset = () => {
+    clearCriticalId(FACELESS_VIDEO_JOB_KEY);
     localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
     setState(initialState);
     setError(null);

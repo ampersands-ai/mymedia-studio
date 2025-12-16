@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,11 @@ export function ScriptReviewStep({
 }: ScriptReviewStepProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedScript, setEditedScript] = useState(script);
+
+  // Sync editedScript when script prop changes (e.g., after generation)
+  useEffect(() => {
+    setEditedScript(script);
+  }, [script]);
 
   const wordCount = script.trim().split(/\s+/).filter(Boolean).length;
   const charCount = script.length;

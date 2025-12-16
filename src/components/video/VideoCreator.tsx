@@ -129,11 +129,23 @@ export function VideoCreator() {
             if (['script_generating', 'voiceover_generating', 'rendering'].includes(step)) {
               setIsPolling(true);
             }
-          } else {
-            // Job doesn't exist in DB, clear localStorage
+          } else if (jobState.verified) {
+            // Job definitely doesn't exist in DB (verified=true), safe to clear localStorage
             logger.info('Video job not found in database, clearing local state');
             clearCriticalId(FACELESS_VIDEO_JOB_KEY);
             localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+          } else {
+            // Couldn't verify (network/auth issue) - preserve existing localStorage state
+            logger.warn('Could not verify job, preserving local state');
+            const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
+            if (saved) {
+              const { state: savedState } = JSON.parse(saved);
+              setState({
+                ...initialState,
+                ...savedState,
+                jobId: savedJobId,
+              });
+            }
           }
         } else {
           // No job ID, try loading draft for form inputs only
@@ -159,9 +171,8 @@ export function VideoCreator() {
           }
         }
       } catch (e) {
+        // Don't clear state on exception - preserve for retry on next load
         logger.error('Failed to load video state', e instanceof Error ? e : new Error(String(e)));
-        clearCriticalId(FACELESS_VIDEO_JOB_KEY);
-        localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
       }
       setIsLoaded(true);
     };

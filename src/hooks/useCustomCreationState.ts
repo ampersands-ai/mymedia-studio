@@ -183,14 +183,23 @@ export const useCustomCreationState = () => {
             // Failed or unknown status
             clearCriticalId(POLLING_ID_KEY);
           }
-        } else {
-          // Generation doesn't exist
+        } else if (genState.verified) {
+          // Generation definitely doesn't exist (verified=true), safe to clear
           logger.info('Polling generation not found in database, clearing local state');
           clearCriticalId(POLLING_ID_KEY);
+        } else {
+          // Couldn't verify (network/auth issue) - preserve polling state to retry later
+          logger.warn('Could not verify generation, preserving polling state');
+          setState(prev => ({
+            ...prev,
+            pollingGenerationId: savedPollingId,
+            localGenerating: true,
+            generationStartTime: Date.now(),
+          }));
         }
       } catch (e) {
         logger.error('Failed to recover polling generation', e instanceof Error ? e : new Error(String(e)));
-        clearCriticalId(POLLING_ID_KEY);
+        // Don't clear on exception - preserve state for retry
       }
     };
     

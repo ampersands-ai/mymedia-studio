@@ -84,10 +84,14 @@ export const useStoryboardState = () => {
         
         if (storyboardState.exists) {
           setCurrentStoryboardId(savedId);
-        } else {
-          // Storyboard doesn't exist in DB, clear localStorage
+        } else if (storyboardState.verified) {
+          // Storyboard definitely doesn't exist in DB (verified=true), safe to clear
           logger.info('Storyboard not found in database, clearing local state');
           clearCriticalId(STORYBOARD_ID_KEY);
+        } else {
+          // Couldn't verify (network/auth issue) - preserve existing ID
+          logger.warn('Could not verify storyboard, preserving local state');
+          setCurrentStoryboardId(savedId);
         }
       }
       setIsVerified(true);

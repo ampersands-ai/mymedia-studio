@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -136,9 +136,10 @@ const countryCodes = [
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { execute } = useErrorHandler();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => searchParams.get('mode') !== 'signup');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

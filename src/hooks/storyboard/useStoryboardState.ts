@@ -1,6 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
+import { 
+  saveCriticalId, 
+  loadCriticalId, 
+  clearCriticalId, 
+  verifyStoryboard 
+} from '@/lib/state-persistence';
+
+const STORYBOARD_ID_KEY = 'currentStoryboardId';
+const STORYBOARD_EXPIRY_HOURS = 168; // 7 days
 
 interface Scene {
   id: string;
@@ -59,21 +69,37 @@ interface Storyboard {
 }
 
 export const useStoryboardState = () => {
-  // Initialize from localStorage on mount
-  const [currentStoryboardId, setCurrentStoryboardId] = useState<string | null>(() => {
-    return localStorage.getItem('currentStoryboardId');
-  });
-  
+  // Initialize from localStorage on mount with verification
+  const [currentStoryboardId, setCurrentStoryboardId] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
+
+  // Verify storyboard exists on mount
+  useEffect(() => {
+    const verifyAndLoadStoryboard = async () => {
+      const savedId = loadCriticalId(STORYBOARD_ID_KEY, STORYBOARD_EXPIRY_HOURS);
+      
+      if (savedId) {
+        const storyboardState = await verifyStoryboard(savedId);
+        
+        if (storyboardState.exists) {
+          setCurrentStoryboardId(savedId);
+        } else {
+          // Storyboard doesn't exist in DB, clear localStorage
+          logger.info('Storyboard not found in database, clearing local state');
+          clearCriticalId(STORYBOARD_ID_KEY);
+        }
+      }
+      setIsVerified(true);
+    };
+    
+    verifyAndLoadStoryboard();
+  }, []);
 
   // Wrapper to persist storyboard ID to localStorage
   const setAndPersistStoryboardId = useCallback((id: string | null) => {
     setCurrentStoryboardId(id);
-    if (id) {
-      localStorage.setItem('currentStoryboardId', id);
-    } else {
-      localStorage.removeItem('currentStoryboardId');
-    }
+    saveCriticalId(STORYBOARD_ID_KEY, id);
     // Notify other hook instances in the same tab
     window.dispatchEvent(new CustomEvent('storyboard-id-changed', { detail: id }));
   }, []);
@@ -86,8 +112,10 @@ export const useStoryboardState = () => {
     };
     
     const onStorageEvent = (e: StorageEvent) => {
-      if (e.key === 'currentStoryboardId') {
-        setCurrentStoryboardId(e.newValue);
+      if (e.key === STORYBOARD_ID_KEY) {
+        // Re-verify when storage changes from another tab
+        const newId = e.newValue ? JSON.parse(e.newValue).id : null;
+        setCurrentStoryboardId(newId);
       }
     };
     
@@ -112,10 +140,18 @@ export const useStoryboardState = () => {
         .eq('id', currentStoryboardId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If storyboard doesn't exist, clear the ID
+        if (error.code === 'PGRST116') {
+          logger.info('Storyboard query returned no results, clearing ID');
+          clearCriticalId(STORYBOARD_ID_KEY);
+          setCurrentStoryboardId(null);
+        }
+        throw error;
+      }
       return data as Storyboard;
     },
-    enabled: !!currentStoryboardId,
+    enabled: !!currentStoryboardId && isVerified,
   });
 
   // Fetch scenes for current storyboard

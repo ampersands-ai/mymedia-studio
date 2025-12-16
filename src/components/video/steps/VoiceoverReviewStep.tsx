@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Download, RefreshCw, Loader2, Coins } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VoiceoverReviewStepProps {
   voiceoverUrl: string;
@@ -25,6 +35,7 @@ export function VoiceoverReviewStep({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [pendingRegenTier, setPendingRegenTier] = useState<'standard' | 'pro' | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,7 +212,7 @@ export function VoiceoverReviewStep({
       <div className="grid grid-cols-2 gap-2">
         <Button
           variant="outline"
-          onClick={() => onRegenerate('standard')}
+          onClick={() => setPendingRegenTier('standard')}
           disabled={isDisabled || isRegenerating || !canAffordStandard}
           className="min-h-[44px]"
         >
@@ -216,7 +227,7 @@ export function VoiceoverReviewStep({
         </Button>
         <Button
           variant="outline"
-          onClick={() => onRegenerate('pro')}
+          onClick={() => setPendingRegenTier('pro')}
           disabled={isDisabled || isRegenerating || !canAffordPro}
           className="min-h-[44px]"
         >
@@ -245,6 +256,33 @@ export function VoiceoverReviewStep({
       >
         Continue to Render Setup
       </Button>
+
+      {/* Regeneration Confirmation Dialog */}
+      <AlertDialog open={!!pendingRegenTier} onOpenChange={(open) => !open && setPendingRegenTier(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate Voiceover?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate a new {pendingRegenTier === 'pro' ? 'Pro' : 'Standard'} voiceover and cost{' '}
+              <span className="font-semibold text-foreground">
+                {pendingRegenTier === 'pro' ? proCost : standardCost} credits
+              </span>.
+              Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingRegenTier) onRegenerate(pendingRegenTier);
+                setPendingRegenTier(null);
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

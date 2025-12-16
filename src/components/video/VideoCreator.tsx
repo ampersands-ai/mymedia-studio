@@ -338,6 +338,10 @@ export function VideoCreator() {
       });
 
       if (error) throw error;
+      
+      // Immediately refresh credits since they're deducted on API call
+      refetchCredits();
+      
       setIsPolling(true);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));

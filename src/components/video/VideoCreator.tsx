@@ -148,25 +148,80 @@ export function VideoCreator() {
             }
           }
         } else {
-          // No job ID, try loading draft for form inputs only
-          const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
-          if (saved) {
-            const { state: savedState, timestamp } = JSON.parse(saved);
-            const hoursSince = (Date.now() - timestamp) / (1000 * 60 * 60);
+          // No localStorage job ID - check database for recent in-progress jobs
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            const { data: recentJob } = await supabase
+              .from('video_jobs')
+              .select('id, status, script, voiceover_url, final_video_url, topic, duration, style, voice_id, voice_name, voiceover_tier, aspect_ratio, caption_style')
+              .eq('user_id', user.id)
+              .in('status', [
+                'pending',
+                'generating_script',
+                'awaiting_script_approval',
+                'generating_voice',
+                'awaiting_voice_approval',
+                'fetching_video',
+                'assembling'
+              ])
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
             
-            if (hoursSince < DRAFT_EXPIRY_HOURS && !savedState.jobId) {
-              // Only restore form inputs, not job state
-              setState(prev => ({
-                ...prev,
-                topic: savedState.topic || '',
-                duration: savedState.duration || 60,
-                style: savedState.style || 'educational',
-                voiceId: savedState.voiceId || prev.voiceId,
-                voiceName: savedState.voiceName || prev.voiceName,
-                aspectRatio: savedState.aspectRatio || '4:5',
-              }));
+            if (recentJob) {
+              // Found an active job - restore it
+              const step = mapVideoStatusToStep(recentJob.status) as VideoCreatorStep;
+              
+              setState({
+                ...initialState,
+                jobId: recentJob.id,
+                topic: recentJob.topic || '',
+                duration: recentJob.duration || 60,
+                style: recentJob.style || 'educational',
+                script: recentJob.script || '',
+                voiceId: recentJob.voice_id || initialState.voiceId,
+                voiceName: recentJob.voice_name || initialState.voiceName,
+                voiceoverTier: (recentJob.voiceover_tier as 'standard' | 'pro') || 'standard',
+                voiceoverUrl: recentJob.voiceover_url || '',
+                videoUrl: recentJob.final_video_url || '',
+                aspectRatio: (recentJob.aspect_ratio as '16:9' | '9:16' | '4:5' | '1:1') || '4:5',
+                captionStyle: recentJob.caption_style as CaptionStyle || captionPresets.modern,
+                selectedBackgroundMedia: [],
+                caption: '',
+                hashtags: [],
+              });
+              
+              // Save to localStorage for future loads
+              saveCriticalId(FACELESS_VIDEO_JOB_KEY, recentJob.id);
+              
+              // Resume polling if in processing state
+              if (['script_generating', 'voiceover_generating', 'rendering'].includes(step)) {
+                setIsPolling(true);
+              }
+              
+              logger.info('Recovered active video job from database', { jobId: recentJob.id, status: recentJob.status });
             } else {
-              localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+              // No active job found, try loading draft for form inputs only
+              const saved = localStorage.getItem(FACELESS_VIDEO_DRAFT_KEY);
+              if (saved) {
+                const { state: savedState, timestamp } = JSON.parse(saved);
+                const hoursSince = (Date.now() - timestamp) / (1000 * 60 * 60);
+                
+                if (hoursSince < DRAFT_EXPIRY_HOURS && !savedState.jobId) {
+                  setState(prev => ({
+                    ...prev,
+                    topic: savedState.topic || '',
+                    duration: savedState.duration || 60,
+                    style: savedState.style || 'educational',
+                    voiceId: savedState.voiceId || prev.voiceId,
+                    voiceName: savedState.voiceName || prev.voiceName,
+                    aspectRatio: savedState.aspectRatio || '4:5',
+                  }));
+                } else {
+                  localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
+                }
+              }
             }
           }
         }

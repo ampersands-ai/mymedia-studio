@@ -64,6 +64,10 @@ export function ScriptReviewStep({
             className="min-h-[200px] text-sm"
             disabled={isDisabled}
           />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{editedScript.trim().split(/\s+/).filter(Boolean).length} words</span>
+            <span>{editedScript.length} characters</span>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={handleSaveEdit}

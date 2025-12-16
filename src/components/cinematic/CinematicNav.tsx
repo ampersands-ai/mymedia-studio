@@ -143,7 +143,7 @@ export const CinematicNav = () => {
                       Sign In
                     </Link>
                     <Link
-                      to="/auth"
+                      to="/auth?mode=signup"
                       onClick={() => setIsOpen(false)}
                       className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all rounded-2xl"
                     >

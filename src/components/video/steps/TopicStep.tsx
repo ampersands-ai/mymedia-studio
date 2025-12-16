@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Sparkles, Info } from 'lucide-react';
+import { Loader2, Sparkles, Info, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -161,10 +161,12 @@ export function TopicStep({
       <Alert className="bg-muted/50">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <span className="font-semibold">Approximate cost: {estimatedCost} credits</span>
+          <span className="font-semibold flex items-center gap-1">
+            Estimated cost: <Coins className="h-4 w-4" />{estimatedCost}
+          </span>
           <br />
           <span className="text-xs text-muted-foreground">
-            Note: Final cost will be determined by the audio time (1s = 0.3 credits)
+            Final cost based on audio length (1s = 0.3 credits)
           </span>
         </AlertDescription>
       </Alert>
@@ -184,7 +186,9 @@ export function TopicStep({
         ) : !canAfford ? (
           'Insufficient Credits'
         ) : (
-          `Generate Script (~${estimatedCost} credits)`
+          <>
+            Generate Script (~<Coins className="inline h-4 w-4 mx-0.5" />{estimatedCost})
+          </>
         )}
       </Button>
     </div>

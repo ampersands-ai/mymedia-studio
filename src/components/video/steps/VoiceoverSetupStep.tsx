@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Volume2, Loader2, Crown } from 'lucide-react';
+import { Volume2, Loader2, Crown, Coins } from 'lucide-react';
 import { VoiceSelector } from '@/components/generation/VoiceSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,8 +37,9 @@ export function VoiceoverSetupStep({
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  // Calculate Pro voiceover cost: +3 credits per 900 characters
-  const proCost = Math.ceil(scriptLength / 900) * 3;
+  // Calculate Pro voiceover cost: 3 credits per 1000 characters (matches backend)
+  const charBlocks = Math.max(1, Math.ceil(scriptLength / 1000));
+  const proCost = charBlocks * 3;
   const canAffordPro = availableCredits >= proCost;
 
   // First generation cost
@@ -127,7 +128,7 @@ export function VoiceoverSetupStep({
             <div className="ml-3 flex-1">
               <p className="font-medium text-sm">Standard</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                First generation: <span className="text-primary font-medium">FREE</span> • Regenerate: 3 credits
+                First generation: <span className="text-primary font-medium">FREE</span> • Regenerate: <Coins className="inline h-3 w-3 mx-0.5" />{charBlocks * 3}
               </p>
             </div>
           </label>
@@ -150,7 +151,7 @@ export function VoiceoverSetupStep({
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                First generation: <span className="font-medium">+{proCost} credits</span> • Regenerate: 6 credits
+                First generation: <Coins className="inline h-3 w-3 mx-0.5" /><span className="font-medium">{proCost}</span> • Regenerate: <Coins className="inline h-3 w-3 mx-0.5" />{charBlocks * 6}
               </p>
               {!canAffordPro && (
                 <p className="text-xs text-destructive mt-1">
@@ -175,7 +176,9 @@ export function VoiceoverSetupStep({
             Generating Voiceover...
           </>
         ) : generationCost > 0 ? (
-          `Generate Voiceover (${generationCost} credits)`
+          <>
+            Generate Voiceover (<Coins className="inline h-4 w-4 mx-0.5" />{generationCost})
+          </>
         ) : (
           'Generate Voiceover (Free)'
         )}

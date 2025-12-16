@@ -75,15 +75,43 @@ Deno.serve(async (req) => {
     const tier = voiceover_tier || 'standard';
     const isScriptEdited = edited_script && edited_script !== job.script;
     const isRegeneration = regenerate === true || isScriptEdited;
+    const isFirstProGeneration = tier === 'pro' && !job.voiceover_url && !isRegeneration;
 
-    // If regenerating voiceover, charge per 1000 characters: 3 for standard, 6 for pro
-    if (isRegeneration) {
+    // Calculate voiceover cost:
+    // - Standard first gen: FREE
+    // - Pro first gen: 3 credits per 1000 chars
+    // - Standard regen: 3 credits per 1000 chars
+    // - Pro regen: 6 credits per 1000 chars
+    const shouldChargeForVoiceover = isRegeneration || isFirstProGeneration;
+
+    if (shouldChargeForVoiceover) {
       const scriptCharCount = finalScript.length;
       const charBlocks = Math.max(1, Math.ceil(scriptCharCount / 1000));
-      const voiceoverCost = tier === 'pro' ? (charBlocks * 6) : (charBlocks * 3);
-      logger.info('Regenerating voiceover', {
+      
+      let voiceoverCost: number;
+      let operationType: string;
+      
+      if (isRegeneration) {
+        voiceoverCost = tier === 'pro' ? (charBlocks * 6) : (charBlocks * 3);
+        operationType = 'voiceover_regeneration';
+      } else {
+        // First-time Pro generation
+        voiceoverCost = charBlocks * 3;
+        operationType = 'voiceover_first_pro';
+      }
+      
+      logger.info('Charging for voiceover', {
         userId: user.id,
-        metadata: { jobId: job_id, cost: voiceoverCost, tier, scriptCharCount, charBlocks, isExplicitRegenerate: regenerate === true, isScriptEdited }
+        metadata: { 
+          jobId: job_id, 
+          cost: voiceoverCost, 
+          tier, 
+          scriptCharCount, 
+          charBlocks, 
+          isRegeneration,
+          isFirstProGeneration,
+          operationType 
+        }
       });
 
       // Check token balance
@@ -98,7 +126,7 @@ Deno.serve(async (req) => {
       }
 
       if (subscription.tokens_remaining < voiceoverCost) {
-        throw new Error(`Insufficient credits. ${voiceoverCost} credits required to regenerate voiceover.`);
+        throw new Error(`Insufficient credits. ${voiceoverCost} credits required for voiceover.`);
       }
 
       // Deduct tokens using atomic RPC function
@@ -127,12 +155,13 @@ Deno.serve(async (req) => {
 
       const newBalance = deductResult.tokens_remaining;
 
-      logger.info('Tokens deducted successfully for voiceover regeneration', {
+      logger.info('Tokens deducted successfully for voiceover', {
         userId: user.id,
         metadata: { 
           jobId: job_id, 
           tokensDeducted: voiceoverCost,
           tier,
+          operationType,
           new_balance: newBalance 
         }
       });
@@ -145,7 +174,7 @@ Deno.serve(async (req) => {
           tokens_deducted: voiceoverCost,
           tokens_remaining: newBalance,
           video_job_id: job_id,
-          operation: 'voiceover_regeneration',
+          operation: operationType,
           tier
         }
       });

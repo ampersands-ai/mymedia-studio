@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { captionPresets } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 import type { VideoJobInput } from '@/types/video';
 import { SelectedMedia } from './BackgroundMediaSelector';
+import { downloadFromUrl } from '@/lib/downloads/downloadManager';
 
 // Step Components
 import { StepCollapsible } from './steps/StepCollapsible';
@@ -19,7 +21,7 @@ import { ScriptReviewStep } from './steps/ScriptReviewStep';
 import { VoiceoverSetupStep } from './steps/VoiceoverSetupStep';
 import { VoiceoverReviewStep } from './steps/VoiceoverReviewStep';
 import { RenderSetupStep } from './steps/RenderSetupStep';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Download, Sparkles, Copy, Check } from 'lucide-react';
 
 type VideoCreatorStep =
   | 'topic'
@@ -47,6 +49,8 @@ interface VideoCreatorState {
   aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
   captionStyle: CaptionStyle;
   selectedBackgroundMedia: SelectedMedia[];
+  caption: string;
+  hashtags: string[];
 }
 
 const initialState: VideoCreatorState = {
@@ -64,6 +68,8 @@ const initialState: VideoCreatorState = {
   aspectRatio: '4:5',
   captionStyle: captionPresets.modern,
   selectedBackgroundMedia: [],
+  caption: '',
+  hashtags: [],
 };
 
 const FACELESS_VIDEO_DRAFT_KEY = 'faceless_video_draft';
@@ -74,6 +80,9 @@ export function VideoCreator() {
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
+  const [copiedCaption, setCopiedCaption] = useState(false);
+  const [copiedHashtags, setCopiedHashtags] = useState(false);
 
   const queryClient = useQueryClient();
   const { createJob, isCreating } = useVideoJobs();
@@ -345,6 +354,52 @@ export function VideoCreator() {
     setIsPolling(false);
   };
 
+  // Generate caption and hashtags
+  const handleGenerateCaption = async () => {
+    if (!state.jobId || !state.script) return;
+    
+    setIsGeneratingCaption(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-caption', {
+        body: {
+          video_job_id: state.jobId,
+          prompt: state.script,
+          content_type: 'video'
+        }
+      });
+
+      if (error) throw error;
+      
+      setState(prev => ({
+        ...prev,
+        caption: data.caption || '',
+        hashtags: data.hashtags || []
+      }));
+      refetchCredits();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to generate caption';
+      toast.error(errorMsg);
+      logger.error('Caption generation failed', err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setIsGeneratingCaption(false);
+    }
+  };
+
+  // Copy to clipboard handlers
+  const handleCopyCaption = async () => {
+    if (!state.caption) return;
+    await navigator.clipboard.writeText(state.caption);
+    setCopiedCaption(true);
+    setTimeout(() => setCopiedCaption(false), 2000);
+  };
+
+  const handleCopyHashtags = async () => {
+    if (!state.hashtags.length) return;
+    await navigator.clipboard.writeText(state.hashtags.join(' '));
+    setCopiedHashtags(true);
+    setTimeout(() => setCopiedHashtags(false), 2000);
+  };
+
   const isProcessing = ['script_generating', 'voiceover_generating', 'rendering'].includes(state.step);
 
   return (
@@ -504,6 +559,78 @@ export function VideoCreator() {
                     className="w-full max-h-[400px] object-contain"
                     autoPlay={false}
                   />
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
+                <Button
+                  onClick={() => downloadFromUrl(state.videoUrl, { 
+                    filename: `faceless-video-${state.jobId}.mp4` 
+                  })}
+                  className="min-h-[44px]"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Video
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleGenerateCaption}
+                  disabled={isGeneratingCaption}
+                  className="min-h-[44px]"
+                >
+                  {isGeneratingCaption ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  {isGeneratingCaption ? 'Generating...' : 'Generate Caption & Hashtags'}
+                </Button>
+              </div>
+
+              {/* Generated Caption & Hashtags */}
+              {state.caption && (
+                <div className="space-y-3 text-left bg-background/50 rounded-lg p-4 mb-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-muted-foreground">Caption</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyCaption}
+                        className="h-6 px-2"
+                      >
+                        {copiedCaption ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-sm">{state.caption}</p>
+                  </div>
+                  
+                  {state.hashtags.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-muted-foreground">Hashtags</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCopyHashtags}
+                          className="h-6 px-2"
+                        >
+                          {copiedHashtags ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-sm text-primary">{state.hashtags.join(' ')}</p>
+                    </div>
+                  )}
                 </div>
               )}
               

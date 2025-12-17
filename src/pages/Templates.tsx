@@ -18,19 +18,10 @@ import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
 
-// Template type from public view (no workflow_steps for IP protection)
-interface TemplatePublic {
-  id: string | null;
-  name: string | null;
-  category: string | null;
-  template_type: string;
-  display_order: number | null;
-  primary_model_id?: string | null;
-  thumbnail_url?: string | null;
-  before_image_url?: string | null;
-  after_image_url?: string | null;
-  description?: string | null;
-}
+// Template type inferred from useAllTemplates hook
+type TemplateFromHook = NonNullable<ReturnType<typeof useAllTemplates>['data']>[number];
+// Type with guaranteed non-null id for rendering
+type TemplatePublic = TemplateFromHook & { id: string };
 
 const Templates = () => {
   const { user } = useAuth();
@@ -116,12 +107,14 @@ const Templates = () => {
         return null;
       };
       
-      // Process all templates in parallel
+      // Process all templates in parallel (filter out any with null id)
+      const validTemplates = allTemplates.filter((t): t is TemplatePublic => t.id !== null);
+      
       await execute(
         async () => {
-          const urlPromises = allTemplates
-            .filter((template: TemplatePublic) => template.before_image_url || template.after_image_url || template.thumbnail_url)
-            .map(async (template: TemplatePublic) => {
+          const urlPromises = validTemplates
+            .filter((template) => template.before_image_url || template.after_image_url || template.thumbnail_url)
+            .map(async (template) => {
               const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
                 getSignedUrl(template.before_image_url || null),
                 getSignedUrl(template.after_image_url || null),
@@ -129,7 +122,7 @@ const Templates = () => {
               ]);
 
               return {
-                id: template.id!,
+                id: template.id,
                 urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
               };
             });

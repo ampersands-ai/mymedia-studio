@@ -25,8 +25,6 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
@@ -64,8 +62,6 @@ const Auth = () => {
           email,
           password,
           confirmPassword,
-          firstName,
-          lastName,
         });
         if (!result.success) {
           const errors: Record<string, string> = {};
@@ -174,9 +170,6 @@ const Auth = () => {
           password,
           options: {
             data: {
-              full_name: `${firstName} ${lastName}`.trim(),
-              first_name: firstName,
-              last_name: lastName,
               canonical_email: canonicalEmail, // Store for future duplicate detection
             },
             emailRedirectTo: `${window.location.origin}/dashboard/custom-creation`,
@@ -234,7 +227,6 @@ const Auth = () => {
               body: {
                 userId: data.user.id,
                 email: data.user.email,
-                fullName: `${firstName} ${lastName}`.trim(),
               }
             });
           } catch (emailError) {
@@ -253,7 +245,6 @@ const Auth = () => {
               body: {
                 userId: data.user.id,
                 email: data.user.email,
-                fullName: `${firstName} ${lastName}`.trim(),
               }
             });
           } catch (verifyError) {
@@ -384,56 +375,6 @@ const Auth = () => {
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="font-bold">First Name</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="John"
-                      value={firstName}
-                      onChange={(e) => {
-                        setFirstName(e.target.value);
-                        setValidationErrors(prev => ({ ...prev, firstName: "" }));
-                      }}
-                      required={!isLogin}
-                      className={cn(
-                        "border-3 border-black brutal-shadow h-12 font-medium",
-                        validationErrors.firstName && "border-red-500"
-                      )}
-                    />
-                    {validationErrors.firstName && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {validationErrors.firstName}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="font-bold">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Doe"
-                      value={lastName}
-                      onChange={(e) => {
-                        setLastName(e.target.value);
-                        setValidationErrors(prev => ({ ...prev, lastName: "" }));
-                      }}
-                      required={!isLogin}
-                      className={cn(
-                        "border-3 border-black brutal-shadow h-12 font-medium",
-                        validationErrors.lastName && "border-red-500"
-                      )}
-                    />
-                    {validationErrors.lastName && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {validationErrors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="font-bold">Email</Label>
                   <Input

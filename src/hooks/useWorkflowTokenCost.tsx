@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import type { WorkflowTemplate } from "./useWorkflowTemplates";
+import type { WorkflowTemplatePublic } from "@/types/workflow-public";
 import { logger } from "@/lib/logger";
 import { getModel } from "@/lib/models/registry";
 
+/**
+ * Hook to calculate estimated token cost for a workflow template
+ * Uses primary_model_record_id from the public view (workflow_steps are server-only)
+ */
 export const useWorkflowTokenCost = (
-  workflow: WorkflowTemplate,
+  workflow: WorkflowTemplatePublic,
   userInputs: Record<string, any>
 ) => {
   const [estimatedTokens, setEstimatedTokens] = useState(50);
@@ -15,72 +19,55 @@ export const useWorkflowTokenCost = (
       setIsCalculating(true);
 
       try {
-        const modelRecordIds = workflow.workflow_steps
-          ?.map((step) => step.model_record_id)
-          .filter(Boolean) || [];
+        // Use primary_model_record_id from public view
+        const primaryModelRecordId = workflow.primary_model_record_id;
 
-        if (modelRecordIds.length === 0) {
+        if (!primaryModelRecordId) {
           setEstimatedTokens(50);
           setIsCalculating(false);
           return;
         }
 
-        let totalCost = 0;
+        let modelModule;
+        try {
+          modelModule = getModel(primaryModelRecordId);
+        } catch (error) {
+          logger.warn('Model not found in registry', {
+            recordId: primaryModelRecordId,
+            workflowId: workflow.id
+          });
+          setEstimatedTokens(50);
+          setIsCalculating(false);
+          return;
+        }
 
-        for (const step of workflow.workflow_steps || []) {
-          if (!step.model_record_id) continue;
+        // Start with base cost from MODEL_CONFIG
+        let totalCost = modelModule.MODEL_CONFIG.baseCreditCost;
 
-          let modelModule;
-          try {
-            modelModule = getModel(step.model_record_id);
-          } catch (error) {
-            logger.warn('Model not found in registry', {
-              recordId: step.model_record_id,
-              workflowId: workflow.id
-            });
-            continue;
-          }
+        // Apply multipliers based on user inputs
+        const multipliers = modelModule.MODEL_CONFIG.costMultipliers || {};
+        for (const [paramName, multiplierConfig] of Object.entries(multipliers)) {
+          const paramValue = userInputs[paramName];
 
-          // Start with base cost from MODEL_CONFIG
-          let stepCost = modelModule.MODEL_CONFIG.baseCreditCost;
+          if (paramValue === undefined || paramValue === null) continue;
 
-          // Resolve step parameters by merging static params with user inputs
-          const resolvedParams = { ...step.parameters };
-          for (const [paramKey, mappingSource] of Object.entries(step.input_mappings || {})) {
-            // mappingSource like "user_input.image_url"
-            if (typeof mappingSource === 'string' && mappingSource.startsWith("user_input.")) {
-              const inputKey = mappingSource.replace("user_input.", "");
-              resolvedParams[paramKey] = userInputs[inputKey];
+          // Handle nested object (parameter-first structure)
+          if (typeof multiplierConfig === "object" && !Array.isArray(multiplierConfig)) {
+            const multiplier = (multiplierConfig as Record<string, number>)[paramValue] ?? 1;
+            if (typeof multiplier === "number") {
+              totalCost *= multiplier;
             }
           }
-
-          // Apply multipliers (exact same logic as CustomCreation and token-calculator.ts)
-          const multipliers = modelModule.MODEL_CONFIG.costMultipliers || {};
-          for (const [paramName, multiplierConfig] of Object.entries(multipliers)) {
-            const paramValue = resolvedParams[paramName];
-
-            if (paramValue === undefined || paramValue === null) continue;
-
-            // Handle nested object (parameter-first structure)
-            if (typeof multiplierConfig === "object" && !Array.isArray(multiplierConfig)) {
-              const multiplier = multiplierConfig[paramValue] ?? 1;
-              if (typeof multiplier === "number") {
-                stepCost *= multiplier;
-              }
-            }
-            // Legacy: Handle flat number
-            else if (typeof multiplierConfig === "number") {
-              if (typeof paramValue === "boolean" && paramValue === true) {
-                stepCost *= multiplierConfig;
-              } else if (Array.isArray(paramValue)) {
-                stepCost += multiplierConfig * paramValue.length;
-              } else if (typeof paramValue === "number") {
-                stepCost += multiplierConfig * paramValue;
-              }
+          // Legacy: Handle flat number
+          else if (typeof multiplierConfig === "number") {
+            if (typeof paramValue === "boolean" && paramValue === true) {
+              totalCost *= multiplierConfig;
+            } else if (Array.isArray(paramValue)) {
+              totalCost += multiplierConfig * paramValue.length;
+            } else if (typeof paramValue === "number") {
+              totalCost += multiplierConfig * paramValue;
             }
           }
-
-          totalCost += Math.round(stepCost * 100) / 100;
         }
 
         setEstimatedTokens(Math.round(totalCost * 100) / 100);

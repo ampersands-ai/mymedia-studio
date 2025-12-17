@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useWorkflowTemplates } from "./useWorkflowTemplates";
 import { enrichTemplates, getTemplatePreviews, EnrichedTemplate } from "@/lib/templates/enrichment";
-import type { TemplatePreview, WorkflowTemplatePublic } from "@/types/templates";
+import type { TemplatePreview } from "@/types/templates";
 
 /**
  * Fetch all templates with full model metadata enrichment

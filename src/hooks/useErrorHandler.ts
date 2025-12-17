@@ -22,6 +22,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { clientLogger } from '@/lib/logging/client-logger';
 import {
   ApplicationError,
   getUserErrorMessage,
@@ -111,6 +112,16 @@ export function useErrorHandler(): UseErrorHandlerReturn {
           ...context,
           errorCode: getErrorCode(error),
         });
+
+        // Send critical/high severity errors to backend for email alerting
+        const severity = error instanceof AuthenticationError ? 'high' :
+                        error instanceof NetworkError ? 'medium' : 'high';
+        clientLogger.error(error, {
+          routeName: context?.component || 'unknown',
+          userAction: context?.operation,
+          severity,
+          metadata: context,
+        }).catch(() => {}); // Fire and forget
 
         // Determine error message
         let displayMessage: string;
@@ -209,6 +220,14 @@ export async function handleOperation<T>(
       ...context,
       errorCode: getErrorCode(error),
     });
+
+    // Send errors to backend for email alerting
+    clientLogger.error(error, {
+      routeName: context?.component || 'unknown',
+      userAction: context?.operation,
+      severity: 'high',
+      metadata: context,
+    }).catch(() => {}); // Fire and forget
 
     const displayMessage = errorMessage || getUserErrorMessage(error);
 

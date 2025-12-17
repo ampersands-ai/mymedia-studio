@@ -12,6 +12,8 @@ const POLLING_EXPIRY_HOURS = 24;
 interface StoredState {
   selectedGroup: CreationGroup;
   selectedModel: string | null;
+  prompt: string;
+  modelParameters: Record<string, unknown>;
   timestamp: number;
   version: string;
 }
@@ -46,6 +48,8 @@ function loadFromStorage(): Partial<CustomCreationState> {
     return {
       selectedGroup: parsed.selectedGroup,
       selectedModel: parsed.selectedModel,
+      prompt: parsed.prompt || '',
+      modelParameters: parsed.modelParameters || {},
     };
   } catch (e) {
     logger.error('Failed to load state from storage', e instanceof Error ? e : new Error(String(e)));
@@ -211,12 +215,14 @@ export const useCustomCreationState = () => {
     saveCriticalId(POLLING_ID_KEY, state.pollingGenerationId);
   }, [state.pollingGenerationId]);
 
-  // Persist selectedGroup and selectedModel to localStorage with validation
+  // Persist state to localStorage
   useEffect(() => {
     try {
       const storedState: StoredState = {
         selectedGroup: state.selectedGroup,
         selectedModel: state.selectedModel,
+        prompt: state.prompt,
+        modelParameters: state.modelParameters,
         timestamp: Date.now(),
         version: STORAGE_VERSION,
       };
@@ -224,7 +230,7 @@ export const useCustomCreationState = () => {
     } catch (e) {
       logger.error('Failed to persist state to storage', e instanceof Error ? e : new Error(String(e)));
     }
-  }, [state.selectedGroup, state.selectedModel]);
+  }, [state.selectedGroup, state.selectedModel, state.prompt, state.modelParameters]);
 
   /**
    * Update partial state
@@ -286,12 +292,13 @@ export const useCustomCreationState = () => {
       return {
         ...prev, 
         selectedModel,
-        // Clear outputs only when model changes and not generating
+        // Clear outputs and parameters when model changes (schema differs per model)
         generatedOutput: null,
         generatedOutputs: [],
         selectedOutputIndex: 0,
         failedGenerationError: null,
         generateCaption: false,
+        modelParameters: {}, // Clear so new schema defaults apply
       };
     });
   }, []);
@@ -313,11 +320,13 @@ export const useCustomCreationState = () => {
         ...prev, 
         selectedGroup, 
         selectedModel: null,
-        // Clear outputs only when group changes and not generating
+        // Clear everything when group changes (different content type entirely)
         generatedOutput: null,
         generatedOutputs: [],
         selectedOutputIndex: 0,
         failedGenerationError: null,
+        modelParameters: {}, // Clear so new schema defaults apply
+        prompt: '', // Clear prompt since switching to different content type
       };
     });
   }, []);

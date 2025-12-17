@@ -235,6 +235,14 @@ export function getUserErrorMessage(error: unknown): string {
       /Module not found/i,
       /ENOENT/i,
       /ECONNREFUSED/i,
+      /Edge function failed/i,
+      /Edge Function returned/i,
+      /FunctionsHttpError/i,
+      /FunctionsRelayError/i,
+      /FunctionsFetchError/i,
+      /non-2xx/i,
+      /status code/i,
+      /internal server error/i,
     ];
     
     const isTechnical = technicalPatterns.some(pattern => 
@@ -246,10 +254,10 @@ export function getUserErrorMessage(error: unknown): string {
       return error.message;
     }
     
-    return 'An unexpected error occurred. Please try again.';
+    return 'Check parameters or refresh browser to clear cache';
   }
 
-  return 'An unknown error occurred. Please try again.';
+  return 'Check parameters or refresh browser to clear cache';
 }
 
 /**

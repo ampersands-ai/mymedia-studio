@@ -1,12 +1,13 @@
 import { FunctionsHttpError, FunctionsRelayError, FunctionsFetchError } from '@supabase/supabase-js';
 
 // User-friendly fallback message for technical errors
-const USER_FRIENDLY_ERROR = 'Error in parameters, we are working diligently to fix it.';
+const USER_FRIENDLY_ERROR = 'Check parameters or refresh browser to clear cache';
 
 // Technical error patterns that should be hidden from end users
 const TECHNICAL_ERROR_PATTERNS = [
   'Edge Function returned a non-2xx status code',
   'Edge function returned an error',
+  'Edge function failed',
   'non-2xx',
   'status code',
   'ECONNREFUSED',
@@ -15,6 +16,9 @@ const TECHNICAL_ERROR_PATTERNS = [
   'fetch failed',
   'network error',
   'internal server error',
+  'FunctionsHttpError',
+  'FunctionsRelayError',
+  'FunctionsFetchError',
   '500',
   '502',
   '503',

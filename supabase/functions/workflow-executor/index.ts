@@ -21,6 +21,12 @@ import {
   type WorkflowStep
 } from "../_shared/schemas.ts";
 
+// Service role client for accessing protected workflow_templates table
+const createServiceClient = () => createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
+
 
 
 Deno.serve(async (req) => {
@@ -78,14 +84,17 @@ Deno.serve(async (req) => {
 
     logger.debug('User inputs validated successfully', { userId: user.id });
 
-    // 1. Load workflow template
-    const { data: workflow, error: workflowError } = await supabase
+    // 1. Load workflow template using service role (base table is protected)
+    const serviceClient = createServiceClient();
+    const { data: workflow, error: workflowError } = await serviceClient
       .from('workflow_templates')
       .select('*')
       .eq('id', workflow_template_id)
+      .eq('is_active', true)
       .single();
 
     if (workflowError || !workflow) {
+      logger.error('Workflow template not found or inactive', workflowError ?? undefined);
       throw new Error('Workflow template not found');
     }
 

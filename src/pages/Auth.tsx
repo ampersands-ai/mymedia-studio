@@ -384,7 +384,7 @@ const Auth = () => {
                         <TooltipTrigger type="button" tabIndex={-1}>
                           <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" align="start">
+                        <TooltipContent side="bottom" align="center" collisionPadding={16}>
                           <p>Email verification required after signup</p>
                         </TooltipContent>
                       </Tooltip>
@@ -420,7 +420,7 @@ const Auth = () => {
                         <TooltipTrigger type="button" tabIndex={-1}>
                           <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" align="start" className="max-w-xs">
+                        <TooltipContent side="bottom" align="center" collisionPadding={16} className="max-w-[280px]">
                           <p className="font-semibold mb-1">Password requirements:</p>
                           <ul className="text-xs space-y-0.5 list-disc list-inside">
                             <li>At least 8 characters</li>

@@ -379,7 +379,7 @@ const Auth = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Label htmlFor="email" className="font-bold">Email</Label>
-                    <TooltipProvider>
+                    <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger type="button" tabIndex={-1}>
                           <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
@@ -415,7 +415,7 @@ const Auth = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Label htmlFor="password" className="font-bold">Password</Label>
-                    <TooltipProvider>
+                    <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger type="button" tabIndex={-1}>
                           <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />

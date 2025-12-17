@@ -3,6 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { checkEmailVerified, createEmailNotVerifiedResponse } from "../_shared/email-verification.ts";
 
 Deno.serve(async (req) => {
   // Get response headers (includes CORS + security headers)
@@ -33,6 +34,13 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       logger.error('Authentication failed', authError || undefined);
       throw new Error('Unauthorized');
+    }
+
+    // Check email verification
+    const isEmailVerified = await checkEmailVerified(supabaseClient, user.id, logger);
+    if (!isEmailVerified) {
+      logger.warn('Email not verified - blocking video creation', { userId: user.id });
+      return createEmailNotVerifiedResponse(responseHeaders);
     }
 
     // Parse and validate input

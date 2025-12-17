@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from '../_shared/edge-logger.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { checkEmailVerified, createEmailNotVerifiedResponse } from "../_shared/email-verification.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -39,6 +40,13 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       logger.error('Authentication failed', authError || undefined);
       throw new Error('Unauthorized');
+    }
+
+    // Check email verification
+    const isEmailVerified = await checkEmailVerified(supabaseClient, user.id, logger);
+    if (!isEmailVerified) {
+      logger.warn('Email not verified - blocking script approval', { userId: user.id });
+      return createEmailNotVerifiedResponse(responseHeaders);
     }
 
     // Fetch job and verify ownership

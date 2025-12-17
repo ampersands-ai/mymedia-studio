@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { SessionWarning } from "@/components/SessionWarning";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
-import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
+
 import { useModels } from "@/hooks/useModels";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useModelSchema } from "@/hooks/useModelSchema";
@@ -502,16 +502,11 @@ const CustomCreation = () => {
       
       {/* Onboarding */}
       {progress && (
-        <>
-          <OnboardingChecklist 
+        <OnboardingChecklist 
             progress={progress}
             onComplete={markComplete}
             onDismiss={dismiss}
           />
-          {progress.checklist.completedFirstGeneration && !progress.dismissed && (
-            <SuccessConfetti trigger={progress.checklist.completedFirstGeneration} />
-          )}
-        </>
       )}
 
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">

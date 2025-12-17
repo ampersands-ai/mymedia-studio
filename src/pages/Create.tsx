@@ -13,7 +13,7 @@ import { TemplateGallery } from "@/components/create/TemplateGallery";
 import { GenerationDialog } from "@/components/create/GenerationDialog";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
-import { SuccessConfetti } from "@/components/onboarding/SuccessConfetti";
+
 import { CREATE_PAGE_SEO } from "@/constants/seo";
 import { TOAST_IDS } from "@/constants/generation";
 import type { TemplatePreview } from "@/types/templates";
@@ -222,11 +222,6 @@ const Create = () => {
             onDismiss={onboardingFlow.dismiss}
           />
         )}
-        
-        <SuccessConfetti
-          trigger={onboardingFlow.showConfetti}
-          onComplete={() => onboardingFlow.setShowConfetti(false)}
-        />
       </div>
     </div>
   );

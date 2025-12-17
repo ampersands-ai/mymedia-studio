@@ -116,6 +116,8 @@ export async function duplicateTemplate(
   }
 
   // All templates are now in workflow_templates (content_templates deleted)
+  // Note: For duplication, workflow_steps may not be available in MergedTemplate
+  // The admin should re-configure steps after duplication if needed
   const newWorkflow = {
     id: `${template.id}-copy-${timestamp}`,
     name: `${template.name} (Copy)`,
@@ -127,7 +129,7 @@ export async function duplicateTemplate(
     is_active: false,
     display_order: template.display_order || 0,
     estimated_time_seconds: template.estimated_time_seconds || null,
-    workflow_steps: template.workflow_steps as any || [],
+    workflow_steps: (template as any).workflow_steps || [],
     user_input_fields: template.user_input_fields as any || [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

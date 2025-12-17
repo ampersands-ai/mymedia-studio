@@ -4,6 +4,7 @@ import type { AIModel } from "./useModels";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import type { Database } from "@/integrations/supabase/types";
+import type { WorkflowTemplatePublic } from "@/types/workflow-public";
 
 type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
 
@@ -52,24 +53,27 @@ export const useTemplatesByCategory = () => {
   return { templatesByCategory, templates, ...rest };
 };
 
-// Merged type for both templates and workflows
-export interface MergedTemplate extends Partial<ContentTemplate>, Partial<WorkflowTemplate> {
+// Merged type for both templates and workflows (public version)
+export interface MergedTemplate extends Partial<ContentTemplate>, Partial<WorkflowTemplatePublic> {
   template_type: 'template' | 'workflow';
 }
 
+/**
+ * Fetch all active templates from public view
+ * Does NOT expose proprietary workflow_steps
+ */
 export const useAllTemplates = () => {
   return useQuery({
     queryKey: ["all-templates"],
     queryFn: async () => {
-      const { data: workflowTemplates, error } = await supabase
-        .from("workflow_templates")
+      const { data, error } = await supabase
+        .from("workflow_templates_public")
         .select("*")
-        .eq("is_active", true)
         .order("display_order", { ascending: true });
 
       if (error) throw error;
 
-      return (workflowTemplates || []).map((w: WorkflowTemplateRow) => ({ 
+      return (data || []).map((w) => ({ 
         ...w, 
         template_type: 'workflow' as const,
       }));
@@ -79,6 +83,10 @@ export const useAllTemplates = () => {
   });
 };
 
+/**
+ * Admin-only: Fetch ALL templates from base table (includes workflow_steps)
+ * Requires admin role RLS policy
+ */
 export const useAllTemplatesAdmin = () => {
   return useQuery({
     queryKey: ["all-templates-admin"],

@@ -9,7 +9,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import type { MergedTemplate } from "@/hooks/useTemplates";
-import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { TemplateActions } from "./TemplateActions";
 
 interface TemplatesTableProps {
@@ -18,7 +17,7 @@ interface TemplatesTableProps {
   onDuplicate: (template: MergedTemplate) => void;
   onToggleActive: (template: MergedTemplate) => void;
   onDelete: (template: MergedTemplate) => void;
-  onTest: (workflow: WorkflowTemplate) => void;
+  onTest: (workflow: MergedTemplate) => void;
 }
 
 /**

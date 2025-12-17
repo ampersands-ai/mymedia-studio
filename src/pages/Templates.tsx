@@ -18,21 +18,18 @@ import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
 
-interface WorkflowStep {
-  model_id: string;
-  model_record_id: string;
-}
-
-interface WorkflowTemplate {
-  id: string;
-  name: string;
-  category: string;
+// Template type from public view (no workflow_steps for IP protection)
+interface TemplatePublic {
+  id: string | null;
+  name: string | null;
+  category: string | null;
   template_type: string;
-  display_order: number;
-  workflow_steps?: WorkflowStep[];
-  thumbnail_url?: string;
-  before_image_url?: string;
-  after_image_url?: string;
+  display_order: number | null;
+  primary_model_id?: string | null;
+  thumbnail_url?: string | null;
+  before_image_url?: string | null;
+  after_image_url?: string | null;
+  description?: string | null;
 }
 
 const Templates = () => {
@@ -59,53 +56,22 @@ const Templates = () => {
     }
   }, []);
 
-  // Calculate token costs for all templates - OPTIMIZED with single batch query
+  // Token costs now come from primary_model_record_id in the public view
   useEffect(() => {
     const calculateTokenCosts = async () => {
       if (!allTemplates) return;
       
-      // Collect all unique model_record_ids from all templates
-      const allModelRecordIds = new Set<string>();
-      
-      allTemplates.forEach((template: WorkflowTemplate) => {
-        if (template.template_type === 'workflow' && template.workflow_steps) {
-          const steps = template.workflow_steps as WorkflowStep[];
-          steps.forEach((step: WorkflowStep) => {
-            if (step.model_record_id) {
-              allModelRecordIds.add(step.model_record_id);
-            }
-          });
-        }
-      });
-      
       // Get all models from registry
-      if (allModelRecordIds.size === 0) return;
-
       const allModels = getAllModels();
-      const models = allModels
-        .filter(m => allModelRecordIds.has(m.MODEL_CONFIG.recordId))
-        .map(m => ({
-          record_id: m.MODEL_CONFIG.recordId,
-          base_token_cost: m.MODEL_CONFIG.baseCreditCost
-        }));
-
-      if (!models) return;
-
-      // Create lookup map for O(1) access
       const modelCostMap = new Map(
-        models.map(m => [m.record_id, m.base_token_cost])
+        allModels.map(m => [m.MODEL_CONFIG.recordId, m.MODEL_CONFIG.baseCreditCost])
       );
       
-      // Calculate costs for each template
+      // Calculate costs using primary_model_record_id from public view
       const costs: Record<string, number> = {};
-
-      allTemplates.forEach((template: WorkflowTemplate) => {
-        if (template.template_type === 'workflow' && template.workflow_steps) {
-          const steps = template.workflow_steps as WorkflowStep[];
-          const totalCost = steps.reduce((sum: number, step: WorkflowStep) => {
-            return sum + (modelCostMap.get(step.model_record_id) || 0);
-          }, 0);
-          costs[template.id] = totalCost;
+      allTemplates.forEach((template: any) => {
+        if (template.primary_model_record_id) {
+          costs[template.id] = modelCostMap.get(template.primary_model_record_id) || 0;
         }
       });
       
@@ -154,8 +120,8 @@ const Templates = () => {
       await execute(
         async () => {
           const urlPromises = allTemplates
-            .filter((template: WorkflowTemplate) => template.before_image_url || template.after_image_url || template.thumbnail_url)
-            .map(async (template: WorkflowTemplate) => {
+            .filter((template: TemplatePublic) => template.before_image_url || template.after_image_url || template.thumbnail_url)
+            .map(async (template: TemplatePublic) => {
               const [beforeUrl, afterUrl, thumbnailUrl] = await Promise.all([
                 getSignedUrl(template.before_image_url || null),
                 getSignedUrl(template.after_image_url || null),
@@ -163,7 +129,7 @@ const Templates = () => {
               ]);
 
               return {
-                id: template.id,
+                id: template.id!,
                 urls: { before: beforeUrl, after: afterUrl, thumbnail: thumbnailUrl }
               };
             });
@@ -215,18 +181,14 @@ const Templates = () => {
     }
   };
 
-  const getWorkflowContentType = (template: WorkflowTemplate): "Video" | "Image" => {
-    // Check if template has workflow_steps to determine output type
-    if (template.workflow_steps && Array.isArray(template.workflow_steps)) {
-      const lastStep = template.workflow_steps[template.workflow_steps.length - 1];
-      if (lastStep?.model_id) {
-        const modelId = lastStep.model_id.toLowerCase();
-        // Check for video model keywords
-        if (modelId.includes("video") || modelId.includes("sora") || modelId.includes("runway") ||
-            modelId.includes("kling") || modelId.includes("luma") || modelId.includes("veo") ||
-            modelId.includes("hailuo") || modelId.includes("wan")) {
-          return "Video";
-        }
+  const getWorkflowContentType = (template: TemplatePublic): "Video" | "Image" => {
+    // Use primary_model_id from public view to determine content type
+    if (template.primary_model_id) {
+      const modelId = template.primary_model_id.toLowerCase();
+      if (modelId.includes("video") || modelId.includes("sora") || modelId.includes("runway") ||
+          modelId.includes("kling") || modelId.includes("luma") || modelId.includes("veo") ||
+          modelId.includes("hailuo") || modelId.includes("wan")) {
+        return "Video";
       }
     }
     // Also check category as fallback
@@ -237,24 +199,24 @@ const Templates = () => {
   };
 
   // Sort templates by display order
-  const templates = (allTemplates || []).sort((a: WorkflowTemplate, b: WorkflowTemplate) => a.display_order - b.display_order);
+  const templates = (allTemplates || []).sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
   
   // Filter templates by search query and content type
-  const filterTemplates = (templates: WorkflowTemplate[]) => {
+  const filterTemplates = (templates: TemplatePublic[]) => {
     let filtered = templates;
     
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
-        t.name.toLowerCase().includes(query) ||
-        ((t as any).description || '').toLowerCase().includes(query)
+        (t.name || '').toLowerCase().includes(query) ||
+        (t.description || '').toLowerCase().includes(query)
       );
     }
     
     // Apply content type filter
     if (contentTypeFilter !== 'all') {
-      filtered = filtered.filter((t: WorkflowTemplate) => {
+      filtered = filtered.filter((t: TemplatePublic) => {
         const type = getWorkflowContentType(t);
         return contentTypeFilter === 'image' 
           ? type === 'Image' 
@@ -265,21 +227,21 @@ const Templates = () => {
     return filtered;
   };
   
-  const filteredTemplates = filterTemplates(templates);
+  const filteredTemplates = filterTemplates(templates as TemplatePublic[]);
   
   // Filter by category
-  const productTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Product");
-  const marketingTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Marketing");
-  const fantasyTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Fantasy");
-  const portraitsTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Portraits");
-  const abstractTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Abstract");
-  const fashionTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Fashion");
-  const travelTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Travel");
-  const babyMilestonesTemplates = filteredTemplates.filter((t: WorkflowTemplate) => t.category === "Baby Milestones");
+  const productTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Product");
+  const marketingTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Marketing");
+  const fantasyTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Fantasy");
+  const portraitsTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Portraits");
+  const abstractTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Abstract");
+  const fashionTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Fashion");
+  const travelTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Travel");
+  const babyMilestonesTemplates = filteredTemplates.filter((t: TemplatePublic) => t.category === "Baby Milestones");
   
   // Count content types
-  const imageCount = templates.filter((t: WorkflowTemplate) => getWorkflowContentType(t) === 'Image').length;
-  const videoCount = templates.filter((t: WorkflowTemplate) => getWorkflowContentType(t) === 'Video').length;
+  const imageCount = (templates as TemplatePublic[]).filter((t: TemplatePublic) => getWorkflowContentType(t) === 'Image').length;
+  const videoCount = (templates as TemplatePublic[]).filter((t: TemplatePublic) => getWorkflowContentType(t) === 'Video').length;
 
   // Extract image URLs for ONLY the first visible carousel
   const imageUrls = useMemo(() => {
@@ -323,7 +285,7 @@ const Templates = () => {
     minLoadedPercentage: 70
   });
 
-  const handleUseTemplate = async (template: WorkflowTemplate) => {
+  const handleUseTemplate = async (template: TemplatePublic) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -360,7 +322,7 @@ const Templates = () => {
     }
   };
 
-  const renderCarousel = (categoryTemplates: WorkflowTemplate[], categoryName: string, isFirstCarousel: boolean = false) => {
+  const renderCarousel = (categoryTemplates: TemplatePublic[], categoryName: string, isFirstCarousel: boolean = false) => {
     if (categoryTemplates.length === 0) return null;
 
     return (

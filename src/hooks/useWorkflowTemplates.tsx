@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import type { WorkflowTemplatePublic } from "@/types/workflow-public";
 
-type WorkflowTemplateRow = Database['public']['Tables']['workflow_templates']['Row'];
-
+// Re-export types for backward compatibility
 export interface WorkflowStep {
   step_number: number;
   step_name: string;
@@ -24,6 +23,10 @@ export interface UserInputField {
   max_files?: number;
 }
 
+/**
+ * Full workflow template (admin only)
+ * Includes proprietary workflow_steps
+ */
 export interface WorkflowTemplate {
   id: string;
   name: string;
@@ -41,44 +44,51 @@ export interface WorkflowTemplate {
   updated_at: string;
 }
 
+/**
+ * Fetch active workflow templates from public view
+ * Returns safe data without proprietary workflow_steps
+ */
 export const useWorkflowTemplates = () => {
   return useQuery({
     queryKey: ["workflow-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("workflow_templates")
+        .from("workflow_templates_public")
         .select("*")
-        .eq("is_active", true)
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return (data || []).map((item: WorkflowTemplateRow) => ({
+      
+      return (data || []).map((item) => ({
         ...item,
-        workflow_steps: item.workflow_steps as unknown as WorkflowStep[],
-        user_input_fields: item.user_input_fields as unknown as UserInputField[],
-      }));
+        user_input_fields: (item.user_input_fields || []) as unknown as UserInputField[],
+      })) as WorkflowTemplatePublic[];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 };
 
+/**
+ * Fetch single workflow template from public view
+ * Returns safe data without proprietary workflow_steps
+ */
 export const useWorkflowTemplate = (id: string) => {
   return useQuery({
     queryKey: ["workflow-template", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("workflow_templates")
+        .from("workflow_templates_public")
         .select("*")
         .eq("id", id)
         .single();
 
       if (error) throw error;
+      
       return {
         ...data,
-        workflow_steps: data.workflow_steps as unknown as WorkflowStep[],
-        user_input_fields: data.user_input_fields as unknown as UserInputField[],
-      };
+        user_input_fields: (data.user_input_fields || []) as unknown as UserInputField[],
+      } as WorkflowTemplatePublic;
     },
     enabled: !!id,
   });

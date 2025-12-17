@@ -48,12 +48,12 @@ const DEFAULT_FLAGS: FeatureFlags = {
       prompt_to_video: { enabled: true, coming_soon: false },
       image_to_video: { enabled: true, coming_soon: false },
       video_to_video: { enabled: true, coming_soon: false },
-      lip_sync: { enabled: true, coming_soon: false },
-      prompt_to_audio: { enabled: true, coming_soon: false },
+      lip_sync: { enabled: true, coming_soon: true },
+      prompt_to_audio: { enabled: true, coming_soon: true },
     },
   },
-  faceless_videos: { enabled: true, coming_soon: false },
-  storyboard: { enabled: true, coming_soon: false },
+  faceless_videos: { enabled: true, coming_soon: true },
+  storyboard: { enabled: true, coming_soon: true },
 };
 
 // Helper to migrate old flag format to new format

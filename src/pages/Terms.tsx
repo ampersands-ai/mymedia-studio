@@ -44,7 +44,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">2. Description of Service</h2>
               <p className="leading-relaxed">
-                Artifio.ai is an AI-powered content generation platform that enables users to create videos, images, audio, and other creative content. Our Service integrates multiple AI providers including OpenAI, Anthropic (Claude), Kie.ai, ElevenLabs, and Suno to deliver high-quality content generation. The Service operates on a credit-based system where users consume credits to generate content.
+                Artifio.ai is an AI-powered content generation platform that enables users to create videos, images, audio, and other creative content. Our Service integrates multiple AI providers including OpenAI, Anthropic (Claude), ElevenLabs, Suno, and other third-party AI generation services to deliver high-quality content generation. The Service operates on a credit-based system where users consume credits to generate content.
               </p>
             </section>
 
@@ -141,7 +141,7 @@ const Terms = () => {
               <h2 className="text-2xl font-bold mb-4 text-white">8. AI-Generated Content</h2>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
                 <li>AI-generated content is provided "as is" without guarantees of accuracy or quality</li>
-                <li>Content is generated using multiple AI providers including OpenAI, Anthropic (Claude), Kie.ai, ElevenLabs, and Suno</li>
+                <li>Content is generated using multiple AI providers including OpenAI, Anthropic (Claude), ElevenLabs, Suno, and other third-party AI generation services</li>
                 <li>You are responsible for verifying the accuracy and appropriateness of generated content</li>
                 <li>Generated content may not be unique and could be similar to content created for other users</li>
                 <li>You are responsible for ensuring your use of AI-generated content complies with applicable laws</li>

@@ -1,7 +1,6 @@
 import { Edit, Copy, Power, PowerOff, Trash2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { MergedTemplate } from "@/hooks/useTemplates";
-import type { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 
 interface TemplateActionsProps {
   template: MergedTemplate;
@@ -9,7 +8,7 @@ interface TemplateActionsProps {
   onDuplicate: (template: MergedTemplate) => void;
   onToggleActive: (template: MergedTemplate) => void;
   onDelete: (template: MergedTemplate) => void;
-  onTest: (workflow: WorkflowTemplate) => void;
+  onTest: (workflow: MergedTemplate) => void;
 }
 
 /**
@@ -30,7 +29,7 @@ export function TemplateActions({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onTest(template as WorkflowTemplate)}
+          onClick={() => onTest(template)}
           title="Test workflow"
           className="border-2"
         >

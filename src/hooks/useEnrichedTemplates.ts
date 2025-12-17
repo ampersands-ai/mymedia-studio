@@ -6,8 +6,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useWorkflowTemplates } from "./useWorkflowTemplates";
-import { enrichTemplates, getTemplatePreviews } from "@/lib/templates/enrichment";
-import type { EnrichedTemplate, TemplatePreview } from "@/types/templates";
+import { enrichTemplates, getTemplatePreviews, EnrichedTemplate } from "@/lib/templates/enrichment";
+import type { TemplatePreview, WorkflowTemplatePublic } from "@/types/templates";
 
 /**
  * Fetch all templates with full model metadata enrichment
@@ -63,7 +63,7 @@ export const useEnrichedTemplatesByCategory = () => {
   const { data: enrichedTemplates, isLoading, error } = useEnrichedTemplates();
 
   const templatesByCategory = useMemo(() => {
-    if (!enrichedTemplates) return {};
+    if (!enrichedTemplates || enrichedTemplates.length === 0) return {};
     
     return enrichedTemplates.reduce((acc, template) => {
       const category = template.category || 'Uncategorized';

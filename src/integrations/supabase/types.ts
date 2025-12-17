@@ -3035,6 +3035,13 @@ export type Database = {
             referencedRelation: "workflow_templates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workflow_executions_workflow_template_id_fkey"
+            columns: ["workflow_template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workflow_templates: {
@@ -3300,6 +3307,60 @@ export type Database = {
           pending_count: number | null
           processed_count: number | null
           total_events: number | null
+        }
+        Relationships: []
+      }
+      workflow_templates_public: {
+        Row: {
+          after_image_url: string | null
+          before_image_url: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          estimated_time_seconds: number | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          primary_model_id: string | null
+          primary_model_record_id: string | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_input_fields: Json | null
+        }
+        Insert: {
+          after_image_url?: string | null
+          before_image_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          estimated_time_seconds?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          primary_model_id?: never
+          primary_model_record_id?: never
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_input_fields?: Json | null
+        }
+        Update: {
+          after_image_url?: string | null
+          before_image_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          estimated_time_seconds?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          primary_model_id?: never
+          primary_model_record_id?: never
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_input_fields?: Json | null
         }
         Relationships: []
       }

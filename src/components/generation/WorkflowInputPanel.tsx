@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { useWorkflowTokenCost } from "@/hooks/useWorkflowTokenCost";
-import { WorkflowTemplate } from "@/hooks/useWorkflowTemplates";
+import type { WorkflowTemplatePublic } from "@/types/workflow-public";
 import { WorkflowPromptInput } from "./WorkflowPromptInput";
 import { useWorkflowSurpriseMe } from "@/hooks/useWorkflowSurpriseMe";
 import { usePromptEnhancement } from "@/hooks/usePromptEnhancement";
@@ -23,13 +23,9 @@ import type {
   WorkflowInputValue,
   WorkflowInputFieldConfig
 } from "@/types/workflow-display";
-import {
-  toModelInputSchema,
-  getSchemaProperty
-} from "@/types/workflow-display";
 
 interface WorkflowInputPanelProps {
-  workflow: WorkflowTemplate;
+  workflow: WorkflowTemplatePublic;
   onExecute: (inputs: WorkflowInputs, shouldGenerateCaption?: boolean) => void;
   onBack: () => void;
   isExecuting: boolean;
@@ -133,43 +129,22 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
       imageUrls.push(signedData.signedUrl);
       }
 
-      // Find which parameter this user input maps to across ALL workflow steps
-    let targetParameterName: string | null = null;
-    let targetParameterSchema: ReturnType<typeof getSchemaProperty> = null;
+      // Determine if field expects array based on user_input_field config
+      // Note: workflow_steps are not exposed in public view for IP protection
+      // The edge function (workflow-executor) has full access for execution
+      const fieldConfig = workflow.user_input_fields?.find(f => f.name === fieldName);
+      const expectsArray = fieldConfig?.max_files && fieldConfig.max_files > 1;
 
-    // Check ALL workflow steps to find where this user input is mapped
-    for (const step of workflow.workflow_steps || []) {
-      for (const [paramKey, mappingSource] of Object.entries(step.input_mappings || {})) {
-        if (mappingSource === `user_input.${fieldName}`) {
-          targetParameterName = paramKey;
-          
-          // Get the model schema for this step from registry
-          const { getAllModels } = await import('@/lib/models/registry');
-          const modules = getAllModels();
-          const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === step.model_record_id);
+      logger.debug('Workflow parameter array detection', {
+        component: 'WorkflowInputPanel',
+        userInputField: fieldName,
+        maxFiles: fieldConfig?.max_files,
+        expectsArray,
+        storingAs: expectsArray ? 'array' : 'single',
+        imageCount: imageUrls.length
+      });
 
-          const schema = toModelInputSchema(modelModule?.SCHEMA);
-          targetParameterSchema = getSchemaProperty(schema, paramKey);
-          break;
-        }
-      }
-      if (targetParameterName) break;
-    }
-
-    // Check if target parameter expects an array
-    const expectsArray = targetParameterSchema?.type === 'array';
-
-    logger.debug('Workflow parameter array detection', {
-      component: 'WorkflowInputPanel',
-      userInputField: fieldName,
-      targetParameter: targetParameterName,
-      targetSchemaType: targetParameterSchema?.type,
-      expectsArray,
-      storingAs: expectsArray ? 'array' : 'single',
-      imageCount: imageUrls.length
-    });
-
-      // Store as array or single value based on target parameter type
+      // Store as array or single value based on field config
       if (expectsArray) {
         handleInputChange(fieldName, imageUrls);  // Store as array
       } else {

@@ -56,6 +56,7 @@ export const OutputGrid = ({
             storagePath={outputs[0].storage_path}
             contentType={contentType}
             className="w-full"
+            showActions={false}
           />
         </div>
         

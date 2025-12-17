@@ -87,7 +87,7 @@ const Privacy = () => {
                   <ul className="list-disc pl-6 space-y-1 text-sm">
                     <li><strong className="text-white">OpenAI</strong> - Content moderation and AI generation; receives prompts</li>
                     <li><strong className="text-white">Anthropic (Claude)</strong> - Script and text generation; receives prompts</li>
-                    <li><strong className="text-white">Kie.ai</strong> - Video and image generation; receives prompts and uploaded images</li>
+                    <li><strong className="text-white">Third-party AI generation services</strong> - Video and image generation; receives prompts and uploaded images</li>
                     <li><strong className="text-white">ElevenLabs</strong> - Voice and audio generation; receives text and voice settings</li>
                     <li><strong className="text-white">Suno</strong> - Music generation; receives prompts</li>
                     <li><strong className="text-white">Pixabay</strong> - Stock video backgrounds; receives search queries</li>

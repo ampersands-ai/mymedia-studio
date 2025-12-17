@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mail, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 
@@ -15,9 +15,23 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [accountNotFound, setAccountNotFound] = useState(false);
+
+  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase.functions.invoke('check-email-duplicate', {
+        body: { email: emailToCheck }
+      });
+      return data?.isDuplicate === true;
+    } catch {
+      // On error, proceed with reset attempt (don't block user)
+      return true;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAccountNotFound(false);
     
     if (!email) {
       toast.error("Please enter your email address");
@@ -27,6 +41,15 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
+      // Check if account exists first
+      const emailExists = await checkEmailExists(email);
+      
+      if (!emailExists) {
+        setAccountNotFound(true);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('send-password-reset-email', {
         body: { email }
       });
@@ -87,16 +110,20 @@ const ForgotPassword = () => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               {sent ? (
                 <CheckCircle className="h-6 w-6 text-green-500" />
+              ) : accountNotFound ? (
+                <AlertCircle className="h-6 w-6 text-amber-500" />
               ) : (
                 <Mail className="h-6 w-6 text-primary" />
               )}
             </div>
             <CardTitle className="text-2xl">
-              {sent ? "Check your email" : "Forgot password?"}
+              {sent ? "Check your email" : accountNotFound ? "Account not found" : "Forgot password?"}
             </CardTitle>
             <CardDescription>
               {sent 
                 ? "We've sent password reset instructions to your email address."
+                : accountNotFound
+                ? "We couldn't find an account with that email address."
                 : "Enter your email and we'll send you instructions to reset your password."
               }
             </CardDescription>
@@ -113,12 +140,39 @@ const ForgotPassword = () => {
                     try again
                   </button>
                 </p>
+                <p className="text-xs text-muted-foreground text-center">
+                  If you still don't receive an email after a few minutes, the account may not exist.{" "}
+                  <Link to="/auth?mode=signup" className="text-primary hover:underline">
+                    Sign up instead
+                  </Link>
+                </p>
                 <Link to="/auth">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Login
                   </Button>
                 </Link>
+              </div>
+            ) : accountNotFound ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Would you like to create a new account with this email?
+                </p>
+                <Link to={`/auth?mode=signup&email=${encodeURIComponent(email)}`}>
+                  <Button className="w-full">
+                    Sign Up Instead
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  className="w-full"
+                  onClick={() => {
+                    setAccountNotFound(false);
+                    setEmail("");
+                  }}
+                >
+                  Try a different email
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,7 +197,7 @@ const ForgotPassword = () => {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Sending...
+                      Checking...
                     </>
                   ) : cooldown > 0 ? (
                     `Wait ${cooldown}s`

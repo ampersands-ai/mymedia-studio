@@ -265,6 +265,15 @@ const CustomCreation = () => {
     userTokens: userTokens || null,
   });
 
+  // Wrap handleGenerate with scroll-to-output behavior for mobile
+  const handleGenerateWithScroll = useCallback(() => {
+    // Scroll to output section on mobile immediately when Generate is clicked
+    if (window.innerWidth < 1024 && outputSectionRef.current) {
+      outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    handleGenerate();
+  }, [handleGenerate]);
+
   // Surprise Me handler - wrapped in useCallback for stable reference
   const onSurpriseMe = useCallback(() => {
     logger.info('Surprise Me triggered', { selectedGroup: state.selectedGroup } as any);
@@ -576,7 +585,7 @@ const CustomCreation = () => {
             modelSchema={modelSchema as ModelJsonSchema | null}
             advancedOpen={state.advancedOpen}
             onAdvancedOpenChange={(open) => updateState({ advancedOpen: open })}
-            onGenerate={handleGenerate}
+            onGenerate={handleGenerateWithScroll}
             isGenerating={isGenerating || state.localGenerating}
             estimatedTokens={estimatedTokens}
             modelId={state.selectedModel || ''}

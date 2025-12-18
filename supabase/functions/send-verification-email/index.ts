@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { hashToken } from "../_shared/token-hashing.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -123,15 +123,16 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Generate secure verification token
+    // Generate secure verification token and hash for storage
     const token = crypto.randomUUID();
+    const tokenHash = await hashToken(token);
 
-    // Store token in database
+    // Store hashed token in database (plaintext never stored)
     const { error: insertError } = await supabaseAdmin
       .from("email_verification_tokens")
       .insert({
         user_id: userId,
-        token,
+        token: tokenHash, // Store SHA-256 hash, not plaintext
         email,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       });

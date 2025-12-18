@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { normalizeGmailDots } from "../_shared/email-validation.ts";
+import { hashToken } from "../_shared/token-hashing.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -94,15 +95,16 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Generate secure token
+    // Generate secure token and hash for storage
     const token = crypto.randomUUID();
+    const tokenHash = await hashToken(token);
 
-    // Store token in database (1 hour expiry)
+    // Store hashed token in database (plaintext never stored)
     const { error: insertError } = await supabaseAdmin
       .from("password_reset_tokens")
       .insert({
         user_id: user.id,
-        token,
+        token: tokenHash, // Store SHA-256 hash, not plaintext
         email: normalizedEmail,
         expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
       });

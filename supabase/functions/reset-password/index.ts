@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { hashToken } from "../_shared/token-hashing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,11 +45,13 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Find the token
+    // Hash the incoming token and query database
+    const tokenHash = await hashToken(token);
+    
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from("password_reset_tokens")
       .select("*")
-      .eq("token", token)
+      .eq("token", tokenHash) // Query with hashed token
       .is("used_at", null)
       .gt("expires_at", new Date().toISOString())
       .single();

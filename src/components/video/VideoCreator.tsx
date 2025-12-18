@@ -472,7 +472,18 @@ export function VideoCreator() {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Failed to render video', error);
-      setError(error.message);
+      
+      // Check if it's a transient network error
+      const isTransientError = error.message.toLowerCase().includes('failed to send') || 
+                               error.message.toLowerCase().includes('network') ||
+                               error.message.toLowerCase().includes('timeout') ||
+                               error.message.toLowerCase().includes('edge function');
+      
+      if (isTransientError) {
+        setError('Connection interrupted. The video may still be processing. Tap "Check Status" to verify.');
+      } else {
+        setError(error.message);
+      }
       setState((prev) => ({ ...prev, step: 'render_setup' }));
     }
   };
@@ -540,8 +551,23 @@ export function VideoCreator() {
         {/* Error Display */}
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertDescription className="flex flex-col gap-2">
+              <span className="break-words">{error}</span>
+              {error.includes('interrupted') && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setError(null);
+                    setIsPolling(true);
+                  }}
+                  className="w-fit"
+                >
+                  Check Status
+                </Button>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -760,7 +786,7 @@ export function VideoCreator() {
                           )}
                         </Button>
                       </div>
-                      <p className="text-sm text-primary">{state.hashtags.join(' ')}</p>
+                      <p className="text-sm text-primary break-words">{state.hashtags.join(' ')}</p>
                     </div>
                   )}
                 </div>

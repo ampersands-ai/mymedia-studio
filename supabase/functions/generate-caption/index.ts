@@ -222,11 +222,36 @@ HASHTAG REQUIREMENTS:
         captionText = captionText + '.';
       }
 
+      // Clean and filter hashtags before validation
+      const rawHashtags = Array.isArray(result.hashtags) ? result.hashtags : [];
+      const cleanedHashtags = rawHashtags
+        .map((tag: unknown) => {
+          if (typeof tag !== 'string') return null;
+          // Trim and ensure starts with #
+          let cleaned = tag.trim();
+          if (!cleaned.startsWith('#')) cleaned = '#' + cleaned;
+          return cleaned;
+        })
+        .filter((tag: string | null): tag is string => {
+          if (!tag) return false;
+          // Must be # followed by letters/numbers/underscores only, max 50 chars
+          return /^#[A-Za-z0-9_]+$/.test(tag) && tag.length <= 50;
+        })
+        .slice(0, 15); // Take first 15 valid ones
+
+      logger.debug('Hashtags cleaned', { 
+        metadata: { 
+          raw_count: rawHashtags.length, 
+          cleaned_count: cleanedHashtags.length,
+          sample: cleanedHashtags.slice(0, 3)
+        } 
+      });
+
       // Now try to validate
       try {
         const validatedResult: CaptionResponse = CaptionResponseSchema.parse({
           caption: captionText,
-          hashtags: result.hashtags
+          hashtags: cleanedHashtags
         });
         
         caption = validatedResult.caption;

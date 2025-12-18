@@ -56,7 +56,7 @@ export const GenerationProgress = ({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {isComplete ? (
             <CheckCircle2 className="h-5 w-5 text-green-500" />

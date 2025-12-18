@@ -497,7 +497,7 @@ const CustomCreation = () => {
       });
       stopPolling();
     }}>
-      <div className="min-h-screen bg-background pb-safe">
+      <div className="min-h-screen bg-background pb-safe overflow-x-hidden">
       <SessionWarning />
       
       {/* Onboarding */}

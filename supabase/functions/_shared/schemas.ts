@@ -47,8 +47,13 @@ export const CaptionResponseSchema = z.object({
   caption: z.string()
     .min(50, "Caption must be at least 50 characters")
     .regex(/[.!?]$/, "Caption must end with proper punctuation"),
-  hashtags: z.array(z.string().regex(/^#/, "Hashtags must start with #"))
-    .length(15, "Must have exactly 15 hashtags"),
+  hashtags: z.array(
+    z.string()
+      .regex(/^#[A-Za-z0-9_]+$/, "Hashtags must be # followed by letters/numbers/underscores only (no spaces)")
+      .max(50, "Hashtag too long")
+  )
+    .min(10, "Must have at least 10 hashtags")
+    .max(15, "Must have at most 15 hashtags"),
 });
 
 export const AIToolCallSchema = z.object({

@@ -2515,6 +2515,10 @@ export type Database = {
       user_onboarding_progress: {
         Row: {
           bonus_awarded: boolean | null
+          clicked_enhance_prompt: boolean | null
+          clicked_generate: boolean | null
+          clicked_generate_caption: boolean | null
+          clicked_surprise_me: boolean | null
           completed_at: string | null
           completed_first_generation: boolean | null
           created_at: string | null
@@ -2524,15 +2528,22 @@ export type Database = {
           first_generation_id: string | null
           id: string
           is_complete: boolean | null
+          navigated_to_text_to_image: boolean | null
           selected_template: boolean | null
+          selected_z_image: boolean | null
           updated_at: string | null
           user_id: string
           viewed_result: boolean | null
           viewed_templates: boolean | null
           viewed_token_cost: boolean | null
+          visited_my_creations: boolean | null
         }
         Insert: {
           bonus_awarded?: boolean | null
+          clicked_enhance_prompt?: boolean | null
+          clicked_generate?: boolean | null
+          clicked_generate_caption?: boolean | null
+          clicked_surprise_me?: boolean | null
           completed_at?: string | null
           completed_first_generation?: boolean | null
           created_at?: string | null
@@ -2542,15 +2553,22 @@ export type Database = {
           first_generation_id?: string | null
           id?: string
           is_complete?: boolean | null
+          navigated_to_text_to_image?: boolean | null
           selected_template?: boolean | null
+          selected_z_image?: boolean | null
           updated_at?: string | null
           user_id: string
           viewed_result?: boolean | null
           viewed_templates?: boolean | null
           viewed_token_cost?: boolean | null
+          visited_my_creations?: boolean | null
         }
         Update: {
           bonus_awarded?: boolean | null
+          clicked_enhance_prompt?: boolean | null
+          clicked_generate?: boolean | null
+          clicked_generate_caption?: boolean | null
+          clicked_surprise_me?: boolean | null
           completed_at?: string | null
           completed_first_generation?: boolean | null
           created_at?: string | null
@@ -2560,12 +2578,15 @@ export type Database = {
           first_generation_id?: string | null
           id?: string
           is_complete?: boolean | null
+          navigated_to_text_to_image?: boolean | null
           selected_template?: boolean | null
+          selected_z_image?: boolean | null
           updated_at?: string | null
           user_id?: string
           viewed_result?: boolean | null
           viewed_templates?: boolean | null
           viewed_token_cost?: boolean | null
+          visited_my_creations?: boolean | null
         }
         Relationships: [
           {

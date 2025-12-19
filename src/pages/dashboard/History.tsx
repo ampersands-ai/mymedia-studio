@@ -87,13 +87,13 @@ const History = () => {
     enabled: !!previewGeneration?.id
   });
 
-  // Track viewing result
+  // Track visiting My Creations for onboarding
   useEffect(() => {
-    if (previewGeneration && progress && !progress.checklist.viewedResult) {
-      updateProgress({ viewedResult: true });
+    if (progress && !progress.checklist.visitedMyCreations) {
+      updateProgress({ visitedMyCreations: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewGeneration, progress]);
+  }, [progress]);
 
   // Extract image URLs for preloading
   const imageUrls = useMemo(() => {

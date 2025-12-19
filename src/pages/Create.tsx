@@ -76,16 +76,11 @@ const Create = () => {
       });
       toast.success('Generation complete!', { id: TOAST_IDS.GENERATION_PROGRESS });
       
-      // Onboarding tracking
-      if (onboardingFlow.progress && !onboardingFlow.progress.checklist.completedFirstGeneration) {
-        onboardingFlow.updateProgress({ completedFirstGeneration: true });
+      // Onboarding tracking - track clickedGenerate
+      if (onboardingFlow.progress && !onboardingFlow.progress.checklist.clickedGenerate) {
+        onboardingFlow.updateProgress({ clickedGenerate: true });
         onboardingFlow.setFirstGeneration(pollingId!);
         onboardingFlow.setShowConfetti(true);
-      }
-      
-      // Track viewing result
-      if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedResult && outputs.length > 0) {
-        onboardingFlow.updateProgress({ viewedResult: true });
       }
     },
     onError: (error) => {
@@ -130,29 +125,11 @@ const Create = () => {
   // SEO
   useSEO(CREATE_PAGE_SEO);
   
-  // Track viewing template gallery
-  useEffect(() => {
-    if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTemplates) {
-      onboardingFlow.updateProgress({ viewedTemplates: true });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onboardingFlow.progress, onboardingFlow.updateProgress]);
-  
   // Handlers
   const handleTemplateSelect = (template: TemplatePreview) => {
     setTemplate(template);
     resetGenerationState();
     setDialogOpen(true);
-    
-    // Track template selection
-    if (onboardingFlow.progress && !onboardingFlow.progress.checklist.selectedTemplate) {
-      onboardingFlow.updateProgress({ selectedTemplate: true });
-    }
-    
-    // Track viewed token cost when dialog opens
-    if (onboardingFlow.progress && !onboardingFlow.progress.checklist.viewedTokenCost) {
-      onboardingFlow.updateProgress({ viewedTokenCost: true });
-    }
   };
   
   const handleViewHistory = () => {

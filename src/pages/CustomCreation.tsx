@@ -115,15 +115,9 @@ const CustomCreation = () => {
         parentGenerationId: parentId || null,
       });
 
-      // Update onboarding progress
-      if (progress && !progress.checklist.completedFirstGeneration) {
-        updateProgress({ completedFirstGeneration: true });
+      // Track first generation for onboarding
+      if (progress && !progress.checklist.clickedGenerate) {
         setFirstGeneration(outputs[0]?.id || '');
-      }
-      
-      // Track viewing result
-      if (progress && !progress.checklist.viewedResult && outputs.length > 0) {
-        updateProgress({ viewedResult: true });
       }
 
       // Auto-scroll to output on mobile
@@ -400,35 +394,23 @@ const CustomCreation = () => {
     }
   }, [filteredModels, state.selectedModel, setStateSelectedModel]);
 
-  // Track onboarding: viewedTemplates when user lands on CustomCreation page
+  // Track onboarding: navigatedToTextToImage when user selects prompt_to_image group
   useEffect(() => {
-    if (progress && !progress.checklist.viewedTemplates) {
-      updateProgress({ viewedTemplates: true });
+    if (state.selectedGroup === 'prompt_to_image' && progress && !progress.checklist.navigatedToTextToImage) {
+      updateProgress({ navigatedToTextToImage: true });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress?.checklist.viewedTemplates]);
+  }, [state.selectedGroup, progress, updateProgress]);
 
-  // Track onboarding: viewedTokenCost when estimatedTokens is visible
+  // Track onboarding: selectedZImage when user selects a Z-Image model
   useEffect(() => {
-    if (estimatedTokens > 0 && progress && !progress.checklist.viewedTokenCost) {
-      updateProgress({ viewedTokenCost: true });
+    if (state.selectedModel && progress && !progress.checklist.selectedZImage) {
+      const model = filteredModels.find(m => String(m.record_id) === state.selectedModel);
+      const modelDisplayName = model?.display_name?.toLowerCase() || '';
+      if (modelDisplayName.includes('z-image') || modelDisplayName.includes('zimage')) {
+        updateProgress({ selectedZImage: true });
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estimatedTokens, progress?.checklist.viewedTokenCost]);
-
-  // Track onboarding: selected template/model
-  useEffect(() => {
-    if (state.selectedModel && progress && !progress.checklist.selectedTemplate) {
-      updateProgress({ selectedTemplate: true });
-    }
-  }, [state.selectedModel, progress, updateProgress]);
-
-  // Track onboarding: entered prompt
-  useEffect(() => {
-    if (state.prompt.length > 10 && progress && !progress.checklist.enteredPrompt) {
-      updateProgress({ enteredPrompt: true });
-    }
-  }, [state.prompt, progress, updateProgress]);
+  }, [state.selectedModel, filteredModels, progress, updateProgress]);
 
   // Compute schema-derived values for InputPanel
   const hasPromptField = useMemo(() => {

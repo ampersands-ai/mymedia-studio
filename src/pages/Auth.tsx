@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { isDisposableEmail, getCanonicalEmail } from "@/lib/email-validation";
+import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -28,6 +29,22 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+    setTurnstileError(null);
+  }, []);
+
+  const handleTurnstileError = useCallback((error: string) => {
+    setTurnstileToken(null);
+    setTurnstileError(error);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -75,6 +92,22 @@ const Auth = () => {
           setLoading(false);
           return;
         }
+      }
+
+      // Verify Turnstile token first
+      if (!turnstileToken) {
+        throw new Error("Please complete the security verification.");
+      }
+
+      // Verify Turnstile server-side
+      const { data: turnstileData, error: turnstileVerifyError } = await supabase.functions.invoke(
+        'verify-turnstile',
+        { body: { token: turnstileToken } }
+      );
+
+      if (turnstileVerifyError || !turnstileData?.success) {
+        setTurnstileToken(null); // Reset token to force re-verification
+        throw new Error("Security verification failed. Please try again.");
       }
 
       // Check rate limiting
@@ -544,12 +577,28 @@ const Auth = () => {
                 </div>
               </>
             )}
+            
+            {/* Turnstile CAPTCHA */}
+            <div className="my-4">
+              <TurnstileWidget
+                onVerify={handleTurnstileVerify}
+                onError={handleTurnstileError}
+                onExpire={handleTurnstileExpire}
+              />
+              {turnstileError && (
+                <p className="text-sm text-red-600 flex items-center gap-1 mt-2 justify-center">
+                  <AlertCircle className="h-3 w-3" />
+                  Verification failed. Please try again.
+                </p>
+              )}
+            </div>
+
             <Button
               type="submit"
               className="w-full"
               variant="neon"
               size="lg"
-              disabled={loading}
+              disabled={loading || !turnstileToken}
             >
               {loading ? "LOADING..." : isLogin ? "SIGN IN" : "SIGN UP"}
             </Button>

@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, ChevronDown, ChevronUp, X, Trophy } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { OnboardingProgress } from "@/hooks/useOnboarding";
 
 interface OnboardingChecklistProps {
@@ -13,7 +14,8 @@ interface OnboardingChecklistProps {
 }
 
 export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: OnboardingChecklistProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   // New 8-step onboarding checklist
   const checklistItems = [
@@ -35,9 +37,12 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
   }
 
   return (
-    <Card variant="light" className="fixed bottom-6 right-6 z-50 shadow-2xl border-2 border-primary-500/20">
+    <Card variant="light" className={cn(
+      "fixed z-50 shadow-2xl border-2 border-primary-500/20",
+      isMobile ? "bottom-4 right-4" : "bottom-6 right-6"
+    )}>
       {isExpanded ? (
-        <div className="w-80">
+        <div className={isMobile ? "w-64" : "w-80"}>
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary-600" />
@@ -124,12 +129,15 @@ export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: Onboard
         </div>
       ) : (
         <div 
-          className="p-4 cursor-pointer hover:bg-neutral-50 transition-colors"
+          className={cn(
+            "cursor-pointer hover:bg-neutral-50 transition-colors",
+            isMobile ? "p-3" : "p-4"
+          )}
           onClick={() => setIsExpanded(true)}
         >
-          <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12">
-              <svg className="transform -rotate-90 h-12 w-12">
+          <div className={cn("flex items-center", isMobile ? "gap-2" : "gap-3")}>
+            <div className={cn("relative", isMobile ? "h-10 w-10" : "h-12 w-12")}>
+              <svg className={cn("transform -rotate-90", isMobile ? "h-10 w-10" : "h-12 w-12")}>
                 <circle
                   cx="24"
                   cy="24"

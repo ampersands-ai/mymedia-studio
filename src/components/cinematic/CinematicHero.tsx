@@ -76,10 +76,21 @@ export const CinematicHero = () => {
   };
 
   useEffect(() => {
-    // Start playing the first video
+    // Start playing the first video with retry logic for faster mobile playback
     const firstVideo = videoRefs.current[0];
     if (firstVideo) {
-      firstVideo.play().catch(() => {});
+      const attemptPlay = () => {
+        firstVideo.play().catch(() => {
+          // Retry after a short delay if autoplay blocked
+          setTimeout(() => firstVideo.play().catch(() => {}), 100);
+        });
+      };
+      
+      if (firstVideo.readyState >= 3) {
+        attemptPlay();
+      } else {
+        firstVideo.addEventListener('canplay', attemptPlay, { once: true });
+      }
     }
   }, []);
 
@@ -108,11 +119,13 @@ export const CinematicHero = () => {
           <SwiperSlide key={src} className="w-full h-full">
             <video
               ref={(el) => (videoRefs.current[index] = el)}
+              src={src}
               muted={isMuted}
               loop
               playsInline
               autoPlay={index === 0}
-              preload={index < 3 ? "auto" : "metadata"}
+              preload={index === 0 ? "auto" : index === 1 ? "metadata" : "none"}
+              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23111'/%3E%3C/svg%3E"
               className="absolute inset-0 w-full h-full object-cover"
             >
               <source src={src} type="video/mp4" />

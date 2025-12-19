@@ -114,10 +114,54 @@ export const useSchemaHelpers = () => {
     return { fieldName: audioFieldName, isRequired, maxDuration };
   }, []);
 
+  /**
+   * Dynamically detect video field from schema using explicit videoInputField flag
+   */
+  const getVideoFieldInfo = useCallback((model: AIModel | null): { 
+    fieldName: string | null; 
+    isRequired: boolean; 
+    maxDuration: number | null;
+    maxFileSize: number;
+  } => {
+    const defaultMaxSize = 10 * 1024 * 1024; // 10MB default
+    
+    if (!model?.input_schema) {
+      return { fieldName: null, isRequired: false, maxDuration: null, maxFileSize: defaultMaxSize };
+    }
+
+    const schema = model.input_schema as { 
+      videoInputField?: string; 
+      properties?: Record<string, { maxDuration?: number; maxFileSize?: number }>; 
+      required?: string[] 
+    };
+    const videoFieldName = schema.videoInputField;
+
+    // No video input field defined in schema
+    if (!videoFieldName) {
+      return { fieldName: null, isRequired: false, maxDuration: null, maxFileSize: defaultMaxSize };
+    }
+
+    const properties = schema.properties || {};
+    const fieldSchema = properties[videoFieldName];
+
+    if (!fieldSchema) {
+      logger.warn(`Video field '${videoFieldName}' declared in schema but not found in properties`);
+      return { fieldName: null, isRequired: false, maxDuration: null, maxFileSize: defaultMaxSize };
+    }
+
+    const required = schema.required || [];
+    const isRequired = required.includes(videoFieldName);
+    const maxDuration = fieldSchema.maxDuration || null;
+    const maxFileSize = fieldSchema.maxFileSize || defaultMaxSize;
+
+    return { fieldName: videoFieldName, isRequired, maxDuration, maxFileSize };
+  }, []);
+
   return {
     getSchemaRequiredFields,
     getImageFieldInfo,
     getAudioFieldInfo,
+    getVideoFieldInfo,
     getMaxPromptLength,
   };
 };

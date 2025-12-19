@@ -16,6 +16,7 @@ import { useOutputProcessor } from "@/hooks/useOutputProcessor";
 import { useCustomGeneration } from "@/hooks/useCustomGeneration";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useAudioUpload } from "@/hooks/useAudioUpload";
+import { useVideoUpload } from "@/hooks/useVideoUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
 
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
@@ -94,6 +95,7 @@ const CustomCreation = () => {
   const schemaHelpers = useSchemaHelpers();
   const imageFieldInfo = schemaHelpers.getImageFieldInfo(modelConfig);
   const audioFieldInfo = schemaHelpers.getAudioFieldInfo(modelConfig);
+  const videoFieldInfo = schemaHelpers.getVideoFieldInfo(modelConfig);
 
   // Output processor (independent module for handling generation outputs)
   const { 
@@ -212,6 +214,16 @@ const CustomCreation = () => {
     uploadAudiosToStorage: _uploadAudiosToStorage, // Will be used in generation flow
     fileInputRef: audioFileInputRef,
   } = useAudioUpload(modelConfig);
+
+  // Video upload
+  const {
+    uploadedVideos,
+    setUploadedVideos,
+    handleFileUpload: handleVideoUpload,
+    removeVideo,
+    uploadVideosToStorage: _uploadVideosToStorage, // Will be used in generation flow
+    fileInputRef: videoFileInputRef,
+  } = useVideoUpload(modelConfig);
 
   // Caption generation
   const {
@@ -555,6 +567,15 @@ const CustomCreation = () => {
             audioMaxDuration={audioFieldInfo.maxDuration}
             audioFileInputRef={audioFileInputRef}
             onAudioDurationChange={(duration) => updateState({ audioDuration: duration })}
+            uploadedVideo={uploadedVideos[0] || null}
+            onVideoUpload={(e) => { handleVideoUpload(e); updateState({ generateCaption: false }); }}
+            onRemoveVideo={() => { removeVideo(); updateState({ generateCaption: false }); }}
+            videoFieldName={videoFieldInfo.fieldName}
+            isVideoRequired={videoFieldInfo.isRequired}
+            videoMaxDuration={videoFieldInfo.maxDuration}
+            videoMaxFileSize={videoFieldInfo.maxFileSize}
+            videoFileInputRef={videoFileInputRef}
+            onVideoDurationChange={(duration) => updateState({ videoDuration: duration })}
             hasDuration={hasDuration}
             durationValue={state.modelParameters.duration}
             durationSchema={(hasDuration && modelSchema?.properties?.duration) as JsonSchemaProperty | null}
@@ -577,11 +598,15 @@ const CustomCreation = () => {
               stopPolling();
               setUploadedImages([]);
               setUploadedAudios([]);
+              setUploadedVideos([]);
               if (fileInputRef.current) {
                 fileInputRef.current.value = '';
               }
               if (audioFileInputRef.current) {
                 audioFileInputRef.current.value = '';
+              }
+              if (videoFileInputRef.current) {
+                videoFileInputRef.current.value = '';
               }
               resetState();
             }}

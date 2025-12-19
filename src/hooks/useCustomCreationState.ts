@@ -101,6 +101,7 @@ const INITIAL_STATE: CustomCreationState = {
   resolution: "Native",
   advancedOpen: false,
   audioDuration: null,
+  videoDuration: null,
   
   // Generation state
   generatedOutput: null,

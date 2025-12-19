@@ -5,6 +5,7 @@ import { ModelFamilySelector } from "./ModelFamilySelector";
 import { PromptInput } from "./PromptInput";
 import { ImageUploadSection } from "./ImageUploadSection";
 import { AudioUploadSection } from "./AudioUploadSection";
+import { VideoUploadSection } from "./VideoUploadSection";
 import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
@@ -53,6 +54,16 @@ interface InputPanelProps {
   audioMaxDuration: number | null;
   audioFileInputRef: React.RefObject<HTMLInputElement>;
   onAudioDurationChange?: (duration: number | null) => void;
+  // Video upload props
+  uploadedVideo: File | null;
+  onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveVideo: () => void;
+  videoFieldName: string | null;
+  isVideoRequired: boolean;
+  videoMaxDuration: number | null;
+  videoMaxFileSize: number;
+  videoFileInputRef: React.RefObject<HTMLInputElement>;
+  onVideoDurationChange?: (duration: number | null) => void;
   hasDuration: boolean;
   durationValue: SchemaValue;
   onDurationChange: SchemaChangeHandler;
@@ -114,6 +125,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   audioMaxDuration,
   audioFileInputRef,
   onAudioDurationChange,
+  // Video upload props
+  uploadedVideo,
+  onVideoUpload,
+  onRemoveVideo,
+  videoFieldName,
+  isVideoRequired,
+  videoMaxDuration,
+  videoMaxFileSize,
+  videoFileInputRef,
+  onVideoDurationChange,
   hasDuration,
   durationValue,
   onDurationChange,
@@ -181,6 +202,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
       // Audio renderer fields - add to specialized to skip in generic loop
       if (audioFieldName && prop.renderer === 'audio' && key === audioFieldName) {
+        specializedFields.add(key);
+      }
+
+      // Video renderer fields - add to specialized to skip in generic loop
+      if (videoFieldName && prop.renderer === 'video' && key === videoFieldName) {
         specializedFields.add(key);
       }
 
@@ -279,6 +305,20 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             fileInputRef={audioFileInputRef}
             maxDuration={audioMaxDuration}
             onDurationChange={onAudioDurationChange}
+          />
+        )}
+
+        {/* Video upload section */}
+        {videoFieldName && (
+          <VideoUploadSection
+            video={uploadedVideo}
+            onUpload={onVideoUpload}
+            onRemove={onRemoveVideo}
+            isRequired={isVideoRequired}
+            fileInputRef={videoFileInputRef}
+            maxDuration={videoMaxDuration}
+            maxFileSize={videoMaxFileSize}
+            onDurationChange={onVideoDurationChange}
           />
         )}
 

@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 
@@ -54,6 +54,7 @@ export const AdminLayout = () => {
               { path: "/admin/test-model-group", label: "Test Model Group", icon: TestTube2 },
               { path: "/admin/comprehensive-model-tester", label: "Model Tester", icon: Layers },
               { path: "/admin/webhook-monitor", label: "Webhook Monitor", icon: Activity },
+              { path: "/admin/security", label: "Security", icon: Shield },
               { path: "/admin/user-logs", label: "User Logs", icon: Activity },
               { path: "/admin/email-settings", label: "Email Settings", icon: Mail },
               { path: "/admin/video-jobs", label: "Video Jobs", icon: Video },

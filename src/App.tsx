@@ -77,6 +77,7 @@ const ComprehensiveModelTester = lazy(() => import("./pages/admin/ComprehensiveM
 const VaultSetup = lazy(() => import("./pages/admin/VaultSetup"));
 const ModelPricing = lazy(() => import("./pages/admin/ModelPricing"));
 const FeatureSettings = lazy(() => import("./pages/admin/FeatureSettings"));
+const SecurityDashboard = lazy(() => import("./pages/admin/SecurityDashboard"));
 const CinematicTest = lazy(() => import("./pages/CinematicTest"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -199,6 +200,7 @@ const AppContent = () => {
               <Route path="vault-setup" element={<RouteErrorBoundary routeName="Admin > Vault Setup"><VaultSetup /></RouteErrorBoundary>} />
               <Route path="model-pricing" element={<RouteErrorBoundary routeName="Admin > Model Pricing"><ModelPricing /></RouteErrorBoundary>} />
               <Route path="feature-settings" element={<RouteErrorBoundary routeName="Admin > Feature Settings"><FeatureSettings /></RouteErrorBoundary>} />
+              <Route path="security" element={<RouteErrorBoundary routeName="Admin > Security"><SecurityDashboard /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />

@@ -1,50 +1,50 @@
 /**
  * Service Worker Registration Helper
+ * Uses Workbox via vite-plugin-pwa for automatic registration
  * Only registers in production to avoid dev issues
  */
 
 import { logger } from '@/lib/logger';
+import { registerSW } from 'virtual:pwa-register';
 
-// Store interval ID for cleanup
-let updateCheckInterval: ReturnType<typeof setInterval> | null = null;
+// Store update function for manual updates
+let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
 
+/**
+ * Register the Workbox-powered service worker
+ * This uses vite-plugin-pwa's auto-generated service worker
+ */
 export function registerServiceWorker() {
-  // ✅ ONLY register in production
-  if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    window.addEventListener('load', async () => {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-
-        logger.info('Service Worker registered successfully', {
+  // Only register in production
+  if (import.meta.env.PROD) {
+    updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        // New content available, show update notification
+        showUpdateNotification();
+      },
+      onOfflineReady() {
+        logger.info('App is ready to work offline', {
           utility: 'serviceWorker',
-          scope: registration.scope,
-          operation: 'registerServiceWorker'
+          operation: 'offlineReady'
         });
-
-        // Clear any existing update check interval (prevents memory leak)
-        if (updateCheckInterval) {
-          clearInterval(updateCheckInterval);
-        }
-
-        // Check for updates every hour
-        updateCheckInterval = setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
-
-        // Notify user when update is available
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker?.addEventListener('statechange', () => {
-            if (
-              newWorker.state === 'installed' &&
-              navigator.serviceWorker.controller
-            ) {
-              showUpdateNotification();
-            }
+      },
+      onRegistered(registration) {
+        if (registration) {
+          logger.info('Service Worker registered successfully', {
+            utility: 'serviceWorker',
+            scope: registration.scope,
+            operation: 'registerServiceWorker'
           });
-        });
-      } catch (err) {
-        logger.error('Service Worker registration failed', err as Error, {
+          
+          // Check for updates every hour
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
+        }
+      },
+      onRegisterError(error) {
+        logger.error('Service Worker registration failed', error, {
           utility: 'serviceWorker',
           operation: 'registerServiceWorker'
         });
@@ -57,12 +57,6 @@ export function registerServiceWorker() {
  * Auto-unregister service worker in dev mode
  */
 export async function unregisterServiceWorker() {
-  // Clear update check interval
-  if (updateCheckInterval) {
-    clearInterval(updateCheckInterval);
-    updateCheckInterval = null;
-  }
-
   if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
@@ -84,13 +78,10 @@ export async function unregisterServiceWorker() {
 }
 
 /**
- * Cleanup function - call when app is unmounting (for hot reload in dev)
+ * Cleanup function - no-op now as Workbox handles cleanup
  */
 export function cleanupServiceWorker() {
-  if (updateCheckInterval) {
-    clearInterval(updateCheckInterval);
-    updateCheckInterval = null;
-  }
+  // Workbox handles cleanup automatically
 }
 
 /**
@@ -98,6 +89,7 @@ export function cleanupServiceWorker() {
  */
 function showUpdateNotification() {
   const banner = document.createElement('div');
+  banner.id = 'sw-update-banner';
   banner.innerHTML = `
     <div style="
       position: fixed;
@@ -110,25 +102,59 @@ function showUpdateNotification() {
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       z-index: 9999;
       font-family: 'Space Grotesk', sans-serif;
+      animation: slideIn 0.3s ease-out;
     ">
+      <style>
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      </style>
       <p style="margin: 0 0 8px 0; font-weight: 600;">New version available!</p>
-      <button
-        onclick="window.location.reload()"
-        style="
-          background: white;
-          color: hsl(271 81% 56%);
-          border: none;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 600;
-          font-family: 'Space Grotesk', sans-serif;
-        "
-      >
-        Update Now
-      </button>
+      <div style="display: flex; gap: 8px;">
+        <button
+          onclick="window.__updateSW && window.__updateSW()"
+          style="
+            background: white;
+            color: hsl(271 81% 56%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+          "
+        >
+          Update Now
+        </button>
+        <button
+          onclick="this.parentElement.parentElement.parentElement.remove()"
+          style="
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+          "
+        >
+          Later
+        </button>
+      </div>
     </div>
   `;
+  
+  // Expose update function globally for the button
+  (window as unknown as { __updateSW?: () => void }).__updateSW = () => {
+    if (updateSW) {
+      updateSW(true);
+    } else {
+      window.location.reload();
+    }
+  };
+  
   document.body.appendChild(banner);
 }
 
@@ -162,7 +188,7 @@ export async function clearAllCaches() {
         utility: 'serviceWorker',
         operation: 'clearAllCaches'
       });
-      throw err; // Re-throw so caller knows it failed
+      throw err;
     }
   }
 }

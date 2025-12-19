@@ -79,16 +79,33 @@ export const CinematicNav = () => {
           )}
         </div>
 
-        {/* Mobile Menu */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <button
-              className="md:hidden p-2 text-white hover:bg-white/10 transition-colors"
-              aria-label="Open menu"
+        {/* Mobile: Quick action + Menu */}
+        <div className="md:hidden flex items-center gap-2">
+          {user ? (
+            <Link
+              to="/dashboard/custom-creation"
+              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
             >
-              <Menu className="w-6 h-6" />
-            </button>
-          </SheetTrigger>
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
+            >
+              Login
+            </Link>
+          )}
+          
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <button
+                className="p-2 text-white hover:bg-white/10 transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            </SheetTrigger>
           <SheetContent 
             side="right" 
             className="w-[300px] bg-black/95 backdrop-blur-xl border-l border-white/10 p-0"
@@ -155,6 +172,7 @@ export const CinematicNav = () => {
             </div>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
     </nav>
   );

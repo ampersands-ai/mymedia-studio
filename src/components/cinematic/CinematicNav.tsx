@@ -84,14 +84,14 @@ export const CinematicNav = () => {
           {user ? (
             <Link
               to="/dashboard/custom-creation"
-              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
+              className="h-7 flex items-center px-3 text-xs font-bold uppercase tracking-wide leading-none text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
             >
               Dashboard
             </Link>
           ) : (
             <Link
               to="/auth"
-              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
+              className="h-7 flex items-center px-3 text-xs font-bold uppercase tracking-wide leading-none text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
             >
               Login
             </Link>

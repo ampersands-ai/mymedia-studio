@@ -10,13 +10,14 @@ export interface OnboardingProgress {
   isComplete: boolean;
   dismissed: boolean;
   checklist: {
-    viewedTemplates: boolean; // Track when user lands on Create page
-    selectedTemplate: boolean; // Track when user selects a template OR model
-    enteredPrompt: boolean; // Track when user enters prompt (>10 chars)
-    viewedTokenCost: boolean; // Track when user views generation dialog with cost
-    completedFirstGeneration: boolean; // Track when first generation completes
-    viewedResult: boolean; // Track when user views output
-    downloadedResult: boolean; // Track when user downloads result
+    navigatedToTextToImage: boolean;  // Step 1: Go to Text to Image section
+    selectedZImage: boolean;          // Step 2: Select Z-Image model
+    clickedSurpriseMe: boolean;       // Step 3: Click Surprise Me
+    clickedEnhancePrompt: boolean;    // Step 4: Click Enhance Prompt
+    clickedGenerateCaption: boolean;  // Step 5: Enable Generate Caption
+    clickedGenerate: boolean;         // Step 6: Click Generate
+    downloadedResult: boolean;        // Step 7: Download result
+    visitedMyCreations: boolean;      // Step 8: Visit My Creations
   };
   completedCount: number;
   totalCount: number;
@@ -65,29 +66,31 @@ export const useOnboarding = () => {
           isComplete: false,
           dismissed: false,
           checklist: {
-            viewedTemplates: false,
-            selectedTemplate: false,
-            enteredPrompt: false,
-            viewedTokenCost: false,
-            completedFirstGeneration: false,
-            viewedResult: false,
+            navigatedToTextToImage: false,
+            selectedZImage: false,
+            clickedSurpriseMe: false,
+            clickedEnhancePrompt: false,
+            clickedGenerateCaption: false,
+            clickedGenerate: false,
             downloadedResult: false,
+            visitedMyCreations: false,
           },
           completedCount: 0,
-          totalCount: 7,
+          totalCount: 8,
           bonusAwarded: false,
           firstGenerationId: null,
         } as OnboardingProgress;
       }
 
       const checklist = {
-        viewedTemplates: data.viewed_templates,
-        selectedTemplate: data.selected_template,
-        enteredPrompt: data.entered_prompt,
-        viewedTokenCost: data.viewed_token_cost,
-        completedFirstGeneration: data.completed_first_generation,
-        viewedResult: data.viewed_result,
-        downloadedResult: data.downloaded_result,
+        navigatedToTextToImage: data.navigated_to_text_to_image ?? false,
+        selectedZImage: data.selected_z_image ?? false,
+        clickedSurpriseMe: data.clicked_surprise_me ?? false,
+        clickedEnhancePrompt: data.clicked_enhance_prompt ?? false,
+        clickedGenerateCaption: data.clicked_generate_caption ?? false,
+        clickedGenerate: data.clicked_generate ?? false,
+        downloadedResult: data.downloaded_result ?? false,
+        visitedMyCreations: data.visited_my_creations ?? false,
       };
 
       const completedCount = Object.values(checklist).filter(Boolean).length;
@@ -98,7 +101,7 @@ export const useOnboarding = () => {
         dismissed: data.dismissed,
         checklist,
         completedCount,
-        totalCount: 7,
+        totalCount: 8,
         bonusAwarded: data.bonus_awarded,
         firstGenerationId: data.first_generation_id,
       } as OnboardingProgress;
@@ -138,13 +141,14 @@ export const useOnboarding = () => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const dbUpdates: Record<string, boolean> = {};
-      if (updates.viewedTemplates !== undefined) dbUpdates.viewed_templates = updates.viewedTemplates;
-      if (updates.selectedTemplate !== undefined) dbUpdates.selected_template = updates.selectedTemplate;
-      if (updates.enteredPrompt !== undefined) dbUpdates.entered_prompt = updates.enteredPrompt;
-      if (updates.viewedTokenCost !== undefined) dbUpdates.viewed_token_cost = updates.viewedTokenCost;
-      if (updates.completedFirstGeneration !== undefined) dbUpdates.completed_first_generation = updates.completedFirstGeneration;
-      if (updates.viewedResult !== undefined) dbUpdates.viewed_result = updates.viewedResult;
+      if (updates.navigatedToTextToImage !== undefined) dbUpdates.navigated_to_text_to_image = updates.navigatedToTextToImage;
+      if (updates.selectedZImage !== undefined) dbUpdates.selected_z_image = updates.selectedZImage;
+      if (updates.clickedSurpriseMe !== undefined) dbUpdates.clicked_surprise_me = updates.clickedSurpriseMe;
+      if (updates.clickedEnhancePrompt !== undefined) dbUpdates.clicked_enhance_prompt = updates.clickedEnhancePrompt;
+      if (updates.clickedGenerateCaption !== undefined) dbUpdates.clicked_generate_caption = updates.clickedGenerateCaption;
+      if (updates.clickedGenerate !== undefined) dbUpdates.clicked_generate = updates.clickedGenerate;
       if (updates.downloadedResult !== undefined) dbUpdates.downloaded_result = updates.downloadedResult;
+      if (updates.visitedMyCreations !== undefined) dbUpdates.visited_my_creations = updates.visitedMyCreations;
 
       const { error } = await supabase
         .from('user_onboarding_progress')

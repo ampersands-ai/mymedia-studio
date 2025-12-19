@@ -87,13 +87,18 @@ export type GenerationOutput = z.infer<typeof GenerationOutputSchema>;
 export type SelectedTemplate = z.infer<typeof SelectedTemplateSchema>;
 
 /**
- * Onboarding progress schema
+ * Onboarding progress schema - 8-step guided onboarding
  */
 export const OnboardingProgressSchema = z.object({
   checklist: z.object({
-    completedFirstGeneration: z.boolean(),
-    downloadedImage: z.boolean().optional(),
-    downloadedResult: z.boolean().optional(), // Legacy field
+    navigatedToTextToImage: z.boolean(),
+    selectedZImage: z.boolean(),
+    clickedSurpriseMe: z.boolean(),
+    clickedEnhancePrompt: z.boolean(),
+    clickedGenerateCaption: z.boolean(),
+    clickedGenerate: z.boolean(),
+    downloadedResult: z.boolean(),
+    visitedMyCreations: z.boolean(),
   }),
 });
 

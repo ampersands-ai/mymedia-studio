@@ -3,7 +3,7 @@ import { Coins, Shield, Layout } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
-import { useOnboarding } from "@/hooks/useOnboarding";
+
 import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ export const GlobalHeader = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { availableCredits, isLoading } = useUserCredits();
-  const { updateProgress } = useOnboarding();
+  
   const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -101,10 +101,7 @@ export const GlobalHeader = () => {
 
             {creditBalance !== null && (
               <button
-                onClick={() => {
-                  updateProgress({ viewedTokenCost: true });
-                  navigate("/dashboard/settings", { state: { defaultTab: 'usage' } });
-                }}
+                onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'usage' } })}
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
               >
                 <Coins className="h-5 w-5 text-primary-orange" />

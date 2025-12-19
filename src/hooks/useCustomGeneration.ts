@@ -229,9 +229,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
       queryClient.invalidateQueries({ queryKey: ['user-credits'] });
 
-      // Update onboarding
-      if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration) {
-        updateProgress({ completedFirstGeneration: true });
+      // Update onboarding - track clickedGenerate
+      if (onboardingProgress && !onboardingProgress.checklist.clickedGenerate) {
+        updateProgress({ clickedGenerate: true });
         setFirstGeneration(genId);
       }
     } catch (error) {

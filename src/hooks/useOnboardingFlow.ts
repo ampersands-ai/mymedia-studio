@@ -4,13 +4,11 @@ import type { TemplatePreview } from "@/types/templates";
 
 /**
  * Hook to orchestrate onboarding flow for Create page
- * @param selectedTemplate - Currently selected template
- * @param prompt - Current prompt value
- * @param onTemplateSelect - Callback when template is selected
+ * Simplified for the new 8-step onboarding system
  */
 export const useOnboardingFlow = (
   _selectedTemplate: TemplatePreview | null,
-  prompt: string,
+  _prompt: string,
   onTemplateSelect: (template: TemplatePreview, prompt: string) => void
 ) => {
   const { 
@@ -29,16 +27,8 @@ export const useOnboardingFlow = (
   useEffect(() => {
     if (progress && !isLoading && progress.isNewUser && !progress.dismissed && !showWelcome) {
       setShowWelcome(true);
-      updateProgress({ viewedTemplates: true });
     }
-  }, [progress, isLoading, showWelcome, updateProgress]);
-  
-  // Track prompt entry
-  useEffect(() => {
-    if (prompt.trim().length > 10 && progress && !progress.checklist.enteredPrompt) {
-      updateProgress({ enteredPrompt: true });
-    }
-  }, [prompt, progress, updateProgress]);
+  }, [progress, isLoading, showWelcome]);
   
   /**
    * Handle template selection from welcome modal

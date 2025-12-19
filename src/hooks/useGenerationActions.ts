@@ -108,9 +108,9 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
         });
         toast.success('Generation complete!', { id: TOAST_IDS.GENERATION_PROGRESS });
         
-        // Update onboarding progress
-        if (onboardingProgress && !onboardingProgress.checklist.completedFirstGeneration && updateOnboardingProgress && setFirstGeneration && setShowConfetti && genId) {
-          updateOnboardingProgress({ completedFirstGeneration: true });
+        // Update onboarding progress - track clickedGenerate
+        if (onboardingProgress && !onboardingProgress.checklist.clickedGenerate && updateOnboardingProgress && setFirstGeneration && setShowConfetti && genId) {
+          updateOnboardingProgress({ clickedGenerate: true });
           setFirstGeneration(genId);
           setShowConfetti(true);
         }

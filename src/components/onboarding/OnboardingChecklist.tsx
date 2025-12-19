@@ -15,14 +15,16 @@ interface OnboardingChecklistProps {
 export const OnboardingChecklist = ({ progress, onComplete, onDismiss }: OnboardingChecklistProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
+  // New 8-step onboarding checklist
   const checklistItems = [
-    { key: 'viewedTemplates', label: 'Explore creation options', completed: progress.checklist.viewedTemplates },
-    { key: 'selectedTemplate', label: 'Choose how to create', completed: progress.checklist.selectedTemplate },
-    { key: 'enteredPrompt', label: 'Describe what you want to create', completed: progress.checklist.enteredPrompt },
-    { key: 'viewedTokenCost', label: 'View your credit balance', completed: progress.checklist.viewedTokenCost },
-    { key: 'completedFirstGeneration', label: 'Generate your first creation', completed: progress.checklist.completedFirstGeneration },
-    { key: 'viewedResult', label: 'View the result', completed: progress.checklist.viewedResult },
+    { key: 'navigatedToTextToImage', label: 'Go to Text to Image section', completed: progress.checklist.navigatedToTextToImage },
+    { key: 'selectedZImage', label: 'Select the Z-Image model', completed: progress.checklist.selectedZImage },
+    { key: 'clickedSurpriseMe', label: 'Click "Surprise Me" for a prompt', completed: progress.checklist.clickedSurpriseMe },
+    { key: 'clickedEnhancePrompt', label: 'Click "Enhance Prompt"', completed: progress.checklist.clickedEnhancePrompt },
+    { key: 'clickedGenerateCaption', label: 'Enable "Generate Caption"', completed: progress.checklist.clickedGenerateCaption },
+    { key: 'clickedGenerate', label: 'Click "Generate"', completed: progress.checklist.clickedGenerate },
     { key: 'downloadedResult', label: 'Download your creation', completed: progress.checklist.downloadedResult },
+    { key: 'visitedMyCreations', label: 'Visit My Creations', completed: progress.checklist.visitedMyCreations },
   ];
 
   const progressPercentage = (progress.completedCount / progress.totalCount) * 100;

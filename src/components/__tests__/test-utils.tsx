@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, RenderOptions, screen, waitFor } from '@testing-library/react';
+import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -188,4 +188,4 @@ export function createMockUser(overrides = {}) {
 }
 
 // Re-export everything from testing-library
-export { render, screen, waitFor, userEvent };
+export { render, userEvent };

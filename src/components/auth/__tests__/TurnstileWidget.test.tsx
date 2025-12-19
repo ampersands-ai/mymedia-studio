@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderWithProviders, waitFor } from '@/components/__tests__/test-utils';
+import { waitFor } from '@testing-library/dom';
+import { renderWithProviders } from '@/components/__tests__/test-utils';
 import { TurnstileWidget } from '../TurnstileWidget';
 
 // Mock the Turnstile script loading

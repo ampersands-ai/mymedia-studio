@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderWithProviders, screen, userEvent } from '@/components/__tests__/test-utils';
+import { screen } from '@testing-library/dom';
+import { renderWithProviders, userEvent } from '@/components/__tests__/test-utils';
 import { AspectRatioSelector } from '../AspectRatioSelector';
 
 describe('AspectRatioSelector', () => {

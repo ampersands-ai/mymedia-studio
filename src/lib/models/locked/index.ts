@@ -93,7 +93,11 @@ import * as WAN22Turbo_ImageToVideo from "./image_to_video/WAN_2_2_Turbo";
 import * as Wan22TurboNew_ImageToVideo from "./image_to_video/Wan_2_2_Turbo_I2V";
 import * as Wan25_ImageToVideo from "./image_to_video/Wan_2_5_I2V";
 import * as SeedanceV1ProFastRunware from "./image_to_video/Seedance_V1_0_Pro_Fast_runware";
+import * as Wan26_ImageToVideo from "./image_to_video/Wan_2_6_I2V";
 
+// Video to Video Models (2)
+import * as TopazVideoUpscale from "./video_to_video/Topaz_Video_Upscale";
+import * as Wan26_VideoToVideo from "./video_to_video/Wan_2_6_V2V";
 // Prompt to Audio Models (8)
 import * as ElevenLabsFast from "./prompt_to_audio/ElevenLabs_Fast";
 import * as ElevenLabsTTS from "./prompt_to_audio/ElevenLabs_TTS";
@@ -166,6 +170,7 @@ import * as Sora2ProStoryboard_PromptToVideo from "./prompt_to_video/Sora_2_Pro_
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 import * as Wan22TurboNew_PromptToVideo from "./prompt_to_video/Wan_2_2_Turbo_T2V";
 import * as Wan25_PromptToVideo from "./prompt_to_video/Wan_2_5_T2V";
+import * as Wan26_PromptToVideo from "./prompt_to_video/Wan_2_6_T2V";
 
 /**
  * Generation execution parameters
@@ -397,8 +402,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f": Wan22SpeechToVideo_LipSync as ModelModule,      // Wan 2.2 Speech-to-Video | lip_sync | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // VIDEO TO VIDEO MODELS (0 total)
+  // VIDEO TO VIDEO MODELS (2 total)
   // ═══════════════════════════════════════════════════════════════════════════
+  "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c": TopazVideoUpscale as ModelModule,                 // Topaz Video Upscale | video_to_video | kie_ai
+  "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": Wan26_VideoToVideo as ModelModule,                // Wan 2.6 V2V | video_to_video | kie_ai
+
+  // Additional Wan 2.6 models
+  "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": Wan26_ImageToVideo as ModelModule,                // Wan 2.6 I2V | image_to_video | kie_ai
+  "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": Wan26_PromptToVideo as ModelModule,               // Wan 2.6 T2V | prompt_to_video | kie_ai
 };
 
 /**

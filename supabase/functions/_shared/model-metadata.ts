@@ -1152,6 +1152,54 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 60,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VIDEO TO VIDEO MODELS (2 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c": {
+    recordId: "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    modelId: "topaz/video-upscale",
+    modelName: "Topaz Video Upscale",
+    provider: "kie_ai",
+    contentType: "video_to_video",
+    baseCreditCost: 5,
+    estimatedTimeSeconds: 300,
+    isActive: true,
+  },
+  "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": {
+    recordId: "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d",
+    modelId: "wan/2-6-video-to-video",
+    modelName: "Wan 2.6",
+    provider: "kie_ai",
+    contentType: "video_to_video",
+    baseCreditCost: 10,
+    estimatedTimeSeconds: 240,
+    isActive: true,
+  },
+
+  // Wan 2.6 I2V
+  "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": {
+    recordId: "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
+    modelId: "wan/2-6-image-to-video",
+    modelName: "Wan 2.6",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 8,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+
+  // Wan 2.6 T2V
+  "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": {
+    recordId: "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f",
+    modelId: "wan/2-6-text-to-video",
+    modelName: "Wan 2.6",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 5,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
 };
 
 /**

@@ -405,8 +405,8 @@ const CustomCreation = () => {
   useEffect(() => {
     if (state.selectedModel && progress && !progress.checklist.selectedZImage) {
       const model = filteredModels.find(m => String(m.record_id) === state.selectedModel);
-      const modelDisplayName = model?.display_name?.toLowerCase() || '';
-      if (modelDisplayName.includes('z-image') || modelDisplayName.includes('zimage')) {
+      const modelName = model?.model_name?.toLowerCase() || '';
+      if (modelName.includes('z-image') || modelName.includes('zimage')) {
         updateProgress({ selectedZImage: true });
       }
     }

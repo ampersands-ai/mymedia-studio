@@ -1,0 +1,46 @@
+# GitGuardian configuration
+# Documentation: https://docs.gitguardian.com/ggshield-docs/reference/config
+
+version: 2
+
+secret:
+  # Don't show actual secrets in output
+  show_secrets: false
+  
+  # Paths to ignore during scanning
+  ignored_paths:
+    - "**/node_modules/**"
+    - "**/.git/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.next/**"
+    - "**/coverage/**"
+    - "**/*.min.js"
+    - "**/*.min.css"
+    - "**/package-lock.json"
+    - "**/bun.lockb"
+    - "**/*.svg"
+    - "**/*.png"
+    - "**/*.jpg"
+    - "**/*.jpeg"
+    - "**/*.gif"
+    - "**/*.ico"
+    - "**/*.woff"
+    - "**/*.woff2"
+    - "**/*.ttf"
+    - "**/*.eot"
+
+  # Specific matches to ignore (false positives)
+  ignored_matches:
+    # Example test API keys (clearly fake)
+    - name: "test_api_key_pattern"
+      match: "sk_test_.*"
+    # Supabase anon keys (public by design)
+    - name: "supabase_anon_key"
+      match: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.*"
+
+# Exit codes
+exit_zero: false
+
+# Verbose output
+verbose: false

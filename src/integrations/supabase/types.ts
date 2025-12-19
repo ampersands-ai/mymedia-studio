@@ -3483,6 +3483,7 @@ export type Database = {
         Args: { amount: number; user_id_param: string }
         Returns: undefined
       }
+      is_admin_user: { Args: { check_user_id: string }; Returns: boolean }
       is_moderation_exempt: { Args: { _user_id: string }; Returns: boolean }
       resolve_error_event: {
         Args: { p_error_id: string; p_resolution_notes?: string }

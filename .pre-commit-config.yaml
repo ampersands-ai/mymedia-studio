@@ -1,0 +1,36 @@
+# Pre-commit configuration for security scanning
+# Install: pip install pre-commit && pre-commit install
+# Manual run: pre-commit run --all-files
+
+repos:
+  # GitGuardian secret scanning
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.24.0
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [commit]
+        name: GitGuardian Secret Scan
+        description: Scan for secrets and credentials before commit
+
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-json
+      - id: check-yaml
+        args: ['--unsafe']
+
+  # Prevent commits to protected branches
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ['--branch', 'main', '--branch', 'production']

@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    groups:
+      # Group security updates for faster review
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      # Group minor/patch updates to reduce PR noise
+      minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "security"
+    # Ignore major version updates for stability
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # Reviewers for security updates
+    reviewers:
+      - "team:security"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci/cd"
+      - "dependencies"

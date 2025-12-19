@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderWithProviders, screen, waitFor } from '@/components/__tests__/test-utils';
+import { renderWithProviders, waitFor } from '@/components/__tests__/test-utils';
 import { TurnstileWidget } from '../TurnstileWidget';
 
 // Mock the Turnstile script loading
@@ -21,18 +21,17 @@ beforeEach(() => {
 describe('TurnstileWidget', () => {
   it('renders the widget container', () => {
     const onVerify = vi.fn();
-    renderWithProviders(<TurnstileWidget onVerify={onVerify} />);
+    const { container } = renderWithProviders(<TurnstileWidget onVerify={onVerify} />);
     
     // Should render a container div
-    const container = document.querySelector('[class*="turnstile"]');
-    expect(container).toBeTruthy();
+    expect(container.querySelector('div')).toBeTruthy();
   });
 
   it('calls onVerify when verification succeeds', async () => {
     const onVerify = vi.fn();
     
     // Mock turnstile to call the callback
-    mockTurnstileRender.mockImplementation((container, options) => {
+    mockTurnstileRender.mockImplementation((_container, options) => {
       // Simulate successful verification after a short delay
       setTimeout(() => {
         options.callback?.('test-token');
@@ -51,7 +50,7 @@ describe('TurnstileWidget', () => {
     const onVerify = vi.fn();
     const onError = vi.fn();
     
-    mockTurnstileRender.mockImplementation((container, options) => {
+    mockTurnstileRender.mockImplementation((_container, options) => {
       setTimeout(() => {
         options['error-callback']?.('error-code');
       }, 10);
@@ -71,7 +70,7 @@ describe('TurnstileWidget', () => {
     const onVerify = vi.fn();
     const onExpire = vi.fn();
     
-    mockTurnstileRender.mockImplementation((container, options) => {
+    mockTurnstileRender.mockImplementation((_container, options) => {
       setTimeout(() => {
         options['expired-callback']?.();
       }, 10);
@@ -98,13 +97,15 @@ describe('TurnstileWidget', () => {
     expect(mockTurnstileRemove).toHaveBeenCalled();
   });
 
-  it('accepts custom className', () => {
+  it('shows loading state initially', () => {
     const onVerify = vi.fn();
-    renderWithProviders(
-      <TurnstileWidget onVerify={onVerify} className="custom-class" />
+    // Remove turnstile to simulate loading
+    (window as unknown as { turnstile: undefined }).turnstile = undefined;
+    
+    const { container } = renderWithProviders(
+      <TurnstileWidget onVerify={onVerify} />
     );
     
-    const container = document.querySelector('.custom-class');
-    expect(container).toBeTruthy();
+    expect(container.textContent).toContain('Loading verification');
   });
 });

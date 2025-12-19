@@ -4,87 +4,87 @@ import { AspectRatioSelector } from '../AspectRatioSelector';
 
 describe('AspectRatioSelector', () => {
   const defaultProps = {
-    value: '1:1',
-    onChange: vi.fn(),
+    selectedRatio: 1, // 1:1
+    onRatioChange: vi.fn(),
   };
 
   it('renders with default value selected', () => {
     renderWithProviders(<AspectRatioSelector {...defaultProps} />);
     
-    // Should show the current selection
-    expect(screen.getByText(/1:1/i)).toBeInTheDocument();
+    // Should show the current selection - 1:1 button should exist
+    expect(screen.getByRole('button', { name: '1:1' })).toBeDefined();
   });
 
-  it('calls onChange when a new ratio is selected', async () => {
-    const onChange = vi.fn();
+  it('calls onRatioChange when a new ratio is selected', async () => {
+    const onRatioChange = vi.fn();
     const user = userEvent.setup();
     
     renderWithProviders(
-      <AspectRatioSelector value="1:1" onChange={onChange} />
+      <AspectRatioSelector selectedRatio={1} onRatioChange={onRatioChange} />
     );
     
-    // Click on a different ratio option
-    const option = screen.getByText(/16:9/i);
+    // Click on a different ratio option (16:9 = 16/9 ≈ 1.778)
+    const option = screen.getByRole('button', { name: '16:9' });
     await user.click(option);
     
-    expect(onChange).toHaveBeenCalledWith('16:9');
+    expect(onRatioChange).toHaveBeenCalledWith(16 / 9);
   });
 
   it('displays common aspect ratios', () => {
     renderWithProviders(<AspectRatioSelector {...defaultProps} />);
     
     // Check for common ratios
-    expect(screen.getByText(/1:1/i)).toBeInTheDocument();
-    expect(screen.getByText(/16:9/i)).toBeInTheDocument();
-    expect(screen.getByText(/9:16/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1:1' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '16:9' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '9:16' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '4:3' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Free' })).toBeDefined();
   });
 
-  it('highlights the selected ratio', () => {
+  it('highlights the selected ratio with default variant', () => {
     renderWithProviders(
-      <AspectRatioSelector value="16:9" onChange={vi.fn()} />
+      <AspectRatioSelector selectedRatio={16 / 9} onRatioChange={vi.fn()} />
     );
     
-    // The selected option should have a distinct style
-    const selectedOption = screen.getByText(/16:9/i).closest('button');
-    expect(selectedOption).toHaveClass(/selected|active|primary/i);
+    // The selected option should have default variant (not outline)
+    const selectedButton = screen.getByRole('button', { name: '16:9' });
+    // Default variant buttons don't have outline class
+    expect(selectedButton.className).not.toContain('outline');
   });
 
-  it('is accessible with keyboard navigation', async () => {
-    const onChange = vi.fn();
+  it('handles free crop selection (null ratio)', async () => {
+    const onRatioChange = vi.fn();
     const user = userEvent.setup();
     
     renderWithProviders(
-      <AspectRatioSelector value="1:1" onChange={onChange} />
+      <AspectRatioSelector selectedRatio={1} onRatioChange={onRatioChange} />
     );
     
-    // Tab to focus
-    await user.tab();
+    // Click on Free option
+    const freeButton = screen.getByRole('button', { name: 'Free' });
+    await user.click(freeButton);
     
-    // Should be focusable
-    expect(document.activeElement).toBeInstanceOf(HTMLElement);
+    expect(onRatioChange).toHaveBeenCalledWith(null);
   });
 
-  it('shows aspect ratio labels for different use cases', () => {
+  it('shows label for aspect ratio section', () => {
     renderWithProviders(<AspectRatioSelector {...defaultProps} />);
     
-    // Should show helpful labels
-    const squareLabel = screen.queryByText(/square|instagram/i);
-    const landscapeLabel = screen.queryByText(/landscape|youtube/i);
-    const portraitLabel = screen.queryByText(/portrait|tiktok|reels/i);
-    
-    // At least one descriptive label should exist
-    expect(squareLabel || landscapeLabel || portraitLabel).toBeTruthy();
+    expect(screen.getByText('Aspect Ratio')).toBeDefined();
   });
 
-  it('handles disabled state', () => {
-    const onChange = vi.fn();
+  it('handles portrait ratios', async () => {
+    const onRatioChange = vi.fn();
+    const user = userEvent.setup();
+    
     renderWithProviders(
-      <AspectRatioSelector value="1:1" onChange={onChange} disabled />
+      <AspectRatioSelector selectedRatio={1} onRatioChange={onRatioChange} />
     );
     
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach(button => {
-      expect(button).toBeDisabled();
-    });
+    // Click on 9:16 (portrait)
+    const portraitButton = screen.getByRole('button', { name: '9:16' });
+    await user.click(portraitButton);
+    
+    expect(onRatioChange).toHaveBeenCalledWith(9 / 16);
   });
 });

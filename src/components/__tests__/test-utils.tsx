@@ -4,9 +4,11 @@
  */
 
 import React from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { Toaster } from '@/components/ui/sonner';
 
 /**
@@ -186,5 +188,4 @@ export function createMockUser(overrides = {}) {
 }
 
 // Re-export everything from testing-library
-export * from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';
+export { render, screen, waitFor, userEvent };

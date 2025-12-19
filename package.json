@@ -55,6 +55,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/dompurify": "^3.0.5",
     "@xyflow/react": "^12.8.6",
     "class-variance-authority": "^0.7.1",

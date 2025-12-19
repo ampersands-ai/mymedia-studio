@@ -53,14 +53,27 @@ export const AUDIT_ACTIONS = {
   GENERATION_FAILED: 'generation_failed',
   GENERATION_CANCELED: 'generation_canceled',
   CLEANUP_STUCK_GENERATIONS: 'cleanup_stuck_generations',
-  CREDITS_MODIFIED: 'credits_modified'
+  CREDITS_MODIFIED: 'credits_modified',
+  // Admin audit actions
+  ADMIN_VIEW_PROFILE: 'admin_view_profile',
+  ADMIN_VIEW_GENERATION: 'admin_view_generation',
+  ADMIN_MODIFY_USER: 'admin_modify_user',
+  ADMIN_BULK_OPERATION: 'admin_bulk_operation',
+  PASSWORD_CHANGED: 'password_changed',
+  EMAIL_CHANGED: 'email_changed'
 } as const;
 
 // Alert types for security monitoring
 export const ALERT_TYPES = {
   MULTIPLE_FAILED_LOGINS: 'MULTIPLE_FAILED_LOGINS',
   RAPID_ACCOUNT_CREATION: 'RAPID_ACCOUNT_CREATION',
-  UNUSUAL_TOKEN_USAGE: 'UNUSUAL_TOKEN_USAGE'
+  UNUSUAL_TOKEN_USAGE: 'UNUSUAL_TOKEN_USAGE',
+  // Enhanced detection types
+  PROFILE_ENUMERATION: 'PROFILE_ENUMERATION',
+  BULK_DOWNLOAD_ATTEMPT: 'BULK_DOWNLOAD_ATTEMPT',
+  ACCOUNT_TAKEOVER_ATTEMPT: 'ACCOUNT_TAKEOVER_ATTEMPT',
+  SUSPICIOUS_ADMIN_ACCESS: 'SUSPICIOUS_ADMIN_ACCESS',
+  GEOGRAPHIC_ANOMALY: 'GEOGRAPHIC_ANOMALY'
 } as const;
 
 // Alert severity levels

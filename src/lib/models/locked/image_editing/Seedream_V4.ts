@@ -26,7 +26,7 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
   baseCreditCost: 2.5,
   estimatedTimeSeconds: 40,
-  costMultipliers: { max_images: { "1": 1, "2": 2, "3": 3, "4": 4 } },
+  costMultipliers: { max_images: { 1: 1, 2: 2, 3: 3, 4: 4 } },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
   maxImages: 10,
@@ -173,8 +173,10 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
 }
 
 // COST CALCULATION
-export function calculateCost(_inputs: Record<string, any>): number {
-  return MODEL_CONFIG.baseCreditCost;
+export function calculateCost(inputs: Record<string, any>): number {
+  const base = MODEL_CONFIG.baseCreditCost;
+  const numImages = Math.min(Math.max(inputs.max_images || 1, 1), 4);
+  return Math.round(base * numImages * 100) / 100;
 }
 
 // EXECUTION

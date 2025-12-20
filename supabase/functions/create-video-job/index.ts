@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
       caption_style,
       background_video_url,
       background_video_thumbnail,
-      voiceover_tier = 'standard'
+      voiceover_tier = 'standard',
+      notify_on_completion = true
     } = await req.json();
 
     if (!topic || topic.trim().length < 5) {
@@ -140,6 +141,7 @@ Deno.serve(async (req) => {
         voiceover_tier: voiceover_tier || 'standard',
         status: VIDEO_JOB_STATUS.PENDING,
         cost_tokens: costTokens,
+        notify_on_completion: notify_on_completion,
       })
       .select()
       .single();

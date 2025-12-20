@@ -140,6 +140,24 @@ Deno.serve(async (req) => {
       } else {
         logger.info('Download function invoked successfully');
       }
+      
+      // Trigger email notification if enabled
+      if (storyboard.notify_on_completion) {
+        logger.info('Triggering completion notification for storyboard', { metadata: { storyboardId: storyboard.id } });
+        try {
+          await supabaseClient.functions.invoke('notify-generation-complete', {
+            body: {
+              generation_id: storyboard.id,
+              user_id: storyboard.user_id,
+              generation_duration_seconds: storyboard.duration || 60,
+              type: 'storyboard',
+              storyboard_title: storyboard.topic,
+            }
+          });
+        } catch (notifyError) {
+          logger.error('Failed to send completion notification', notifyError as Error, { metadata: { storyboardId: storyboard.id } });
+        }
+      }
     } else if (status === 'error' || status === 'failed') {
       updates.status = 'failed';
       

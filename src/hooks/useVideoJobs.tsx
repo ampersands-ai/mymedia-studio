@@ -176,9 +176,12 @@ export function useVideoJobs() {
   };
   // Create video job mutation
   const createJob = useMutation({
-    mutationFn: async (input: VideoJobInput) => {
+    mutationFn: async (input: VideoJobInput & { notify_on_completion?: boolean }) => {
       const { data, error } = await supabase.functions.invoke('create-video-job', {
-        body: input,
+        body: {
+          ...input,
+          notify_on_completion: input.notify_on_completion ?? true,
+        },
       });
       
       if (error) {

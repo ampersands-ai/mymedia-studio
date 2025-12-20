@@ -334,6 +334,7 @@ export function VideoCreator() {
             background_video_thumbnail: state.selectedBackgroundMedia[0]?.thumbnail,
             background_media_type: state.selectedBackgroundMedia[0]?.type || 'video',
             caption_style: state.captionStyle,
+            notify_on_completion: state.notifyOnCompletion,
           },
           {
             onSuccess: (data) => resolve(data),

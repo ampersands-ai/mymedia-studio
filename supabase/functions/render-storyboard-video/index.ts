@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     }
     const user = userData.user;
 
-    const { storyboardId, confirmRerender } = await req.json();
+    const { storyboardId, confirmRerender, notifyOnCompletion = true } = await req.json();
 
     // Generate unique render job ID for this request
     const uniqueRenderJobId = generateUniqueRenderJobId();
@@ -134,6 +134,7 @@ Deno.serve(async (req) => {
           render_job_id: null,
           video_url: null,
           video_storage_path: null,
+          notify_on_completion: notifyOnCompletion,
         })
         .eq('id', storyboardId);
       

@@ -28,7 +28,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+    const origin = req.headers.get("origin") ?? "";
+    const isPreviewHost =
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      origin.includes("lovableproject.com");
+
+    // In preview/local environments, use Cloudflare's test secret so Turnstile works on changing preview domains.
+    const testSecretKey = "1x0000000000000000000000000000000AA";
+    const configuredSecretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+    const secretKey = isPreviewHost ? testSecretKey : configuredSecretKey;
+
     if (!secretKey) {
       console.error("[verify-turnstile] TURNSTILE_SECRET_KEY not configured");
       return new Response(

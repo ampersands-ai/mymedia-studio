@@ -429,7 +429,7 @@ export default function UsersManager() {
                     <SortIcon column="email" />
                   </div>
                 </TableHead>
-                <TableHead className="font-bold">Name</TableHead>
+                <TableHead className="font-bold">Profile Name</TableHead>
                 <TableHead
                   className="font-bold cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("tokens_remaining")}
@@ -491,7 +491,7 @@ export default function UsersManager() {
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate">
-                      {user.full_name || "N/A"}
+                      {user.profile_name || "N/A"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

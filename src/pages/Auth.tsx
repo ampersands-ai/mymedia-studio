@@ -29,6 +29,7 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
 
@@ -204,7 +205,8 @@ const Auth = () => {
           password,
           options: {
             data: {
-              canonical_email: canonicalEmail, // Store for future duplicate detection
+              canonical_email: canonicalEmail,
+              marketing_consent: marketingConsent,
             },
             emailRedirectTo: `${window.location.origin}/dashboard/custom-creation`,
           },
@@ -513,6 +515,20 @@ const Auth = () => {
                       {validationErrors.confirmPassword}
                     </p>
                   )}
+                </div>
+                
+                {/* Marketing Consent Checkbox */}
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={marketingConsent}
+                    onChange={(e) => setMarketingConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-2 border-black"
+                  />
+                  <label htmlFor="marketingConsent" className="text-sm text-muted-foreground">
+                    Send me product updates and tips
+                  </label>
                 </div>
               </>
             )}

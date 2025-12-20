@@ -17,36 +17,14 @@ export const passwordSchema = z
   .regex(/[0-9]/, { message: "Must contain at least one number" })
   .regex(/[^A-Za-z0-9]/, { message: "Must contain at least one special character" });
 
-// Phone number validation (international format)
-export const phoneSchema = z
+// Profile name validation (privacy-focused)
+export const profileNameSchema = z
   .string()
   .trim()
-  .regex(/^\+?[1-9]\d{1,14}$/, { 
-    message: "Invalid phone format. Use international format (e.g., +1234567890)" 
-  })
-  .optional()
-  .or(z.literal(""));
-
-// Zipcode validation (flexible for international)
-export const zipcodeSchema = z
-  .string()
-  .trim()
-  .min(3, { message: "Zipcode must be at least 3 characters" })
-  .max(10, { message: "Zipcode must be less than 10 characters" })
-  .regex(/^[A-Za-z0-9\s-]+$/, { 
-    message: "Zipcode can only contain letters, numbers, spaces, and hyphens" 
-  })
-  .optional()
-  .or(z.literal(""));
-
-// Name validation
-export const nameSchema = z
-  .string()
-  .trim()
-  .min(1, { message: "Name cannot be empty" })
-  .max(50, { message: "Name must be less than 50 characters" })
-  .regex(/^[a-zA-Z\s'-]+$/, { 
-    message: "Name can only contain letters, spaces, hyphens, and apostrophes" 
+  .min(3, { message: "Profile name must be at least 3 characters" })
+  .max(20, { message: "Profile name must be less than 20 characters" })
+  .regex(/^[a-zA-Z0-9_]+$/, { 
+    message: "Profile name can only contain letters, numbers, and underscores" 
   });
 
 // Combined schemas for forms
@@ -65,9 +43,7 @@ export const loginSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
-  full_name: z.string().trim().min(1, { message: "Name is required" }).max(100),
-  phoneNumber: phoneSchema,
-  zipcode: zipcodeSchema,
+  profile_name: profileNameSchema,
 });
 
 // Edge function validation schemas

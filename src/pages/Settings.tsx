@@ -15,9 +15,7 @@ const Settings = () => {
   const location = useLocation();
   const defaultTab = (location.state as {defaultTab?: string})?.defaultTab || 'profile';
   const [profileData, setProfileData] = useState({
-    full_name: "",
-    phone_number: "",
-    zipcode: "",
+    profile_name: "",
     email_verified: false,
   });
   
@@ -45,9 +43,7 @@ const Settings = () => {
         if (error) throw error;
         if (data) {
           setProfileData({
-            full_name: data.full_name || "",
-            phone_number: data.phone_number || "",
-            zipcode: data.zipcode || "",
+            profile_name: data.profile_name || "",
             email_verified: data.email_verified || false,
           });
         }

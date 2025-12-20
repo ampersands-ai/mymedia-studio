@@ -8,16 +8,24 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, AlertCircle, Mail, CheckCircle2, Info } from "lucide-react";
-import { profileUpdateSchema } from "@/lib/validation-schemas";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// Profile name validation schema
+const profileNameSchema = z
+  .string()
+  .trim()
+  .min(3, { message: "Profile name must be at least 3 characters" })
+  .max(20, { message: "Profile name must be less than 20 characters" })
+  .regex(/^[a-zA-Z0-9_]+$/, { 
+    message: "Profile name can only contain letters, numbers, and underscores" 
+  });
 
 interface ProfileData {
-  full_name: string;
-  phone_number: string;
-  zipcode: string;
+  profile_name: string;
   email_verified: boolean;
 }
 
@@ -42,7 +50,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
         body: {
           userId: user.id,
           email: user.email,
-          fullName: user.user_metadata?.full_name || profileData.full_name || ""
+          profileName: profileData.profile_name || ""
         }
       });
       
@@ -74,19 +82,13 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
     try {
       await execute(
         async () => {
-          // Validate inputs
-          const result = profileUpdateSchema.safeParse({
-            full_name: profileData.full_name,
-            phoneNumber: profileData.phone_number,
-            zipcode: profileData.zipcode,
-          });
+          // Validate profile name
+          const result = profileNameSchema.safeParse(profileData.profile_name);
 
           if (!result.success) {
             const errors: Record<string, string> = {};
             result.error.errors.forEach((err) => {
-              if (err.path[0]) {
-                errors[err.path[0].toString()] = err.message;
-              }
+              errors['profile_name'] = err.message;
             });
             setValidationErrors(errors);
             setLoading(false);
@@ -96,13 +98,19 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
           const { error } = await supabase
             .from("profiles")
             .update({
-              full_name: profileData.full_name,
-              phone_number: profileData.phone_number,
-              zipcode: profileData.zipcode,
+              profile_name: profileData.profile_name,
             })
             .eq("id", user?.id);
 
-          if (error) throw error;
+          if (error) {
+            // Handle unique constraint violation
+            if (error.code === '23505') {
+              setValidationErrors({ profile_name: "This profile name is already taken" });
+              setLoading(false);
+              return;
+            }
+            throw error;
+          }
 
           // Log profile update
           try {
@@ -112,7 +120,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
                 resource_type: 'profile',
                 resource_id: user?.id,
                 metadata: {
-                  updated_fields: ['full_name', 'phone_number', 'zipcode']
+                  updated_fields: ['profile_name']
                 }
               }
             });
@@ -133,7 +141,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
               routeName: 'Settings',
               description: 'Updated profile settings',
               metadata: {
-                fields_changed: Object.keys({ full_name: profileData.full_name, phone_number: profileData.phone_number, zipcode: profileData.zipcode }),
+                fields_changed: ['profile_name'],
               },
             });
           } catch (trackError) {
@@ -163,102 +171,44 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
     <Card>
       <CardHeader>
         <CardTitle>Profile Information</CardTitle>
-        <CardDescription>Manage your personal information and verification status</CardDescription>
+        <CardDescription>Manage your profile name and verification status</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="first_name">First Name</Label>
-              <Input
-                id="first_name"
-                value={profileData.full_name?.split(' ')[0] || ''}
-                onChange={(e) => {
-                  const lastName = profileData.full_name?.split(' ').slice(1).join(' ') || '';
-                  setProfileData({ ...profileData, full_name: `${e.target.value} ${lastName}`.trim() });
-                  setValidationErrors(prev => ({ ...prev, full_name: "" }));
-                }}
-                placeholder="John"
-                aria-label="First name"
-                className={cn(validationErrors.full_name && "border-red-500")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="last_name">Last Name</Label>
-              <Input
-                id="last_name"
-                value={profileData.full_name?.split(' ').slice(1).join(' ') || ''}
-                onChange={(e) => {
-                  const firstName = profileData.full_name?.split(' ')[0] || '';
-                  setProfileData({ ...profileData, full_name: `${firstName} ${e.target.value}`.trim() });
-                  setValidationErrors(prev => ({ ...prev, full_name: "" }));
-                }}
-                placeholder="Doe"
-                aria-label="Last name"
-                className={cn(validationErrors.full_name && "border-red-500")}
-              />
-            </div>
-          </div>
-          {validationErrors.full_name && (
-            <p className="text-sm text-red-600 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {validationErrors.full_name}
+          <div className="space-y-2">
+            <Label htmlFor="profile_name">Profile Name</Label>
+            <Input
+              id="profile_name"
+              value={profileData.profile_name || ''}
+              onChange={(e) => {
+                setProfileData({ ...profileData, profile_name: e.target.value });
+                setValidationErrors(prev => ({ ...prev, profile_name: "" }));
+              }}
+              placeholder="Creator_XXXXX"
+              aria-label="Profile name"
+              className={cn(validationErrors.profile_name && "border-red-500")}
+            />
+            {validationErrors.profile_name && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {validationErrors.profile_name}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              This is your public display name. Use letters, numbers, and underscores only.
             </p>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                value={user?.email || ''}
-                disabled
-                aria-label="Email address"
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="zipcode">Zipcode</Label>
-              <Input
-                id="zipcode"
-                value={profileData.zipcode}
-                onChange={(e) => {
-                  setProfileData({ ...profileData, zipcode: e.target.value });
-                  setValidationErrors(prev => ({ ...prev, zipcode: "" }));
-                }}
-                placeholder="12345"
-                aria-label="Zipcode"
-                className={cn(validationErrors.zipcode && "border-red-500")}
-              />
-              {validationErrors.zipcode && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {validationErrors.zipcode}
-                </p>
-              )}
-            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone_number">Phone Number</Label>
+            <Label htmlFor="email">Email Address</Label>
             <Input
-              id="phone_number"
-              value={profileData.phone_number}
-              onChange={(e) => {
-                setProfileData({ ...profileData, phone_number: e.target.value });
-                setValidationErrors(prev => ({ ...prev, phoneNumber: "" }));
-              }}
-              placeholder="+1234567890"
-              aria-label="Phone number"
-              className={cn(validationErrors.phoneNumber && "border-red-500")}
+              id="email"
+              value={user?.email || ''}
+              disabled
+              aria-label="Email address"
+              className="bg-muted"
             />
-            {validationErrors.phoneNumber && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {validationErrors.phoneNumber}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
 
           <div className="space-y-3">

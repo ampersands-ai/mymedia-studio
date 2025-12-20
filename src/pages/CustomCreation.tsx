@@ -122,12 +122,14 @@ const CustomCreation = () => {
         setFirstGeneration(outputs[0]?.id || '');
       }
 
-      // Auto-scroll to output on mobile
+      // Auto-scroll to output on mobile (use window.scrollTo for better mobile support)
       setTimeout(() => {
-        if (outputSectionRef.current && window.innerWidth < 1024) {
-          outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.matchMedia('(max-width: 1023px)').matches && outputSectionRef.current) {
+          (document.activeElement as HTMLElement | null)?.blur?.();
+          const top = outputSectionRef.current.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: Math.max(0, top - 12), behavior: 'smooth' });
         }
-      }, 300);
+      }, 250);
 
       // Generate caption if enabled
       if (state.generateCaption && outputs.length > 0) {
@@ -273,12 +275,23 @@ const CustomCreation = () => {
 
   // Wrap handleGenerate with scroll-to-output behavior for mobile
   const handleGenerateWithScroll = useCallback(() => {
-    // Scroll to output section on mobile immediately when Generate is clicked
-    if (window.innerWidth < 1024 && outputSectionRef.current) {
-      outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.matchMedia('(max-width: 1023px)').matches && outputSectionRef.current) {
+      (document.activeElement as HTMLElement | null)?.blur?.();
+      const top = outputSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: Math.max(0, top - 12), behavior: 'smooth' });
+
+      // Retry after layout/keyboard settles (common on mobile)
+      setTimeout(() => {
+        if (outputSectionRef.current) {
+          const retryTop = outputSectionRef.current.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: Math.max(0, retryTop - 12), behavior: 'smooth' });
+        }
+      }, 350);
     }
+
     handleGenerate();
   }, [handleGenerate]);
+
 
   // Surprise Me handler - wrapped in useCallback for stable reference
   const onSurpriseMe = useCallback(() => {

@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     const isPreviewHost =
       origin.includes("localhost") ||
       origin.includes("127.0.0.1") ||
+      origin.includes("lovable.app") ||
       origin.includes("lovableproject.com");
 
     // In preview/local environments, use Cloudflare's test secret so Turnstile works on changing preview domains.

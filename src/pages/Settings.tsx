@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
+import { AccountSection } from "@/components/settings/AccountSection";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 const Settings = () => {
@@ -95,10 +96,11 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 gap-1">
+          <TabsList className="grid w-full grid-cols-4 gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-4 mt-6">
@@ -111,6 +113,10 @@ const Settings = () => {
 
           <TabsContent value="notifications" className="space-y-4 mt-6">
             <NotificationPreferences />
+          </TabsContent>
+
+          <TabsContent value="account" className="space-y-4 mt-6">
+            <AccountSection />
           </TabsContent>
 
         </Tabs>

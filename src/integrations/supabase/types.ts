@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          deletion_metadata: Json | null
+          id: string
+          reason: string | null
+          requested_at: string
+          scheduled_deletion_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          deletion_metadata?: Json | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          scheduled_deletion_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          deletion_metadata?: Json | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          scheduled_deletion_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_call_logs: {
         Row: {
           additional_metadata: Json | null
@@ -780,6 +819,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_export_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          download_url: string | null
+          error_message: string | null
+          expires_at: string | null
+          file_size_bytes: number | null
+          id: string
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          download_url?: string | null
+          error_message?: string | null
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          download_url?: string | null
+          error_message?: string | null
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       email_history: {
         Row: {
@@ -2297,6 +2375,48 @@ export type Database = {
           route_path?: string | null
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_consent_records: {
+        Row: {
+          consent_type: string
+          consented: boolean
+          consented_at: string | null
+          created_at: string
+          device_id: string | null
+          id: string
+          ip_address: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+          withdrawn_at: string | null
+        }
+        Insert: {
+          consent_type: string
+          consented?: boolean
+          consented_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          withdrawn_at?: string | null
+        }
+        Update: {
+          consent_type?: string
+          consented?: boolean
+          consented_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: []
       }

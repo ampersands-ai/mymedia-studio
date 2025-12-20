@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   contentType: "video_to_video", // NEW CONTENT TYPE
   use_api_key: "KIE_AI_API_KEY_VIDEO_TO_VIDEO",
   baseCreditCost: 35,
-  estimatedTimeSeconds: 500,
+  estimatedTimeSeconds: 800,
   costMultipliers: {
     duration: { "5": 1, "10": 2 }, // Only 5 or 10 seconds for V2V
     resolution: { "720p": 1, "1080p": 2 },

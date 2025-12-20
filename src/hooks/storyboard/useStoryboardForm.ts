@@ -39,6 +39,7 @@ export interface StoryboardFormState {
   imagePosition: string;
   enableCache: boolean;
   draftMode: boolean;
+  notifyOnCompletion: boolean;
 }
 
 const loadDraft = (): Partial<StoryboardFormState> | null => {
@@ -91,6 +92,7 @@ const getInitialState = (): StoryboardFormState => {
     imagePosition: draft?.imagePosition || 'center-center',
     enableCache: draft?.enableCache ?? true,
     draftMode: draft?.draftMode ?? false,
+    notifyOnCompletion: draft?.notifyOnCompletion ?? true,
   };
 };
 

@@ -562,6 +562,8 @@ const CustomCreation = () => {
             generatingSurprise={state.generatingSurprise}
             generateCaption={state.generateCaption}
             onGenerateCaptionChange={(generate) => updateState({ generateCaption: generate })}
+            notifyOnCompletion={state.notifyOnCompletion}
+            onNotifyOnCompletionChange={(notify) => updateState({ notifyOnCompletion: notify })}
             uploadedImages={uploadedImages}
             onFileUpload={(e) => { handleFileUpload(e); updateState({ generateCaption: false }); }}
             onRemoveImage={(idx) => { removeImage(idx); updateState({ generateCaption: false }); }}

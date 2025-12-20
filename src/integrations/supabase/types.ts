@@ -1784,6 +1784,7 @@ export type Database = {
           intro_voiceover_text: string | null
           media_type: string | null
           music_settings: Json | null
+          notify_on_completion: boolean | null
           original_character_count: number | null
           render_job_id: string | null
           status: string
@@ -1839,6 +1840,7 @@ export type Database = {
           intro_voiceover_text?: string | null
           media_type?: string | null
           music_settings?: Json | null
+          notify_on_completion?: boolean | null
           original_character_count?: number | null
           render_job_id?: string | null
           status?: string
@@ -1894,6 +1896,7 @@ export type Database = {
           intro_voiceover_text?: string | null
           media_type?: string | null
           music_settings?: Json | null
+          notify_on_completion?: boolean | null
           original_character_count?: number | null
           render_job_id?: string | null
           status?: string
@@ -2923,6 +2926,7 @@ export type Database = {
           error_message: string | null
           final_video_url: string | null
           id: string
+          notify_on_completion: boolean | null
           renderer: string
           script: string | null
           shotstack_render_id: string | null
@@ -2957,6 +2961,7 @@ export type Database = {
           error_message?: string | null
           final_video_url?: string | null
           id?: string
+          notify_on_completion?: boolean | null
           renderer?: string
           script?: string | null
           shotstack_render_id?: string | null
@@ -2991,6 +2996,7 @@ export type Database = {
           error_message?: string | null
           final_video_url?: string | null
           id?: string
+          notify_on_completion?: boolean | null
           renderer?: string
           script?: string | null
           shotstack_render_id?: string | null

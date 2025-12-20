@@ -11,6 +11,7 @@ import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Sparkles, RotateCcw, Coins, Clock, ArrowUp } from "lucide-react";
+import { NotifyOnCompletionToggle } from "@/components/shared/NotifyOnCompletionToggle";
 import type { CreationGroup } from "@/constants/creation-groups";
 import type { 
   ModelRecord, 
@@ -35,6 +36,8 @@ interface InputPanelProps {
   generatingSurprise: boolean;
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
+  notifyOnCompletion: boolean;
+  onNotifyOnCompletionChange: (enabled: boolean) => void;
   uploadedImages: File[];
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
@@ -106,6 +109,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   generatingSurprise,
   generateCaption,
   onGenerateCaptionChange,
+  notifyOnCompletion,
+  onNotifyOnCompletionChange,
   uploadedImages,
   onFileUpload,
   onRemoveImage,
@@ -478,6 +483,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             </>
           );
         })()}
+      </div>
+
+      {/* Notification Toggle - placed before action buttons */}
+      <div className="px-4 md:px-8">
+        <NotifyOnCompletionToggle
+          checked={notifyOnCompletion}
+          onCheckedChange={onNotifyOnCompletionChange}
+          disabled={isDisabled}
+          description="Get an email when your generation is ready"
+        />
       </div>
 
       {/* Sticky action buttons at bottom - ALWAYS VISIBLE */}

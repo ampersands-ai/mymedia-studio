@@ -10,6 +10,7 @@ import { BackgroundMediaSelector, SelectedMedia } from '../BackgroundMediaSelect
 import { captionPresets, aspectRatioConfig, CAPTION_FONTS } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 import { cn } from '@/lib/utils';
+import { NotifyOnCompletionToggle } from '@/components/shared/NotifyOnCompletionToggle';
 
 interface RenderSetupStepProps {
   aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
@@ -17,9 +18,11 @@ interface RenderSetupStepProps {
   selectedBackgroundMedia: SelectedMedia[];
   duration: number;
   style: string;
+  notifyOnCompletion: boolean;
   onAspectRatioChange: (ratio: '16:9' | '9:16' | '4:5' | '1:1') => void;
   onCaptionStyleChange: (style: CaptionStyle) => void;
   onBackgroundMediaChange: (media: SelectedMedia[]) => void;
+  onNotifyOnCompletionChange: (notify: boolean) => void;
   onRenderVideo: () => void;
   isRendering: boolean;
   isDisabled: boolean;
@@ -31,9 +34,11 @@ export function RenderSetupStep({
   selectedBackgroundMedia,
   duration,
   style,
+  notifyOnCompletion,
   onAspectRatioChange,
   onCaptionStyleChange,
   onBackgroundMediaChange,
+  onNotifyOnCompletionChange,
   onRenderVideo,
   isRendering,
   isDisabled,
@@ -285,6 +290,14 @@ export function RenderSetupStep({
           Leave empty for auto-selection based on topic
         </p>
       </div>
+
+      {/* Notification Toggle */}
+      <NotifyOnCompletionToggle
+        checked={notifyOnCompletion}
+        onCheckedChange={onNotifyOnCompletionChange}
+        disabled={isDisabled}
+        description="Get an email when your video is ready"
+      />
 
       {/* Render Video Button */}
       <Button

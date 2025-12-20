@@ -405,11 +405,11 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // VIDEO TO VIDEO MODELS (2 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c": TopazVideoUpscale as ModelModule,                 // Topaz Video Upscale | video_to_video | kie_ai
-  "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": Wan26_VideoToVideo as ModelModule,                // Wan 2.6 V2V | video_to_video | kie_ai
+  "a2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": Wan26_VideoToVideo as ModelModule,                // Wan 2.6 V2V | video_to_video | kie_ai
 
   // Additional Wan 2.6 models
-  "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": Wan26_ImageToVideo as ModelModule,                // Wan 2.6 I2V | image_to_video | kie_ai
-  "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": Wan26_PromptToVideo as ModelModule,               // Wan 2.6 T2V | prompt_to_video | kie_ai
+  "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": Wan26_ImageToVideo as ModelModule,                // Wan 2.6 I2V | image_to_video | kie_ai
+  "c4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": Wan26_PromptToVideo as ModelModule,               // Wan 2.6 T2V | prompt_to_video | kie_ai
 };
 
 /**

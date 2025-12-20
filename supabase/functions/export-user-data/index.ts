@@ -84,10 +84,10 @@ Deno.serve(async (req) => {
       },
     };
 
-    // 1. Profile data
+    // 1. Profile data (privacy-compliant fields only)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, profile_name, marketing_consent, consent_timestamp, created_at, updated_at')
       .eq('id', user.id)
       .maybeSingle();
     exportData.profile = profile;

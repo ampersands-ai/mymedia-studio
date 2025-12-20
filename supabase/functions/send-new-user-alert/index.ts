@@ -49,15 +49,14 @@ serve(async (req) => {
       preheader: `${body.email} just signed up`,
       headerColor: '#16a34a',
       headerEmoji: '🎉',
-      sections: [
+sections: [
         {
           type: 'summary',
           title: 'User Information',
           content: `
             <p><strong>Email:</strong> ${body.email}</p>
-            ${body.full_name ? `<p><strong>Name:</strong> ${body.full_name}</p>` : ''}
-            ${body.phone_number ? `<p><strong>Phone:</strong> ${body.phone_number}</p>` : ''}
-            ${body.country ? `<p><strong>Location:</strong> ${body.country}${body.zipcode ? `, ${body.zipcode}` : ''}</p>` : ''}
+            <p><strong>Profile Name:</strong> ${body.profile_name || 'Auto-generated'}</p>
+            <p><strong>Marketing Consent:</strong> ${body.marketing_consent ? 'Yes' : 'No'}</p>
             <p><strong>Signup Method:</strong> ${body.signup_method}</p>
             <p><strong>Registered:</strong> Just now</p>
           `

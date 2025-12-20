@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('profile_name')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2>Account Deletion Scheduled</h2>
-              <p>Hi ${profile?.full_name || 'there'},</p>
+              <p>Hi ${profile?.profile_name || 'there'},</p>
               <p>We've received your request to delete your Artifio account.</p>
               <p><strong>Your account is scheduled to be permanently deleted on ${scheduledDeletionAt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.</strong></p>
               <p>What will be deleted:</p>

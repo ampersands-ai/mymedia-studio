@@ -61,6 +61,7 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
       const isPreviewHost =
         hostname === "localhost" ||
         hostname === "127.0.0.1" ||
+        hostname.endsWith(".lovable.app") ||
         hostname.endsWith(".lovableproject.com");
 
       const sitekey = isPreviewHost ? DEV_TURNSTILE_SITE_KEY : PROD_TURNSTILE_SITE_KEY;

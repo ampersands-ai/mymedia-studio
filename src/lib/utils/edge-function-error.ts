@@ -1,4 +1,5 @@
 import { FunctionsHttpError, FunctionsRelayError, FunctionsFetchError } from '@supabase/supabase-js';
+import { sanitizeProprietaryTerms } from './errorSanitizer';
 
 // User-friendly fallback message for technical errors
 const USER_FRIENDLY_ERROR = 'Check parameters or refresh browser to clear cache';
@@ -37,6 +38,7 @@ function isTechnicalError(message: string): boolean {
 
 /**
  * Sanitize error message for end users - hide technical details
+ * and strip proprietary provider names
  */
 function sanitizeErrorForUser(message: string): string {
   // If it's a technical error, return friendly message
@@ -44,8 +46,8 @@ function sanitizeErrorForUser(message: string): string {
     return USER_FRIENDLY_ERROR;
   }
   
-  // If the message is valid user-facing content, return it
-  return message;
+  // Sanitize proprietary terms before returning
+  return sanitizeProprietaryTerms(message);
 }
 
 /**

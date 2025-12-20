@@ -3,7 +3,12 @@
  *
  * Provides structured error handling with context and error codes.
  * Used throughout the application for consistent error handling.
+ * 
+ * All user-facing error messages are automatically sanitized to remove
+ * proprietary provider names.
  */
+
+import { sanitizeProprietaryTerms } from '@/lib/utils/errorSanitizer';
 
 export interface ErrorContext {
   userId?: string;
@@ -213,13 +218,14 @@ export function isApplicationError(error: unknown): error is ApplicationError {
 
 /**
  * Get user-friendly error message
+ * Automatically sanitizes proprietary terms from the message.
  */
 export function getUserErrorMessage(error: unknown): string {
-  if (isApplicationError(error)) {
-    return error.message;
-  }
+  let message: string;
 
-  if (error instanceof Error) {
+  if (isApplicationError(error)) {
+    message = error.message;
+  } else if (error instanceof Error) {
     // Check if message appears to be technical (not user-friendly)
     const technicalPatterns = [
       /^TypeError:/i,
@@ -251,13 +257,16 @@ export function getUserErrorMessage(error: unknown): string {
     
     // Pass through user-friendly messages, mask technical ones
     if (!isTechnical && error.message) {
-      return error.message;
+      message = error.message;
+    } else {
+      return 'Check parameters or refresh browser to clear cache';
     }
-    
+  } else {
     return 'Check parameters or refresh browser to clear cache';
   }
 
-  return 'Check parameters or refresh browser to clear cache';
+  // Sanitize proprietary terms before returning
+  return sanitizeProprietaryTerms(message);
 }
 
 /**

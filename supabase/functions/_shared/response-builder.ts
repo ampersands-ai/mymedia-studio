@@ -1,8 +1,10 @@
 import { createSafeErrorResponse } from './error-handler.ts';
+import { sanitizeErrorMessage } from './error-sanitizer.ts';
 
 /**
  * Standardized response builder for edge functions
  * Provides consistent response formatting
+ * Automatically sanitizes proprietary provider names from error messages
  */
 export class ResponseBuilder {
   /**
@@ -51,11 +53,20 @@ export class ResponseBuilder {
     errors?: Record<string, string[]>,
     headers: Record<string, string> = {}
   ): Response {
+    // Sanitize the message and any error details
+    const sanitizedMessage = sanitizeErrorMessage(message);
+    const sanitizedErrors = errors ? Object.fromEntries(
+      Object.entries(errors).map(([key, values]) => [
+        key,
+        values.map(sanitizeErrorMessage)
+      ])
+    ) : undefined;
+
     return new Response(
       JSON.stringify({
-        error: message,
+        error: sanitizedMessage,
         code: 'VALIDATION_ERROR',
-        details: errors,
+        details: sanitizedErrors,
       }),
       {
         status: 400,
@@ -76,7 +87,7 @@ export class ResponseBuilder {
   ): Response {
     return new Response(
       JSON.stringify({
-        error: message,
+        error: sanitizeErrorMessage(message),
         code: 'UNAUTHORIZED',
       }),
       {

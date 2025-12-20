@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       kieApiKey = getKieApiKey(data.model_id || '', data.model_record_id || '');
     }
 
-    logger.info('Polling Kie.ai task status', { 
+    logger.info('Polling provider task status', { 
       metadata: { taskId: taskIdToQuery, generationId: generation_id }
     });
 
@@ -123,18 +123,18 @@ Deno.serve(async (req) => {
 
     if (!statusResponse.ok) {
       const errorText = await statusResponse.text();
-      logger.error('Kie.ai query failed', undefined, { 
+      logger.error('Provider query failed', undefined, { 
         metadata: { 
           taskId: taskIdToQuery, 
           status: statusResponse.status, 
           error: errorText 
         }
       });
-      throw new Error(`Kie.ai query failed: ${statusResponse.status}`);
+      throw new Error(`Provider query failed: ${statusResponse.status}`);
     }
 
     const statusData = await statusResponse.json();
-    logger.info('Kie.ai status retrieved', { 
+    logger.info('Provider status retrieved', { 
       metadata: { 
         taskId: taskIdToQuery, 
         status: statusData.data?.status 
@@ -143,10 +143,10 @@ Deno.serve(async (req) => {
 
     // Check if task is completed
     if (statusData.code !== 200) {
-      logger.error('Kie.ai returned error', undefined, { 
+      logger.error('Provider returned error', undefined, { 
         metadata: { message: statusData.message }
       });
-      throw new Error(`Kie.ai returned error: ${statusData.message}`);
+      throw new Error(`Provider returned error: ${statusData.message}`);
     }
 
     const taskStatus = statusData.data?.status;
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
           success: true,
           status: taskStatus,
           result_urls: resultUrls,
-          message: 'Task completed on Kie.ai'
+          message: 'Task completed successfully'
         }),
         { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );

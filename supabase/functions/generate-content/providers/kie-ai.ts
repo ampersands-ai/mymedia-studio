@@ -64,7 +64,7 @@ export async function callKieAI(
     ? `${API_ENDPOINTS.KIE_AI.BASE}${request.api_endpoint}`
     : API_ENDPOINTS.KIE_AI.createTaskUrl;
 
-  logger.info('Calling Kie.ai API', {
+  logger.info('Calling generation API', {
     metadata: {
       model: request.model,
       payloadStructure: request.payload_structure || 'wrapper',
@@ -147,7 +147,7 @@ export async function callKieAI(
 
   try {
     // Step 1: Create the task
-    logger.info('Creating Kie.ai task', { metadata: { model: request.model } });
+    logger.info('Creating generation task', { metadata: { model: request.model } });
 
     const createResponse = await fetch(createTaskUrl, {
       method: 'POST',
@@ -160,18 +160,18 @@ export async function callKieAI(
 
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
-      logger.error('Kie.ai task creation failed', undefined, { 
+      logger.error('Task creation failed', undefined, { 
         metadata: { status: createResponse.status, error: errorText } 
       });
-      throw new Error(`Kie.ai task creation failed: ${createResponse.status} - ${errorText}`);
+      throw new Error(`Task creation failed: ${createResponse.status} - ${errorText}`);
     }
 
     const createData = await createResponse.json();
-    logger.info('Kie.ai task created', { metadata: { response: createData } });
+    logger.info('Generation task created', { metadata: { response: createData } });
 
     // Check response structure
     if (createData.code !== 200 || !createData.data?.taskId) {
-      throw new Error(`Kie.ai task creation failed: ${createData.msg || 'Unknown error'}`);
+      throw new Error(`Task creation failed: ${createData.msg || 'Unknown error'}`);
     }
 
     const taskId = createData.data.taskId;
@@ -224,8 +224,8 @@ export async function callKieAI(
     };
 
   } catch (error) {
-    logger.error('Kie.ai provider error', error as Error, { metadata: { model: request.model } });
+    logger.error('Generation provider error', error as Error, { metadata: { model: request.model } });
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    throw new Error(`Kie.ai provider failed: ${errorMsg}`);
+    throw new Error(`Generation provider failed: ${errorMsg}`);
   }
 }

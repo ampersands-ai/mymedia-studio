@@ -31,6 +31,8 @@ export const WebhookEventVolumeChart = ({ timeSeries }: Props) => {
   );
 
   const colors: Record<string, string> = {
+    'primary_success': '#22c55e',
+    'primary_failure': '#ef4444',
     'kie-ai_success': '#22c55e',
     'kie-ai_failure': '#ef4444',
     'midjourney_success': '#3b82f6',

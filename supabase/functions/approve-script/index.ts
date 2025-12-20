@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
 
     const modelConfig = tier === 'pro' ? MODEL_CONFIGS.pro : MODEL_CONFIGS.standard;
 
-    logger.info('Voiceover configuration via Kie.ai', {
+    logger.info('Voiceover configuration', {
       userId: user.id,
       metadata: { jobId: job_id, tier, modelId: modelConfig.modelId, voiceName: job.voice_name }
     });
@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
       throw new Error(`Voiceover generation failed: ${functionError.message}`);
     }
 
-    logger.logDuration('approve-script submitted to Kie.ai', startTime, {
+    logger.logDuration('approve-script submitted', startTime, {
       userId: user.id,
       metadata: { jobId: job_id, generationId: generation.id, status: 'generating_voice' }
     });

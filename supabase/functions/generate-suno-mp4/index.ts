@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
     if (author) kiePayload.author = author;
     if (domain_name) kiePayload.domainName = domain_name;
 
-    logger.info('Calling Kie.ai MP4 API', { 
+    logger.info('Calling MP4 generation API', { 
       metadata: { 
         taskId, 
         audioId, 
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
 
     const kieData = await kieResponse.json();
 
-    logger.debug('Kie.ai API Response', { 
+    logger.debug('Provider API Response', { 
       metadata: { 
         response: kieData,
         hasCode: 'code' in kieData,
@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
     });
 
     if (!kieResponse.ok) {
-      logger.error('Kie.ai API error', undefined, { 
+      logger.error('Provider API error', undefined, { 
         metadata: { 
           status: kieResponse.status, 
           statusText: kieResponse.statusText,
@@ -316,14 +316,14 @@ Deno.serve(async (req) => {
       });
 
       return new Response(
-        JSON.stringify({ error: 'Kie.ai API failed', details: kieData }),
+        JSON.stringify({ error: 'Content generation failed', details: kieData }),
         { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Validate response structure
     if (kieData.code !== 200 || !kieData.data?.taskId) {
-      logger.error('Invalid Kie.ai response', undefined, { metadata: { response: kieData } });
+      logger.error('Invalid provider response', undefined, { metadata: { response: kieData } });
       
       // Fail generation and refund
       await supabaseClient

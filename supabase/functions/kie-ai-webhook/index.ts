@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
 
     // === HANDLE FAILURE ===
     if (isFailed) {
-      logger.error('KieAI generation failure', undefined, { 
+      logger.error('Generation failure', undefined, { 
         metadata: { 
           task_id: taskId,
           fail_msg: failMsg,

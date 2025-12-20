@@ -247,7 +247,7 @@ export function AccountSection() {
           
           <Button 
             onClick={handleRequestExport}
-            disabled={isExporting || (exportRequest && ['pending', 'processing'].includes(exportRequest.status))}
+            disabled={isExporting || (exportRequest && ['pending', 'processing'].includes(exportRequest.status)) || undefined}
             variant="outline"
           >
             {isExporting ? (

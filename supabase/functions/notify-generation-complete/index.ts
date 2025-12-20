@@ -90,12 +90,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Get user profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("email, full_name")
+      .select("email, profile_name")
       .eq("id", user_id)
       .single();
 
     const recipientEmail = profile?.email || "";
-    const userName = profile?.full_name || "User";
+    const userName = profile?.profile_name || "Creator";
 
     let emailSent = false;
     let pushSent = false;

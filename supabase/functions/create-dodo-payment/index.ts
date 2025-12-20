@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     // Get user profile for email
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email, full_name')
+      .select('email, profile_name')
       .eq('id', user.id)
       .single();
 
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
           },
           customer: {
             email: profile?.email || user.email,
-            name: profile?.full_name || '',
+            name: profile?.profile_name || '',
           },
           metadata: {
             user_id: user.id,

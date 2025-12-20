@@ -216,12 +216,12 @@ Deno.serve(async (req) => {
     // Get user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email, full_name')
+      .select('email, profile_name')
       .eq('id', user.id)
       .single();
 
     const email = profile?.email || user.email || '';
-    const fullName = profile?.full_name || '';
+    const profileName = profile?.profile_name || '';
     const baseUrl = appOrigin || req.headers.get('origin') || 'https://artifio-create-flow.lovable.app';
     const successUrl = `${baseUrl}/dashboard/create?payment=success`;
     const cancelUrl = `${baseUrl}/pricing?payment=cancelled`;
@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
       try {
         const dodoResult = await tryDodoPayment(
           logger, dodoApiKey, planKey, billingPeriod,
-          user.id, email, fullName, successUrl, cancelUrl
+          user.id, email, profileName, successUrl, cancelUrl
         );
         result = { ...dodoResult, provider: 'dodo' };
         logger.info('Dodo payment session created', { metadata: { sessionId: result.session_id } });

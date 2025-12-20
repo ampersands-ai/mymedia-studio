@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Bell, Mail, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { PushNotificationToggle } from './PushNotificationToggle';
 
 interface NotificationPreferences {
   email_on_completion: boolean;
@@ -147,21 +148,8 @@ export const NotificationPreferences = () => {
           />
         </div>
 
-        {/* Push Notifications (Future) */}
-        <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4 opacity-50">
-          <div className="flex items-start space-x-4">
-            <Bell className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div className="space-y-1">
-              <Label className="text-base font-medium">
-                Browser Push Notifications
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Coming soon - receive instant browser notifications
-              </p>
-            </div>
-          </div>
-          <Switch disabled checked={false} />
-        </div>
+        {/* Push Notifications */}
+        <PushNotificationToggle />
 
         {/* Threshold Slider */}
         <div className="space-y-4 rounded-lg border border-border p-4">

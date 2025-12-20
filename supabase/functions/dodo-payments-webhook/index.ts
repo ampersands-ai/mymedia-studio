@@ -40,11 +40,11 @@ interface WebhookEventData {
 
 
 const PLAN_TOKENS = {
-  'freemium': 500,
-  'explorer': 10000,
-  'professional': 32500,
-  'ultimate': 75000,
-  'veo_connoisseur': 200000,
+  'freemium': 5,
+  'explorer': 375,
+  'professional': 1000,
+  'ultimate': 2500,
+  'veo_connoisseur': 5000,
 };
 
 Deno.serve(async (req) => {
@@ -407,8 +407,8 @@ async function handleSubscriptionExpired(supabase: SupabaseClient, data: Webhook
     .from('user_subscriptions')
     .update({
       plan: 'freemium',
-      tokens_remaining: 500,
-      tokens_total: 500,
+      tokens_remaining: 5,
+      tokens_total: 5,
       status: 'expired',
       dodo_subscription_id: null,
       dodo_customer_id: null,

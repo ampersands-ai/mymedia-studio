@@ -3,7 +3,10 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Cloudflare Turnstile Site Key
-const TURNSTILE_SITE_KEY = "0x4AAAAAACHj1CN28cJMGuIM";
+// Note: Lovable preview domains change frequently. For preview/local we use Cloudflare's test keys
+// so verification works reliably during development.
+const PROD_TURNSTILE_SITE_KEY = "0x4AAAAAACHj1CN28cJMGuIM";
+const DEV_TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
 
 interface TurnstileWidgetProps {
   onVerify: (token: string) => void;
@@ -54,8 +57,16 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
     setHasError(false);
 
     try {
+      const hostname = window.location.hostname;
+      const isPreviewHost =
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname.endsWith(".lovableproject.com");
+
+      const sitekey = isPreviewHost ? DEV_TURNSTILE_SITE_KEY : PROD_TURNSTILE_SITE_KEY;
+
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
+        sitekey,
         callback: (token: string) => {
           onVerify(token);
         },
@@ -94,7 +105,9 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
 
     if (!existingScript) {
       const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad";
+      // Explicit rendering mode to ensure window.turnstile is available reliably
+      script.src =
+        "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
       script.async = true;
       script.defer = true;
 

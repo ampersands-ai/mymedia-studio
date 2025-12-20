@@ -1,15 +1,15 @@
 /**
  * Wan 2.6 Image-to-Video
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Image-to-video generation
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Image field: image_urls (ARRAY, not singular)
  * - Supports Chinese and English prompts
  * - Duration: 5, 10, or 15 seconds
  * - Resolution: 720p or 1080p
- * 
+ *
  * @locked
  * @model wan/2-6-image-to-video
  * @provider kie.ai
@@ -34,11 +34,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
-  baseCreditCost: 8,
+  baseCreditCost: 35,
   estimatedTimeSeconds: 180,
   costMultipliers: {
     duration: { "5": 1, "10": 2, "15": 3 },
-    resolution: { "720p": 1, "1080p": 2 },
+    resolution: { "720p": 1, "1080p": 1.5 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -49,7 +49,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.6 Image-to-Video",
+  variantName: "Wan 2.6",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

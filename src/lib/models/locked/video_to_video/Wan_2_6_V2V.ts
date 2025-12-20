@@ -1,8 +1,8 @@
 /**
  * Wan 2.6 Video-to-Video
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Video-to-video generation (style transfer/transformation)
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Video field: video_urls (ARRAY)
@@ -10,9 +10,9 @@
  * - Duration: 5 or 10 seconds ONLY (NOT 15)
  * - Resolution: 720p or 1080p
  * - Accepted video formats: MP4, MOV, MKV
- * 
+ *
  * NEW CONTENT TYPE: video_to_video
- * 
+ *
  * @locked
  * @model wan/2-6-video-to-video
  * @provider kie.ai
@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "video_to_video", // NEW CONTENT TYPE
   use_api_key: "KIE_AI_API_KEY_VIDEO_TO_VIDEO",
-  baseCreditCost: 10,
+  baseCreditCost: 35,
   estimatedTimeSeconds: 240,
   costMultipliers: {
     duration: { "5": 1, "10": 2 }, // Only 5 or 10 seconds for V2V
@@ -54,7 +54,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.6 Video-to-Video",
+  variantName: "Wan 2.6",
   displayOrderInFamily: 3,
   // Lock system
   isLocked: true,

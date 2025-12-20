@@ -1,14 +1,14 @@
 /**
  * Wan 2.6 Text-to-Video
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * High-quality text-to-video generation
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Supports Chinese and English prompts
  * - Duration: 5, 10, or 15 seconds
  * - Resolution: 720p or 1080p
- * 
+ *
  * @locked
  * @model wan/2-6-text-to-video
  * @provider kie.ai
@@ -33,11 +33,11 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_video",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_VIDEO",
-  baseCreditCost: 5,
+  baseCreditCost: 35,
   estimatedTimeSeconds: 180,
   costMultipliers: {
     duration: { "5": 1, "10": 2, "15": 3 },
-    resolution: { "720p": 1, "1080p": 2 },
+    resolution: { "720p": 1, "1080p": 1.5 },
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -47,7 +47,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.6 Text-to-Video",
+  variantName: "Wan 2.6",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

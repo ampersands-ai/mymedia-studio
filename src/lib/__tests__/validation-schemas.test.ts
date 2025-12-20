@@ -2,9 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   emailSchema,
   passwordSchema,
-  phoneSchema,
-  zipcodeSchema,
-  nameSchema,
+  profileNameSchema,
   signupSchema,
   loginSchema,
   generationRequestSchema,
@@ -101,91 +99,48 @@ describe('validation-schemas', () => {
     });
   });
 
-  describe('phoneSchema', () => {
-    it('accepts valid international phone numbers', () => {
-      const validPhones = [
-        '+12025551234',
-        '+442071234567',
-        '+919876543210',
-        '12025551234',
-      ];
-      
-      validPhones.forEach(phone => {
-        expect(phoneSchema.safeParse(phone).success).toBe(true);
-      });
-    });
-
-    it('accepts empty string (optional)', () => {
-      expect(phoneSchema.safeParse('').success).toBe(true);
-    });
-
-    it('rejects invalid phone formats', () => {
-      const invalidPhones = [
-        'not-a-phone',
-        '123',
-        '+0123456789',
-        '++12345678901',
-      ];
-      
-      invalidPhones.forEach(phone => {
-        const result = phoneSchema.safeParse(phone);
-        expect(result.success).toBe(false);
-      });
-    });
-  });
-
-  describe('zipcodeSchema', () => {
-    it('accepts valid zipcodes', () => {
-      const validZipcodes = [
-        '12345',
-        '12345-6789',
-        'SW1A 1AA',
-        'M5V 2T6',
-      ];
-      
-      validZipcodes.forEach(zipcode => {
-        expect(zipcodeSchema.safeParse(zipcode).success).toBe(true);
-      });
-    });
-
-    it('accepts empty string (optional)', () => {
-      expect(zipcodeSchema.safeParse('').success).toBe(true);
-    });
-
-    it('rejects zipcodes with special characters', () => {
-      expect(zipcodeSchema.safeParse('123!45').success).toBe(false);
-    });
-
-    it('rejects zipcodes that are too short', () => {
-      expect(zipcodeSchema.safeParse('12').success).toBe(false);
-    });
-  });
-
-  describe('nameSchema', () => {
-    it('accepts valid names', () => {
+  describe('profileNameSchema', () => {
+    it('accepts valid profile names', () => {
       const validNames = [
-        'John',
-        'John Doe',
-        "O'Connor",
-        'Mary-Jane',
+        'Creator_ABC12',
+        'JohnDoe',
+        'user_123',
+        'TestUser99',
       ];
       
       validNames.forEach(name => {
-        expect(nameSchema.safeParse(name).success).toBe(true);
+        expect(profileNameSchema.safeParse(name).success).toBe(true);
       });
     });
 
-    it('rejects names with numbers', () => {
-      expect(nameSchema.safeParse('John123').success).toBe(false);
+    it('rejects profile names with special characters', () => {
+      const invalidNames = [
+        'John@Doe',
+        'User-Name',
+        'Name.With.Dots',
+        'Space Name',
+      ];
+      
+      invalidNames.forEach(name => {
+        expect(profileNameSchema.safeParse(name).success).toBe(false);
+      });
     });
 
-    it('rejects empty names', () => {
-      expect(nameSchema.safeParse('').success).toBe(false);
+    it('rejects profile names that are too short', () => {
+      expect(profileNameSchema.safeParse('AB').success).toBe(false);
     });
 
-    it('rejects names over 50 characters', () => {
-      const longName = 'A'.repeat(51);
-      expect(nameSchema.safeParse(longName).success).toBe(false);
+    it('rejects profile names that are too long', () => {
+      const longName = 'A'.repeat(21);
+      expect(profileNameSchema.safeParse(longName).success).toBe(false);
+    });
+
+    it('trims whitespace', () => {
+      const result = profileNameSchema.safeParse('  ValidName  ');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe('ValidName');
+      }
     });
   });
 

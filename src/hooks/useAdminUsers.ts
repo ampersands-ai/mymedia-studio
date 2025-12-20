@@ -13,7 +13,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 export interface AdminUser {
   id: string;
   email: string | null;
-  full_name: string | null;
+  profile_name: string | null;
   email_verified: boolean | null;
   created_at: string;
   last_activity_at: string | null;
@@ -105,7 +105,7 @@ export function useAdminUsers() {
         setUsers(data.map((row: Record<string, unknown>) => ({
           id: row.id as string,
           email: row.email as string | null,
-          full_name: row.full_name as string | null,
+          profile_name: row.profile_name as string | null,
           email_verified: row.email_verified as boolean | null,
           created_at: row.created_at as string,
           last_activity_at: row.last_activity_at as string | null,
@@ -209,11 +209,11 @@ export function useAdminUsers() {
       }
 
       // Generate CSV
-      const headers = ['ID', 'Email', 'Full Name', 'Plan', 'Status', 'Credits', 'Role', 'Email Verified', 'Last Active', 'Joined'];
+      const headers = ['ID', 'Email', 'Profile Name', 'Plan', 'Status', 'Credits', 'Role', 'Email Verified', 'Last Active', 'Joined'];
       const rows = data.map((user: Record<string, unknown>) => [
         user.id,
         user.email || '',
-        user.full_name || '',
+        user.profile_name || '',
         user.plan || 'freemium',
         user.subscription_status || 'active',
         Number(user.tokens_remaining || 0).toFixed(2),

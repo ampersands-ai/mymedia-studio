@@ -3701,12 +3701,12 @@ export type Database = {
           created_at: string
           email: string
           email_verified: boolean
-          full_name: string
           id: string
           is_admin: boolean
           is_mod_exempt: boolean
           last_activity_at: string
           plan: string
+          profile_name: string
           subscription_status: string
           tokens_remaining: number
           tokens_total: number

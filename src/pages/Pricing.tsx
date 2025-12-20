@@ -138,7 +138,8 @@ const Pricing = () => {
     setIsCreatingPayment(planName);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-dodo-payment', {
+      // Use unified payment function with automatic Dodo/Stripe failover
+      const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           plan: planName,
           isAnnual,
@@ -167,10 +168,16 @@ const Pricing = () => {
       }
 
       if (data.checkout_url) {
+        // Show info toast if using backup provider
+        if (data.provider === 'stripe') {
+          toast.info('Processing with backup payment provider');
+        }
+        
         // Track payment initiation
         trackEvent('payment_initiated', {
           plan_name: planName,
           billing_period: isAnnual ? 'annual' : 'monthly',
+          provider: data.provider || 'dodo',
         });
         window.location.href = data.checkout_url;
       } else {

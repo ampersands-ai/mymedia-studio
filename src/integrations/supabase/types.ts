@@ -2830,8 +2830,10 @@ export type Database = {
           id: string
           last_webhook_at: string | null
           last_webhook_event: string | null
+          payment_provider: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: string
+          stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tokens_remaining: number
           tokens_total: number
@@ -2847,8 +2849,10 @@ export type Database = {
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
+          payment_provider?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tokens_remaining?: number
           tokens_total?: number
@@ -2864,8 +2868,10 @@ export type Database = {
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
+          payment_provider?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tokens_remaining?: number
           tokens_total?: number

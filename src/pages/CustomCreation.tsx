@@ -122,9 +122,9 @@ const CustomCreation = () => {
         setFirstGeneration(outputs[0]?.id || '');
       }
 
-      // Auto-scroll to output section when generation completes
+      // Auto-scroll to output on mobile
       setTimeout(() => {
-        if (outputSectionRef.current) {
+        if (outputSectionRef.current && window.innerWidth < 1024) {
           outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 300);
@@ -271,10 +271,10 @@ const CustomCreation = () => {
     userTokens: userTokens || null,
   });
 
-  // Wrap handleGenerate with scroll-to-output behavior
+  // Wrap handleGenerate with scroll-to-output behavior for mobile
   const handleGenerateWithScroll = useCallback(() => {
-    // Scroll to output section when Generate is clicked (all screen sizes)
-    if (outputSectionRef.current) {
+    // Scroll to output section on mobile immediately when Generate is clicked
+    if (window.innerWidth < 1024 && outputSectionRef.current) {
       outputSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     handleGenerate();

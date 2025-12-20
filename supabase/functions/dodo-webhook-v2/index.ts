@@ -300,14 +300,18 @@ async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent,
       webhookLogger.info(`Unhandled event type: ${eventType}`);
   }
 
-  // Log to audit trail
+  // Log to audit trail - sanitized (no raw payment IDs or full event data)
   if (userId) {
     await supabase.from('audit_logs').insert({
       user_id: userId,
       action: `webhook.${eventType}`,
       resource_type: 'subscription',
       resource_id: eventData.subscription_id || eventData.payment_id,
-      metadata: { event: eventData },
+      metadata: { 
+        event_type: eventType,
+        status: 'processed',
+        timestamp: new Date().toISOString()
+      },
     });
   }
   

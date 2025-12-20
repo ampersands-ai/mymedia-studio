@@ -187,7 +187,7 @@ async function handleCheckoutCompleted(
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  // Update subscription
+  // Update subscription with payment IDs (encryption happens via trigger)
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
@@ -210,7 +210,7 @@ async function handleCheckoutCompleted(
     throw error;
   }
 
-  // Audit log
+  // Audit log - sanitized (no raw payment IDs)
   await supabase.from('audit_logs').insert({
     user_id: userId,
     action: 'webhook.stripe.checkout_completed',
@@ -232,15 +232,13 @@ async function handleInvoicePaymentSucceeded(
 
   const customerId = invoice.customer as string;
   
-  // Find user by Stripe customer ID
-  const { data: subscription } = await supabase
-    .from('user_subscriptions')
-    .select('user_id, plan')
-    .eq('stripe_customer_id', customerId)
-    .maybeSingle();
+  // Find user by Stripe customer ID using secure lookup (supports encrypted IDs)
+  const { data: lookupResult, error: lookupError } = await supabase
+    .rpc('find_user_by_stripe_customer', { p_customer_id: customerId });
 
-  if (!subscription) {
-    logger.warn('No subscription found for customer', { metadata: { customerId } });
+  const subscription = lookupResult?.[0];
+  if (lookupError || !subscription) {
+    logger.warn('No subscription found for customer', { metadata: { customerId: '[REDACTED]' } });
     return;
   }
 
@@ -276,12 +274,11 @@ async function handleInvoicePaymentFailed(
 ) {
   const customerId = invoice.customer as string;
 
-  const { data: subscription } = await supabase
-    .from('user_subscriptions')
-    .select('user_id')
-    .eq('stripe_customer_id', customerId)
-    .maybeSingle();
+  // Find user by Stripe customer ID using secure lookup
+  const { data: lookupResult } = await supabase
+    .rpc('find_user_by_stripe_customer', { p_customer_id: customerId });
 
+  const subscription = lookupResult?.[0];
   if (!subscription) {
     return;
   }
@@ -305,12 +302,11 @@ async function handleSubscriptionDeleted(
 ) {
   const customerId = subscription.customer as string;
 
-  const { data: userSub } = await supabase
-    .from('user_subscriptions')
-    .select('user_id')
-    .eq('stripe_customer_id', customerId)
-    .maybeSingle();
+  // Find user by Stripe customer ID using secure lookup
+  const { data: lookupResult } = await supabase
+    .rpc('find_user_by_stripe_customer', { p_customer_id: customerId });
 
+  const userSub = lookupResult?.[0];
   if (!userSub) {
     return;
   }
@@ -339,12 +335,11 @@ async function handleSubscriptionUpdated(
 ) {
   const customerId = subscription.customer as string;
 
-  const { data: userSub } = await supabase
-    .from('user_subscriptions')
-    .select('user_id')
-    .eq('stripe_customer_id', customerId)
-    .maybeSingle();
+  // Find user by Stripe customer ID using secure lookup
+  const { data: lookupResult } = await supabase
+    .rpc('find_user_by_stripe_customer', { p_customer_id: customerId });
 
+  const userSub = lookupResult?.[0];
   if (!userSub) {
     return;
   }

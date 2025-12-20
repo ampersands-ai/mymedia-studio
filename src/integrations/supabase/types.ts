@@ -2826,7 +2826,9 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           dodo_customer_id: string | null
+          dodo_customer_id_encrypted: string | null
           dodo_subscription_id: string | null
+          dodo_subscription_id_encrypted: string | null
           id: string
           last_webhook_at: string | null
           last_webhook_event: string | null
@@ -2834,7 +2836,9 @@ export type Database = {
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: string
           stripe_customer_id: string | null
+          stripe_customer_id_encrypted: string | null
           stripe_subscription_id: string | null
+          stripe_subscription_id_encrypted: string | null
           tokens_remaining: number
           tokens_total: number
           updated_at: string
@@ -2845,7 +2849,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           dodo_customer_id?: string | null
+          dodo_customer_id_encrypted?: string | null
           dodo_subscription_id?: string | null
+          dodo_subscription_id_encrypted?: string | null
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
@@ -2853,7 +2859,9 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_customer_id?: string | null
+          stripe_customer_id_encrypted?: string | null
           stripe_subscription_id?: string | null
+          stripe_subscription_id_encrypted?: string | null
           tokens_remaining?: number
           tokens_total?: number
           updated_at?: string
@@ -2864,7 +2872,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           dodo_customer_id?: string | null
+          dodo_customer_id_encrypted?: string | null
           dodo_subscription_id?: string | null
+          dodo_subscription_id_encrypted?: string | null
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
@@ -2872,7 +2882,9 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_customer_id?: string | null
+          stripe_customer_id_encrypted?: string | null
           stripe_subscription_id?: string | null
+          stripe_subscription_id_encrypted?: string | null
           tokens_remaining?: number
           tokens_total?: number
           updated_at?: string
@@ -3587,6 +3599,15 @@ export type Database = {
         Args: { _generation_id: string }
         Returns: boolean
       }
+      check_plaintext_payment_ids: {
+        Args: never
+        Returns: {
+          check_name: string
+          encrypted_count: number
+          has_plaintext: boolean
+          plaintext_count: number
+        }[]
+      }
       cleanup_all_old_logs: {
         Args: never
         Returns: {
@@ -3604,12 +3625,38 @@ export type Database = {
       cleanup_old_function_logs: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      decrypt_payment_id: { Args: { ciphertext: string }; Returns: string }
       deduct_user_tokens: {
         Args: { p_cost: number; p_user_id: string }
         Returns: {
           error_message: string
           success: boolean
           tokens_remaining: number
+        }[]
+      }
+      encrypt_payment_id: { Args: { plaintext: string }; Returns: string }
+      find_user_by_dodo_customer: {
+        Args: { p_customer_id: string }
+        Returns: {
+          plan: string
+          tokens_remaining: number
+          user_id: string
+        }[]
+      }
+      find_user_by_stripe_customer: {
+        Args: { p_customer_id: string }
+        Returns: {
+          plan: string
+          tokens_remaining: number
+          user_id: string
+        }[]
+      }
+      find_user_by_stripe_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: {
+          plan: string
+          tokens_remaining: number
+          user_id: string
         }[]
       }
       get_admin_user_stats: {
@@ -3680,6 +3727,10 @@ export type Database = {
       }
       is_admin_user: { Args: { check_user_id: string }; Returns: boolean }
       is_moderation_exempt: { Args: { _user_id: string }; Returns: boolean }
+      log_payment_id_decryption: {
+        Args: { p_field_name: string; p_reason?: string; p_user_id: string }
+        Returns: undefined
+      }
       resolve_error_event: {
         Args: { p_error_id: string; p_resolution_notes?: string }
         Returns: undefined

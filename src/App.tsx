@@ -13,8 +13,8 @@ import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { setStatusBarStyle, isNativePlatform } from "@/utils/capacitor-utils";
-import { initPostHog } from "@/lib/posthog";
 import { usePostHog } from "@/hooks/usePostHog";
+import { CookieConsentBanner } from "@/components/gdpr/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { reportWebVitals, monitorPerformance } from "@/lib/webVitals";
@@ -87,12 +87,10 @@ const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
 const AppContent = () => {
-  // Initialize PostHog
-  useEffect(() => {
-    initPostHog();
-  }, []);
+  // Initialize PostHog only if consent was given (handled by CookieConsentBanner)
+  // PostHog initialization moved to CookieConsentBanner for GDPR compliance
 
-  // Use PostHog tracking
+  // Use PostHog tracking (will only work if initialized)
   usePostHog();
 
   // Preload critical routes based on auth status
@@ -223,6 +221,7 @@ const AppContent = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />
           </Routes>
+          <CookieConsentBanner />
         </Suspense>
       </div>
     </ErrorBoundary>

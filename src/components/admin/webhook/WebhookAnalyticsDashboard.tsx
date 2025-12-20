@@ -80,7 +80,7 @@ export const WebhookAnalyticsDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Providers</SelectItem>
-                  <SelectItem value="kie-ai">KIE AI</SelectItem>
+                  <SelectItem value="kie-ai">Primary Provider</SelectItem>
                   <SelectItem value="midjourney">Midjourney</SelectItem>
                   <SelectItem value="json2video">JSON2Video</SelectItem>
                   <SelectItem value="dodo-payments">Dodo Payments</SelectItem>

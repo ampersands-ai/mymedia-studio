@@ -67,7 +67,7 @@ serve(async (req) => {
       );
     }
 
-    webhookLogger.info('KIE recovery started', { generationId: generation_id });
+    webhookLogger.info('Generation recovery started', { generationId: generation_id });
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -100,11 +100,11 @@ serve(async (req) => {
       );
     }
 
-    webhookLogger.info('Querying KIE status', { generationId: generation_id, taskId });
+    webhookLogger.info('Querying generation status', { generationId: generation_id, taskId });
 
     const kieApiKey = getKieApiKey(generation.model_id || '', generation.model_record_id || '');
 
-    // Query KIE AI status
+    // Query provider status
     const kieResponse = await fetch(API_ENDPOINTS.KIE_AI.queryTaskUrl, {
       method: 'POST',
       headers: {
@@ -116,7 +116,7 @@ serve(async (req) => {
 
     if (!kieResponse.ok) {
       const errorText = await kieResponse.text();
-      webhookLogger.error('KIE status check failed', new Error(errorText), { 
+      webhookLogger.error('Provider status check failed', new Error(errorText), { 
         generationId: generation_id, 
         taskId,
         status: String(kieResponse.status)
@@ -124,7 +124,7 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to check KIE status',
+          error: 'Failed to check generation status',
           details: errorText 
         }),
         { status: kieResponse.status, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
@@ -132,7 +132,7 @@ serve(async (req) => {
     }
 
     const taskStatus = await kieResponse.json();
-    webhookLogger.info('KIE status received', { 
+    webhookLogger.info('Provider status received', { 
       generationId: generation_id, 
       taskId,
       state: taskStatus.data?.state 

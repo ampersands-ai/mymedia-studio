@@ -89,12 +89,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    logger.info('Querying Kie.ai for task', { metadata: { taskId: kieTaskId } });
+    logger.info('Querying provider for task', { metadata: { taskId: kieTaskId } });
 
-    // Query Kie.ai API for task status
+    // Query provider API for task status
     const kieApiKey = Deno.env.get('KIE_AI_API_KEY');
     if (!kieApiKey) {
-      throw new Error('KIE_AI_API_KEY not configured');
+      throw new Error('API key not configured');
     }
 
     const kieResponse = await fetch(
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     );
 
     const kieData = await kieResponse.json();
-    logger.debug('Kie.ai response received', { metadata: { response: kieData } });
+    logger.debug('Provider response received', { metadata: { response: kieData } });
 
     // Check if task completed successfully
     const successFlag = kieData.data?.successFlag;
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
       successFlag === 'GENERATE_MP4_FAILED' ||
       kieData.data?.errorCode !== 0
     ) {
-      logger.error('Task failed on Kie.ai side', new Error('Generation failed'));
+      logger.error('Task failed on provider side', new Error('Generation failed'));
 
 
       // Mark as failed and refund

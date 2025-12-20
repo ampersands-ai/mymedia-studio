@@ -16,7 +16,7 @@ export interface ProviderConfig {
 
 export const PROVIDERS: Record<string, ProviderConfig> = {
   'kie_ai': {
-    name: 'KIE AI',
+    name: 'Primary AI',
     webhook: '/functions/v1/webhooks/kie-webhook',
     recovery: '/functions/v1/recovery/recover-kie-generation',
     statusEndpoint: API_ENDPOINTS.KIE_AI.queryTaskUrl,

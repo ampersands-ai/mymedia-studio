@@ -78,6 +78,9 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
   }, [onVerify, onError, onExpire]);
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let pollIntervalId: ReturnType<typeof setInterval>;
+    
     // Check if script is already loaded
     if (window.turnstile) {
       renderWidget();
@@ -99,15 +102,45 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
         renderWidget();
       };
 
+      script.onerror = () => {
+        console.error("[Turnstile] Failed to load script");
+        setIsLoading(false);
+        setHasError(true);
+        onError?.("Failed to load security verification");
+      };
+
       document.head.appendChild(script);
     } else {
-      // Script exists but turnstile not ready yet
+      // Script exists - poll for turnstile to be ready
+      // This handles the case where script loaded but onTurnstileLoad already fired
+      pollIntervalId = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(pollIntervalId);
+          renderWidget();
+        }
+      }, 100);
+      
+      // Also set the callback in case it hasn't fired yet
       window.onTurnstileLoad = () => {
+        if (pollIntervalId) clearInterval(pollIntervalId);
         renderWidget();
       };
     }
 
+    // Timeout fallback - if Turnstile doesn't load in 10 seconds, show error
+    timeoutId = setTimeout(() => {
+      if (pollIntervalId) clearInterval(pollIntervalId);
+      if (!window.turnstile) {
+        console.error("[Turnstile] Load timeout");
+        setIsLoading(false);
+        setHasError(true);
+        onError?.("Security verification timed out. Please refresh the page.");
+      }
+    }, 10000);
+
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (pollIntervalId) clearInterval(pollIntervalId);
       if (widgetIdRef.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetIdRef.current);
@@ -116,7 +149,7 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
         }
       }
     };
-  }, [renderWidget]);
+  }, [renderWidget, onError]);
 
   const handleRetry = () => {
     setHasError(false);

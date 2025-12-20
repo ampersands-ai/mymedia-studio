@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
     // PWA with Workbox
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'placeholder.svg'],
+      includeAssets: ['favicon.ico', 'placeholder.svg', 'sw-push.js'],
       manifest: {
         name: 'Artifio.ai - AI Content Creation',
         short_name: 'Artifio',
@@ -43,7 +43,9 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
+      injectRegister: 'auto',
       workbox: {
+        importScripts: ['sw-push.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,

@@ -1509,6 +1509,45 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          p256dh_key: string
+          platform: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh_key: string
+          platform?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh_key?: string
+          platform?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rate_limit_tiers: {
         Row: {
           max_concurrent_generations: number
@@ -2839,6 +2878,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vapid_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          private_key: string
+          public_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          private_key: string
+          public_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          private_key?: string
+          public_key?: string
+        }
+        Relationships: []
       }
       video_jobs: {
         Row: {

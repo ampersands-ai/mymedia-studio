@@ -67,11 +67,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if email notification is enabled
-    if (!preferences.email_on_completion) {
-      logger.info('Email notifications disabled for this user', { userId: user_id });
+    // Check if any notification is enabled
+    const emailEnabled = preferences.email_on_completion;
+    const pushEnabled = preferences.push_on_completion;
+
+    if (!emailEnabled && !pushEnabled) {
+      logger.info('All notifications disabled for this user', { userId: user_id });
       return new Response(
-        JSON.stringify({ success: true, message: "Email disabled" }),
+        JSON.stringify({ success: true, message: "All notifications disabled" }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -113,7 +116,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const recipientEmail = profile?.email || "";
     const userName = profile?.full_name || "User";
 
-    // Send email notification
+    let emailSent = false;
+    let pushSent = false;
+    let emailId: string | null = null;
+
+    // Send email notification if enabled
+    if (emailEnabled && recipientEmail) {
     const emailResponse = await resend.emails.send({
       from: "Artifio <noreply@artifio.ai>",
       to: [recipientEmail],
@@ -171,47 +179,110 @@ Deno.serve(async (req: Request): Promise<Response> => {
         </body>
         </html>
       `
-    });
+      });
 
-    logger.info('Email sent successfully', { 
-      userId: user_id,
-      metadata: { 
-        generation_id,
-        email_id: (emailResponse as any).data?.id || (emailResponse as any).id 
-      } 
-    });
-    logger.logDuration('Notification sent', startTime);
+      emailId = (emailResponse as any).data?.id || (emailResponse as any).id;
+      emailSent = true;
+
+      logger.info('Email sent successfully', { 
+        userId: user_id,
+        metadata: { 
+          generation_id,
+          email_id: emailId 
+        } 
+      });
+
+      // Log to email_history
+      await supabase.from("email_history").insert({
+        user_id,
+        recipient_email: recipientEmail,
+        email_type: "generation_complete",
+        subject: `✅ Your ${generation.type} is ready!`,
+        delivery_status: "sent",
+        resend_email_id: emailId,
+        metadata: {
+          generation_id,
+          generation_type: generation.type,
+          model_id: generation.model_id,
+          duration_seconds: generation_duration_seconds
+        }
+      });
+    }
+
+    // Send push notification if enabled
+    if (pushEnabled) {
+      try {
+        const pushResponse = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              user_id,
+              title: '🎉 Generation Complete!',
+              body: `Your ${generation.type} "${generation.prompt?.substring(0, 50)}${(generation.prompt?.length || 0) > 50 ? '...' : ''}" is ready to view.`,
+              icon: '/icons/icon-192x192.png',
+              tag: `generation-${generation_id}`,
+              data: {
+                generation_id,
+                generation_type: generation.type,
+              },
+              url: '/dashboard/history',
+            }),
+          }
+        );
+
+        if (pushResponse.ok) {
+          const pushResult = await pushResponse.json();
+          pushSent = pushResult.sent > 0;
+          logger.info('Push notification sent', {
+            userId: user_id,
+            metadata: {
+              generation_id,
+              sent: pushResult.sent,
+            },
+          });
+        }
+      } catch (pushError) {
+        logger.error('Failed to send push notification', pushError as Error, {
+          userId: user_id,
+          metadata: { generation_id },
+        });
+      }
+    }
+
+    logger.logDuration('Notifications sent', startTime);
 
     // Log to generation_notifications
-    await supabase.from("generation_notifications").insert({
-      user_id,
-      generation_id,
-      notification_type: "email",
-      delivery_status: "sent",
-      email_id: (emailResponse as any).data?.id || (emailResponse as any).id
-    });
-
-    // Log to email_history
-    await supabase.from("email_history").insert({
-      user_id,
-      recipient_email: recipientEmail,
-      email_type: "generation_complete",
-      subject: `✅ Your ${generation.type} is ready!`,
-      delivery_status: "sent",
-      resend_email_id: (emailResponse as any).data?.id || (emailResponse as any).id,
-      metadata: {
+    if (emailSent) {
+      await supabase.from("generation_notifications").insert({
+        user_id,
         generation_id,
-        generation_type: generation.type,
-        model_id: generation.model_id,
-        duration_seconds: generation_duration_seconds
-      }
-    });
+        notification_type: "email",
+        delivery_status: "sent",
+        email_id: emailId
+      });
+    }
+
+    if (pushSent) {
+      await supabase.from("generation_notifications").insert({
+        user_id,
+        generation_id,
+        notification_type: "push",
+        delivery_status: "sent"
+      });
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Notification sent",
-        email_id: (emailResponse as any).data?.id || (emailResponse as any).id
+        message: "Notifications sent",
+        email_sent: emailSent,
+        push_sent: pushSent,
+        email_id: emailId
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

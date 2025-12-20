@@ -32,20 +32,20 @@ const DODO_PLAN_PRODUCTS = {
 // Stripe price IDs (backup)
 const STRIPE_PLAN_PRICES = {
   explorer: {
-    monthly: 'price_1SgVT7KukgJ0qrjRav72Oyh8',
-    annual: 'price_1SgVTqKukgJ0qrjRfiT4vD9d',
+    monthly: 'price_1SgW4XPoOsAS6r2g0o1PwDKO',
+    annual: 'price_1SgW4oPoOsAS6r2gbgWJb1tf',
   },
   professional: {
-    monthly: 'price_1SgVUGKukgJ0qrjR4M4c51u8',
-    annual: 'price_1SgVUvKukgJ0qrjRHsjfniMo',
+    monthly: 'price_1SgW53PoOsAS6r2guIoU83bt',
+    annual: 'price_1SgW5GPoOsAS6r2gjxjE5ppb',
   },
   ultimate: {
-    monthly: 'price_1SgVWvKukgJ0qrjRAdy7UZ0i',
-    annual: 'price_1SgVXcKukgJ0qrjRvJMdTPYP',
+    monthly: 'price_1SgW5WPoOsAS6r2gcuNO6kuU',
+    annual: 'price_1SgW5mPoOsAS6r2gRYDBWtMf',
   },
   veo_connoisseur: {
-    monthly: 'price_1SgVXvKukgJ0qrjRgjFMjstO',
-    annual: 'price_1SgVYGKukgJ0qrjRdLWq6dsh',
+    monthly: 'price_1SgW6HPoOsAS6r2gaW9gV4so',
+    annual: 'price_1SgW6WPoOsAS6r2gtXoPfLJi',
   },
 } as const;
 

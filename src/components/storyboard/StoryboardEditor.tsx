@@ -95,7 +95,7 @@ export const StoryboardEditor = () => {
     }
     
     try {
-      const result = await renderVideo(false);
+      const result = await renderVideo(false, notifyOnCompletion);
       
       if (result?.requiresConfirmation) {
         updateState({
@@ -121,7 +121,7 @@ export const StoryboardEditor = () => {
   const handleConfirmRerender = async () => {
     updateState({ showRerenderDialog: false });
     try {
-      await renderVideo(true);
+      await renderVideo(true, notifyOnCompletion);
       toast.success('Video re-rendering started!');
     } catch (error) {
       logger.error('Video re-rendering failed to start', error instanceof Error ? error : new Error(String(error)), {

@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError} = await supabaseClient
       .from('video_jobs')
-      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration, background_media_type')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration, background_media_type, notify_on_completion')
       .eq('id', job_id)
       .single();
 
@@ -1318,6 +1318,30 @@ async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderI
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }).eq('id', jobId);
+          
+          // Trigger email notification if enabled
+          const { data: jobWithNotify } = await supabase
+            .from('video_jobs')
+            .select('notify_on_completion, topic, duration')
+            .eq('id', jobId)
+            .single();
+          
+          if (jobWithNotify?.notify_on_completion) {
+            logger?.info('Triggering completion notification for video job', { metadata: { jobId } });
+            try {
+              await supabase.functions.invoke('notify-generation-complete', {
+                body: {
+                  generation_id: generation.id,
+                  user_id: job.user_id,
+                  generation_duration_seconds: job.duration || 60,
+                  type: 'video_job',
+                  video_topic: jobWithNotify.topic,
+                }
+              });
+            } catch (notifyError) {
+              logger?.error('Failed to send completion notification', notifyError as Error, { metadata: { jobId } });
+            }
+          }
           
           return; // Exit after successful completion
         } catch (uploadError) {

@@ -17,11 +17,12 @@ export const useStoryboardRendering = (
 
   // Render video mutation
   const renderVideoMutation = useMutation({
-    mutationFn: async ({ confirmRerender = false }: { confirmRerender?: boolean } = {}) => {
+    mutationFn: async ({ confirmRerender = false, notifyOnCompletion = true }: { confirmRerender?: boolean; notifyOnCompletion?: boolean } = {}) => {
       const { data, error } = await supabase.functions.invoke('render-storyboard-video', {
         body: { 
           storyboardId: currentStoryboardId,
-          confirmRerender
+          confirmRerender,
+          notifyOnCompletion
         },
       });
 
@@ -206,9 +207,9 @@ export const useStoryboardRendering = (
     };
   }, [currentStoryboardId, queryClient, isRendering]);
 
-  const renderVideo = useCallback(async (confirmRerender = false) => {
+  const renderVideo = useCallback(async (confirmRerender = false, notifyOnCompletion = true) => {
     if (!currentStoryboardId) return null;
-    return renderVideoMutation.mutateAsync({ confirmRerender });
+    return renderVideoMutation.mutateAsync({ confirmRerender, notifyOnCompletion });
   }, [currentStoryboardId, renderVideoMutation]);
 
   const cancelRender = useCallback(() => {

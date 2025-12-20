@@ -46,11 +46,11 @@ export const DODO_PLAN_PRODUCTS = {
 
 // Token allocations by plan
 export const PLAN_TOKENS = {
-  freemium: 500,
-  explorer: 10_000,
-  professional: 32_500,
-  ultimate: 75_000,
-  veo_connoisseur: 200_000,
+  freemium: 5,
+  explorer: 375,
+  professional: 1_000,
+  ultimate: 2_500,
+  veo_connoisseur: 5_000,
 } as const;
 
 export type PlanKey = keyof typeof STRIPE_PLAN_PRICES;

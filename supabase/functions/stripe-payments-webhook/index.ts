@@ -12,11 +12,11 @@ const WEBHOOK_VERSION = "1.0-stripe-backup";
 
 // Token allocations by plan
 const PLAN_TOKENS: Record<string, number> = {
-  freemium: 500,
-  explorer: 10000,
-  professional: 32500,
-  ultimate: 75000,
-  veo_connoisseur: 200000,
+  freemium: 5,
+  explorer: 375,
+  professional: 1000,
+  ultimate: 2500,
+  veo_connoisseur: 5000,
 };
 
 // Map Stripe product IDs to plan names
@@ -322,8 +322,8 @@ async function handleSubscriptionDeleted(
     .from('user_subscriptions')
     .update({
       plan: 'freemium',
-      tokens_remaining: 500,
-      tokens_total: 500,
+      tokens_remaining: 5,
+      tokens_total: 5,
       status: 'cancelled',
       stripe_subscription_id: null,
       last_webhook_event: 'customer.subscription.deleted',

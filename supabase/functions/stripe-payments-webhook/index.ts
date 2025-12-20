@@ -22,15 +22,15 @@ const PLAN_TOKENS: Record<string, number> = {
 // Map Stripe product IDs to plan names
 const STRIPE_PRODUCT_TO_PLAN: Record<string, string> = {
   // Monthly products
-  'prod_Tdn3wJsneldKRP': 'explorer',       // Explorer Monthly
-  'prod_Tdn4UOqYssA5pP': 'professional',   // Professional Monthly  
-  'prod_Tdn70U58Qk9ZnE': 'ultimate',       // Ultimate Monthly
-  'prod_Tdn8pwgpoYM1oR': 'veo_connoisseur', // Veo Connoisseur Monthly
+  'prod_TdnfGrQLjOQ1XD': 'explorer',       // Explorer Monthly
+  'prod_TdngwzaCGA5DOf': 'professional',   // Professional Monthly  
+  'prod_TdngdRtIfuiw2c': 'ultimate',       // Ultimate Monthly
+  'prod_TdnhHwKM0c3Den': 'veo_connoisseur', // Veo Connoisseur Monthly
   // Annual products
-  'prod_Tdn3CySu3QP498': 'explorer',       // Explorer Annual
-  'prod_Tdn5aqWk6kB6qQ': 'professional',   // Professional Annual
-  'prod_Tdn7VO181qZtdX': 'ultimate',       // Ultimate Annual
-  'prod_Tdn8OqdMffa6Ky': 'veo_connoisseur', // Veo Connoisseur Annual
+  'prod_TdngHGT1JsWDnL': 'explorer',       // Explorer Annual
+  'prod_TdngF1VzGiEfBO': 'professional',   // Professional Annual
+  'prod_TdnhfLnZrsQ5Bf': 'ultimate',       // Ultimate Annual
+  'prod_TdnhievqGBX9KC': 'veo_connoisseur', // Veo Connoisseur Annual
 };
 
 Deno.serve(async (req) => {

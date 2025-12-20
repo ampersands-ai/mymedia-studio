@@ -29,13 +29,13 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = {
   modelId: "wan/2-6-image-to-video",
-  recordId: "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
+  recordId: "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
   modelName: "Wan 2.6",
   provider: "kie_ai",
   contentType: "image_to_video",
   use_api_key: "KIE_AI_API_KEY_IMAGE_TO_VIDEO",
   baseCreditCost: 35,
-  estimatedTimeSeconds: 180,
+  estimatedTimeSeconds: 500,
   costMultipliers: {
     duration: { "5": 1, "10": 2, "15": 3 },
     resolution: { "720p": 1, "1080p": 1.5 },
@@ -205,7 +205,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   const { error: functionError } = await supabase.functions.invoke("generate-content", {
     body: {
-      generationId: generation.id,
+      generation_id: generation.id,
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,

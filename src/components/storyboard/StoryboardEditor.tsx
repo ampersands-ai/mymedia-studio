@@ -3,7 +3,7 @@
  * Main component orchestrating storyboard editing and video rendering
  */
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
@@ -33,7 +33,7 @@ import { SubtitleCustomizer } from './SubtitleCustomizer';
 import type { SubtitleSettings } from '@/types/subtitle';
 
 export const StoryboardEditor = () => {
-  
+  const [notifyOnCompletion, setNotifyOnCompletion] = useState(true);
   // Main storyboard hook
   const {
     storyboard,
@@ -244,6 +244,8 @@ export const StoryboardEditor = () => {
           costDifference={costDifference}
           estimatedDuration={storyboard.duration}
           sceneCount={scenes.length}
+          notifyOnCompletion={notifyOnCompletion}
+          onNotifyOnCompletionChange={setNotifyOnCompletion}
           onRender={handleRender}
           disabled={false}
         />

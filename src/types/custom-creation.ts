@@ -67,6 +67,7 @@ export interface CustomCreationState {
   selectedGroup: CreationGroup;
   modelParameters: Record<string, any>;
   generateCaption: boolean;
+  notifyOnCompletion: boolean;
   resolution: "Native" | "HD";
   advancedOpen: boolean;
   audioDuration: number | null;

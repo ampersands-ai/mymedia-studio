@@ -58,6 +58,7 @@ interface VideoCreatorState {
   selectedBackgroundMedia: SelectedMedia[];
   caption: string;
   hashtags: string[];
+  notifyOnCompletion: boolean;
 }
 
 const initialState: VideoCreatorState = {
@@ -77,6 +78,7 @@ const initialState: VideoCreatorState = {
   selectedBackgroundMedia: [],
   caption: '',
   hashtags: [],
+  notifyOnCompletion: true,
 };
 
 const FACELESS_VIDEO_DRAFT_KEY = 'faceless_video_draft';
@@ -693,9 +695,11 @@ export function VideoCreator() {
               selectedBackgroundMedia={state.selectedBackgroundMedia}
               duration={state.duration}
               style={state.style}
+              notifyOnCompletion={state.notifyOnCompletion}
               onAspectRatioChange={(ratio) => setState((prev) => ({ ...prev, aspectRatio: ratio }))}
               onCaptionStyleChange={(style) => setState((prev) => ({ ...prev, captionStyle: style }))}
               onBackgroundMediaChange={(media) => setState((prev) => ({ ...prev, selectedBackgroundMedia: media }))}
+              onNotifyOnCompletionChange={(notify) => setState((prev) => ({ ...prev, notifyOnCompletion: notify }))}
               onRenderVideo={handleRenderVideo}
               isRendering={false}
               isDisabled={isProcessing || state.step !== 'render_setup'}

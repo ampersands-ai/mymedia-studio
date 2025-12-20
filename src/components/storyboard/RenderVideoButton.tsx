@@ -6,6 +6,7 @@
 import { Play, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { NotifyOnCompletionToggle } from '@/components/shared/NotifyOnCompletionToggle';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,8 @@ interface RenderVideoButtonProps {
   costDifference: number;
   estimatedDuration: number;
   sceneCount: number;
+  notifyOnCompletion: boolean;
+  onNotifyOnCompletionChange: (notify: boolean) => void;
   onRender: () => void;
   disabled: boolean;
 }
@@ -38,14 +41,25 @@ export const RenderVideoButton = ({
   costDifference,
   estimatedDuration,
   sceneCount,
+  notifyOnCompletion,
+  onNotifyOnCompletionChange,
   onRender,
   disabled,
 }: RenderVideoButtonProps) => {
   return (
-    <Card className="p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-sm">
-          <Coins className="w-5 h-5 text-primary" />
+    <div className="space-y-4">
+      {/* Notification Toggle */}
+      <NotifyOnCompletionToggle
+        checked={notifyOnCompletion}
+        onCheckedChange={onNotifyOnCompletionChange}
+        disabled={disabled || isRendering}
+        description="Get an email when your video is ready"
+      />
+      
+      <Card className="p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-sm">
+            <Coins className="w-5 h-5 text-primary" />
           <span className="text-muted-foreground">
             Balance: <span className="font-semibold text-foreground">{tokenBalance.toFixed(2)}</span>
           </span>
@@ -108,7 +122,8 @@ export const RenderVideoButton = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </div>
   );
 };

@@ -98,6 +98,7 @@ const INITIAL_STATE: CustomCreationState = {
   selectedGroup: "prompt_to_image",
   modelParameters: {},
   generateCaption: false,
+  notifyOnCompletion: true,
   resolution: "Native",
   advancedOpen: false,
   audioDuration: null,

@@ -29,7 +29,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 
 export const MODEL_CONFIG = {
   modelId: "wan/2-6-image-to-video",
-  recordId: "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
+  recordId: "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
   modelName: "Wan 2.6",
   provider: "kie_ai",
   contentType: "image_to_video",
@@ -205,7 +205,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   const { error: functionError } = await supabase.functions.invoke("generate-content", {
     body: {
-      generation_id: generation.id,
+      generationId: generation.id,
       user_id: userId,
       model_id: MODEL_CONFIG.modelId,
       model_record_id: MODEL_CONFIG.recordId,

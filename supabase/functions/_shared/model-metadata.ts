@@ -1166,8 +1166,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 300,
     isActive: true,
   },
-  "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": {
-    recordId: "g2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d",
+  "a2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": {
+    recordId: "a2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d",
     modelId: "wan/2-6-video-to-video",
     modelName: "Wan 2.6",
     provider: "kie_ai",
@@ -1178,8 +1178,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // Wan 2.6 I2V
-  "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": {
-    recordId: "h3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
+  "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": {
+    recordId: "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e",
     modelId: "wan/2-6-image-to-video",
     modelName: "Wan 2.6",
     provider: "kie_ai",
@@ -1190,8 +1190,8 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // Wan 2.6 T2V
-  "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": {
-    recordId: "i4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f",
+  "c4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f": {
+    recordId: "c4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f",
     modelId: "wan/2-6-text-to-video",
     modelName: "Wan 2.6",
     provider: "kie_ai",

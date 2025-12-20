@@ -3,9 +3,14 @@
  *
  * Provides reusable error formatting and handling functions.
  * Extracted from duplicate implementations across error handlers.
+ * 
+ * All error messages are automatically sanitized to remove
+ * proprietary provider names before reaching users.
  *
  * @module errorFormatting
  */
+
+import { sanitizeProprietaryTerms } from './errorSanitizer';
 
 /**
  * Format error to user-friendly message
@@ -23,40 +28,35 @@
  * ```
  */
 export function formatErrorMessage(error: unknown): string {
+  let message: string;
+
   if (typeof error === 'string') {
-    return error;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (error && typeof error === 'object') {
+    message = error;
+  } else if (error instanceof Error) {
+    message = error.message;
+  } else if (error && typeof error === 'object') {
     // Check for common error object patterns
     if ('message' in error && typeof error.message === 'string') {
-      return error.message;
-    }
-
-    if ('error' in error && typeof error.error === 'string') {
-      return error.error;
-    }
-
-    if ('statusText' in error && typeof error.statusText === 'string') {
-      return error.statusText;
-    }
-
-    // Try to stringify object
-    try {
-      const stringified = JSON.stringify(error);
-      if (stringified !== '{}') {
-        return stringified;
+      message = error.message;
+    } else if ('error' in error && typeof error.error === 'string') {
+      message = error.error;
+    } else if ('statusText' in error && typeof error.statusText === 'string') {
+      message = error.statusText;
+    } else {
+      // Try to stringify object
+      try {
+        const stringified = JSON.stringify(error);
+        message = stringified !== '{}' ? stringified : 'An unexpected error occurred';
+      } catch {
+        message = 'An unexpected error occurred';
       }
-    } catch {
-      // Ignore stringify errors
     }
+  } else {
+    message = 'An unexpected error occurred';
   }
 
-  return 'An unexpected error occurred';
+  // Sanitize proprietary terms before returning
+  return sanitizeProprietaryTerms(message);
 }
 
 /**

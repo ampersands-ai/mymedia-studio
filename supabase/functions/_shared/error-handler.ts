@@ -1,8 +1,10 @@
 import { normalizeHeaders } from "./validation.ts";
+import { sanitizeErrorMessage } from "./error-sanitizer.ts";
 
 /**
  * Safe error response handler for edge functions
  * Returns generic messages to clients for security
+ * Automatically sanitizes proprietary provider names
  */
 export function createSafeErrorResponse(
   error: unknown,
@@ -34,6 +36,9 @@ export function createSafeErrorResponse(
     safeMessage = 'Request timed out';
     status = 504;
   }
+  
+  // Sanitize proprietary terms before sending to client
+  safeMessage = sanitizeErrorMessage(safeMessage);
   
   return new Response(
     JSON.stringify({ 

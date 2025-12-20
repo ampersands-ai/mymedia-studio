@@ -2,6 +2,8 @@
  * Error utility functions for edge functions
  */
 
+import { sanitizeErrorMessage } from "./error-sanitizer.ts";
+
 /**
  * Safely converts unknown error to Error instance
  */
@@ -14,10 +16,9 @@ export function toError(error: unknown): Error {
 
 /**
  * Extracts error message from unknown error
+ * Automatically sanitizes proprietary provider names
  */
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
+  const message = error instanceof Error ? error.message : String(error);
+  return sanitizeErrorMessage(message);
 }

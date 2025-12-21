@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { trackEvent } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
-import { getUserErrorMessage } from "@/lib/errors/custom-errors";
+
 
 const plans = [
   {

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Bell, Mail, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { PushNotificationToggle } from './PushNotificationToggle';
-import { getUserErrorMessage } from '@/lib/errors/custom-errors';
+
 
 interface NotificationPreferences {
   email_on_completion: boolean;

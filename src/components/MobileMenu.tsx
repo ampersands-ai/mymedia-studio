@@ -31,6 +31,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   
   const showFeaturesPage = isPageEnabled('features') || isAdmin;
   const showBlogPage = isPageEnabled('blog') || isAdmin;
+  const showCommunityPage = isPageEnabled('community') || isAdmin;
 
   const handleSignOut = async () => {
     try {
@@ -213,18 +214,20 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>FAQ</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/community") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/community")}
-                >
-                  <Users className="h-5 w-5" />
-                  <span>Community</span>
-                </button>
+                {showCommunityPage && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/community") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/community")}
+                  >
+                    <Users className="h-5 w-5" />
+                    <span>Community</span>
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -358,18 +361,20 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>FAQ</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/community") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/community")}
-                >
-                  <Users className="h-5 w-5" />
-                  <span>Community</span>
-                </button>
+                {showCommunityPage && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/community") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/community")}
+                  >
+                    <Users className="h-5 w-5" />
+                    <span>Community</span>
+                  </button>
+                )}
               </>
             )}
 

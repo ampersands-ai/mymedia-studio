@@ -191,8 +191,11 @@ export function CookieConsentBanner() {
             </div>
 
             <button
+              type="button"
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-1 text-sm text-primary hover:underline"
+              className="flex items-center gap-1 text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+              aria-expanded={showDetails}
+              aria-controls="cookie-preferences"
             >
               {showDetails ? (
                 <>
@@ -208,7 +211,10 @@ export function CookieConsentBanner() {
             </button>
 
             {showDetails && (
-              <div className="space-y-3 py-3 border-t border-border animate-in fade-in duration-200">
+              <div 
+                id="cookie-preferences"
+                className="space-y-3 py-3 border-t border-border animate-in fade-in duration-200"
+              >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="functional" className="text-sm font-medium">

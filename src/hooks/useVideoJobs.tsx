@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { VideoJob, VideoJobInput } from '@/types/video';
 import { logger } from '@/lib/logger';
 import { extractEdgeFunctionError } from '@/lib/utils/edge-function-error';
+import { getUserErrorMessage } from '@/lib/errors/custom-errors';
 const PINNED_JOB_KEY = 'pinnedVideoJobId';
 const CLEARED_FLAG_KEY = 'videoJobsCleared';
 
@@ -214,7 +215,7 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(getUserErrorMessage(error));
       // Refetch to restore accurate state after error
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
@@ -271,7 +272,7 @@ export function useVideoJobs() {
       await queryClient.refetchQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(getUserErrorMessage(error));
     },
   });
 
@@ -381,7 +382,7 @@ export function useVideoJobs() {
         component: 'useVideoJobs',
         operation: 'approveVoiceover'
       });
-      toast.error(error.message);
+      toast.error(getUserErrorMessage(error));
       // Refresh job data to show updated error state
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
@@ -428,7 +429,7 @@ export function useVideoJobs() {
       if (context?.previous) {
         queryClient.setQueryData(['video-jobs'], context.previous);
       }
-      toast.error(error.message || 'Failed to cancel video job');
+      toast.error(getUserErrorMessage(error) || 'Failed to cancel video job');
     },
     onSuccess: async () => {
       // Clear the pinned job so it doesn't reappear in UI
@@ -462,7 +463,7 @@ export function useVideoJobs() {
         component: 'useVideoJobs',
         operation: 'generateCaption'
       });
-      toast.error(error.message);
+      toast.error(getUserErrorMessage(error));
     }
   });
 
@@ -499,7 +500,7 @@ export function useVideoJobs() {
         component: 'useVideoJobs',
         operation: 'recoverJob'
       });
-      toast.error(error.message || 'Failed to sync job status');
+      toast.error(getUserErrorMessage(error) || 'Failed to sync job status');
     }
   });
 
@@ -518,7 +519,7 @@ export function useVideoJobs() {
       queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to dismiss error');
+      toast.error(getUserErrorMessage(error) || 'Failed to dismiss error');
     },
   });
 

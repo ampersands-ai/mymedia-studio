@@ -60,7 +60,7 @@ export function CreditBoostSection({ plan, billingPeriod }: CreditBoostSectionPr
       }
     } catch (error) {
       console.error('Error creating boost checkout:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create checkout session');
+      toast.error('Failed to create checkout session. Please try again.');
     } finally {
       setIsLoading(false);
     }

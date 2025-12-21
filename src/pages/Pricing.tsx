@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { trackEvent } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
+import { getUserErrorMessage } from "@/lib/errors/custom-errors";
 
 const plans = [
   {
@@ -164,11 +165,11 @@ const Pricing = () => {
         }
         
         // Check if it's a 503 service unavailable error
-        if (error.message?.includes('SERVICE_UNAVAILABLE') || 
+        if (error.message?.includes('SERVICE_UNAVAILABLE') ||
             error.message?.includes('temporarily unavailable')) {
           toast.error('Payment service is temporarily unavailable. Please try again in a few seconds.');
         } else {
-          toast.error(`Failed to create payment session: ${error.message || 'Please try again'}`);
+          toast.error('Failed to create payment session. Please try again.');
         }
         
         setIsCreatingPayment(null);
@@ -198,7 +199,7 @@ const Pricing = () => {
         planName,
         isAnnual
       });
-      toast.error(`Failed to create payment session: ${error instanceof Error ? error.message : 'Please try again'}`);
+      toast.error('Failed to create payment session. Please try again.');
       setIsCreatingPayment(null);
     }
   };

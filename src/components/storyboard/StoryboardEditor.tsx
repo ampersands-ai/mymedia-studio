@@ -114,7 +114,7 @@ export const StoryboardEditor = () => {
         storyboardId: storyboard?.id,
         sceneCount: scenes.length
       });
-      toast.error(error instanceof Error ? error.message : 'Failed to start rendering');
+      toast.error('Failed to start rendering. Please try again.');
     }
   };
   
@@ -129,7 +129,7 @@ export const StoryboardEditor = () => {
         operation: 'handleConfirmRerender',
         storyboardId: storyboard?.id
       });
-      toast.error(error instanceof Error ? error.message : 'Failed to start re-rendering');
+      toast.error('Failed to start re-rendering. Please try again.');
     }
   };
   

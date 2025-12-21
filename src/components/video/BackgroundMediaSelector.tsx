@@ -112,7 +112,7 @@ export function BackgroundMediaSelector({
         query,
         errorMessage: appError.message
       });
-      toast.error(error instanceof Error ? error.message : `Failed to search ${type}s`);
+      toast.error(`Failed to search ${type}s. Please try again.`);
     } finally {
       setLoading(false);
     }

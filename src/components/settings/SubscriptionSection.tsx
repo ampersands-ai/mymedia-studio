@@ -39,7 +39,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to open subscription management');
+      toast.error('Failed to open subscription management. Please try again.');
     } finally {
       setManagingSubscription(false);
     }

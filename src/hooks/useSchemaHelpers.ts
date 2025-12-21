@@ -66,7 +66,7 @@ export const useSchemaHelpers = () => {
   const getMaxPromptLength = useCallback((model: AIModel | null, customMode?: boolean): number => {
     if (!model) return 5000;
 
-    // Kie.ai audio in non-custom mode has 500 char limit
+    // Primary provider audio in non-custom mode has 500 char limit
     if (isKieAiAudioModel(model) && customMode === false) {
       return 500;
     }

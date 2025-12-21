@@ -22,7 +22,8 @@ export const PLAN_TOKENS = {
   explorer: 375,
   professional: 1_000,
   ultimate: 2_500,
-  veo_connoisseur: 5_000,
+  studio: 5_000,
+  veo_connoisseur: 5_000, // Alias for backward compatibility
 } as const;
 
 export type PlanName = keyof typeof PLAN_TOKENS;
@@ -184,6 +185,15 @@ export const PREMIUM_BENEFITS = {
     'Full commercial license',
     'Advanced API access',
     'Dedicated support',
+  ],
+  studio: [
+    '200,000 credits per month',
+    'Instant processing',
+    'Unlimited resolution',
+    'Enterprise license',
+    'Full API suite',
+    '24/7 priority support',
+    'Custom integrations',
   ],
   veo_connoisseur: [
     '200,000 credits per month',

@@ -8,13 +8,15 @@ import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music,
 import { useTokenUsage } from "@/hooks/useTokenUsage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
+import { CreditBoostSection } from "./CreditBoostSection";
+import { normalizePlanName, type BillingPeriod } from "@/lib/config/payment-providers";
 interface Subscription {
   plan: string;
   status: string;
   tokens_remaining: number;
   tokens_total: number;
   current_period_end?: string;
+  billing_period?: BillingPeriod;
 }
 
 interface SubscriptionSectionProps {
@@ -126,6 +128,13 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
             </div>
           </CardContent>
         </Card>
+
+        {isPaidPlan && subscription && (
+          <CreditBoostSection 
+            plan={normalizePlanName(subscription.plan)} 
+            billingPeriod={subscription.billing_period || 'monthly'} 
+          />
+        )}
 
 
         <Card>

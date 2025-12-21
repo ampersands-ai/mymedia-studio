@@ -1,4 +1,4 @@
-import { Loader2, Play, Download, RefreshCw } from 'lucide-react';
+import { Play, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useVideoEditorRender } from '../hooks/useVideoEditorRender';

@@ -155,6 +155,14 @@ const Pricing = () => {
           isAnnual
         });
         
+        // Check for duplicate subscription error
+        if (error.message?.includes('DUPLICATE_SUBSCRIPTION') || 
+            error.message?.includes('already have an active subscription')) {
+          toast.info('You already have an active subscription to this plan. You can manage your subscription from your account settings.');
+          setIsCreatingPayment(null);
+          return;
+        }
+        
         // Check if it's a 503 service unavailable error
         if (error.message?.includes('SERVICE_UNAVAILABLE') || 
             error.message?.includes('temporarily unavailable')) {

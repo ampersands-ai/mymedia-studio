@@ -258,10 +258,17 @@ export function getFilteredEnum(
 }
 
 /**
- * Initializes parameters with default values from schema
- * NOTE: 'prompt' is excluded because it's managed separately in state.prompt
- * to avoid conflicts during model execution where { prompt, ...modelParameters }
- * could accidentally override the explicit prompt parameter
+ * Fields that are managed separately from modelParameters.
+ * These are excluded from initialization to prevent conflicts during model execution.
+ * 
+ * - `prompt`: Managed by state.prompt to avoid { prompt, ...modelParameters } 
+ *   accidentally overwriting the explicit prompt parameter with an empty/default value
+ */
+const EXCLUDED_PARAMETER_FIELDS = ['prompt'] as const;
+
+/**
+ * Initializes parameters with default values from schema.
+ * Excludes fields listed in EXCLUDED_PARAMETER_FIELDS which are managed separately.
  */
 export function initializeParameters(
   schema: ModelJsonSchema | null | undefined,
@@ -271,12 +278,9 @@ export function initializeParameters(
   
   const initialized: ModelParameters = {};
   
-  // Fields to skip - these are managed separately from modelParameters
-  const excludedFields = ['prompt'];
-  
   Object.entries(schema.properties).forEach(([key, property]) => {
-    // Skip excluded fields (they're tracked separately)
-    if (excludedFields.includes(key)) return;
+    // Skip fields managed separately (e.g., prompt is managed by state.prompt)
+    if ((EXCLUDED_PARAMETER_FIELDS as readonly string[]).includes(key)) return;
     if (!isJsonSchemaProperty(property)) return;
     
     if (currentValues[key] !== undefined) {
@@ -285,9 +289,6 @@ export function initializeParameters(
       initialized[key] = toModelParameterValue(property.default);
     }
   });
-  
-  // Remove any prompt key that might have been stored previously
-  delete initialized.prompt;
   
   return initialized;
 }

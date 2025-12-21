@@ -65,6 +65,13 @@ export async function executeGeneration({
     uploadedAudioUrls = await uploadAudiosToStorage(userId);
   }
 
+  // Defensive check: prompt should never be in modelParameters
+  // This catches any regressions where prompt accidentally gets included
+  if ('prompt' in modelParameters) {
+    console.warn('[executeGeneration] Warning: prompt found in modelParameters, removing to prevent conflicts');
+    delete modelParameters.prompt;
+  }
+
   // Pass ORIGINAL modelParameters to model's execute()
   // Each model handles sanitization at its own database insert point
   const generationId = await modelModule.execute({

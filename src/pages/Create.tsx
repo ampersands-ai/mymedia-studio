@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTemplatePreviewsByCategory } from "@/hooks/useEnrichedTemplates";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useGenerationState } from "@/hooks/useGenerationState";
@@ -25,10 +26,12 @@ import { clientLogger } from "@/lib/logging/client-logger";
  */
 const Create = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   
   // Data fetching
   const { templatesByCategory, isLoading } = useTemplatePreviewsByCategory();
-  const { data: userTokenData } = useUserTokens();
+  const { data: userTokenData, refetch: refetchTokens } = useUserTokens();
   const userTokens = userTokenData?.tokens_remaining || 0;
   
   // State management
@@ -36,6 +39,36 @@ const Create = () => {
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // Handle payment success from redirect
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+      // Show success toast
+      toast.success('Payment successful!', {
+        description: 'Your subscription is now active. Tokens have been added to your account.',
+        duration: 6000,
+      });
+      
+      // Refetch user tokens and subscription data
+      refetchTokens();
+      queryClient.invalidateQueries({ queryKey: ['user-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
+      
+      // Clean the URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('payment');
+      setSearchParams(newParams, { replace: true });
+      
+      clientLogger.activity({
+        activityType: 'payment',
+        activityName: 'payment_success_detected',
+        routeName: 'Create',
+        metadata: { source: 'url_param' }
+      });
+    }
+  }, [searchParams, setSearchParams, refetchTokens, queryClient]);
   
   // Polling with callbacks
   const { startPolling, isPolling, pollingId } = useGenerationPolling({

@@ -2842,10 +2842,14 @@ export type Database = {
           dodo_customer_id_encrypted: string | null
           dodo_subscription_id: string | null
           dodo_subscription_id_encrypted: string | null
+          frozen_credits: number | null
+          grace_period_end: string | null
           id: string
           last_webhook_at: string | null
           last_webhook_event: string | null
           payment_provider: string | null
+          pending_downgrade_at: string | null
+          pending_downgrade_plan: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: string
           stripe_customer_id: string | null
@@ -2866,10 +2870,14 @@ export type Database = {
           dodo_customer_id_encrypted?: string | null
           dodo_subscription_id?: string | null
           dodo_subscription_id_encrypted?: string | null
+          frozen_credits?: number | null
+          grace_period_end?: string | null
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
           payment_provider?: string | null
+          pending_downgrade_at?: string | null
+          pending_downgrade_plan?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_customer_id?: string | null
@@ -2890,10 +2898,14 @@ export type Database = {
           dodo_customer_id_encrypted?: string | null
           dodo_subscription_id?: string | null
           dodo_subscription_id_encrypted?: string | null
+          frozen_credits?: number | null
+          grace_period_end?: string | null
           id?: string
           last_webhook_at?: string | null
           last_webhook_event?: string | null
           payment_provider?: string | null
+          pending_downgrade_at?: string | null
+          pending_downgrade_plan?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: string
           stripe_customer_id?: string | null

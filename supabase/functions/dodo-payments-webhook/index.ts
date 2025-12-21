@@ -1,4 +1,12 @@
-// Dodo Payments Webhook Handler - v2.0 - Enhanced Diagnostics
+/**
+ * Dodo Payments Webhook Handler - v2.1 - Grace Period Support
+ * 
+ * PRICING POLICY COMPLIANCE:
+ * - Cancellation: 30-day grace period with frozen credits
+ * - Upgrade: Immediate with full tier credits added
+ * - Downgrade: Applied at end of billing period
+ * - Resubscription during grace: Restores frozen credits
+ */
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Webhook } from "https://esm.sh/svix@1";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
@@ -6,7 +14,8 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 
-const WEBHOOK_VERSION = "2.0-svix-dual-headers";
+const WEBHOOK_VERSION = "2.1-grace-period";
+const GRACE_PERIOD_DAYS = 30;
 
 // Type definitions
 interface WebhookEvent {
@@ -37,19 +46,30 @@ interface WebhookEventData {
   [key: string]: unknown;
 }
 
-
-
 const PLAN_TOKENS = {
   'freemium': 5,
   'explorer': 375,
   'professional': 1000,
   'ultimate': 2500,
+  'studio': 5000,
   'veo_connoisseur': 5000,
 };
 
+// Helper to determine plan ranking for upgrade/downgrade detection
+function getPlanRank(plan: string): number {
+  const normalizedPlan = plan === 'veo_connoisseur' ? 'studio' : plan;
+  const ranks: Record<string, number> = {
+    freemium: 0,
+    explorer: 1,
+    professional: 2,
+    ultimate: 3,
+    studio: 4,
+  };
+  return ranks[normalizedPlan] ?? 0;
+}
+
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
-
   const requestId = crypto.randomUUID();
   const logger = new EdgeLogger('dodo-payments-webhook', requestId);
   
@@ -59,7 +79,7 @@ Deno.serve(async (req) => {
 
   try {
     logger.info('Webhook deployed', { 
-      metadata: { version: WEBHOOK_VERSION, features: ['svix-* headers', 'webhook-* headers'] }
+      metadata: { version: WEBHOOK_VERSION, features: ['grace-period', 'deferred-downgrade'] }
     });
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -174,7 +194,7 @@ Deno.serve(async (req) => {
 
       // Step 4: Process the event
       logger.info('Processing webhook event', { metadata: { idempotencyKey, eventType } });
-      await handleWebhookEvent(supabase, event);
+      await handleWebhookEvent(supabase, event, logger);
       
       // Step 5: Record webhook event for idempotency
       await supabase.from('webhook_events').insert({
@@ -208,11 +228,9 @@ Deno.serve(async (req) => {
   }
 });
 
-async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent) {
+async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent, logger: EdgeLogger) {
   const eventType = event.type || event.event_type;
   const eventData = event.data || (event as unknown as WebhookEventData);
-
-  // Processing webhook event
 
   // Extract metadata (user_id, plan, etc.)
   const metadata = eventData.metadata || {};
@@ -250,59 +268,63 @@ async function handleWebhookEvent(supabase: SupabaseClient, event: WebhookEvent)
 
   switch (eventType) {
     case 'payment.succeeded':
-      await handlePaymentSucceeded(supabase, eventData, metadata);
+      await handlePaymentSucceeded(supabase, eventData, metadata, logger);
       break;
 
     case 'payment.failed':
-      await handlePaymentFailed(supabase, eventData, metadata);
+      await handlePaymentFailed(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.active':
-      await handleSubscriptionActive(supabase, eventData, metadata);
+      await handleSubscriptionActive(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.cancelled':
-      await handleSubscriptionCancelled(supabase, eventData, metadata);
+      await handleSubscriptionCancelled(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.expired':
-      await handleSubscriptionExpired(supabase, eventData, metadata);
+      await handleSubscriptionExpired(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.renewed':
-      await handleSubscriptionRenewed(supabase, eventData, metadata);
+      await handleSubscriptionRenewed(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.plan_changed':
-      await handleSubscriptionPlanChanged(supabase, eventData, metadata);
+      await handleSubscriptionPlanChanged(supabase, eventData, metadata, logger);
       break;
 
     case 'subscription.on_hold':
-      await handleSubscriptionOnHold(supabase, eventData, metadata);
+      await handleSubscriptionOnHold(supabase, eventData, metadata, logger);
       break;
 
     case 'refund.succeeded':
-      await handleRefundSucceeded(supabase, eventData, metadata);
+      await handleRefundSucceeded(supabase, eventData, metadata, logger);
       break;
 
     default:
-      // Unhandled event type
-      break;
+      logger.info('Unhandled event type', { metadata: { eventType } });
   }
 
   // Log to audit trail
   if (userId) {
     await supabase.from('audit_logs').insert({
       user_id: userId,
-      action: `webhook.${eventType}`,
+      action: `webhook.dodo.${eventType}`,
       resource_type: 'subscription',
       resource_id: eventData.subscription_id || eventData.payment_id,
-      metadata: { event: eventData },
+      metadata: { event_type: eventType, timestamp: new Date().toISOString() },
     });
   }
 }
 
-async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handlePaymentSucceeded(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   if (!metadata) {
     throw new Error('Missing metadata in payment succeeded event');
   }
@@ -316,32 +338,37 @@ async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEve
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
 
-  // Note: EdgeLogger not available in helper functions, using structured JSON for consistency
-  const requestId = crypto.randomUUID();
-  const logger = new EdgeLogger('payment-handler', requestId);
-
   logger.info('Payment succeeded', { metadata: { userId, planName, tokens } });
 
-  // Get current tokens
+  // Check if user is in grace period (resubscription)
   const { data: currentSub } = await supabase
     .from('user_subscriptions')
-    .select('tokens_remaining, tokens_total')
+    .select('tokens_remaining, tokens_total, frozen_credits, grace_period_end')
     .eq('user_id', userId)
     .maybeSingle();
 
-  // Add new tokens to existing balance
-  const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
-  const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
+  let newTokensRemaining = tokens;
+  let newTokensTotal = tokens;
+  let restoredCredits = 0;
 
-  logger.info('Adding tokens', {
-    metadata: {
-      tokens,
-      currentRemaining: currentSub?.tokens_remaining,
-      newRemaining: newTokensRemaining
+  // RESUBSCRIPTION: Restore frozen credits if within grace period
+  if (currentSub?.grace_period_end && currentSub?.frozen_credits) {
+    const gracePeriodEnd = new Date(currentSub.grace_period_end);
+    if (gracePeriodEnd > new Date()) {
+      restoredCredits = currentSub.frozen_credits;
+      newTokensRemaining = restoredCredits + tokens;
+      newTokensTotal = restoredCredits + tokens;
+      logger.info('Grace period resubscription - restoring frozen credits', {
+        metadata: { restoredCredits, newBalance: newTokensRemaining }
+      });
     }
-  });
+  } else {
+    // Normal subscription - add tokens to existing balance
+    newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
+    newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
+  }
 
-  // Update subscription with added tokens
+  // Update subscription with added tokens, clear grace period
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
@@ -353,6 +380,11 @@ async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEve
       dodo_customer_id: data.customer_id,
       current_period_start: data.current_period_start || new Date().toISOString(),
       current_period_end: data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      // Clear grace period fields
+      grace_period_end: null,
+      frozen_credits: null,
+      pending_downgrade_plan: null,
+      pending_downgrade_at: null,
     })
     .eq('user_id', userId);
 
@@ -360,10 +392,22 @@ async function handlePaymentSucceeded(supabase: SupabaseClient, data: WebhookEve
     logger.error('Error updating subscription', error as Error);
     throw error;
   }
+
+  if (restoredCredits > 0) {
+    logger.info('Resubscription complete - credits restored', {
+      metadata: { userId, restoredCredits, totalBalance: newTokensRemaining }
+    });
+  }
 }
 
-async function handlePaymentFailed(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handlePaymentFailed(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
+  logger.warn('Payment failed', { metadata: { userId } });
 
   await supabase
     .from('user_subscriptions')
@@ -371,11 +415,13 @@ async function handlePaymentFailed(supabase: SupabaseClient, data: WebhookEventD
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionActive(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handleSubscriptionActive(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
-  const requestId = crypto.randomUUID();
-  const logger = new EdgeLogger('subscription-handler', requestId);
-
   logger.info('Subscription activated', { metadata: { userId } });
 
   await supabase
@@ -389,40 +435,84 @@ async function handleSubscriptionActive(supabase: SupabaseClient, data: WebhookE
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionCancelled(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+/**
+ * CANCELLATION HANDLER - 30-DAY GRACE PERIOD
+ */
+async function handleSubscriptionCancelled(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
+  logger.info('Subscription cancelled - starting 30-day grace period', { metadata: { userId } });
 
-  // Don't remove tokens immediately - let them use until period ends
+  // Get current credit balance to freeze
+  const { data: currentSub } = await supabase
+    .from('user_subscriptions')
+    .select('tokens_remaining, plan')
+    .eq('user_id', userId)
+    .single();
+
+  // Calculate grace period end (30 days from now)
+  const gracePeriodEnd = new Date();
+  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
+
+  // Set grace period status - freeze credits
   await supabase
     .from('user_subscriptions')
-    .update({ status: GENERATION_STATUS.CANCELLED })
+    .update({ 
+      status: 'grace_period',
+      grace_period_end: gracePeriodEnd.toISOString(),
+      frozen_credits: currentSub?.tokens_remaining || 0,
+      dodo_subscription_id: null,
+    })
     .eq('user_id', userId);
+
+  logger.info('Grace period started', {
+    metadata: { 
+      userId, 
+      frozenCredits: currentSub?.tokens_remaining,
+      gracePeriodEnd: gracePeriodEnd.toISOString() 
+    }
+  });
 }
 
-async function handleSubscriptionExpired(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handleSubscriptionExpired(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
+  logger.info('Subscription expired - downgrading to freemium', { metadata: { userId } });
 
-  // Downgrade to freemium
+  // Downgrade to freemium - this happens after grace period via cron job typically
   await supabase
     .from('user_subscriptions')
     .update({
       plan: 'freemium',
-      tokens_remaining: 5,
-      tokens_total: 5,
+      tokens_remaining: PLAN_TOKENS.freemium,
+      tokens_total: PLAN_TOKENS.freemium,
       status: 'expired',
+      grace_period_end: null,
+      frozen_credits: null,
       dodo_subscription_id: null,
       dodo_customer_id: null,
     })
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionRenewed(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handleSubscriptionRenewed(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
   const planName = metadata?.plan || 'freemium';
   const planKey = planName.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
   const tokens = PLAN_TOKENS[planKey] || 500;
-  const requestId = crypto.randomUUID();
-  const logger = new EdgeLogger('subscription-renewed', requestId);
 
   logger.info('Subscription renewed', { metadata: { userId, tokens } });
 
@@ -449,7 +539,15 @@ async function handleSubscriptionRenewed(supabase: SupabaseClient, data: Webhook
     .eq('user_id', userId);
 }
 
-async function handleSubscriptionPlanChanged(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+/**
+ * PLAN CHANGE HANDLER - UPGRADE/DOWNGRADE LOGIC
+ */
+async function handleSubscriptionPlanChanged(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   if (!metadata) {
     throw new Error('Missing metadata in plan changed event');
   }
@@ -465,25 +563,83 @@ async function handleSubscriptionPlanChanged(supabase: SupabaseClient, data: Web
   }
   
   const planKey = newPlan.toLowerCase().replace(' ', '_') as keyof typeof PLAN_TOKENS;
-  const tokens = PLAN_TOKENS[planKey] || 500;
-  const requestId = crypto.randomUUID();
-  const logger = new EdgeLogger('plan-changed', requestId);
+  const newTokens = PLAN_TOKENS[planKey] || 500;
 
-  logger.info('Plan changed', { metadata: { userId, newPlan, tokens } });
-
-  await supabase
+  // Get current subscription to determine upgrade vs downgrade
+  const { data: currentSub } = await supabase
     .from('user_subscriptions')
-    .update({
-      plan: planKey,
-      tokens_remaining: tokens,
-      tokens_total: tokens,
-      status: 'active',
-    })
-    .eq('user_id', userId);
+    .select('plan, tokens_remaining, tokens_total')
+    .eq('user_id', userId)
+    .single();
+
+  const currentPlan = currentSub?.plan || 'freemium';
+  const isUpgrade = getPlanRank(planKey) > getPlanRank(currentPlan);
+  const isDowngrade = getPlanRank(planKey) < getPlanRank(currentPlan);
+
+  logger.info('Plan change detected', { 
+    metadata: { userId, currentPlan, newPlan: planKey, isUpgrade, isDowngrade } 
+  });
+
+  if (isUpgrade) {
+    // UPGRADE: Immediate - add full new tier credits
+    const newTokensRemaining = (currentSub?.tokens_remaining || 0) + newTokens;
+    const newTokensTotal = (currentSub?.tokens_total || 0) + newTokens;
+
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        plan: planKey,
+        tokens_remaining: newTokensRemaining,
+        tokens_total: newTokensTotal,
+        status: 'active',
+        pending_downgrade_plan: null,
+        pending_downgrade_at: null,
+      })
+      .eq('user_id', userId);
+
+    logger.info('Upgrade applied immediately', {
+      metadata: { userId, tokensAdded: newTokens, newBalance: newTokensRemaining }
+    });
+
+  } else if (isDowngrade) {
+    // DOWNGRADE: Schedule for end of billing period
+    const downgradeAt = data.current_period_end 
+      ? new Date(data.current_period_end)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        pending_downgrade_plan: planKey,
+        pending_downgrade_at: downgradeAt.toISOString(),
+        // Keep current plan active
+      })
+      .eq('user_id', userId);
+
+    logger.info('Downgrade scheduled for end of billing period', {
+      metadata: { userId, pendingPlan: planKey, downgradeAt: downgradeAt.toISOString() }
+    });
+
+  } else {
+    // Same tier change (maybe billing period)
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        plan: planKey,
+        status: 'active',
+      })
+      .eq('user_id', userId);
+  }
 }
 
-async function handleSubscriptionOnHold(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handleSubscriptionOnHold(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
+  logger.warn('Subscription on hold', { metadata: { userId } });
 
   await supabase
     .from('user_subscriptions')
@@ -491,17 +647,17 @@ async function handleSubscriptionOnHold(supabase: SupabaseClient, data: WebhookE
     .eq('user_id', userId);
 }
 
-async function handleRefundSucceeded(supabase: SupabaseClient, data: WebhookEventData, metadata: WebhookEventData['metadata']) {
+async function handleRefundSucceeded(
+  supabase: SupabaseClient, 
+  data: WebhookEventData, 
+  metadata: WebhookEventData['metadata'],
+  logger: EdgeLogger
+) {
   const userId = metadata?.user_id;
   const refundAmount = data.amount || 0;
-  const requestId = crypto.randomUUID();
-  const logger = new EdgeLogger('refund-handler', requestId);
 
   logger.info('Refund processed', { metadata: { userId, refundAmount } });
 
-  // Optionally deduct tokens proportionally
-  await supabase
-    .from('user_subscriptions')
-    .update({ status: 'refunded' })
-    .eq('user_id', userId);
+  // You may want to adjust credits here based on refund
+  // For now just log it
 }

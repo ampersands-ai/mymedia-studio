@@ -2,13 +2,19 @@
  * Stripe Payments Webhook Handler
  * 
  * Handles Stripe webhook events for subscription payments (backup gateway)
+ * 
+ * PRICING POLICY COMPLIANCE:
+ * - Cancellation: 30-day grace period with frozen credits
+ * - Downgrade: Applied at end of billing period
+ * - Upgrade: Immediate with full tier credits added
+ * - Resubscription during grace: Restores frozen credits
  */
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const WEBHOOK_VERSION = "1.1-stripe-boost";
+const WEBHOOK_VERSION = "2.0-grace-period";
 
 // Token allocations by plan
 const PLAN_TOKENS: Record<string, number> = {
@@ -33,6 +39,9 @@ const STRIPE_PRODUCT_TO_PLAN: Record<string, string> = {
   'prod_TdnhfLnZrsQ5Bf': 'ultimate',       // Ultimate Annual
   'prod_TdnhievqGBX9KC': 'studio',         // Studio Annual (was veo_connoisseur)
 };
+
+// Grace period duration in days
+const GRACE_PERIOD_DAYS = 30;
 
 // Normalize plan name for backward compatibility
 function normalizePlanName(plan: string): string {
@@ -63,10 +72,11 @@ function getPlanRank(plan: string): number {
 interface SubscriptionEmailPayload {
   user_id: string;
   email: string;
-  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed' | 'boost_purchased';
+  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed' | 'boost_purchased' | 'resubscribed';
   plan_name: string;
   previous_plan?: string;
   tokens_added?: number;
+  grace_period_end?: string;
 }
 
 async function sendSubscriptionEmail(
@@ -246,17 +256,35 @@ async function handleCheckoutCompleted(
 
   logger.info('Checkout completed', { metadata: { userId, planKey, tokens, productId, billingPeriod } });
 
-  // Get current tokens
+  // Check if user is in grace period (resubscription)
   const { data: currentSub } = await supabase
     .from('user_subscriptions')
-    .select('tokens_remaining, tokens_total')
+    .select('tokens_remaining, tokens_total, frozen_credits, grace_period_end')
     .eq('user_id', userId)
     .maybeSingle();
 
-  const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
-  const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
+  let newTokensRemaining = tokens;
+  let newTokensTotal = tokens;
+  let restoredCredits = 0;
 
-  // Update subscription with payment IDs and billing period
+  // RESUBSCRIPTION: Restore frozen credits if within grace period
+  if (currentSub?.grace_period_end && currentSub?.frozen_credits) {
+    const gracePeriodEnd = new Date(currentSub.grace_period_end);
+    if (gracePeriodEnd > new Date()) {
+      restoredCredits = currentSub.frozen_credits;
+      newTokensRemaining = restoredCredits + tokens;
+      newTokensTotal = restoredCredits + tokens;
+      logger.info('Grace period resubscription - restoring frozen credits', {
+        metadata: { restoredCredits, newBalance: newTokensRemaining }
+      });
+    }
+  } else {
+    // Normal new subscription - add tokens to any existing balance
+    newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
+    newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
+  }
+
+  // Update subscription with payment IDs, clear grace period fields
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
@@ -274,6 +302,11 @@ async function handleCheckoutCompleted(
       current_period_end: subscription.current_period_end 
         ? new Date(subscription.current_period_end * 1000).toISOString() 
         : null,
+      // Clear grace period and pending downgrade fields
+      grace_period_end: null,
+      frozen_credits: null,
+      pending_downgrade_plan: null,
+      pending_downgrade_at: null,
       last_webhook_event: 'checkout.session.completed',
       last_webhook_at: new Date().toISOString(),
     })
@@ -291,28 +324,40 @@ async function handleCheckoutCompleted(
     .eq('id', userId)
     .maybeSingle();
 
-  // Send subscription activated email
+  // Send appropriate email
   if (profile?.email) {
     try {
-      await sendSubscriptionEmail(supabase, {
-        user_id: userId,
-        email: profile.email,
-        event_type: 'activated',
-        plan_name: planKey,
-        tokens_added: tokens,
-      }, logger);
+      if (restoredCredits > 0) {
+        // Resubscription email
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'resubscribed',
+          plan_name: planKey,
+          tokens_added: restoredCredits,
+        }, logger);
+      } else {
+        // New subscription email
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'activated',
+          plan_name: planKey,
+          tokens_added: tokens,
+        }, logger);
+      }
     } catch (emailError) {
       logger.warn('Failed to send subscription email', { metadata: { errorMessage: (emailError as Error).message } });
     }
   }
 
-  // Audit log - sanitized (no raw payment IDs)
+  // Audit log
   await supabase.from('audit_logs').insert({
     user_id: userId,
-    action: 'webhook.stripe.checkout_completed',
+    action: restoredCredits > 0 ? 'webhook.stripe.resubscribed' : 'webhook.stripe.checkout_completed',
     resource_type: 'subscription',
     resource_id: subscription.id,
-    metadata: { plan: planKey, tokens, provider: 'stripe', billingPeriod },
+    metadata: { plan: planKey, tokens, restoredCredits, provider: 'stripe', billingPeriod },
   });
 }
 
@@ -506,6 +551,14 @@ async function handleInvoicePaymentFailed(
     .eq('user_id', subscription.user_id);
 }
 
+/**
+ * CANCELLATION HANDLER - 30-DAY GRACE PERIOD
+ * 
+ * Per pricing policy:
+ * - Credits frozen for 30 days after billing cycle ends
+ * - Resubscribing within grace period restores full credit balance
+ * - After grace period, credits removed permanently
+ */
 async function handleSubscriptionDeleted(
   supabase: SupabaseClient,
   subscription: Stripe.Subscription,
@@ -522,26 +575,39 @@ async function handleSubscriptionDeleted(
     return;
   }
 
-  logger.info('Subscription cancelled', { metadata: { userId: userSub.user_id } });
+  logger.info('Subscription cancelled - starting 30-day grace period', { 
+    metadata: { userId: userSub.user_id } 
+  });
 
   const previousPlan = normalizePlanName(userSub.plan);
 
-  // Downgrade to freemium
+  // Get current credit balance to freeze
+  const { data: currentSub } = await supabase
+    .from('user_subscriptions')
+    .select('tokens_remaining')
+    .eq('user_id', userSub.user_id)
+    .single();
+
+  // Calculate grace period end (30 days from now)
+  const gracePeriodEnd = new Date();
+  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
+
+  // Set grace period status - freeze credits instead of wiping them
   await supabase
     .from('user_subscriptions')
     .update({
-      plan: 'freemium',
-      billing_period: 'monthly',
-      tokens_remaining: 5,
-      tokens_total: 5,
-      status: 'cancelled',
+      status: 'grace_period',
+      grace_period_end: gracePeriodEnd.toISOString(),
+      frozen_credits: currentSub?.tokens_remaining || 0,
+      // Keep credits available during grace period
+      // They will be wiped by the cron job after grace period expires
       stripe_subscription_id: null,
       last_webhook_event: 'customer.subscription.deleted',
       last_webhook_at: new Date().toISOString(),
     })
     .eq('user_id', userSub.user_id);
 
-  // Get user email and send cancellation notification
+  // Get user email and send cancellation notification with grace period info
   const { data: profile } = await supabase
     .from('profiles')
     .select('email')
@@ -555,13 +621,34 @@ async function handleSubscriptionDeleted(
         email: profile.email,
         event_type: 'cancelled',
         plan_name: previousPlan,
+        grace_period_end: gracePeriodEnd.toISOString(),
       }, logger);
     } catch (emailError) {
       logger.warn('Failed to send cancellation email', { metadata: { errorMessage: (emailError as Error).message } });
     }
   }
+
+  // Audit log
+  await supabase.from('audit_logs').insert({
+    user_id: userSub.user_id,
+    action: 'webhook.stripe.cancelled_grace_period',
+    resource_type: 'subscription',
+    resource_id: subscription.id,
+    metadata: { 
+      previousPlan, 
+      frozenCredits: currentSub?.tokens_remaining || 0,
+      gracePeriodEnd: gracePeriodEnd.toISOString(),
+    },
+  });
 }
 
+/**
+ * SUBSCRIPTION UPDATE HANDLER - UPGRADE/DOWNGRADE LOGIC
+ * 
+ * Per pricing policy:
+ * - Upgrade: Immediate, prorated charge, add full new tier credits immediately
+ * - Downgrade: Applied at end of billing cycle, keep existing credits
+ */
 async function handleSubscriptionUpdated(
   supabase: SupabaseClient,
   stripe: Stripe,
@@ -606,6 +693,7 @@ async function handleSubscriptionUpdated(
   }
 
   const isUpgrade = getPlanRank(newPlanKey) > getPlanRank(previousPlan);
+  const isDowngrade = getPlanRank(newPlanKey) < getPlanRank(previousPlan);
   
   logger.info('Subscription updated', { 
     metadata: { 
@@ -613,6 +701,7 @@ async function handleSubscriptionUpdated(
       newPlan: newPlanKey, 
       previousPlan, 
       isUpgrade,
+      isDowngrade,
       newBillingPeriod,
       previousBillingPeriod,
       planChanged,
@@ -627,34 +716,32 @@ async function handleSubscriptionUpdated(
     .eq('user_id', userSub.user_id)
     .single();
 
-  // REVISED UPGRADE LOGIC: On upgrade, add FULL new tier credits
-  // Existing credits stay in account, new tier credits added on top
-  let tokensToAdd = 0;
   if (isUpgrade && planChanged) {
-    tokensToAdd = PLAN_TOKENS[newPlanKey] || 0;
-    logger.info('Upgrade detected - adding full tier credits', { 
+    // UPGRADE: Immediate - add full new tier credits
+    const tokensToAdd = PLAN_TOKENS[newPlanKey] || 0;
+    logger.info('Upgrade detected - adding full tier credits immediately', { 
       metadata: { tokensToAdd, existingBalance: currentSub?.tokens_remaining } 
     });
-  }
 
-  // Update subscription
-  await supabase
-    .from('user_subscriptions')
-    .update({
-      plan: newPlanKey,
-      billing_period: newBillingPeriod,
-      tokens_remaining: (currentSub?.tokens_remaining || 0) + tokensToAdd,
-      tokens_total: (currentSub?.tokens_total || 0) + tokensToAdd,
-      current_period_end: subscription.current_period_end 
-        ? new Date(subscription.current_period_end * 1000).toISOString() 
-        : null,
-      last_webhook_event: 'customer.subscription.updated',
-      last_webhook_at: new Date().toISOString(),
-    })
-    .eq('user_id', userSub.user_id);
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        plan: newPlanKey,
+        billing_period: newBillingPeriod,
+        tokens_remaining: (currentSub?.tokens_remaining || 0) + tokensToAdd,
+        tokens_total: (currentSub?.tokens_total || 0) + tokensToAdd,
+        current_period_end: subscription.current_period_end 
+          ? new Date(subscription.current_period_end * 1000).toISOString() 
+          : null,
+        // Clear any pending downgrade
+        pending_downgrade_plan: null,
+        pending_downgrade_at: null,
+        last_webhook_event: 'customer.subscription.updated',
+        last_webhook_at: new Date().toISOString(),
+      })
+      .eq('user_id', userSub.user_id);
 
-  // Get user email and send plan change notification (only if plan changed, not just billing period)
-  if (planChanged) {
+    // Send upgrade email
     const { data: profile } = await supabase
       .from('profiles')
       .select('email')
@@ -666,32 +753,121 @@ async function handleSubscriptionUpdated(
         await sendSubscriptionEmail(supabase, {
           user_id: userSub.user_id,
           email: profile.email,
-          event_type: isUpgrade ? 'upgraded' : 'downgraded',
+          event_type: 'upgraded',
           plan_name: newPlanKey,
           previous_plan: previousPlan,
-          tokens_added: isUpgrade ? tokensToAdd : undefined,
+          tokens_added: tokensToAdd,
         }, logger);
       } catch (emailError) {
-        logger.warn('Failed to send plan change email', { metadata: { errorMessage: (emailError as Error).message } });
+        logger.warn('Failed to send upgrade email', { metadata: { errorMessage: (emailError as Error).message } });
       }
     }
-  }
 
-  // Audit log
-  await supabase.from('audit_logs').insert({
-    user_id: userSub.user_id,
-    action: planChanged 
-      ? (isUpgrade ? 'webhook.stripe.upgraded' : 'webhook.stripe.downgraded')
-      : 'webhook.stripe.billing_period_changed',
-    resource_type: 'subscription',
-    resource_id: subscription.id,
-    metadata: { 
-      newPlan: newPlanKey, 
-      previousPlan, 
-      isUpgrade,
-      tokensAdded: tokensToAdd,
-      newBillingPeriod,
-      previousBillingPeriod,
-    },
-  });
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      user_id: userSub.user_id,
+      action: 'webhook.stripe.upgraded',
+      resource_type: 'subscription',
+      resource_id: subscription.id,
+      metadata: { 
+        newPlan: newPlanKey, 
+        previousPlan, 
+        tokensAdded: tokensToAdd,
+        newBillingPeriod,
+      },
+    });
+
+  } else if (isDowngrade && planChanged) {
+    // DOWNGRADE: Deferred to end of billing period
+    // Per spec: "Your current plan stays active until the end of your billing cycle"
+    const downgradeAt = subscription.current_period_end 
+      ? new Date(subscription.current_period_end * 1000)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    logger.info('Downgrade detected - scheduling for end of billing period', { 
+      metadata: { 
+        pendingPlan: newPlanKey, 
+        downgradeAt: downgradeAt.toISOString() 
+      } 
+    });
+
+    // Note: Stripe already handles the actual plan change at period end
+    // We just track it for UI display and the cron job handles credit adjustment
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        pending_downgrade_plan: newPlanKey,
+        pending_downgrade_at: downgradeAt.toISOString(),
+        billing_period: newBillingPeriod,
+        current_period_end: downgradeAt.toISOString(),
+        last_webhook_event: 'customer.subscription.updated',
+        last_webhook_at: new Date().toISOString(),
+      })
+      .eq('user_id', userSub.user_id);
+
+    // Send downgrade scheduled email
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userSub.user_id)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendSubscriptionEmail(supabase, {
+          user_id: userSub.user_id,
+          email: profile.email,
+          event_type: 'downgraded',
+          plan_name: newPlanKey,
+          previous_plan: previousPlan,
+        }, logger);
+      } catch (emailError) {
+        logger.warn('Failed to send downgrade email', { metadata: { errorMessage: (emailError as Error).message } });
+      }
+    }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      user_id: userSub.user_id,
+      action: 'webhook.stripe.downgrade_scheduled',
+      resource_type: 'subscription',
+      resource_id: subscription.id,
+      metadata: { 
+        currentPlan: previousPlan,
+        pendingPlan: newPlanKey, 
+        downgradeAt: downgradeAt.toISOString(),
+        newBillingPeriod,
+      },
+    });
+
+  } else {
+    // Billing period change only (or same-tier change)
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        plan: newPlanKey,
+        billing_period: newBillingPeriod,
+        current_period_end: subscription.current_period_end 
+          ? new Date(subscription.current_period_end * 1000).toISOString() 
+          : null,
+        last_webhook_event: 'customer.subscription.updated',
+        last_webhook_at: new Date().toISOString(),
+      })
+      .eq('user_id', userSub.user_id);
+
+    // Audit log for billing period change
+    if (billingPeriodChanged) {
+      await supabase.from('audit_logs').insert({
+        user_id: userSub.user_id,
+        action: 'webhook.stripe.billing_period_changed',
+        resource_type: 'subscription',
+        resource_id: subscription.id,
+        metadata: { 
+          plan: newPlanKey,
+          previousBillingPeriod,
+          newBillingPeriod,
+        },
+      });
+    }
+  }
 }

@@ -103,7 +103,7 @@ export function BackgroundMusicSelector({
         operation: 'searchMusic',
         query
       });
-      toast.error(error instanceof Error ? error.message : 'Failed to search music');
+      toast.error('Failed to search music. Please try again.');
     } finally {
       setLoading(false);
     }

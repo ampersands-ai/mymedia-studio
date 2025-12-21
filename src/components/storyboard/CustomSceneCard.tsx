@@ -88,7 +88,7 @@ export function CustomSceneCard({
         promptLength: scene.imagePrompt.length,
         operation: 'handleEnhancePrompt'
       });
-      toast.error(err.message || 'Failed to enhance prompt');
+      toast.error('Failed to enhance prompt. Please try again.');
     } finally {
       setIsEnhancing(false);
     }
@@ -125,7 +125,7 @@ export function CustomSceneCard({
         promptLength: scene.imagePrompt.length,
         operation: 'handleGenerateImage'
       });
-      toast.error(err.message || 'Failed to generate image');
+      toast.error('Failed to generate image. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -161,7 +161,7 @@ export function CustomSceneCard({
         fileSize: file.size,
         operation: 'handleUploadImage'
       });
-      toast.error(err.message || 'Failed to upload image');
+      toast.error('Failed to upload image. Please try again.');
     }
   };
 

@@ -58,7 +58,7 @@ export function TopicStep({
         component: 'TopicStep',
         operation: 'generateTopic',
       });
-      toast.error(err.message);
+      toast.error('Failed to generate topic. Please try again.');
     } finally {
       setIsGeneratingTopic(false);
     }

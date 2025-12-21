@@ -28,7 +28,7 @@ export function DataSection() {
                   try {
                     await clearAllCaches();
                   } catch (error) {
-                    toast.error(`Failed to clear caches: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    toast.error('Failed to clear caches. Please try again.');
                   }
                 }}
               >

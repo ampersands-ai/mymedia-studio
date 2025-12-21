@@ -50,7 +50,7 @@ export const GenerationsInProgress = ({
         generationId,
         operation: 'handleCancelGeneration'
       });
-      toast.error(err.message);
+      toast.error('Failed to cancel generation. Please try again.');
     } finally {
       setCancelingId(null);
     }
@@ -74,7 +74,7 @@ export const GenerationsInProgress = ({
       }
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to check provider status');
-      toast.error(err.message);
+      toast.error('Failed to check status. Please try again.');
     } finally {
       setCancelingId(null);
     }

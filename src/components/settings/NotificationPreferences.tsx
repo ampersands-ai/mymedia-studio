@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Bell, Mail, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { PushNotificationToggle } from './PushNotificationToggle';
+import { getUserErrorMessage } from '@/lib/errors/custom-errors';
 
 interface NotificationPreferences {
   email_on_completion: boolean;
@@ -58,7 +59,7 @@ export const NotificationPreferences = () => {
         userId: user?.id,
         operation: 'fetchPreferences'
       });
-      toast.error(`Failed to load notification preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error('Failed to load notification preferences. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export const NotificationPreferences = () => {
         preferences,
         operation: 'savePreferences'
       });
-      toast.error(`Failed to save preferences: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error('Failed to save preferences. Please try again.');
     } finally {
       setSaving(false);
     }

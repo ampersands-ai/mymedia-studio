@@ -69,12 +69,6 @@ export const GlobalHeader = () => {
                 Features
               </button>
             )}
-            <button 
-              onClick={() => navigate("/pricing")}
-              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-            >
-              Pricing
-            </button>
             {showBlogPage && (
               <button 
                 onClick={() => navigate("/blog")}

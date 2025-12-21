@@ -330,9 +330,6 @@ const Pricing = () => {
                 <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
               </Link>
               <div className="flex items-center gap-2 md:gap-3">
-                <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
-                  Pricing
-                </Button>
                 {!user ? (
                   <>
                     <Button variant="outline" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-sm md:text-base">

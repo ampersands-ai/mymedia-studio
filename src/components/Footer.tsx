@@ -6,18 +6,16 @@ import logo from "@/assets/logo.png";
 import { useState } from "react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
-import { useAdminRole } from "@/hooks/useAdminRole";
 
 export const Footer = () => {
   const [email, setEmail] = useState("");
   const { subscribe, isLoading } = useNewsletterSubscribe();
   const { isPageEnabled } = useFeatureFlags();
-  const { isAdmin } = useAdminRole();
   
-  const showFeaturesPage = isPageEnabled('features') || isAdmin;
-  const showBlogPage = isPageEnabled('blog') || isAdmin;
-  const showCommunityPage = isPageEnabled('community') || isAdmin;
-  const showTemplateLandings = isPageEnabled('templateLandings') || isAdmin;
+  const showFeaturesPage = isPageEnabled('features');
+  const showBlogPage = isPageEnabled('blog');
+  const showCommunityPage = isPageEnabled('community');
+  const showTemplateLandings = isPageEnabled('templateLandings');
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -95,6 +95,6 @@ Each file needs the following lines removed:
 ## Testing:
 Once cleanup is complete, test with:
 1. Remove Background model (Runware)
-2. Any KIE AI model
+2. Any provider model
 3. Verify no CORS errors
 4. Verify edge function logs show successful execution

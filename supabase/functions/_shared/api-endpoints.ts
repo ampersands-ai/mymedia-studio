@@ -19,7 +19,7 @@ function getEnvOrDefault(key: string, defaultValue: string): string {
 }
 
 /**
- * Kie.ai API endpoints
+ * Provider API endpoints
  */
 export const KIE_AI_ENDPOINTS = {
   BASE: getEnvOrDefault('KIE_AI_BASE_URL', 'https://api.kie.ai'),

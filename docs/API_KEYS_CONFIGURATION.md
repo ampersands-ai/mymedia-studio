@@ -11,7 +11,7 @@ The `get-api-key` Edge Function automatically routes to the correct API key base
 ## Provider Parameter (Required)
 
 The `provider` parameter is **required** and must be explicitly passed by all models:
-- KIE AI models: `provider: "kie_ai"`
+- Provider models: `provider: "kie_ai"`
 - Runware models: `provider: "runware"`
 
 **Why explicit provider (industry standard):**
@@ -25,7 +25,7 @@ All 28 model files now explicitly pass `provider: MODEL_CONFIG.provider` to the 
 
 ---
 
-## KIE AI API Keys (provider = "kie_ai")
+## Provider API Keys (provider = "kie_ai")
 
 ### Specific Model Keys (Priority)
 
@@ -54,7 +54,7 @@ If no specific model key matches, it checks by content type:
 
 | Environment Variable | Used For |
 |---------------------|----------|
-| `KIE_AI_API_KEY` | Fallback for any KIE AI model if no specific key is found |
+| `KIE_AI_API_KEY` | Fallback for any provider model if no specific key is found |
 
 ---
 
@@ -86,7 +86,7 @@ If no specific model key matches, it checks by content type:
 
 ## API Key Lookup Logic
 
-### For KIE AI Models
+### For Provider Models
 
 ```
 1. Check specific model keys by recordId (VEO3, SORA2, Nano Banana, Seedream V4)
@@ -153,7 +153,7 @@ To test if an API key is configured correctly:
 **You need to configure:**
 
 ### Minimum Setup (Fallback Keys Only)
-- `KIE_AI_API_KEY` - for all KIE AI models
+- `KIE_AI_API_KEY` - for all provider models
 - `RUNWARE_API_KEY` - for all Runware models
 
 ### Recommended Setup (Organized by Model Type)

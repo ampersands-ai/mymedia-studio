@@ -44,7 +44,7 @@ if (!signatureResult.success) {
 ### Security Impact
 
 - **Prevents**: Payload tampering, man-in-the-middle attacks
-- **Validates**: Cryptographic proof that webhook came from KIE.ai
+- **Validates**: Cryptographic proof that webhook came from provider
 - **Implementation**: Uses constant-time comparison to prevent timing attacks
 - **Requires**: `KIE_WEBHOOK_SECRET` environment variable (already configured)
 

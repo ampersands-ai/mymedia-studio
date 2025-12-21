@@ -1,9 +1,9 @@
 /**
- * HMAC Signature Validator for Kie.ai Webhook
+ * HMAC Signature Validator for Provider Webhook
  *
  * SECURITY LAYER 5: Cryptographic signature verification
  *
- * This provides cryptographic proof that the request came from Kie.ai
+ * This provides cryptographic proof that the request came from provider
  * and that the payload hasn't been tampered with in transit.
  *
  * Attack Vectors Prevented:
@@ -43,7 +43,7 @@ export function validateSignature(
   const secret = Deno.env.get('KIE_WEBHOOK_SECRET');
 
   // If no secret configured AND no signature provided, skip HMAC validation
-  // This allows providers like Kie.ai that don't send HMAC signatures
+  // This allows providers that don't send HMAC signatures
   // (Other security layers still protect the webhook: URL token, verify token, timing, idempotency)
   if (!secret && !receivedSignature) {
     logger.info('Layer 5 skipped: HMAC validation not configured');

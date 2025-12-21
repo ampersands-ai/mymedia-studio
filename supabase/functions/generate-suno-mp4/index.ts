@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
 
     logger.info('Video generation created', { metadata: { generation_id: videoGen.id } });
 
-    // Call Kie.ai MP4 generation API
+    // Call provider MP4 generation API
     const KIE_API_KEY = Deno.env.get('KIE_AI_API_KEY');
     const KIE_WEBHOOK_TOKEN = Deno.env.get('KIE_WEBHOOK_URL_TOKEN');
     

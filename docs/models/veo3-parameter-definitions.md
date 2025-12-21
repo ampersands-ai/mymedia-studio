@@ -1,13 +1,13 @@
 # Veo 3.1 Model Parameter Definitions
 
-This document captures the exact UI/input schema and payload expectations for every Veo 3.1 model we support. It is derived from the official Kie.ai documentation for the `/api/v1/veo/generate` endpoint.  
-Reference: [Kie.ai Veo 3.1 API](https://docs.kie.ai/veo3-api/generate-veo-3-video)
+This document captures the exact UI/input schema and payload expectations for every Veo 3.1 model we support. It is derived from the official provider documentation for the `/api/v1/veo/generate` endpoint.
+Reference: [Provider Veo 3.1 API](https://docs.kie.ai/veo3-api/generate-veo-3-video)
 
 The intent is to keep one canonical definition per model that we can feed directly into the code generator that produces the isolated `.ts` files (one file per model, no shared dependencies). Whenever a parameter changes, update it here first, then regenerate the model file.
 
 ---
 
-## 1. Shared Field Reference (from Kie.ai spec)
+## 1. Shared Field Reference (from provider spec)
 
 | Field | Type | Required | Allowed Values / Constraints | Notes |
 | --- | --- | --- | --- | --- |
@@ -156,7 +156,7 @@ Fill out each slot with the specifics for the five Veo 3.1 variants in the Image
 - **Display Name:** `Google Veo 3.1 Reference`
 - **Group:** `image_to_video`
 - **Default Generation Type:** `REFERENCE_2_VIDEO`
-- **Supported Modes:** `REFERENCE_2_VIDEO` (per Kie.ai doc: only supported on `veo3_fast` and 16:9)
+- **Supported Modes:** `REFERENCE_2_VIDEO` (per provider doc: only supported on `veo3_fast` and 16:9)
 - **UI Parameter Matrix:**
 
 | UI Field | Payload Field | Type / Renderer | Required | Default | Notes |

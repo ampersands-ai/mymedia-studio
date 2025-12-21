@@ -188,7 +188,7 @@ The admin panel provides comprehensive management tools for ARTIFIO.AI's AI mode
 **Route**: `/admin/api-health`
 **Purpose**: External API health monitoring
 **Features**:
-- Monitor all provider APIs (KIE AI, Runware, ElevenLabs, etc.)
+- Monitor all provider APIs (Runware, ElevenLabs, etc.)
 - Response time tracking
 - Error rate monitoring
 - Uptime statistics

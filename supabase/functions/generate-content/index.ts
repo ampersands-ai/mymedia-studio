@@ -1207,7 +1207,7 @@ Deno.serve(async (req) => {
           }
         });
 
-        // Convert base64 images to signed URLs (required for Kie.ai and other providers)
+        // Convert base64 images to signed URLs (required for provider and other APIs)
         const processedParams = await convertImagesToUrls(
           allowedParams,
           user.id,
@@ -1239,7 +1239,7 @@ Deno.serve(async (req) => {
           }
         });
 
-        // Get webhookToken from generation settings for Kie.ai provider
+        // Get webhookToken from generation settings for provider
         const webhookToken = createdGeneration.settings?._webhook_token as string | undefined;
 
         // Log provider API call if in test mode
@@ -1295,7 +1295,7 @@ Deno.serve(async (req) => {
           metadata: { generation_id: createdGeneration.id }
         });
 
-        // Check if this is a webhook-based provider (Kie.ai)
+        // Check if this is a webhook-based provider
         const isWebhookProvider = model.provider === 'kie_ai' && providerResponse.metadata?.task_id;
 
         if (isWebhookProvider) {
@@ -1599,7 +1599,7 @@ async function enhancePrompt(
   let systemPrompt = instruction;
 
   if (!systemPrompt) {
-    // For Kie.ai audio non-custom mode, enforce strict 500 character limit
+    // For provider audio non-custom mode, enforce strict 500 character limit
     if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
       systemPrompt = `You are a prompt enhancement AI for audio generation. Transform the user's prompt into an optimized prompt for better audio output.
 
@@ -1633,7 +1633,7 @@ Keep the core intent, add key musical/audio details (genre, mood, instruments, t
   const data = await response.json();
   let enhanced = data.choices[0].message.content.trim();
 
-  // Safety net: Force truncate if enhancement still exceeds limit for Kie.ai non-custom mode
+  // Safety net: Force truncate if enhancement still exceeds limit for provider non-custom mode
   if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
     if (enhanced.length > 500) {
       // Truncate to stay within 500 character limit

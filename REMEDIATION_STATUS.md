@@ -48,7 +48,7 @@ These 5 utilities will enable fixing **200+ issues** efficiently:
 
 4. **API Endpoints Config** (`supabase/functions/_shared/api-endpoints.ts`) ✅
    - Centralizes 30+ hardcoded API URLs
-   - Kie.ai, Runware, Shotstack, Json2Video, ElevenLabs
+   - Provider, Runware, Shotstack, Json2Video, ElevenLabs
    - Environment-based configuration
    - **Fixes:** 30+ files with hardcoded endpoints
 

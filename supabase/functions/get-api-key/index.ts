@@ -7,7 +7,7 @@
  * API keys server-side, eliminating client-side API key exposure.
  *
  * Related commits:
- * - 65648b95: Security refactor for 54 KIE.AI models
+ * - 65648b95: Security refactor for 54 provider models
  * - 5d1483bc: Security refactor for 13 Runware models
  *
  * HTTP 410 Gone indicates this resource is permanently unavailable.

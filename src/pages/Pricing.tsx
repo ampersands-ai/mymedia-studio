@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 
 const plans = [
   {
-    name: "Veo Connoisseur",
+    name: "Studio",
     monthlyPrice: "$94.99",
     annualPrice: "$74.99",
     period: "/mo",

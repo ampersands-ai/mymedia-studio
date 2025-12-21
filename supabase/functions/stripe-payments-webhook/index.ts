@@ -8,7 +8,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-const WEBHOOK_VERSION = "1.0-stripe-backup";
+const WEBHOOK_VERSION = "1.1-stripe-boost";
 
 // Token allocations by plan
 const PLAN_TOKENS: Record<string, number> = {
@@ -16,28 +16,54 @@ const PLAN_TOKENS: Record<string, number> = {
   explorer: 375,
   professional: 1000,
   ultimate: 2500,
-  veo_connoisseur: 5000,
+  studio: 5000,
+  veo_connoisseur: 5000, // Alias for backward compatibility
 };
 
 // Map Stripe product IDs to plan names
 const STRIPE_PRODUCT_TO_PLAN: Record<string, string> = {
-  // Monthly products
+  // Monthly subscription products
   'prod_TdnfGrQLjOQ1XD': 'explorer',       // Explorer Monthly
   'prod_TdngwzaCGA5DOf': 'professional',   // Professional Monthly  
   'prod_TdngdRtIfuiw2c': 'ultimate',       // Ultimate Monthly
-  'prod_TdnhHwKM0c3Den': 'veo_connoisseur', // Veo Connoisseur Monthly
-  // Annual products
+  'prod_TdnhHwKM0c3Den': 'studio',         // Studio Monthly (was veo_connoisseur)
+  // Annual subscription products
   'prod_TdngHGT1JsWDnL': 'explorer',       // Explorer Annual
   'prod_TdngF1VzGiEfBO': 'professional',   // Professional Annual
   'prod_TdnhfLnZrsQ5Bf': 'ultimate',       // Ultimate Annual
-  'prod_TdnhievqGBX9KC': 'veo_connoisseur', // Veo Connoisseur Annual
+  'prod_TdnhievqGBX9KC': 'studio',         // Studio Annual (was veo_connoisseur)
 };
+
+// Normalize plan name for backward compatibility
+function normalizePlanName(plan: string): string {
+  return plan === 'veo_connoisseur' ? 'studio' : plan;
+}
+
+// Get billing period from Stripe subscription
+function getBillingPeriod(subscription: Stripe.Subscription): 'monthly' | 'annual' {
+  const interval = subscription.items.data[0]?.price?.recurring?.interval;
+  return interval === 'year' ? 'annual' : 'monthly';
+}
+
+// Helper to determine plan ranking for upgrade/downgrade detection
+function getPlanRank(plan: string): number {
+  const normalizedPlan = normalizePlanName(plan);
+  const ranks: Record<string, number> = {
+    freemium: 0,
+    explorer: 1,
+    professional: 2,
+    ultimate: 3,
+    studio: 4,
+    veo_connoisseur: 4, // Same rank as studio
+  };
+  return ranks[normalizedPlan] ?? 0;
+}
 
 // Helper to send subscription emails
 interface SubscriptionEmailPayload {
   user_id: string;
   email: string;
-  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed';
+  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed' | 'boost_purchased';
   plan_name: string;
   previous_plan?: string;
   tokens_added?: number;
@@ -179,7 +205,7 @@ async function handleStripeEvent(
       break;
 
     case 'customer.subscription.updated':
-      await handleSubscriptionUpdated(supabase, event.data.object as Stripe.Subscription, logger);
+      await handleSubscriptionUpdated(supabase, stripe, event.data.object as Stripe.Subscription, logger);
       break;
 
     default:
@@ -199,7 +225,14 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // Get subscription details
+  // Check if this is a one-time boost purchase
+  const boostType = session.metadata?.boost_type;
+  if (boostType && session.mode === 'payment') {
+    await handleBoostPurchase(supabase, session, logger);
+    return;
+  }
+
+  // Handle subscription checkout
   if (!session.subscription) {
     logger.warn('No subscription in checkout session');
     return;
@@ -207,10 +240,11 @@ async function handleCheckoutCompleted(
 
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
   const productId = subscription.items.data[0]?.price?.product as string;
-  const planKey = STRIPE_PRODUCT_TO_PLAN[productId] || 'explorer';
+  const planKey = normalizePlanName(STRIPE_PRODUCT_TO_PLAN[productId] || 'explorer');
   const tokens = PLAN_TOKENS[planKey] || 500;
+  const billingPeriod = getBillingPeriod(subscription);
 
-  logger.info('Checkout completed', { metadata: { userId, planKey, tokens, productId } });
+  logger.info('Checkout completed', { metadata: { userId, planKey, tokens, productId, billingPeriod } });
 
   // Get current tokens
   const { data: currentSub } = await supabase
@@ -222,11 +256,12 @@ async function handleCheckoutCompleted(
   const newTokensRemaining = (currentSub?.tokens_remaining || 0) + tokens;
   const newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
 
-  // Update subscription with payment IDs (encryption happens via trigger)
+  // Update subscription with payment IDs and billing period
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
       plan: planKey,
+      billing_period: billingPeriod,
       tokens_remaining: newTokensRemaining,
       tokens_total: newTokensTotal,
       status: 'active',
@@ -277,7 +312,100 @@ async function handleCheckoutCompleted(
     action: 'webhook.stripe.checkout_completed',
     resource_type: 'subscription',
     resource_id: subscription.id,
-    metadata: { plan: planKey, tokens, provider: 'stripe' },
+    metadata: { plan: planKey, tokens, provider: 'stripe', billingPeriod },
+  });
+}
+
+async function handleBoostPurchase(
+  supabase: SupabaseClient,
+  session: Stripe.Checkout.Session,
+  logger: EdgeLogger
+) {
+  const userId = session.metadata?.user_id;
+  const boostType = session.metadata?.boost_type;
+  const creditsToAdd = parseInt(session.metadata?.credits_to_add || '0');
+
+  if (!userId || !boostType || creditsToAdd <= 0) {
+    logger.error('Invalid boost purchase metadata');
+    return;
+  }
+
+  logger.info('Processing boost purchase', { 
+    metadata: { userId, boostType, creditsToAdd } 
+  });
+
+  // Get current subscription
+  const { data: currentSub, error: subError } = await supabase
+    .from('user_subscriptions')
+    .select('tokens_remaining, tokens_total')
+    .eq('user_id', userId)
+    .single();
+
+  if (subError || !currentSub) {
+    logger.error('Failed to fetch current subscription for boost', subError as unknown as Error);
+    return;
+  }
+
+  // Add credits to existing balance
+  const { error: updateError } = await supabase
+    .from('user_subscriptions')
+    .update({
+      tokens_remaining: currentSub.tokens_remaining + creditsToAdd,
+      tokens_total: currentSub.tokens_total + creditsToAdd,
+      last_webhook_event: 'boost.payment.completed',
+      last_webhook_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (updateError) {
+    logger.error('Failed to add boost credits', updateError as unknown as Error);
+    return;
+  }
+
+  logger.info('Boost credits added successfully', { 
+    metadata: { 
+      userId, 
+      creditsAdded: creditsToAdd,
+      newBalance: currentSub.tokens_remaining + creditsToAdd 
+    } 
+  });
+
+  // Get user email for notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  // Send boost purchase confirmation email
+  if (profile?.email) {
+    try {
+      await sendSubscriptionEmail(supabase, {
+        user_id: userId,
+        email: profile.email,
+        event_type: 'boost_purchased',
+        plan_name: boostType,
+        tokens_added: creditsToAdd,
+      }, logger);
+    } catch (emailError) {
+      logger.warn('Failed to send boost confirmation email', { 
+        metadata: { errorMessage: (emailError as Error).message } 
+      });
+    }
+  }
+
+  // Audit log
+  await supabase.from('audit_logs').insert({
+    user_id: userId,
+    action: 'webhook.stripe.boost_completed',
+    resource_type: 'boost',
+    resource_id: session.id,
+    metadata: { 
+      boostType, 
+      creditsAdded: creditsToAdd, 
+      provider: 'stripe',
+      sessionId: session.id,
+    },
   });
 }
 
@@ -303,7 +431,8 @@ async function handleInvoicePaymentSucceeded(
     return;
   }
 
-  const tokens = PLAN_TOKENS[subscription.plan] || 500;
+  const normalizedPlan = normalizePlanName(subscription.plan);
+  const tokens = PLAN_TOKENS[normalizedPlan] || 500;
 
   logger.info('Subscription renewed', { metadata: { userId: subscription.user_id, tokens } });
 
@@ -339,7 +468,7 @@ async function handleInvoicePaymentSucceeded(
           user_id: subscription.user_id,
           email: profile.email,
           event_type: 'renewed',
-          plan_name: subscription.plan,
+          plan_name: normalizedPlan,
           tokens_added: tokens,
         }, logger);
       } catch (emailError) {
@@ -395,13 +524,14 @@ async function handleSubscriptionDeleted(
 
   logger.info('Subscription cancelled', { metadata: { userId: userSub.user_id } });
 
-  const previousPlan = userSub.plan;
+  const previousPlan = normalizePlanName(userSub.plan);
 
   // Downgrade to freemium
   await supabase
     .from('user_subscriptions')
     .update({
       plan: 'freemium',
+      billing_period: 'monthly',
       tokens_remaining: 5,
       tokens_total: 5,
       status: 'cancelled',
@@ -434,6 +564,7 @@ async function handleSubscriptionDeleted(
 
 async function handleSubscriptionUpdated(
   supabase: SupabaseClient,
+  stripe: Stripe,
   subscription: Stripe.Subscription,
   logger: EdgeLogger
 ) {
@@ -448,20 +579,22 @@ async function handleSubscriptionUpdated(
     return;
   }
 
-  // Get new plan from subscription
+  // Get new plan and billing period from subscription
   const productId = subscription.items.data[0]?.price?.product as string;
-  const planKey = STRIPE_PRODUCT_TO_PLAN[productId];
+  const newPlanKey = normalizePlanName(STRIPE_PRODUCT_TO_PLAN[productId] || userSub.plan);
+  const newBillingPeriod = getBillingPeriod(subscription);
+  const previousPlan = normalizePlanName(userSub.plan);
+  const previousBillingPeriod = userSub.billing_period || 'monthly';
 
-  if (planKey && planKey !== userSub.plan) {
-    const previousPlan = userSub.plan;
-    const isUpgrade = getPlanRank(planKey) > getPlanRank(previousPlan);
-    
-    logger.info('Subscription updated', { metadata: { userId: userSub.user_id, newPlan: planKey, previousPlan, isUpgrade } });
+  // Check if plan or billing period changed
+  const planChanged = newPlanKey !== previousPlan;
+  const billingPeriodChanged = newBillingPeriod !== previousBillingPeriod;
 
+  if (!planChanged && !billingPeriodChanged) {
+    // No significant changes, just update period end
     await supabase
       .from('user_subscriptions')
       .update({
-        plan: planKey,
         current_period_end: subscription.current_period_end 
           ? new Date(subscription.current_period_end * 1000).toISOString() 
           : null,
@@ -469,8 +602,59 @@ async function handleSubscriptionUpdated(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', userSub.user_id);
+    return;
+  }
 
-    // Get user email and send plan change notification
+  const isUpgrade = getPlanRank(newPlanKey) > getPlanRank(previousPlan);
+  
+  logger.info('Subscription updated', { 
+    metadata: { 
+      userId: userSub.user_id, 
+      newPlan: newPlanKey, 
+      previousPlan, 
+      isUpgrade,
+      newBillingPeriod,
+      previousBillingPeriod,
+      planChanged,
+      billingPeriodChanged,
+    } 
+  });
+
+  // Get current tokens
+  const { data: currentSub } = await supabase
+    .from('user_subscriptions')
+    .select('tokens_remaining, tokens_total')
+    .eq('user_id', userSub.user_id)
+    .single();
+
+  // REVISED UPGRADE LOGIC: On upgrade, add FULL new tier credits
+  // Existing credits stay in account, new tier credits added on top
+  let tokensToAdd = 0;
+  if (isUpgrade && planChanged) {
+    tokensToAdd = PLAN_TOKENS[newPlanKey] || 0;
+    logger.info('Upgrade detected - adding full tier credits', { 
+      metadata: { tokensToAdd, existingBalance: currentSub?.tokens_remaining } 
+    });
+  }
+
+  // Update subscription
+  await supabase
+    .from('user_subscriptions')
+    .update({
+      plan: newPlanKey,
+      billing_period: newBillingPeriod,
+      tokens_remaining: (currentSub?.tokens_remaining || 0) + tokensToAdd,
+      tokens_total: (currentSub?.tokens_total || 0) + tokensToAdd,
+      current_period_end: subscription.current_period_end 
+        ? new Date(subscription.current_period_end * 1000).toISOString() 
+        : null,
+      last_webhook_event: 'customer.subscription.updated',
+      last_webhook_at: new Date().toISOString(),
+    })
+    .eq('user_id', userSub.user_id);
+
+  // Get user email and send plan change notification (only if plan changed, not just billing period)
+  if (planChanged) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('email')
@@ -483,24 +667,31 @@ async function handleSubscriptionUpdated(
           user_id: userSub.user_id,
           email: profile.email,
           event_type: isUpgrade ? 'upgraded' : 'downgraded',
-          plan_name: planKey,
+          plan_name: newPlanKey,
           previous_plan: previousPlan,
+          tokens_added: isUpgrade ? tokensToAdd : undefined,
         }, logger);
       } catch (emailError) {
         logger.warn('Failed to send plan change email', { metadata: { errorMessage: (emailError as Error).message } });
       }
     }
   }
-}
 
-// Helper to determine plan ranking for upgrade/downgrade detection
-function getPlanRank(plan: string): number {
-  const ranks: Record<string, number> = {
-    freemium: 0,
-    explorer: 1,
-    professional: 2,
-    ultimate: 3,
-    veo_connoisseur: 4,
-  };
-  return ranks[plan] ?? 0;
+  // Audit log
+  await supabase.from('audit_logs').insert({
+    user_id: userSub.user_id,
+    action: planChanged 
+      ? (isUpgrade ? 'webhook.stripe.upgraded' : 'webhook.stripe.downgraded')
+      : 'webhook.stripe.billing_period_changed',
+    resource_type: 'subscription',
+    resource_id: subscription.id,
+    metadata: { 
+      newPlan: newPlanKey, 
+      previousPlan, 
+      isUpgrade,
+      tokensAdded: tokensToAdd,
+      newBillingPeriod,
+      previousBillingPeriod,
+    },
+  });
 }

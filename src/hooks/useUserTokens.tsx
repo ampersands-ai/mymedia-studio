@@ -73,11 +73,11 @@ export const useUserTokens = () => {
   return useQuery({
     queryKey: ["user-tokens", user?.id],
     queryFn: async () => {
-      if (!user) return { tokens_remaining: 0, plan: "freemium" };
+      if (!user) return { tokens_remaining: 0, tokens_total: 0, plan: "freemium", current_period_end: null };
 
       const { data, error } = await supabase
         .from("user_subscriptions")
-        .select("tokens_remaining, plan")
+        .select("tokens_remaining, tokens_total, plan, current_period_end")
         .eq("user_id", user.id)
         .single();
 
@@ -96,7 +96,7 @@ export const useUserTokens = () => {
             userId: user?.id
           });
           // Return default values instead of throwing
-          return { tokens_remaining: 0, plan: "freemium" };
+          return { tokens_remaining: 0, tokens_total: 0, plan: "freemium", current_period_end: null };
         }
         throw error;
       }

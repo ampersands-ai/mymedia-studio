@@ -8,6 +8,7 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
 import { AccountSection } from "@/components/settings/AccountSection";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useUserTokens } from "@/hooks/useUserTokens";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -19,13 +20,22 @@ const Settings = () => {
     email_verified: false,
   });
   
-  const [subscription, setSubscription] = useState<any>(null);
+  // Use react-query hook for subscription data - auto-updates when invalidated
+  const { data: userTokenData } = useUserTokens();
+  
+  // Build subscription object from the hook data
+  const subscription = userTokenData ? {
+    plan: userTokenData.plan || 'freemium',
+    status: 'active',
+    tokens_remaining: userTokenData.tokens_remaining || 0,
+    tokens_total: userTokenData.tokens_total || 0,
+    current_period_end: userTokenData.current_period_end,
+  } : null;
 
   useEffect(() => {
     document.title = "Settings - Artifio.ai";
     if (user) {
       fetchProfile();
-      fetchSubscription();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -54,30 +64,6 @@ const Settings = () => {
         context: {
           component: 'Settings',
           operation: 'fetchProfile',
-          userId: user?.id
-        }
-      }
-    );
-  };
-
-  const fetchSubscription = async () => {
-    await execute(
-      async () => {
-        const { data, error } = await supabase
-          .from("user_subscriptions")
-          .select("*")
-          .eq("user_id", user?.id)
-          .maybeSingle();
-
-        if (error) throw error;
-        setSubscription(data);
-      },
-      {
-        showSuccessToast: false,
-        showErrorToast: false,
-        context: {
-          component: 'Settings',
-          operation: 'fetchSubscription',
           userId: user?.id
         }
       }

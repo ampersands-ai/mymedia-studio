@@ -69,12 +69,6 @@ export const GlobalHeader = () => {
                 Features
               </button>
             )}
-            <button 
-              onClick={() => navigate("/pricing")}
-              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-            >
-              Pricing
-            </button>
             {showBlogPage && (
               <button 
                 onClick={() => navigate("/blog")}
@@ -88,6 +82,13 @@ export const GlobalHeader = () => {
           {/* Right Side - Actions */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
+
+            <button
+              onClick={() => navigate("/pricing")}
+              className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+            >
+              Pricing
+            </button>
 
             {!user && (
               <button

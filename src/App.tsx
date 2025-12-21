@@ -84,6 +84,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ModerationDocs = lazy(() => import("./pages/ModerationDocs"));
+const AnimationPage = lazy(() => import("./pages/AnimationPage"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 
@@ -219,6 +220,7 @@ const AppContent = () => {
             <Route path="/forgot-password" element={<RouteErrorBoundary routeName="Forgot Password"><ForgotPassword /></RouteErrorBoundary>} />
             <Route path="/reset-password" element={<RouteErrorBoundary routeName="Reset Password"><ResetPassword /></RouteErrorBoundary>} />
             <Route path="/moderation-docs" element={<RouteErrorBoundary routeName="Moderation Docs"><ModerationDocs /></RouteErrorBoundary>} />
+            <Route path="/animation-page" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Page"><AnimationPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />

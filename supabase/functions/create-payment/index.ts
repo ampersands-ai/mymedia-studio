@@ -213,6 +213,30 @@ Deno.serve(async (req) => {
 
     const billingPeriod: BillingPeriod = isAnnual ? 'annual' : 'monthly';
 
+    // Check for existing active subscription
+    const { data: existingSub } = await supabase
+      .from('user_subscriptions')
+      .select('plan, status, stripe_subscription_id, dodo_subscription_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingSub && existingSub.status === 'active' && existingSub.plan !== 'freemium') {
+      // Check if trying to subscribe to the same plan
+      if (existingSub.plan === planKey) {
+        logger.warn('User already has active subscription to same plan', { metadata: { userId: user.id, plan: planKey } });
+        return new Response(JSON.stringify({
+          error: 'You already have an active subscription to this plan. Please manage your subscription from your account settings.',
+          code: 'DUPLICATE_SUBSCRIPTION',
+        }), {
+          status: 400,
+          headers: { ...responseHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Allow upgrade/downgrade - user is changing plans
+      logger.info('User changing subscription plan', { metadata: { userId: user.id, currentPlan: existingSub.plan, newPlan: planKey } });
+    }
+
     // Get user profile
     const { data: profile } = await supabase
       .from('profiles')

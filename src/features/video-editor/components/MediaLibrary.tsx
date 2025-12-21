@@ -1,0 +1,126 @@
+import { Film, Image, Music, Plus, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useVideoEditorStore } from '../store';
+import { MediaAsset } from '../types';
+import { cn } from '@/lib/utils';
+
+const formatDuration = (seconds?: number) => {
+  if (!seconds) return '';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const formatSize = (bytes: number) => {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const MediaIcon = ({ type }: { type: MediaAsset['type'] }) => {
+  switch (type) {
+    case 'video': return <Film className="h-4 w-4" />;
+    case 'image': return <Image className="h-4 w-4" />;
+    case 'audio': return <Music className="h-4 w-4" />;
+  }
+};
+
+export const MediaLibrary = () => {
+  const { assets, removeAsset, addClipFromAsset, setAudioTrack } = useVideoEditorStore();
+
+  const handleAddToSequence = (asset: MediaAsset) => {
+    if (asset.type === 'audio') {
+      setAudioTrack({
+        id: crypto.randomUUID(),
+        assetId: asset.id,
+        asset,
+        volume: 0.5,
+        fadeIn: true,
+        fadeOut: true,
+        fadeInDuration: 1,
+        fadeOutDuration: 1,
+        trimStart: 0,
+        loop: false,
+      });
+    } else {
+      addClipFromAsset(asset.id);
+    }
+  };
+
+  if (assets.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No media uploaded yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {assets.map((asset) => (
+        <div
+          key={asset.id}
+          className="group relative bg-card border border-border rounded-lg overflow-hidden"
+        >
+          {/* Thumbnail */}
+          <div className="aspect-video bg-muted flex items-center justify-center">
+            {asset.thumbnailUrl ? (
+              <img
+                src={asset.thumbnailUrl}
+                alt={asset.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <MediaIcon type={asset.type} />
+            )}
+          </div>
+
+          {/* Type badge */}
+          <div className={cn(
+            "absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-medium",
+            asset.type === 'video' && "bg-blue-500/80 text-white",
+            asset.type === 'image' && "bg-green-500/80 text-white",
+            asset.type === 'audio' && "bg-purple-500/80 text-white",
+          )}>
+            {asset.type}
+          </div>
+
+          {/* Duration badge */}
+          {asset.duration && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/60 text-white text-xs">
+              {formatDuration(asset.duration)}
+            </div>
+          )}
+
+          {/* Info */}
+          <div className="p-2">
+            <p className="text-sm font-medium truncate" title={asset.name}>
+              {asset.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatSize(asset.size)}
+            </p>
+          </div>
+
+          {/* Actions overlay */}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => handleAddToSequence(asset)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => removeAsset(asset.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};

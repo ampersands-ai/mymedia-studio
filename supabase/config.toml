@@ -82,3 +82,9 @@ verify_jwt = true
 
 [functions.render-animation]
 verify_jwt = true
+
+[functions.render-video-editor]
+verify_jwt = true
+
+[functions.status-video-editor]
+verify_jwt = true

@@ -3038,6 +3038,57 @@ export type Database = {
         }
         Relationships: []
       }
+      video_editor_jobs: {
+        Row: {
+          audio_track: Json | null
+          clips: Json | null
+          cost_credits: number | null
+          created_at: string
+          error_message: string | null
+          final_video_url: string | null
+          id: string
+          output_settings: Json | null
+          shotstack_render_id: string | null
+          status: string
+          subtitle_config: Json | null
+          total_duration: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_track?: Json | null
+          clips?: Json | null
+          cost_credits?: number | null
+          created_at?: string
+          error_message?: string | null
+          final_video_url?: string | null
+          id?: string
+          output_settings?: Json | null
+          shotstack_render_id?: string | null
+          status?: string
+          subtitle_config?: Json | null
+          total_duration?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_track?: Json | null
+          clips?: Json | null
+          cost_credits?: number | null
+          created_at?: string
+          error_message?: string | null
+          final_video_url?: string | null
+          id?: string
+          output_settings?: Json | null
+          shotstack_render_id?: string | null
+          status?: string
+          subtitle_config?: Json | null
+          total_duration?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_jobs: {
         Row: {
           actual_audio_duration: number | null

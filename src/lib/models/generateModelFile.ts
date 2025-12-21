@@ -149,7 +149,7 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
   const isVeo3Model = MODEL_CONFIG.modelId === 'veo3' || MODEL_CONFIG.modelId === 'veo3_fast';
   
   if (isVeo3Model && inputs.generationType !== 'REFERENCE_2_VIDEO') {
-    // Merge startFrame/endFrame into imageUrls array for Kie.ai API
+    // Merge startFrame/endFrame into imageUrls array for Primary Provider API
     // User sees startFrame/endFrame in schema (user-friendly)
     // Backend converts to imageUrls format (API requirement)
     const imageUrlsArray: string[] = [];
@@ -172,13 +172,13 @@ export function preparePayload(inputs: Record<string, any>): Record<string, any>
       });
     }
     
-    // Add Kie.ai API defaults (not exposed in user schema)
+    // Add Primary Provider API defaults (not exposed in user schema)
     // These are API requirements documented here in the locked file
     payload.watermark = "";
     payload.enableFallback = false;
     payload.enableTranslation = true;
     
-    logger.debug("Added Kie.ai API defaults", {
+    logger.debug("Added Primary Provider API defaults", {
       watermark: payload.watermark,
       enableFallback: payload.enableFallback,
       enableTranslation: payload.enableTranslation

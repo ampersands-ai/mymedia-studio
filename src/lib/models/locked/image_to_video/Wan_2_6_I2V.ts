@@ -12,7 +12,7 @@
  *
  * @locked
  * @model wan/2-6-image-to-video
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

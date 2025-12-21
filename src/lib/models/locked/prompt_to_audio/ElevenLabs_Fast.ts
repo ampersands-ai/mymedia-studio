@@ -12,7 +12,7 @@
  *
  * @locked
  * @model elevenlabs/text-to-speech-turbo-2-5
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

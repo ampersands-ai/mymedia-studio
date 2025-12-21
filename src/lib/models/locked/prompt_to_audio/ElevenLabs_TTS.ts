@@ -12,7 +12,7 @@
  *
  * @locked
  * @model elevenlabs/text-to-speech-multilingual-v2
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

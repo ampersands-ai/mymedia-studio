@@ -11,7 +11,7 @@
  *
  * @locked
  * @model midjourney/image-to-image
- * @provider kie.ai
+ * @provider primary
  * @version 2.0.0
  */
 

@@ -11,7 +11,7 @@ export const MODEL_CONFIG = { modelId: "recraft/remove-background", recordId: "5
   // UI metadata
   isActive: true,
   logoUrl: "/logos/plum.png",
-  modelFamily: "KIE AI",
+  modelFamily: "Recraft",
   variantName: "Remove Background",
   displayOrderInFamily: 2,
 

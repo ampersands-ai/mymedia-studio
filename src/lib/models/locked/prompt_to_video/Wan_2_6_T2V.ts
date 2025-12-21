@@ -11,7 +11,7 @@
  *
  * @locked
  * @model wan/2-6-text-to-video
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

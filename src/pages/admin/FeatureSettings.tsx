@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, Palette, Video, Layout, ImageIcon, Film, Repeat, CircleUser, Music, Clock } from 'lucide-react';
+import { Loader2, FileText, Palette, Video, Layout, ImageIcon, Film, Repeat, CircleUser, Music, Clock, Globe, BookOpen, Sparkles } from 'lucide-react';
 
 const CREATION_GROUP_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   image_editing: { label: 'Image to Image', icon: <ImageIcon className="h-4 w-4" /> },
@@ -263,6 +263,53 @@ export default function FeatureSettings() {
               </div>
             </CardContent>
           )}
+        </Card>
+
+        {/* Public Pages Section */}
+        <Card className="border-3 border-black brutal-shadow">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5" />
+              <div>
+                <CardTitle>Public Pages</CardTitle>
+                <CardDescription>Control visibility of public-facing pages</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="features-page" className="text-sm">
+                    Features Page
+                  </Label>
+                </div>
+                <Switch
+                  id="features-page"
+                  checked={flags.pages.features.enabled}
+                  onCheckedChange={(checked) => toggleFlag('pages.features.enabled', checked)}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="blog-page" className="text-sm">
+                    Blog Page
+                  </Label>
+                </div>
+                <Switch
+                  id="blog-page"
+                  checked={flags.pages.blog.enabled}
+                  onCheckedChange={(checked) => toggleFlag('pages.blog.enabled', checked)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Disabled pages will be hidden from navigation. Admins can still access them.
+              </p>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>

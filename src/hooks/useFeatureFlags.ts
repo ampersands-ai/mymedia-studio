@@ -35,6 +35,10 @@ export interface FeatureFlags {
     enabled: boolean;
     coming_soon: boolean;
   };
+  pages: {
+    features: { enabled: boolean };
+    blog: { enabled: boolean };
+  };
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -54,6 +58,10 @@ const DEFAULT_FLAGS: FeatureFlags = {
   },
   faceless_videos: { enabled: true, coming_soon: true },
   storyboard: { enabled: true, coming_soon: true },
+  pages: {
+    features: { enabled: true },
+    blog: { enabled: true },
+  },
 };
 
 // Helper to migrate old flag format to new format
@@ -110,6 +118,19 @@ function migrateFlags(rawFlags: unknown): FeatureFlags {
     const sb = flags.storyboard as Record<string, unknown>;
     result.storyboard.enabled = sb.enabled as boolean ?? true;
     result.storyboard.coming_soon = sb.coming_soon as boolean ?? false;
+  }
+  
+  // Migrate pages
+  if (flags.pages) {
+    const p = flags.pages as Record<string, unknown>;
+    if (p.features && typeof p.features === 'object') {
+      const features = p.features as Record<string, boolean>;
+      result.pages.features.enabled = features.enabled ?? true;
+    }
+    if (p.blog && typeof p.blog === 'object') {
+      const blog = p.blog as Record<string, boolean>;
+      result.pages.blog.enabled = blog.enabled ?? true;
+    }
   }
   
   return result;
@@ -210,6 +231,11 @@ export function useFeatureFlags() {
     return flags[featureId].enabled && flags[featureId].coming_soon;
   };
 
+  const isPageEnabled = (pageId: 'features' | 'blog'): boolean => {
+    if (!flags) return true;
+    return flags.pages[pageId].enabled;
+  };
+
   return {
     flags: flags ?? DEFAULT_FLAGS,
     isLoading,
@@ -218,6 +244,7 @@ export function useFeatureFlags() {
     isGroupComingSoon,
     isFeatureEnabled,
     isFeatureComingSoon,
+    isPageEnabled,
     updateFlags: updateFlags.mutate,
     isUpdating: updateFlags.isPending,
   };

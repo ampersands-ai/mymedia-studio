@@ -3,6 +3,7 @@ import { Coins, Shield, Layout } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -16,9 +17,13 @@ export const GlobalHeader = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { availableCredits, isLoading } = useUserCredits();
+  const { isPageEnabled } = useFeatureFlags();
   
   const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  const showFeaturesPage = isPageEnabled('features') || isAdmin;
+  const showBlogPage = isPageEnabled('blog') || isAdmin;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,24 +61,28 @@ export const GlobalHeader = () => {
 
           {/* Center - Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => navigate("/features")}
-              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-            >
-              Features
-            </button>
+            {showFeaturesPage && (
+              <button 
+                onClick={() => navigate("/features")}
+                className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+              >
+                Features
+              </button>
+            )}
             <button 
               onClick={() => navigate("/pricing")}
               className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
             >
               Pricing
             </button>
-            <button 
-              onClick={() => navigate("/blog")}
-              className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-            >
-              Blog
-            </button>
+            {showBlogPage && (
+              <button 
+                onClick={() => navigate("/blog")}
+                className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+              >
+                Blog
+              </button>
+            )}
           </nav>
 
           {/* Right Side - Actions */}

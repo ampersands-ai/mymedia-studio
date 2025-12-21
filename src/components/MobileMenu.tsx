@@ -24,10 +24,13 @@ import { logger } from "@/lib/logger";
 export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: number }) => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
-  const { isFeatureEnabled, isFeatureComingSoon } = useFeatureFlags();
+  const { isFeatureEnabled, isFeatureComingSoon, isPageEnabled } = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  
+  const showFeaturesPage = isPageEnabled('features') || isAdmin;
+  const showBlogPage = isPageEnabled('blog') || isAdmin;
 
   const handleSignOut = async () => {
     try {
@@ -182,18 +185,20 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>About</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/blog") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/blog")}
-                >
-                  <BookOpen className="h-5 w-5" />
-                  <span>Blog</span>
-                </button>
+                {showBlogPage && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/blog") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/blog")}
+                  >
+                    <BookOpen className="h-5 w-5" />
+                    <span>Blog</span>
+                  </button>
+                )}
 
                 <button
                   className={cn(
@@ -239,18 +244,20 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
 
                 <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">PRODUCT</div>
                 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/features") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/features")}
-                >
-                  <Sparkles className="h-5 w-5" />
-                  <span>Features</span>
-                </button>
+                {showFeaturesPage && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/features") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/features")}
+                  >
+                    <Sparkles className="h-5 w-5" />
+                    <span>Features</span>
+                  </button>
+                )}
 
                 {user && (
                   <button
@@ -323,18 +330,20 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span>About</span>
                 </button>
 
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/blog") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/blog")}
-                >
-                  <BookOpen className="h-5 w-5" />
-                  <span>Blog</span>
-                </button>
+                {showBlogPage && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                      isActive("/blog") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/blog")}
+                  >
+                    <BookOpen className="h-5 w-5" />
+                    <span>Blog</span>
+                  </button>
+                )}
 
                 <button
                   className={cn(

@@ -3,7 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 
-// API key mapping logic for KIE AI
+// API key mapping logic for provider
 function getKieApiKey(modelId: string, recordId: string): string {
   const veo3Models = [
     '8aac94cb-5625-47f4-880c-4f0fd8bd83a1',
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       metadata: { taskId: taskIdToQuery, generationId: generation_id }
     });
 
-    // Query Kie.ai task status
+    // Query provider task status
     const statusResponse = await fetch(API_ENDPOINTS.KIE_AI.queryTaskUrl, {
       method: 'POST',
       headers: {

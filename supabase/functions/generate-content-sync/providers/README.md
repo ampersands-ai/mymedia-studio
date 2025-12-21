@@ -1,6 +1,6 @@
 # Provider Adapters
 
-Provider adapters translate between our schema-driven system and external AI provider APIs (Runware, KIE.ai, etc.).
+Provider adapters translate between our schema-driven system and external AI provider APIs (Runware, etc.).
 
 ## Architecture Pattern
 
@@ -152,7 +152,7 @@ Each provider adapter is responsible for:
 
 ## Examples
 
-### Field Mapping Example (KIE.ai)
+### Field Mapping Example (Provider)
 ```typescript
 // Different models use different prompt field names
 const modelPromptField = promptAliases[modelId]?.[0] || 'prompt';

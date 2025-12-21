@@ -1,6 +1,6 @@
 /**
- * KIE AI Recovery Function
- * Handles recovery of stuck KIE AI generations
+ * Provider Recovery Function
+ * Handles recovery of stuck provider generations
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -10,7 +10,7 @@ import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../../_shared/cors.ts";
 import { getErrorMessage } from "../../_shared/error-utils.ts";
 
-// API key mapping logic for KIE AI
+// API key mapping logic for provider
 function getKieApiKey(modelId: string, recordId: string): string {
   const veo3Models = [
     '8aac94cb-5625-47f4-880c-4f0fd8bd83a1',

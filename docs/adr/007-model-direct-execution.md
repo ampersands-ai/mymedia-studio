@@ -38,7 +38,7 @@ Model Registry (src/lib/models/registry.ts)
   ↓
 Model File (src/lib/models/locked/{group}/{ModelName}.ts)
   ↓
-Direct API Call to Provider (Runware, KIE AI, etc.)
+Direct API Call to Provider (Runware, etc.)
   ↓
 Return Generation ID to Client
 ```
@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
 });
 ```
 
-**KIE AI Key Mapping: `supabase/functions/_shared/getKieApiKey.ts`**
+**Provider Key Mapping: `supabase/functions/_shared/getKieApiKey.ts`**
 
 Maps specific model record IDs to dedicated API keys:
 
@@ -264,8 +264,8 @@ export async function getKieApiKey(modelId: string, recordId: string): Promise<s
     }
   });
 
-  if (error) throw new Error(`Failed to retrieve KIE AI API key: ${error.message}`);
-  if (!data?.apiKey) throw new Error('KIE AI API key not found in response');
+  if (error) throw new Error(`Failed to retrieve provider API key: ${error.message}`);
+  if (!data?.apiKey) throw new Error('Provider API key not found in response');
 
   return data.apiKey;
 }
@@ -352,7 +352,7 @@ export interface ModelModule {
 ### Phase 3: API Key Infrastructure (⏳ IN PROGRESS)
 - [ ] Create `get-api-key` edge function
 - [ ] Implement provider-specific key mapping:
-  - [ ] KIE AI: 8 dedicated keys + fallbacks
+  - [ ] Provider: 8 dedicated keys + fallbacks
   - [ ] Runware: 2 dedicated keys + fallback
   - [ ] ElevenLabs: Single key
   - [ ] JSON2Video: Single key
@@ -468,7 +468,7 @@ export interface ModelModule {
 
 ### Required Secrets in Supabase
 
-**KIE AI Keys (8 dedicated + 6 fallbacks):**
+**Provider Keys (8 dedicated + 6 fallbacks):**
 - `KIE_AI_API_KEY_VEO3` - For Veo 3 models (5 models)
 - `KIE_AI_API_KEY_SORA2` - For Sora 2 models (2 models)
 - `KIE_AI_API_KEY_NANO_BANANA` - For Nano Banana (1 model)
@@ -845,7 +845,7 @@ Credits update automatically via:
 
 ### Validation Tests
 - [ ] Each content type group tested (5 groups)
-- [ ] Each provider tested (KIE AI, Runware, ElevenLabs, etc.)
+- [ ] Each provider tested (Runware, ElevenLabs, etc.)
 - [ ] API key fallback logic verified
 - [ ] Concurrent generation stress test passed
 
@@ -880,7 +880,7 @@ If direct execution causes issues:
 - Model Registry Implementation: `src/lib/models/locked/index.ts`
 - Clean Export Wrapper: `src/lib/models/registry.ts`
 - API Key Function: `supabase/functions/get-api-key/index.ts`
-- KIE AI Key Mapping: `supabase/functions/_shared/getKieApiKey.ts`
+- Provider Key Mapping: `supabase/functions/_shared/getKieApiKey.ts`
 - Runware Key Mapping: `supabase/functions/_shared/getRunwareApiKey.ts`
 - Client Key Retrieval: `src/lib/models/locked/getKieApiKey.ts`
 

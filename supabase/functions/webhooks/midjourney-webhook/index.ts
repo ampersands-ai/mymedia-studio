@@ -1,6 +1,6 @@
 /**
  * Midjourney Webhook Handler
- * Dedicated webhook for Midjourney generations via KIE AI
+ * Dedicated webhook for Midjourney generations via provider
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';

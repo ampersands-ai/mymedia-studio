@@ -905,7 +905,7 @@ Flow:
 
 #### Webhook Functions
 
-**`kie-ai-webhook`** - Handles callbacks from kie.ai
+**`kie-ai-webhook`** - Handles callbacks from provider
 ```typescript
 // POST /functions/v1/kie-ai-webhook
 // Validates signature, updates generation status
@@ -955,10 +955,10 @@ Flow:
 
 ### Provider Integrations
 
-#### kie.ai Integration
+#### Provider Integration
 
 ```typescript
-// Call kie.ai API
+// Call provider API
 const response = await fetch('https://api.kie.ai/v1/jobs/createTask', {
   method: 'POST',
   headers: {
@@ -979,7 +979,7 @@ const response = await fetch('https://api.kie.ai/v1/jobs/createTask', {
 {
   job_id: "job-123",
   status: "completed",
-  output_url: "https://cdn.kie.ai/result.mp4"
+  output_url: "https://cdn.provider.com/result.mp4"
 }
 
 // Update database
@@ -1991,7 +1991,7 @@ const CREATION_GROUPS = [
 
 ### Provider-Specific Formats
 
-**kie.ai (wrapper)**:
+**Provider (wrapper)**:
 ```json
 {
   "model": "sora-2",

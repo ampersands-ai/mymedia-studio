@@ -33,7 +33,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
   'midjourney': {
     name: 'Midjourney',
     webhook: '/functions/v1/webhooks/midjourney-webhook',
-    recovery: '/functions/v1/recovery/recover-kie-generation', // Uses KIE recovery
+    recovery: '/functions/v1/recovery/recover-kie-generation', // Uses provider recovery
     supports: ['image'],
     requiresWebhook: true
   },

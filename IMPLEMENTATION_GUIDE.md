@@ -120,7 +120,7 @@ await downloadBatchFromStorage(['file1.png', 'file2.png']);
 ```typescript
 import { API_ENDPOINTS } from '@/shared/api-endpoints';
 
-// Instead of: 'https://api.kie.ai/api/v1/jobs/createTask'
+// Instead of hardcoding API endpoint URLs
 const response = await fetch(API_ENDPOINTS.KIE_AI.createTaskUrl, {
   method: 'POST',
   body: JSON.stringify(data)
@@ -128,7 +128,7 @@ const response = await fetch(API_ENDPOINTS.KIE_AI.createTaskUrl, {
 ```
 
 **Providers Configured:**
-- Kie.ai (video generation)
+- Provider (video generation)
 - Runware (image generation)
 - Shotstack (video editing)
 - Json2Video (video automation)
@@ -403,7 +403,7 @@ src/components/generation/OptimizedGenerationPreview.tsx
 **Pattern:**
 ```typescript
 // Find all hardcoded URLs:
-grep -r "https://api.kie.ai" src/ supabase/
+grep -r "api_endpoint" src/ supabase/
 
 // Replace with:
 import { API_ENDPOINTS } from '@/shared/api-endpoints';

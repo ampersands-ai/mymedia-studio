@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
       .eq('id', job_id);
 
     // ========================================================================
-    // VOICEOVER GENERATION VIA KIE.AI (NOT DIRECT ELEVENLABS)
+    // VOICEOVER GENERATION VIA PROVIDER (NOT DIRECT ELEVENLABS)
     // Routes through generate-content edge function like Audio Studio models
     // ========================================================================
     
@@ -300,7 +300,7 @@ Deno.serve(async (req) => {
       metadata: { jobId: job_id, generationId: generation.id }
     });
 
-    // Call generate-content edge function (routes through Kie.ai)
+    // Call generate-content edge function (routes through provider)
     // user_id is required when using service role authentication
     const { error: functionError } = await supabaseClient.functions.invoke('generate-content', {
       body: {

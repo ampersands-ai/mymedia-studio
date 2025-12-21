@@ -3,7 +3,7 @@ import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 
-// API key mapping logic for KIE AI
+// API key mapping logic for provider
 function getKieApiKey(modelId: string, recordId: string): string {
   const veo3Models = [
     '8aac94cb-5625-47f4-880c-4f0fd8bd83a1',
@@ -44,11 +44,11 @@ function getKieApiKey(modelId: string, recordId: string): string {
 }
 
 /**
- * Kie.ai Provider Implementation
+ * Provider Implementation
  *
  * NOTE: All model-specific parameter preprocessing (prompt->text, etc.) should be
  * handled in individual model .ts files via preparePayload() functions.
- * This provider is a dumb transport layer that calls the Kie.ai API.
+ * This provider is a dumb transport layer that calls the provider API.
  *
  * Example: ElevenLabs models handle prompt->text mapping in their own .ts files.
  */
@@ -136,7 +136,7 @@ export async function callKieAI(
     // This matches the November 17th working structure
     payload = {
       model: request.model,
-      callBackUrl: callbackUrl, // System field - TOP LEVEL to match Kie.ai expectations
+      callBackUrl: callbackUrl, // System field - TOP LEVEL to match provider expectations
       input: cleanedParameters
     };
   }

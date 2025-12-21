@@ -31,7 +31,7 @@ All 70 models now have logo placeholders. Currently showing **simple placeholder
 18. **jasper.svg** - Jasper (Image)
 19. **hidream.svg** - HiDream (Image)
 20. **ultradetail.svg** - Ultra Detail (Image)
-21. **kie.svg** - Kie.ai (Multiple models)
+21. **kie.svg** - Provider (Multiple models)
 
 ## How to Upload Real Logos
 

@@ -39,7 +39,7 @@ This document provides a step-by-step manual testing checklist for ADR 007 imple
 
 ---
 
-## 2. Video Generation Tests (KIE AI)
+## 2. Video Generation Tests (Provider)
 
 ### Test 2.1: Seedance V1 Lite (Basic)
 - [ ] Select model: "Seedance V1 Lite"
@@ -189,8 +189,8 @@ This document provides a step-by-step manual testing checklist for ADR 007 imple
 
 ## 8. Polling System Tests
 
-### Test 8.1: Webhook Polling (KIE AI)
-- [ ] Generate video with KIE AI model
+### Test 8.1: Webhook Polling (Provider)
+- [ ] Generate video with provider model
 - [ ] Open Browser Console
 - [ ] **Verify Console Logs:**
   - "Polling generation {id}..."
@@ -247,7 +247,7 @@ This document provides a step-by-step manual testing checklist for ADR 007 imple
   - Instant or near-instant result
   - Uses `RUNWARE_API_KEY_PROMPT_TO_IMAGE`
 
-### Test 10.2: KIE AI (Async)
+### Test 10.2: Provider (Async)
 - [ ] Generate with Seedance
 - [ ] **Verify:**
   - Webhook polling starts
@@ -256,7 +256,7 @@ This document provides a step-by-step manual testing checklist for ADR 007 imple
 
 ### Test 10.3: Multiple Content Types
 - [ ] Test image generation (Runware)
-- [ ] Test video generation (KIE AI)
+- [ ] Test video generation (Provider)
 - [ ] Test audio generation (if available)
 - [ ] **Verify:** Each uses correct specialized API key
 

@@ -2647,28 +2647,40 @@ export type Database = {
       user_notification_preferences: {
         Row: {
           created_at: string
+          email_marketing: boolean
           email_on_completion: boolean
+          email_on_profile_created: boolean
+          email_on_subscription_change: boolean
           id: string
           notification_threshold_seconds: number
           push_on_completion: boolean
+          unsubscribe_token: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          email_marketing?: boolean
           email_on_completion?: boolean
+          email_on_profile_created?: boolean
+          email_on_subscription_change?: boolean
           id?: string
           notification_threshold_seconds?: number
           push_on_completion?: boolean
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          email_marketing?: boolean
           email_on_completion?: boolean
+          email_on_profile_created?: boolean
+          email_on_subscription_change?: boolean
           id?: string
           notification_threshold_seconds?: number
           push_on_completion?: boolean
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id?: string
         }

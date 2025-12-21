@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText } from "lucide-react";
+import { Loader2, Coins, Sparkles, TrendingUp, Video, Image as ImageIcon, Music, FileText, Settings2 } from "lucide-react";
 import { useTokenUsage } from "@/hooks/useTokenUsage";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Subscription {
   plan: string;
@@ -19,10 +22,28 @@ interface SubscriptionSectionProps {
 }
 
 export function SubscriptionSection({ subscription }: SubscriptionSectionProps) {
+  const [managingSubscription, setManagingSubscription] = useState(false);
   const {
     currentMonth,
     isLoadingCurrent,
   } = useTokenUsage();
+
+  const handleManageSubscription = async () => {
+    setManagingSubscription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to open subscription management');
+    } finally {
+      setManagingSubscription(false);
+    }
+  };
+
+  const isPaidPlan = subscription?.plan && subscription.plan !== 'freemium';
 
   return (
     <div className="space-y-4">
@@ -81,11 +102,28 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
               </>
             )}
 
-            <Link to="/pricing">
-              <Button className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold" aria-label="View all pricing plans">
-                Upgrade Plan
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Link to="/pricing" className="flex-1">
+                <Button className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold" aria-label="View all pricing plans">
+                  {isPaidPlan ? 'Change Plan' : 'Upgrade Plan'}
+                </Button>
+              </Link>
+              {isPaidPlan && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleManageSubscription}
+                  disabled={managingSubscription}
+                  className="flex-1"
+                >
+                  {managingSubscription ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Settings2 className="h-4 w-4 mr-2" />
+                  )}
+                  Manage Subscription
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 

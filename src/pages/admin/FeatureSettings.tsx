@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, Palette, Video, Layout, ImageIcon, Film, Repeat, CircleUser, Music, Clock, Globe, BookOpen, Sparkles } from 'lucide-react';
+import { Loader2, FileText, Palette, Video, Layout, ImageIcon, Film, Repeat, CircleUser, Music, Clock, Globe, BookOpen, Sparkles, Users, Image } from 'lucide-react';
 
 const CREATION_GROUP_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   image_editing: { label: 'Image to Image', icon: <ImageIcon className="h-4 w-4" /> },
@@ -303,6 +303,34 @@ export default function FeatureSettings() {
                   id="blog-page"
                   checked={flags.pages.blog.enabled}
                   onCheckedChange={(checked) => toggleFlag('pages.blog.enabled', checked)}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="community-page" className="text-sm">
+                    Community Page
+                  </Label>
+                </div>
+                <Switch
+                  id="community-page"
+                  checked={flags.pages.community.enabled}
+                  onCheckedChange={(checked) => toggleFlag('pages.community.enabled', checked)}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="template-landings-page" className="text-sm">
+                    Template Landing Pages
+                  </Label>
+                </div>
+                <Switch
+                  id="template-landings-page"
+                  checked={flags.pages.templateLandings.enabled}
+                  onCheckedChange={(checked) => toggleFlag('pages.templateLandings.enabled', checked)}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">

@@ -16,6 +16,8 @@ export const Footer = () => {
   
   const showFeaturesPage = isPageEnabled('features') || isAdmin;
   const showBlogPage = isPageEnabled('blog') || isAdmin;
+  const showCommunityPage = isPageEnabled('community') || isAdmin;
+  const showTemplateLandings = isPageEnabled('templateLandings') || isAdmin;
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,11 +107,6 @@ export const Footer = () => {
                 </li>
               )}
               <li>
-                <Link to="/dashboard/templates" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Workflow Templates
-                </Link>
-              </li>
-              <li>
                 <Link to="/pricing" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Pricing
                 </Link>
@@ -122,27 +119,29 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Popular Templates */}
-          <div className="text-center md:text-left">
-            <h3 className="font-black text-sm mb-4">POPULAR TEMPLATES</h3>
-            <ul className="space-y-4">
-              <li>
-                <Link to="/templates/photo-editing/professional-headshot" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Professional Headshots
-                </Link>
-              </li>
-              <li>
-                <Link to="/templates/ai-image/product-photography" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Product Photography
-                </Link>
-              </li>
-              <li>
-                <Link to="/templates/text-to-image/social-media-content" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Social Media Content
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Popular Templates - conditionally rendered */}
+          {showTemplateLandings && (
+            <div className="text-center md:text-left">
+              <h3 className="font-black text-sm mb-4">POPULAR TEMPLATES</h3>
+              <ul className="space-y-4">
+                <li>
+                  <Link to="/templates/photo-editing/professional-headshot" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Professional Headshots
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/templates/ai-image/product-photography" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Product Photography
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/templates/text-to-image/social-media-content" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Social Media Content
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
 
           {/* Company */}
           <div className="text-center md:text-left">
@@ -182,11 +181,13 @@ export const Footer = () => {
                   FAQ
                 </Link>
               </li>
-              <li>
-                <Link to="/community" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Community
-                </Link>
-              </li>
+              {showCommunityPage && (
+                <li>
+                  <Link to="/community" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Community
+                  </Link>
+                </li>
+              )}
               <li>
                 <a href="mailto:support@artifio.ai" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Contact Us

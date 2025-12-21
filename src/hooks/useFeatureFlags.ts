@@ -38,6 +38,8 @@ export interface FeatureFlags {
   pages: {
     features: { enabled: boolean };
     blog: { enabled: boolean };
+    community: { enabled: boolean };
+    templateLandings: { enabled: boolean };
   };
 }
 
@@ -61,6 +63,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   pages: {
     features: { enabled: true },
     blog: { enabled: true },
+    community: { enabled: false },
+    templateLandings: { enabled: false },
   },
 };
 
@@ -130,6 +134,14 @@ function migrateFlags(rawFlags: unknown): FeatureFlags {
     if (p.blog && typeof p.blog === 'object') {
       const blog = p.blog as Record<string, boolean>;
       result.pages.blog.enabled = blog.enabled ?? true;
+    }
+    if (p.community && typeof p.community === 'object') {
+      const community = p.community as Record<string, boolean>;
+      result.pages.community.enabled = community.enabled ?? false;
+    }
+    if (p.templateLandings && typeof p.templateLandings === 'object') {
+      const templateLandings = p.templateLandings as Record<string, boolean>;
+      result.pages.templateLandings.enabled = templateLandings.enabled ?? false;
     }
   }
   
@@ -231,8 +243,8 @@ export function useFeatureFlags() {
     return flags[featureId].enabled && flags[featureId].coming_soon;
   };
 
-  const isPageEnabled = (pageId: 'features' | 'blog'): boolean => {
-    if (!flags) return true;
+  const isPageEnabled = (pageId: 'features' | 'blog' | 'community' | 'templateLandings'): boolean => {
+    if (!flags) return pageId === 'features' || pageId === 'blog';
     return flags.pages[pageId].enabled;
   };
 

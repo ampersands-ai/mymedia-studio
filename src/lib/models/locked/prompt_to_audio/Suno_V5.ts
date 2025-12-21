@@ -11,7 +11,7 @@
  *
  * @locked
  * @model suno/music-v5
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

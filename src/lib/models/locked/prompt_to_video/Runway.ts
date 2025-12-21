@@ -14,7 +14,7 @@
  *
  * @locked
  * @model runway/text-to-video
- * @provider kie.ai
+ * @provider primary
  * @version 2.0.0
  */
 

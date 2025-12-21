@@ -14,7 +14,7 @@
  * 
  * @locked
  * @model topaz/video-upscale
- * @provider kie.ai
+ * @provider primary
  * @version 1.0.0
  */
 

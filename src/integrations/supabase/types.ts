@@ -53,6 +53,93 @@ export type Database = {
         }
         Relationships: []
       }
+      animation_jobs: {
+        Row: {
+          audio_url: string | null
+          background_type: string
+          background_url: string | null
+          callback_email: string | null
+          caption_style: string
+          color_scheme: Json | null
+          completed_at: string | null
+          created_at: string | null
+          duration: number
+          error_message: string | null
+          id: string
+          llm_cost: number | null
+          overlay_type: string
+          render_cost: number | null
+          render_progress: number | null
+          render_started_at: string | null
+          retry_count: number | null
+          scenes: Json | null
+          script: string
+          status: string
+          style: string
+          updated_at: string | null
+          user_id: string
+          video_config: Json | null
+          video_url: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          background_type?: string
+          background_url?: string | null
+          callback_email?: string | null
+          caption_style?: string
+          color_scheme?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration: number
+          error_message?: string | null
+          id?: string
+          llm_cost?: number | null
+          overlay_type?: string
+          render_cost?: number | null
+          render_progress?: number | null
+          render_started_at?: string | null
+          retry_count?: number | null
+          scenes?: Json | null
+          script: string
+          status?: string
+          style?: string
+          updated_at?: string | null
+          user_id: string
+          video_config?: Json | null
+          video_url?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          background_type?: string
+          background_url?: string | null
+          callback_email?: string | null
+          caption_style?: string
+          color_scheme?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration?: number
+          error_message?: string | null
+          id?: string
+          llm_cost?: number | null
+          overlay_type?: string
+          render_cost?: number | null
+          render_progress?: number | null
+          render_started_at?: string | null
+          retry_count?: number | null
+          scenes?: Json | null
+          script?: string
+          status?: string
+          style?: string
+          updated_at?: string | null
+          user_id?: string
+          video_config?: Json | null
+          video_url?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       api_call_logs: {
         Row: {
           additional_metadata: Json | null

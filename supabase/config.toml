@@ -76,3 +76,9 @@ verify_jwt = false
 
 [functions.subscribe-newsletter]
 verify_jwt = false
+
+[functions.generate-animation]
+verify_jwt = true
+
+[functions.render-animation]
+verify_jwt = true

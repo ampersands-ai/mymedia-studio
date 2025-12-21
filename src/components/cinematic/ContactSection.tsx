@@ -112,9 +112,9 @@ export const ContactSection = () => {
       {/* Footer */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          <div className="flex flex-wrap justify-center gap-12 md:gap-16 mb-12">
             {/* Brand Column */}
-            <div className="col-span-2 md:col-span-1">
+            <div className="w-full sm:w-auto sm:min-w-[200px]">
               <Link to="/" className="flex items-center gap-2 mb-4">
                 <img 
                   src="/logos/artifio.png" 
@@ -143,7 +143,7 @@ export const ContactSection = () => {
             </div>
 
             {/* Product */}
-            <div>
+            <div className="min-w-[140px]">
               <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
                 Product
               </h4>
@@ -162,7 +162,7 @@ export const ContactSection = () => {
             </div>
 
             {showTemplateLandings && (
-              <div>
+              <div className="min-w-[140px]">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
                   Popular Templates
                 </h4>
@@ -182,7 +182,7 @@ export const ContactSection = () => {
             )}
 
             {/* Company */}
-            <div>
+            <div className="min-w-[140px]">
               <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
                 Company
               </h4>
@@ -201,7 +201,7 @@ export const ContactSection = () => {
             </div>
 
             {/* Support */}
-            <div>
+            <div className="min-w-[140px]">
               <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
                 Support
               </h4>

@@ -175,7 +175,7 @@ const ConfigForm = ({ config, onSave, onCancel, isEditing, onEdit, isNew }: Conf
               <SelectValue placeholder="Select provider" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="kie-ai">KIE AI</SelectItem>
+              <SelectItem value="kie-ai">Primary Provider</SelectItem>
               <SelectItem value="runware">Runware</SelectItem>
               <SelectItem value="json2video">Json2Video</SelectItem>
               <SelectItem value="dodo-payments">Dodo Payments</SelectItem>

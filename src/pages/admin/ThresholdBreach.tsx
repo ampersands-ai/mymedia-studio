@@ -14,7 +14,7 @@ interface ThresholdBreach {
   id: string;
   generation_id: string;
   model_id: string;
-  kie_credits_consumed: number;
+  kie_credits_consumed: number; // DB column name - displayed as "Provider Credits"
   our_tokens_charged: number;
   credit_multiplier: number;
   api_request_payload: Record<string, unknown>;
@@ -23,6 +23,9 @@ interface ThresholdBreach {
   processing_time_seconds: number;
   task_status: string;
 }
+
+// Alias for display purposes - hides proprietary column names
+const getProviderCredits = (breach: ThresholdBreach): number => breach.kie_credits_consumed;
 
 export default function ThresholdBreach() {
   const [selectedBreach, setSelectedBreach] = useState<ThresholdBreach | null>(null);
@@ -56,7 +59,7 @@ export default function ThresholdBreach() {
   // Calculate summary statistics
   const stats = {
     totalBreaches: breaches?.length || 0,
-    totalExcessCredits: breaches?.reduce((sum, b) => sum + (b.kie_credits_consumed - b.our_tokens_charged), 0) || 0,
+    totalExcessCredits: breaches?.reduce((sum, b) => sum + (getProviderCredits(b) - b.our_tokens_charged), 0) || 0,
     avgMultiplier: breaches?.length 
       ? (breaches.reduce((sum, b) => sum + b.credit_multiplier, 0) / breaches.length).toFixed(2)
       : '0',
@@ -186,7 +189,7 @@ export default function ThresholdBreach() {
                         {breach.our_tokens_charged}
                       </TableCell>
                       <TableCell className="text-right font-bold text-destructive">
-                        {breach.kie_credits_consumed}
+                        {getProviderCredits(breach)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="destructive" className="font-bold">
@@ -253,7 +256,7 @@ export default function ThresholdBreach() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-muted-foreground">Provider Credits</p>
-                  <p className="text-lg font-black text-destructive">{selectedBreach.kie_credits_consumed}</p>
+                  <p className="text-lg font-black text-destructive">{getProviderCredits(selectedBreach)}</p>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-muted-foreground">Multiplier</p>

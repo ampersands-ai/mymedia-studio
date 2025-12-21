@@ -67,12 +67,15 @@ export const getImageFieldInfo = (model: ModelSchema): {
 
 
 /**
- * Check if model is a Kie AI audio model
+ * Check if model is a primary provider audio model
  * Centralized utility to avoid duplication
  */
-export const isKieAiAudioModel = (model: { provider: string; content_type: string }): boolean => {
+export const isPrimaryProviderAudioModel = (model: { provider: string; content_type: string }): boolean => {
   return model.provider === 'kie_ai' && model.content_type === 'audio';
 };
+
+// Legacy alias for backward compatibility
+export const isKieAiAudioModel = isPrimaryProviderAudioModel;
 
 /**
  * Get max prompt length based on model and customMode
@@ -80,8 +83,8 @@ export const isKieAiAudioModel = (model: { provider: string; content_type: strin
 export const getMaxPromptLength = (model: ModelSchema, customMode: boolean | undefined): number => {
   if (!model) return 5000;
 
-  // Kie.ai audio in non-custom mode has 500 char limit
-  if (isKieAiAudioModel(model) && customMode === false) {
+  // Primary provider audio in non-custom mode has 500 char limit
+  if (isPrimaryProviderAudioModel(model) && customMode === false) {
     return 500;
   }
 

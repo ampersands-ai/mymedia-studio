@@ -30,11 +30,18 @@ export const WebhookEventVolumeChart = ({ timeSeries }: Props) => {
     new Set(timeSeries.map(item => `${item.provider}_${item.status}`))
   );
 
+  // Transform provider names to hide proprietary terms
+  const sanitizeProviderName = (name: string): string => {
+    return name
+      .replace(/kie-ai/gi, 'primary')
+      .replace(/kie_ai/gi, 'primary')
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ');
+  };
+
   const colors: Record<string, string> = {
     'primary_success': '#22c55e',
     'primary_failure': '#ef4444',
-    'kie-ai_success': '#22c55e',
-    'kie-ai_failure': '#ef4444',
     'midjourney_success': '#3b82f6',
     'midjourney_failure': '#f97316',
     'json2video_success': '#8b5cf6',
@@ -65,17 +72,20 @@ export const WebhookEventVolumeChart = ({ timeSeries }: Props) => {
             <YAxis />
             <Tooltip />
             <Legend />
-            {providerStatusCombos.map(combo => (
-              <Line
-                key={combo}
-                type="monotone"
-                dataKey={combo}
-                stroke={colors[combo] || '#888888'}
-                strokeWidth={2}
-                name={combo.replace('_', ' ').replace('-', ' ')}
-                connectNulls
-              />
-            ))}
+            {providerStatusCombos.map(combo => {
+              const sanitizedCombo = combo.replace(/kie-ai/gi, 'primary').replace(/kie_ai/gi, 'primary');
+              return (
+                <Line
+                  key={combo}
+                  type="monotone"
+                  dataKey={combo}
+                  stroke={colors[sanitizedCombo] || colors[combo] || '#888888'}
+                  strokeWidth={2}
+                  name={sanitizeProviderName(combo)}
+                  connectNulls
+                />
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

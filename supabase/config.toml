@@ -58,3 +58,12 @@ verify_jwt = false
 
 [functions.cleanup-old-content]
 verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.send-subscription-email]
+verify_jwt = false
+
+[functions.handle-unsubscribe]
+verify_jwt = false

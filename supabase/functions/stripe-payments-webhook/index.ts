@@ -33,6 +33,41 @@ const STRIPE_PRODUCT_TO_PLAN: Record<string, string> = {
   'prod_TdnhievqGBX9KC': 'veo_connoisseur', // Veo Connoisseur Annual
 };
 
+// Helper to send subscription emails
+interface SubscriptionEmailPayload {
+  user_id: string;
+  email: string;
+  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed';
+  plan_name: string;
+  previous_plan?: string;
+  tokens_added?: number;
+}
+
+async function sendSubscriptionEmail(
+  supabase: SupabaseClient,
+  payload: SubscriptionEmailPayload,
+  logger: EdgeLogger
+): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-subscription-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseServiceKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Email send failed: ${errorText}`);
+  }
+  
+  logger.info('Subscription email sent', { metadata: { event_type: payload.event_type, plan: payload.plan_name } });
+}
+
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
   const requestId = crypto.randomUUID();
@@ -214,6 +249,28 @@ async function handleCheckoutCompleted(
     throw error;
   }
 
+  // Get user email for notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  // Send subscription activated email
+  if (profile?.email) {
+    try {
+      await sendSubscriptionEmail(supabase, {
+        user_id: userId,
+        email: profile.email,
+        event_type: 'activated',
+        plan_name: planKey,
+        tokens_added: tokens,
+      }, logger);
+    } catch (emailError) {
+      logger.warn('Failed to send subscription email', { metadata: { errorMessage: (emailError as Error).message } });
+    }
+  }
+
   // Audit log - sanitized (no raw payment IDs)
   await supabase.from('audit_logs').insert({
     user_id: userId,
@@ -268,6 +325,27 @@ async function handleInvoicePaymentSucceeded(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', subscription.user_id);
+
+    // Get user email and send renewal notification
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', subscription.user_id)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendSubscriptionEmail(supabase, {
+          user_id: subscription.user_id,
+          email: profile.email,
+          event_type: 'renewed',
+          plan_name: subscription.plan,
+          tokens_added: tokens,
+        }, logger);
+      } catch (emailError) {
+        logger.warn('Failed to send renewal email', { metadata: { errorMessage: (emailError as Error).message } });
+      }
+    }
   }
 }
 
@@ -317,6 +395,8 @@ async function handleSubscriptionDeleted(
 
   logger.info('Subscription cancelled', { metadata: { userId: userSub.user_id } });
 
+  const previousPlan = userSub.plan;
+
   // Downgrade to freemium
   await supabase
     .from('user_subscriptions')
@@ -330,6 +410,26 @@ async function handleSubscriptionDeleted(
       last_webhook_at: new Date().toISOString(),
     })
     .eq('user_id', userSub.user_id);
+
+  // Get user email and send cancellation notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userSub.user_id)
+    .maybeSingle();
+
+  if (profile?.email) {
+    try {
+      await sendSubscriptionEmail(supabase, {
+        user_id: userSub.user_id,
+        email: profile.email,
+        event_type: 'cancelled',
+        plan_name: previousPlan,
+      }, logger);
+    } catch (emailError) {
+      logger.warn('Failed to send cancellation email', { metadata: { errorMessage: (emailError as Error).message } });
+    }
+  }
 }
 
 async function handleSubscriptionUpdated(
@@ -352,8 +452,11 @@ async function handleSubscriptionUpdated(
   const productId = subscription.items.data[0]?.price?.product as string;
   const planKey = STRIPE_PRODUCT_TO_PLAN[productId];
 
-  if (planKey) {
-    logger.info('Subscription updated', { metadata: { userId: userSub.user_id, newPlan: planKey } });
+  if (planKey && planKey !== userSub.plan) {
+    const previousPlan = userSub.plan;
+    const isUpgrade = getPlanRank(planKey) > getPlanRank(previousPlan);
+    
+    logger.info('Subscription updated', { metadata: { userId: userSub.user_id, newPlan: planKey, previousPlan, isUpgrade } });
 
     await supabase
       .from('user_subscriptions')
@@ -366,5 +469,38 @@ async function handleSubscriptionUpdated(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', userSub.user_id);
+
+    // Get user email and send plan change notification
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userSub.user_id)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendSubscriptionEmail(supabase, {
+          user_id: userSub.user_id,
+          email: profile.email,
+          event_type: isUpgrade ? 'upgraded' : 'downgraded',
+          plan_name: planKey,
+          previous_plan: previousPlan,
+        }, logger);
+      } catch (emailError) {
+        logger.warn('Failed to send plan change email', { metadata: { errorMessage: (emailError as Error).message } });
+      }
+    }
   }
+}
+
+// Helper to determine plan ranking for upgrade/downgrade detection
+function getPlanRank(plan: string): number {
+  const ranks: Record<string, number> = {
+    freemium: 0,
+    explorer: 1,
+    professional: 2,
+    ultimate: 3,
+    veo_connoisseur: 4,
+  };
+  return ranks[plan] ?? 0;
 }

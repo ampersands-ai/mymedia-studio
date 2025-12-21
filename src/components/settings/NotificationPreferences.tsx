@@ -15,6 +15,8 @@ interface NotificationPreferences {
   email_on_completion: boolean;
   push_on_completion: boolean;
   notification_threshold_seconds: number;
+  email_on_subscription_change: boolean;
+  email_marketing: boolean;
 }
 
 export const NotificationPreferences = () => {
@@ -24,7 +26,9 @@ export const NotificationPreferences = () => {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     email_on_completion: false,
     push_on_completion: false,
-    notification_threshold_seconds: 60
+    notification_threshold_seconds: 60,
+    email_on_subscription_change: true,
+    email_marketing: true,
   });
 
   const fetchPreferences = useCallback(async () => {
@@ -43,7 +47,9 @@ export const NotificationPreferences = () => {
         setPreferences({
           email_on_completion: data.email_on_completion,
           push_on_completion: data.push_on_completion,
-          notification_threshold_seconds: data.notification_threshold_seconds
+          notification_threshold_seconds: data.notification_threshold_seconds,
+          email_on_subscription_change: data.email_on_subscription_change ?? true,
+          email_marketing: data.email_marketing ?? true,
         });
       }
     } catch (error) {
@@ -76,6 +82,8 @@ export const NotificationPreferences = () => {
           email_on_completion: preferences.email_on_completion,
           push_on_completion: preferences.push_on_completion,
           notification_threshold_seconds: preferences.notification_threshold_seconds,
+          email_on_subscription_change: preferences.email_on_subscription_change,
+          email_marketing: preferences.email_marketing,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'user_id'
@@ -144,6 +152,50 @@ export const NotificationPreferences = () => {
             checked={preferences.email_on_completion}
             onCheckedChange={(checked) => 
               setPreferences(prev => ({ ...prev, email_on_completion: checked }))
+            }
+          />
+        </div>
+
+        {/* Subscription Change Notifications */}
+        <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4">
+          <div className="flex items-start space-x-4">
+            <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div className="space-y-1">
+              <Label htmlFor="subscription-notify" className="text-base font-medium">
+                Subscription Emails
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receive emails about subscription changes, renewals, and cancellations
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="subscription-notify"
+            checked={preferences.email_on_subscription_change}
+            onCheckedChange={(checked) => 
+              setPreferences(prev => ({ ...prev, email_on_subscription_change: checked }))
+            }
+          />
+        </div>
+
+        {/* Marketing Notifications */}
+        <div className="flex items-center justify-between space-x-4 rounded-lg border border-border p-4">
+          <div className="flex items-start space-x-4">
+            <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div className="space-y-1">
+              <Label htmlFor="marketing-notify" className="text-base font-medium">
+                Product Updates
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receive emails about new features, tips, and product updates
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="marketing-notify"
+            checked={preferences.email_marketing}
+            onCheckedChange={(checked) => 
+              setPreferences(prev => ({ ...prev, email_marketing: checked }))
             }
           />
         </div>

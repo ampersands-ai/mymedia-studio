@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
     const displayName = fullName || email.split('@')[0];
 
     const emailResponse = await resend.emails.send({
-      from: "Artifio <onboarding@resend.dev>",
+      from: "Artifio <welcome@artifio.ai>",
       to: [email],
       subject: "Welcome to Artifio - Your Creative Journey Starts Here! 🎨",
       html: `

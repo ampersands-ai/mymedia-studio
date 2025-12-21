@@ -70,3 +70,9 @@ verify_jwt = false
 
 [functions.create-one-time-payment]
 verify_jwt = true
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.subscribe-newsletter]
+verify_jwt = false

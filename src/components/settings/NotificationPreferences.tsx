@@ -11,6 +11,7 @@ import { Bell, Mail, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { PushNotificationToggle } from './PushNotificationToggle';
 
+
 interface NotificationPreferences {
   email_on_completion: boolean;
   push_on_completion: boolean;

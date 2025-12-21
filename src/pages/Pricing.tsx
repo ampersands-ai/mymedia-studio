@@ -11,6 +11,7 @@ import logo from "@/assets/logo.png";
 import { trackEvent } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
 
+
 const plans = [
   {
     name: "Studio",

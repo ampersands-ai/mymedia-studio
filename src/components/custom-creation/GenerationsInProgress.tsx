@@ -72,8 +72,7 @@ export const GenerationsInProgress = ({
         queryClient.invalidateQueries({ queryKey: ['active-generations'] });
         queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
       }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Failed to check provider status');
+    } catch {
       toast.error('Failed to check status. Please try again.');
     } finally {
       setCancelingId(null);

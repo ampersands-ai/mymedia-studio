@@ -5,10 +5,17 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import { useState } from "react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 export const Footer = () => {
   const [email, setEmail] = useState("");
   const { subscribe, isLoading } = useNewsletterSubscribe();
+  const { isPageEnabled } = useFeatureFlags();
+  const { isAdmin } = useAdminRole();
+  
+  const showFeaturesPage = isPageEnabled('features') || isAdmin;
+  const showBlogPage = isPageEnabled('blog') || isAdmin;
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,11 +97,13 @@ export const Footer = () => {
           <div className="text-center md:text-left">
             <h3 className="font-black text-sm mb-4">PRODUCT</h3>
             <ul className="space-y-4">
-              <li>
-                <Link to="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Features
-                </Link>
-              </li>
+              {showFeaturesPage && (
+                <li>
+                  <Link to="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Features
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/dashboard/templates" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Workflow Templates
@@ -144,11 +153,13 @@ export const Footer = () => {
                   About
                 </Link>
               </li>
-              <li>
-                <Link to="/blog" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Blog
-                </Link>
-              </li>
+              {showBlogPage && (
+                <li>
+                  <Link to="/blog" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                    Blog
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/privacy" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Privacy Policy

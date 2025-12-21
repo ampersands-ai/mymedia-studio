@@ -22,8 +22,8 @@ export const GlobalHeader = () => {
   const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);
   
-  const showFeaturesPage = isPageEnabled('features') || isAdmin;
-  const showBlogPage = isPageEnabled('blog') || isAdmin;
+  const showFeaturesPage = isPageEnabled('features');
+  const showBlogPage = isPageEnabled('blog');
 
   useEffect(() => {
     const handleScroll = () => {

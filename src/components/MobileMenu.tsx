@@ -29,9 +29,9 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   const location = useLocation();
   const [open, setOpen] = useState(false);
   
-  const showFeaturesPage = isPageEnabled('features') || isAdmin;
-  const showBlogPage = isPageEnabled('blog') || isAdmin;
-  const showCommunityPage = isPageEnabled('community') || isAdmin;
+  const showFeaturesPage = isPageEnabled('features');
+  const showBlogPage = isPageEnabled('blog');
+  const showCommunityPage = isPageEnabled('community');
 
   const handleSignOut = async () => {
     try {

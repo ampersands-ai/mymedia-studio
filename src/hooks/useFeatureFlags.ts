@@ -61,8 +61,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   faceless_videos: { enabled: true, coming_soon: true },
   storyboard: { enabled: true, coming_soon: true },
   pages: {
-    features: { enabled: true },
-    blog: { enabled: true },
+    features: { enabled: false },
+    blog: { enabled: false },
     community: { enabled: false },
     templateLandings: { enabled: false },
   },
@@ -244,7 +244,7 @@ export function useFeatureFlags() {
   };
 
   const isPageEnabled = (pageId: 'features' | 'blog' | 'community' | 'templateLandings'): boolean => {
-    if (!flags) return pageId === 'features' || pageId === 'blog';
+    if (!flags) return false;
     return flags.pages[pageId].enabled;
   };
 

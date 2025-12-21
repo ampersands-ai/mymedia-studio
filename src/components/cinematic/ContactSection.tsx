@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 const footerLinks = {
   product: [
@@ -41,6 +42,24 @@ const socialLinks = [
 export const ContactSection = () => {
   const [email, setEmail] = useState("");
   const { subscribe, isLoading } = useNewsletterSubscribe();
+  const { isPageEnabled } = useFeatureFlags();
+
+  const showFeaturesPage = isPageEnabled("features");
+  const showBlogPage = isPageEnabled("blog");
+  const showCommunityPage = isPageEnabled("community");
+  const showTemplateLandings = isPageEnabled("templateLandings");
+
+  const productLinks = footerLinks.product.filter((link) =>
+    link.label === "Features" ? showFeaturesPage : true
+  );
+
+  const companyLinks = footerLinks.company.filter((link) =>
+    link.label === "Blog" ? showBlogPage : true
+  );
+
+  const supportLinks = footerLinks.support.filter((link) =>
+    link.label === "Community" ? showCommunityPage : true
+  );
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,7 +148,7 @@ export const ContactSection = () => {
                 Product
               </h4>
               <ul className="space-y-3">
-                {footerLinks.product.map((link) => (
+                {productLinks.map((link) => (
                   <li key={link.label}>
                     <Link 
                       to={link.href}
@@ -142,24 +161,25 @@ export const ContactSection = () => {
               </ul>
             </div>
 
-            {/* Popular Templates */}
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
-                Popular Templates
-              </h4>
-              <ul className="space-y-3">
-                {footerLinks.templates.map((link) => (
-                  <li key={link.label}>
-                    <Link 
-                      to={link.href}
-                      className="text-sm text-white/70 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {showTemplateLandings && (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-primary-orange mb-4">
+                  Popular Templates
+                </h4>
+                <ul className="space-y-3">
+                  {footerLinks.templates.map((link) => (
+                    <li key={link.label}>
+                      <Link 
+                        to={link.href}
+                        className="text-sm text-white/70 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Company */}
             <div>
@@ -167,7 +187,7 @@ export const ContactSection = () => {
                 Company
               </h4>
               <ul className="space-y-3">
-                {footerLinks.company.map((link) => (
+                {companyLinks.map((link) => (
                   <li key={link.label}>
                     <Link 
                       to={link.href}
@@ -186,7 +206,7 @@ export const ContactSection = () => {
                 Support
               </h4>
               <ul className="space-y-3">
-                {footerLinks.support.map((link) => (
+                {supportLinks.map((link) => (
                   <li key={link.label}>
                     {link.href.startsWith("mailto:") ? (
                       <a 

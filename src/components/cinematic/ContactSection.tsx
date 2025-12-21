@@ -49,9 +49,11 @@ export const ContactSection = () => {
   const showCommunityPage = isPageEnabled("community");
   const showTemplateLandings = isPageEnabled("templateLandings");
 
-  const productLinks = footerLinks.product.filter((link) =>
-    link.label === "Features" ? showFeaturesPage : true
-  );
+  const productLinks = footerLinks.product.filter((link) => {
+    if (link.label === "Features") return showFeaturesPage;
+    if (link.label === "Workflow Templates") return showTemplateLandings;
+    return true;
+  });
 
   const companyLinks = footerLinks.company.filter((link) =>
     link.label === "Blog" ? showBlogPage : true

@@ -107,9 +107,6 @@ const Features = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-lg mb-1 truncate">{model.model_name}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {model.provider}
-                              </p>
                             </div>
                           </div>
                           

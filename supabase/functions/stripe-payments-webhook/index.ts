@@ -198,8 +198,12 @@ async function handleCheckoutCompleted(
       stripe_subscription_id: subscription.id,
       stripe_customer_id: session.customer as string,
       payment_provider: 'stripe',
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_start: subscription.current_period_start 
+        ? new Date(subscription.current_period_start * 1000).toISOString() 
+        : null,
+      current_period_end: subscription.current_period_end 
+        ? new Date(subscription.current_period_end * 1000).toISOString() 
+        : null,
       last_webhook_event: 'checkout.session.completed',
       last_webhook_at: new Date().toISOString(),
     })
@@ -355,7 +359,9 @@ async function handleSubscriptionUpdated(
       .from('user_subscriptions')
       .update({
         plan: planKey,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_end: subscription.current_period_end 
+          ? new Date(subscription.current_period_end * 1000).toISOString() 
+          : null,
         last_webhook_event: 'customer.subscription.updated',
         last_webhook_at: new Date().toISOString(),
       })

@@ -42,6 +42,7 @@ const About = lazy(() => import("./pages/About"));
 const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const Help = lazy(() => import("./pages/Help"));
 const Features = lazy(() => import("./pages/Features"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -208,6 +209,7 @@ const AppContent = () => {
             <Route path="/blog" element={<RouteErrorBoundary routeName="Blog List"><BlogList /></RouteErrorBoundary>} />
             <Route path="/blog/:slug" element={<RouteErrorBoundary routeName="Blog Post"><BlogPost /></RouteErrorBoundary>} />
             <Route path="/faq" element={<RouteErrorBoundary routeName="FAQ"><FAQ /></RouteErrorBoundary>} />
+            <Route path="/help" element={<RouteErrorBoundary routeName="Help"><Help /></RouteErrorBoundary>} />
             <Route path="/features" element={<RouteErrorBoundary routeName="Features"><Features /></RouteErrorBoundary>} />
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
             <Route path="/custom-creation" element={<Navigate to="/dashboard/custom-creation" replace />} />

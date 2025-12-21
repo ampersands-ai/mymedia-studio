@@ -18,7 +18,7 @@ Your plan includes a monthly credit allocation. Unused credits roll over to next
   },
   {
     question: "Can I cancel anytime?",
-    answer: "Yes! No contracts, no commitments. Cancel with one click from your dashboard. Keep your credits until they expire (12 months).",
+    answer: "Yes! No contracts, no commitments. Cancel with one click from your dashboard. Your credits are frozen for 30 days — resubscribe within that window and they're fully restored.",
   },
   {
     question: "What's the quality like compared to Midjourney/Runway?",
@@ -34,11 +34,11 @@ Quality = identical to using those tools directly. Benefit = You get them all in
     question: "What if I run out of credits?",
     answer: `Three options:
 
-1. Wait until next month (resets automatically)
-2. Buy credit top-up ($5 for 1,000 credits)
-3. Upgrade to higher plan
+1. Wait until next month (credits refresh with your subscription)
+2. Buy additional credits at your current plan rate
+3. Upgrade to a higher plan
 
-You'll get alerts at 80% and 95% usage.`,
+Subscribers can purchase additional credits anytime. The more you commit, the better your per-credit price.`,
   },
   {
     question: "Is this suitable for beginners?",

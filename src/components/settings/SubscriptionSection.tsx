@@ -152,7 +152,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
               </p>
               <p className="text-sm text-primary flex items-center justify-center gap-1">
                 <Sparkles className="h-4 w-4" />
-                Credits never expire
+                Credits never expire while subscribed
               </p>
             </div>
 

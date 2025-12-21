@@ -78,7 +78,7 @@ const FAQ = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-2">Can I switch plans anytime?</h3>
                     <p className="text-muted-foreground">
-                      Yes! You can upgrade, downgrade, or cancel your subscription at any time. Changes take effect at the start of your next billing cycle. Your unused tokens roll over as long as your subscription is active.
+                      Yes! You can upgrade, downgrade, or cancel at any time. Upgrades take effect immediately with prorated billing. Downgrades apply at the end of your current billing cycle. Credits never expire while subscribed, and if you cancel, they're frozen for 30 days — resubscribe to restore them.
                     </p>
                   </div>
                   

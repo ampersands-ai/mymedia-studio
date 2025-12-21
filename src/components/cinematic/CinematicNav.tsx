@@ -5,17 +5,28 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
   { id: "pricing", label: "Pricing", href: "/pricing" },
   { id: "blog", label: "Blog", href: "/blog" },
-];
+] as const;
+
+
 
 export const CinematicNav = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const { isPageEnabled } = useFeatureFlags();
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.id === "pricing") return true;
+    if (item.id === "features") return isPageEnabled("features");
+    if (item.id === "blog") return isPageEnabled("blog");
+    return false;
+  }) as ReadonlyArray<(typeof navItems)[number]>;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,7 +59,7 @@ export const CinematicNav = () => {
 
         {/* Desktop Nav Links */}
         <div className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.id}
               to={item.href}
@@ -127,7 +138,7 @@ export const CinematicNav = () => {
               {/* Nav Links */}
               <div className="flex-1 py-8">
                 <div className="flex flex-col gap-2 px-6">
-                  {navItems.map((item) => (
+                  {visibleNavItems.map((item) => (
                     <Link
                       key={item.id}
                       to={item.href}

@@ -24,6 +24,7 @@ import { CreationGroupSelector } from "@/components/custom-creation/CreationGrou
 import { InputPanel } from "@/components/custom-creation/InputPanel";
 import { OutputPanel } from "@/components/custom-creation/OutputPanel";
 import { BestPracticesCard } from "@/components/custom-creation/BestPracticesCard";
+import { GenerationHistoryTable } from "@/components/custom-creation/GenerationHistoryTable";
 import { downloadMultipleOutputs } from "@/lib/download-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCinematicPrompts, getSurpriseMePromptFromDb } from "@/hooks/useCinematicPrompts";
@@ -677,6 +678,9 @@ const CustomCreation = () => {
 
         {/* Best Practices */}
         <BestPracticesCard />
+
+        {/* Generation History */}
+        <GenerationHistoryTable />
 
       </div>
     </div>

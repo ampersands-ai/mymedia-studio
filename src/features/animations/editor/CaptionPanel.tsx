@@ -45,7 +45,6 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({
   caption,
   sceneDuration,
   onUpdate,
-  onImportTimestamps,
 }) => {
   const [scriptText, setScriptText] = useState('');
   const [showImport, setShowImport] = useState(false);

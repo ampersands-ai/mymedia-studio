@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
 export type StatusFilter = 'all' | 'completed' | 'failed' | 'pending';
-export type ContentTypeFilter = 'all' | 'image' | 'video' | 'audio' | 'storyboard';
+export type ContentTypeFilter = 'all' | 'image' | 'video' | 'audio' | 'storyboard' | 'video_editor';
 
 const isValidStatusFilter = (value: string | null): value is StatusFilter => {
   return value === 'all' || value === 'completed' || value === 'failed' || value === 'pending';

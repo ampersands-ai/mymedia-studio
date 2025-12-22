@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Image as ImageIcon, Video, Music, FileText, Loader2 } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Video, Music, FileText, Loader2, Clapperboard } from "lucide-react";
 import type { StatusFilter, ContentTypeFilter } from "../hooks/useGenerationFilters";
 
 interface GenerationFiltersProps {
@@ -33,7 +33,7 @@ export const GenerationFilters = ({
 
       <div className="mb-6">
         <Tabs value={contentTypeFilter} onValueChange={(v) => onContentTypeFilterChange(v as ContentTypeFilter)}>
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6">
             <TabsTrigger value="all">
               <Sparkles className="h-4 w-4 mr-1" />
               All
@@ -45,6 +45,10 @@ export const GenerationFilters = ({
             <TabsTrigger value="video">
               <Video className="h-4 w-4 mr-1" />
               Videos
+            </TabsTrigger>
+            <TabsTrigger value="video_editor">
+              <Clapperboard className="h-4 w-4 mr-1" />
+              Editor
             </TabsTrigger>
             <TabsTrigger value="audio">
               <Music className="h-4 w-4 mr-1" />

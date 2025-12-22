@@ -45,6 +45,8 @@ interface UseGenerationHistoryOptions {
   itemsPerPage: number;
   statusFilter: 'all' | 'completed' | 'failed' | 'pending';
   contentTypeFilter: 'all' | 'image' | 'video' | 'audio' | 'storyboard' | 'video_editor';
+  dateRange?: { from: Date | undefined; to: Date | undefined };
+  modelFilter?: string;
 }
 
 export const useGenerationHistory = ({
@@ -53,10 +55,12 @@ export const useGenerationHistory = ({
   itemsPerPage,
   statusFilter,
   contentTypeFilter,
+  dateRange,
+  modelFilter,
 }: UseGenerationHistoryOptions) => {
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["generations-count", userId, statusFilter, contentTypeFilter],
+    queryKey: ["generations-count", userId, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter],
     queryFn: async () => {
       let query = supabase
         .from("user_content_history")
@@ -81,6 +85,19 @@ export const useGenerationHistory = ({
         query = query.eq('type', contentTypeFilter);
       }
 
+      // Apply date range filter
+      if (dateRange?.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange?.to) {
+        query = query.lte('created_at', dateRange.to.toISOString());
+      }
+
+      // Apply model filter
+      if (modelFilter && modelFilter !== 'all') {
+        query = query.eq('model_record_id', modelFilter);
+      }
+
       const { count } = await query;
       return count || 0;
     },
@@ -89,7 +106,7 @@ export const useGenerationHistory = ({
 
   // Fetch generations from unified view with server-side pagination
   const { data: generations, refetch, isRefetching, isLoading } = useQuery<Generation[]>({
-    queryKey: ["generations", userId, currentPage, statusFilter, contentTypeFilter],
+    queryKey: ["generations", userId, currentPage, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter],
     queryFn: async () => {
       const offset = (currentPage - 1) * itemsPerPage;
 
@@ -117,6 +134,19 @@ export const useGenerationHistory = ({
         query = query.eq('type', 'video');
       } else if (contentTypeFilter !== 'all') {
         query = query.eq('type', contentTypeFilter);
+      }
+
+      // Apply date range filter
+      if (dateRange?.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange?.to) {
+        query = query.lte('created_at', dateRange.to.toISOString());
+      }
+
+      // Apply model filter
+      if (modelFilter && modelFilter !== 'all') {
+        query = query.eq('model_record_id', modelFilter);
       }
 
       // Apply pagination and ordering

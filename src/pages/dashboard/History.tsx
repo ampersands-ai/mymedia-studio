@@ -14,9 +14,11 @@ import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { useGenerationHistory } from "./hooks/useGenerationHistory";
 import { useGenerationFilters } from "./hooks/useGenerationFilters";
 import { useGenerationActions } from "./hooks/useGenerationActions";
+import { useAvailableModels } from "./hooks/useAvailableModels";
 import { GenerationFilters } from "./components/GenerationFilters";
 import { GenerationList } from "./components/GenerationList";
 import { GenerationDetailsModal } from "./components/GenerationDetailsModal";
+import { RateLimitDisplay } from "@/components/shared/RateLimitDisplay";
 import type { Generation } from "./hooks/useGenerationHistory";
 
 const ITEMS_PER_PAGE = 20;
@@ -35,9 +37,17 @@ const History = () => {
     setStatusFilter,
     contentTypeFilter,
     setContentTypeFilter,
+    datePreset,
+    setDatePreset,
+    dateRange,
+    modelFilter,
+    setModelFilter,
     currentPage,
     setCurrentPage,
   } = useGenerationFilters();
+
+  // Fetch available models for filter dropdown
+  const { data: availableModels = [] } = useAvailableModels();
 
   // Fetch data
   const {
@@ -52,6 +62,8 @@ const History = () => {
     itemsPerPage: ITEMS_PER_PAGE,
     statusFilter,
     contentTypeFilter,
+    dateRange,
+    modelFilter,
   });
 
   // Actions
@@ -160,15 +172,18 @@ const History = () => {
             Your generated AI content
           </p>
         </div>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          size="icon"
-          disabled={isRefetching}
-          className="brutal-card-sm"
-        >
-          <RefreshCw className={`h-5 w-5 ${isRefetching ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-3">
+          <RateLimitDisplay />
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="icon"
+            disabled={isRefetching}
+            className="brutal-card-sm"
+          >
+            <RefreshCw className={`h-5 w-5 ${isRefetching ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <GenerationFilters
@@ -176,6 +191,11 @@ const History = () => {
         onStatusFilterChange={setStatusFilter}
         contentTypeFilter={contentTypeFilter}
         onContentTypeFilterChange={setContentTypeFilter}
+        datePreset={datePreset}
+        onDatePresetChange={setDatePreset}
+        modelFilter={modelFilter}
+        onModelFilterChange={setModelFilter}
+        availableModels={availableModels}
       />
 
       <LoadingTransition

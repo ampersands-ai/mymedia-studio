@@ -1477,6 +1477,13 @@ export type Database = {
             foreignKeyName: "generations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1790,6 +1797,89 @@ export type Database = {
           last_attempt_at?: string
         }
         Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          reward_tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          reward_tokens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          reward_tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code_id: string
+          referred_reward_tokens: number
+          referred_rewarded: boolean
+          referred_user_id: string
+          referrer_reward_tokens: number
+          referrer_rewarded: boolean
+          referrer_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code_id: string
+          referred_reward_tokens?: number
+          referred_rewarded?: boolean
+          referred_user_id: string
+          referrer_reward_tokens?: number
+          referrer_rewarded?: boolean
+          referrer_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code_id?: string
+          referred_reward_tokens?: number
+          referred_rewarded?: boolean
+          referred_user_id?: string
+          referrer_reward_tokens?: number
+          referrer_rewarded?: boolean
+          referrer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_redemptions_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_caption_presets: {
         Row: {
@@ -2616,6 +2706,13 @@ export type Database = {
             foreignKeyName: "token_dispute_reports_user_fk"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "token_dispute_reports_user_fk"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3165,6 +3262,13 @@ export type Database = {
             foreignKeyName: "user_subscriptions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3697,6 +3801,45 @@ export type Database = {
       }
     }
     Views: {
+      acquisition_channel_metrics: {
+        Row: {
+          activated: number | null
+          campaign: string | null
+          conversion_rate_pct: number | null
+          converted: number | null
+          medium: string | null
+          signup_method: string | null
+          signups: number | null
+          source: string | null
+        }
+        Relationships: []
+      }
+      acquisition_cohort_metrics: {
+        Row: {
+          activated_users: number | null
+          active_last_30d: number | null
+          cohort_month: string | null
+          cohort_size: number | null
+          conversion_rate_pct: number | null
+          converted_users: number | null
+        }
+        Relationships: []
+      }
+      churn_risk_indicators: {
+        Row: {
+          churn_risk: string | null
+          days_since_activity: number | null
+          display_name: string | null
+          generations_last_30d: number | null
+          last_activity_at: string | null
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
+          tokens_remaining: number | null
+          tokens_total: number | null
+          total_generations: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       community_creations_public: {
         Row: {
           content_type: string | null
@@ -3752,6 +3895,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_adoption_metrics: {
+        Row: {
+          avg_tokens_per_generation: number | null
+          feature_type: string | null
+          total_generations: number | null
+          total_tokens_consumed: number | null
+          unique_users: number | null
+          users_last_30d: number | null
+        }
+        Relationships: []
+      }
+      referral_program_metrics: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          is_active: boolean | null
+          referrer_id: string | null
+          referrer_name: string | null
+          successful_referrals: number | null
+          tokens_earned: number | null
+          total_referrals: number | null
+        }
+        Relationships: []
       }
       template_landing_pages_public: {
         Row: {
@@ -3857,6 +4024,18 @@ export type Database = {
           },
         ]
       }
+      token_economics_metrics: {
+        Row: {
+          avg_tokens_consumed_per_user: number | null
+          consumption_rate_pct: number | null
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
+          total_tokens_consumed: number | null
+          total_tokens_issued: number | null
+          total_tokens_remaining: number | null
+          user_count: number | null
+        }
+        Relationships: []
+      }
       user_available_credits: {
         Row: {
           available_credits: number | null
@@ -3865,6 +4044,13 @@ export type Database = {
           user_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "user_subscriptions_user_id_fkey"
             columns: ["user_id"]
@@ -3971,6 +4157,13 @@ export type Database = {
       }
     }
     Functions: {
+      anonymize_old_prompts: {
+        Args: never
+        Returns: {
+          generations_anonymized: number
+          moderation_logs_deleted: number
+        }[]
+      }
       check_and_fail_stuck_jobs: { Args: never; Returns: undefined }
       check_existing_dispute: {
         Args: { _generation_id: string }
@@ -4043,6 +4236,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      generate_referral_code: { Args: { p_user_id: string }; Returns: string }
       get_admin_user_stats: {
         Args: never
         Returns: {
@@ -4114,6 +4308,10 @@ export type Database = {
       log_payment_id_decryption: {
         Args: { p_field_name: string; p_reason?: string; p_user_id: string }
         Returns: undefined
+      }
+      redeem_referral_code: {
+        Args: { p_code: string; p_referred_user_id: string }
+        Returns: boolean
       }
       resolve_error_event: {
         Args: { p_error_id: string; p_resolution_notes?: string }

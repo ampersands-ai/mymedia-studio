@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Share2, CheckCircle, Image, Video, Music, Type, ArrowLeft, Coins, User } from "lucide-react";
+import { Loader2, Share2, CheckCircle, Image, Video, Music, Type, ArrowLeft, Coins, User, Shield, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -22,6 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { useImageUrl, useVideoUrl } from "@/hooks/media";
 import { usePagination } from "@/hooks/usePagination";
@@ -30,6 +36,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 type GenerationRow = Database['public']['Tables']['generations']['Row'];
 type CommunityCreationRow = Database['public']['Tables']['community_creations']['Row'];
+
+interface ModerationLog {
+  id: string;
+  user_id: string;
+  prompt: string;
+  flagged: boolean;
+  flagged_categories: string[];
+  category_scores: Record<string, number>;
+  exempt: boolean;
+  created_at: string;
+}
 
 interface Generation {
   id: string;
@@ -289,6 +306,33 @@ export default function UserGenerations() {
     enabled: !!userId,
   });
 
+  // Fetch moderation logs for this user
+  const { data: moderationLogs, isLoading: isLoadingModeration } = useQuery({
+    queryKey: ['admin-user-moderation-logs', userId],
+    queryFn: async () => {
+      if (!userId) throw new Error('User ID is required');
+
+      const { data, error } = await supabase
+        .from('moderation_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+      return (data || []) as ModerationLog[];
+    },
+    enabled: !!userId,
+  });
+
+  // Calculate moderation stats
+  const moderationStats = {
+    total: moderationLogs?.length || 0,
+    blocked: moderationLogs?.filter(l => l.flagged).length || 0,
+    exempt: moderationLogs?.filter(l => l.exempt).length || 0,
+    passed: moderationLogs?.filter(l => !l.flagged && !l.exempt).length || 0,
+  };
+
   const generations = queryResult?.generations || [];
   const totalCount = queryResult?.totalCount || 0;
 
@@ -492,179 +536,364 @@ export default function UserGenerations() {
         </DialogContent>
       </Dialog>
 
-      {/* Generations List */}
-      <Card>
-        <CardHeader className="px-3 md:px-6">
-          <CardTitle className="text-base md:text-lg">
-            {totalCount.toLocaleString()} Generations
-            {generations.length > 0 && totalCount > generations.length && (
-              <span className="text-xs md:text-sm font-normal text-muted-foreground ml-2">
-                (Showing {generations.length})
-              </span>
+      {/* Tabbed Content */}
+      <Tabs defaultValue="generations" className="w-full">
+        <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex">
+          <TabsTrigger value="generations" className="gap-2">
+            <Image className="h-4 w-4" />
+            <span className="hidden sm:inline">Generations</span>
+            <Badge variant="secondary" className="ml-1">{totalCount}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Moderation</span>
+            {moderationStats.blocked > 0 && (
+              <Badge variant="destructive" className="ml-1">{moderationStats.blocked}</Badge>
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 md:px-6">
-          {generations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No generations found for this user
-            </div>
-          ) : isMobile ? (
-            /* Mobile Card View */
-            <div className="space-y-3">
-              {generations.map((gen: Generation) => (
-                <Card key={gen.id} className="border p-3">
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0">
-                      <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getContentIcon(gen.type)}
-                        <span className="capitalize text-sm font-medium">{gen.type}</span>
-                        {getStatusBadge(gen.status)}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Generations Tab */}
+        <TabsContent value="generations" className="mt-4">
+          <Card>
+            <CardHeader className="px-3 md:px-6">
+              <CardTitle className="text-base md:text-lg">
+                {totalCount.toLocaleString()} Generations
+                {generations.length > 0 && totalCount > generations.length && (
+                  <span className="text-xs md:text-sm font-normal text-muted-foreground ml-2">
+                    (Showing {generations.length})
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 md:px-6">
+              {generations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No generations found for this user
+                </div>
+              ) : isMobile ? (
+                /* Mobile Card View */
+                <div className="space-y-3">
+                  {generations.map((gen: Generation) => (
+                    <Card key={gen.id} className="border p-3">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0">
+                          <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2">
+                            {getContentIcon(gen.type)}
+                            <span className="capitalize text-sm font-medium">{gen.type}</span>
+                            {getStatusBadge(gen.status)}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{gen.prompt}</p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <code className="bg-muted px-1 py-0.5 rounded text-[10px] truncate max-w-[100px]">
+                              {gen.model_id}
+                            </code>
+                            <span>{gen.tokens_used} credits</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(gen.created_at), 'MMM d, HH:mm')}
+                            </span>
+                            {gen.status === 'completed' && (
+                              gen.is_shared ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs"
+                                  onClick={() => unshareFromCommunity.mutate(gen.id)}
+                                  disabled={unshareFromCommunity.isPending}
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                                  Shared
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs"
+                                  onClick={() => shareToCommunity.mutate(gen)}
+                                  disabled={shareToCommunity.isPending}
+                                >
+                                  <Share2 className="h-3 w-3 mr-1" />
+                                  Share
+                                </Button>
+                              )
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{gen.prompt}</p>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <code className="bg-muted px-1 py-0.5 rounded text-[10px] truncate max-w-[100px]">
-                          {gen.model_id}
-                        </code>
-                        <span>{gen.tokens_used} credits</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(gen.created_at), 'MMM d, HH:mm')}
-                        </span>
-                        {gen.status === 'completed' && (
-                          gen.is_shared ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 text-xs"
-                              onClick={() => unshareFromCommunity.mutate(gen.id)}
-                              disabled={unshareFromCommunity.isPending}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                              Shared
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 text-xs"
-                              onClick={() => shareToCommunity.mutate(gen)}
-                              disabled={shareToCommunity.isPending}
-                            >
-                              <Share2 className="h-3 w-3 mr-1" />
-                              Share
-                            </Button>
-                          )
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                /* Desktop Table View */
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Preview</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>Prompt</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead className="text-right">Credits</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {generations.map((gen: Generation) => (
+                        <TableRow key={gen.id}>
+                          <TableCell>
+                            <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getContentIcon(gen.type)}
+                              <span className="capitalize">{gen.type}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                              {gen.model_id}
+                            </code>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="truncate" title={gen.prompt}>
+                              {gen.prompt}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(gen.status)}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {format(new Date(gen.created_at), 'MMM d, yyyy HH:mm')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {gen.tokens_used.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {gen.status === 'completed' && (
+                                gen.is_shared ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => unshareFromCommunity.mutate(gen.id)}
+                                    disabled={unshareFromCommunity.isPending}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                                    Shared
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => shareToCommunity.mutate(gen)}
+                                    disabled={shareToCommunity.isPending}
+                                  >
+                                    <Share2 className="h-4 w-4 mr-1" />
+                                    Share
+                                  </Button>
+                                )
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalCount > pagination.pageSize && (
+                <div className="mt-4">
+                  <PaginationControls
+                    page={pagination.page}
+                    totalPages={pagination.totalPages}
+                    totalCount={totalCount}
+                    pageSize={pagination.pageSize}
+                    hasPrevious={pagination.hasPrevious}
+                    hasNext={pagination.hasNext}
+                    onPageChange={pagination.goToPage}
+                    onFirstPage={pagination.firstPage}
+                    onLastPage={pagination.lastPage}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Moderation Logs Tab */}
+        <TabsContent value="moderation" className="mt-4 space-y-4">
+          {/* Moderation Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
+            <Card className="border-2">
+              <CardContent className="p-3 md:p-4">
+                <span className="text-xs text-muted-foreground">Total Checks</span>
+                <p className="text-xl md:text-2xl font-bold">{moderationStats.total}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-2">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1">
+                  <ShieldAlert className="h-3 w-3 text-red-500" />
+                  <span className="text-xs text-muted-foreground">Blocked</span>
+                </div>
+                <p className="text-xl md:text-2xl font-bold text-red-500">{moderationStats.blocked}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-2">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-green-500" />
+                  <span className="text-xs text-muted-foreground">Passed</span>
+                </div>
+                <p className="text-xl md:text-2xl font-bold text-green-500">{moderationStats.passed}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-2">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1">
+                  <ShieldOff className="h-3 w-3 text-yellow-500" />
+                  <span className="text-xs text-muted-foreground">Exempt</span>
+                </div>
+                <p className="text-xl md:text-2xl font-bold text-yellow-500">{moderationStats.exempt}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Moderation Logs List */}
+          <Card>
+            <CardHeader className="px-3 md:px-6">
+              <CardTitle className="text-base md:text-lg">
+                Moderation Logs
+                <span className="text-xs md:text-sm font-normal text-muted-foreground ml-2">
+                  (Last 500 checks)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 md:px-6">
+              {isLoadingModeration ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : !moderationLogs || moderationLogs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No moderation logs found for this user
+                </div>
+              ) : isMobile ? (
+                /* Mobile Card View for Moderation */
+                <div className="space-y-3">
+                  {moderationLogs.map((log) => (
+                    <Card key={log.id} className={`border p-3 ${log.flagged ? 'border-red-500/50 bg-red-500/5' : log.exempt ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`}>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {log.flagged ? (
+                              <Badge variant="destructive" className="text-xs">
+                                <ShieldAlert className="h-3 w-3 mr-1" />
+                                Blocked
+                              </Badge>
+                            ) : log.exempt ? (
+                              <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600">
+                                <ShieldOff className="h-3 w-3 mr-1" />
+                                Exempt
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs border-green-500 text-green-600">
+                                <ShieldCheck className="h-3 w-3 mr-1" />
+                                Passed
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(log.created_at), 'MMM d, HH:mm')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-3">{log.prompt}</p>
+                        {log.flagged && log.flagged_categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {log.flagged_categories.map((cat, idx) => (
+                              <Badge key={idx} variant="destructive" className="text-[10px]">
+                                {cat}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            /* Desktop Table View */
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Preview</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Prompt</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Credits</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {generations.map((gen: Generation) => (
-                    <TableRow key={gen.id}>
-                      <TableCell>
-                        <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getContentIcon(gen.type)}
-                          <span className="capitalize">{gen.type}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {gen.model_id}
-                        </code>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="truncate" title={gen.prompt}>
-                          {gen.prompt}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(gen.status)}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {format(new Date(gen.created_at), 'MMM d, yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {gen.tokens_used.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {gen.status === 'completed' && (
-                            gen.is_shared ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => unshareFromCommunity.mutate(gen.id)}
-                                disabled={unshareFromCommunity.isPending}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
-                                Shared
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => shareToCommunity.mutate(gen)}
-                                disabled={shareToCommunity.isPending}
-                              >
-                                <Share2 className="h-4 w-4 mr-1" />
-                                Share
-                              </Button>
-                            )
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {/* Pagination Controls */}
-          {totalCount > pagination.pageSize && (
-            <div className="mt-4">
-              <PaginationControls
-                page={pagination.page}
-                totalPages={pagination.totalPages}
-                totalCount={totalCount}
-                pageSize={pagination.pageSize}
-                hasPrevious={pagination.hasPrevious}
-                hasNext={pagination.hasNext}
-                onPageChange={pagination.goToPage}
-                onFirstPage={pagination.firstPage}
-                onLastPage={pagination.lastPage}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+              ) : (
+                /* Desktop Table View for Moderation */
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Prompt</TableHead>
+                        <TableHead>Flagged Categories</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {moderationLogs.map((log) => (
+                        <TableRow key={log.id} className={log.flagged ? 'bg-red-500/5' : log.exempt ? 'bg-yellow-500/5' : ''}>
+                          <TableCell>
+                            {log.flagged ? (
+                              <Badge variant="destructive">
+                                <ShieldAlert className="h-3 w-3 mr-1" />
+                                Blocked
+                              </Badge>
+                            ) : log.exempt ? (
+                              <Badge variant="outline" className="border-yellow-500 text-yellow-600">
+                                <ShieldOff className="h-3 w-3 mr-1" />
+                                Exempt
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="border-green-500 text-green-600">
+                                <ShieldCheck className="h-3 w-3 mr-1" />
+                                Passed
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-md">
+                            <div className="truncate" title={log.prompt}>
+                              {log.prompt}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {log.flagged_categories.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {log.flagged_categories.map((cat, idx) => (
+                                  <Badge key={idx} variant="destructive" className="text-xs">
+                                    {cat}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

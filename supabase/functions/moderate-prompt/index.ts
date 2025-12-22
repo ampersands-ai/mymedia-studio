@@ -31,10 +31,47 @@ interface ModeratePromptRequest {
   userId?: string;
 }
 
+// Helper to log moderation attempt to database
+async function logModerationAttempt(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabaseAdmin: any,
+  userId: string | undefined,
+  prompt: string,
+  flagged: boolean,
+  flaggedCategories: string[],
+  categoryScores: Record<string, number>,
+  exempt: boolean
+): Promise<void> {
+  if (!userId) return; // Only log for authenticated users
+  
+  try {
+    const { error } = await supabaseAdmin
+      .from('moderation_logs')
+      .insert({
+        user_id: userId,
+        prompt: prompt.substring(0, 5000), // Limit prompt length
+        flagged,
+        flagged_categories: flaggedCategories,
+        category_scores: categoryScores,
+        exempt,
+      });
+    
+    if (error) {
+      console.error('Failed to log moderation attempt:', error);
+    }
+  } catch (e) {
+    console.error('Error logging moderation attempt:', e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const { prompt, userId } = await req.json() as ModeratePromptRequest;
@@ -48,10 +85,6 @@ Deno.serve(async (req) => {
 
     // Check if user is exempt from moderation
     if (userId) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
       const { data: isExempt, error: exemptError } = await supabaseAdmin
         .rpc('is_moderation_exempt', { _user_id: userId });
 
@@ -59,6 +92,18 @@ Deno.serve(async (req) => {
         console.error('Error checking moderation exemption:', exemptError);
       } else if (isExempt === true) {
         console.log('User is exempt from moderation:', userId);
+        
+        // Log exemption to database
+        await logModerationAttempt(
+          supabaseAdmin,
+          userId,
+          prompt,
+          false,
+          [],
+          {},
+          true
+        );
+        
         return new Response(
           JSON.stringify({
             flagged: false,
@@ -122,6 +167,17 @@ Deno.serve(async (req) => {
       flaggedCategories,
       userId: userId || 'anonymous',
     });
+
+    // Log ALL moderation attempts to database (not just flagged ones)
+    await logModerationAttempt(
+      supabaseAdmin,
+      userId,
+      prompt,
+      result.flagged,
+      flaggedCategories,
+      result.category_scores,
+      false
+    );
 
     return new Response(
       JSON.stringify({

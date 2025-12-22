@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
-import { Play, Pause, Maximize2, Download, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Maximize2, Download, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useVideoEditorStore } from '../store';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export const VideoPreview = () => {
   const { finalVideoUrl, renderStatus } = useVideoEditorStore();
@@ -11,6 +13,7 @@ export const VideoPreview = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -50,6 +53,43 @@ export const VideoPreview = () => {
       document.exitFullscreen();
     } else {
       videoRef.current.requestFullscreen();
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!finalVideoUrl) {
+      toast.error('Video URL not available');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(finalVideoUrl);
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const timestamp = Date.now();
+      const filename = `artifio-video-${timestamp}.mp4`;
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Video downloaded successfully');
+    } catch (error) {
+      logger.error('Video download failed', error instanceof Error ? error : new Error(String(error)), {
+        component: 'VideoPreview',
+        operation: 'handleDownload',
+        videoUrl: finalVideoUrl
+      });
+      toast.error('Failed to download video. Try right-clicking the video and "Save video as..."');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -140,11 +180,18 @@ export const VideoPreview = () => {
             <Button size="icon" variant="ghost" onClick={handleFullscreen}>
               <Maximize2 className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" asChild>
-              <a href={finalVideoUrl} download target="_blank" rel="noopener noreferrer">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
                 <Download className="h-4 w-4 mr-1" />
-                Download
-              </a>
+              )}
+              {isDownloading ? 'Downloading...' : 'Download'}
             </Button>
           </div>
         </div>

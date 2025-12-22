@@ -1,7 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MediaUploader,
   MediaLibrary,
@@ -38,32 +37,25 @@ const VideoEditorPage = () => {
       {/* Main content */}
       <main className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left column - Media & Clips */}
+          {/* Left column - Upload, Library & Clips */}
           <div className="lg:col-span-2 space-y-6">
-            <Tabs defaultValue="upload" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upload">Upload Media</TabsTrigger>
-                <TabsTrigger value="arrange">Arrange Clips</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="upload" className="space-y-4 mt-4">
-                <MediaUploader />
-                <div>
-                  <h3 className="font-medium mb-3">Media Library</h3>
-                  <MediaLibrary />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="arrange" className="space-y-4 mt-4">
-                <div>
-                  <h3 className="font-medium mb-3">Clip Sequence</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Drag to reorder clips. Click settings to adjust duration and transitions.
-                  </p>
-                  <ClipList />
-                </div>
-              </TabsContent>
-            </Tabs>
+            {/* Upload */}
+            <MediaUploader />
+
+            {/* Media Library */}
+            <div>
+              <h3 className="font-medium mb-3">Media Library</h3>
+              <MediaLibrary />
+            </div>
+
+            {/* Clip Sequence */}
+            <div>
+              <h3 className="font-medium mb-3">Clip Sequence</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Drag to reorder clips. Click settings to adjust duration and transitions.
+              </p>
+              <ClipList />
+            </div>
           </div>
 
           {/* Right column - Settings & Render */}

@@ -281,25 +281,36 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
           
           // Add caption track if auto-captions enabled and we have video clips
           if (subtitleConfig.mode === 'auto' && firstVideoClipId) {
+            // Caption asset structure per Shotstack API
+            const captionAsset: any = {
+              type: 'caption',
+              src: 'alias://speech-source',
+            };
+            
+            // Add font styling
+            if (subtitleConfig.fontSize || subtitleConfig.fontColor) {
+              captionAsset.font = {};
+              if (subtitleConfig.fontSize) captionAsset.font.size = subtitleConfig.fontSize;
+              if (subtitleConfig.fontColor) captionAsset.font.color = subtitleConfig.fontColor;
+            }
+            
+            // Add background if enabled
+            if (subtitleConfig.showBackground) {
+              captionAsset.background = {
+                color: subtitleConfig.backgroundColor,
+                padding: 10,
+              };
+            }
+            
             const captionTrack: ShotstackTrack = {
               clips: [{
-                asset: {
-                  type: 'caption' as any,
-                  src: 'alias://speech-source',
-                  font: {
-                    size: subtitleConfig.fontSize,
-                    color: subtitleConfig.fontColor,
-                  },
-                  background: subtitleConfig.showBackground ? {
-                    color: subtitleConfig.backgroundColor,
-                    padding: 10,
-                  } : undefined,
-                  position: subtitleConfig.position === 'top' ? 'top' 
-                    : subtitleConfig.position === 'center' ? 'center' 
-                    : 'bottom',
-                } as any,
+                asset: captionAsset,
                 start: 0,
                 length: totalDuration > 0 ? totalDuration : 'end',
+                // Position is set at clip level, not asset level
+                position: subtitleConfig.position === 'top' ? 'top' 
+                  : subtitleConfig.position === 'center' ? 'center' 
+                  : 'bottom',
               }] as any,
             };
             tracks.push(captionTrack);

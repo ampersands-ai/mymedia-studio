@@ -620,17 +620,18 @@ export default function UsersManager() {
                             onClick={() =>
                               handleToggleModerationExempt(user.id, user.is_mod_exempt)
                             }
-                          title={user.is_mod_exempt ? "Remove Exemption" : "Exempt from Moderation"}
-                        >
-                          <ShieldOff className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                            title={user.is_mod_exempt ? "Remove Exemption" : "Exempt from Moderation"}
+                          >
+                            <ShieldOff className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (

@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { useImageUrl, useVideoUrl } from "@/hooks/media";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type GenerationRow = Database['public']['Tables']['generations']['Row'];
 type CommunityCreationRow = Database['public']['Tables']['community_creations']['Row'];
@@ -359,44 +360,48 @@ export default function UserGenerations() {
     );
   }
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Users
+          Back
         </Button>
       </div>
 
       <div>
-        <h1 className="text-3xl font-black">User Generations</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-black">User Generations</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Viewing all generations for this user
         </p>
       </div>
 
       {/* User Info Card */}
       <Card className="border-2">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">{userProfile?.email || 'Unknown'}</span>
-              {userProfile?.full_name && (
-                <span className="text-muted-foreground">({userProfile.full_name})</span>
-              )}
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium text-sm md:text-base truncate">{userProfile?.email || 'Unknown'}</span>
             </div>
-            <Badge variant="outline" className="capitalize">
-              {userSubscription?.plan || 'freemium'}
-            </Badge>
-            <Badge variant={userSubscription?.status === 'active' ? 'default' : 'secondary'}>
-              {userSubscription?.status || 'inactive'}
-            </Badge>
-            <div className="flex items-center gap-1 text-sm">
-              <Coins className="h-4 w-4 text-primary" />
-              <span className="font-bold">{userSubscription?.tokens_remaining?.toLocaleString() || 0}</span>
-              <span className="text-muted-foreground">/ {userSubscription?.tokens_total?.toLocaleString() || 0} credits</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {userProfile?.full_name && (
+                <span className="text-xs md:text-sm text-muted-foreground">({userProfile.full_name})</span>
+              )}
+              <Badge variant="outline" className="capitalize text-xs">
+                {userSubscription?.plan || 'freemium'}
+              </Badge>
+              <Badge variant={userSubscription?.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                {userSubscription?.status || 'inactive'}
+              </Badge>
+              <div className="flex items-center gap-1 text-xs md:text-sm">
+                <Coins className="h-3 w-3 text-primary" />
+                <span className="font-bold">{userSubscription?.tokens_remaining?.toLocaleString() || 0}</span>
+                <span className="text-muted-foreground hidden sm:inline">/ {userSubscription?.tokens_total?.toLocaleString() || 0}</span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -404,56 +409,56 @@ export default function UserGenerations() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-4">
           <Card className="border-2">
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <span className="text-xs text-muted-foreground">Total</span>
-              <p className="text-2xl font-bold">{stats.total.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold">{stats.total.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="border-2">
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-1">
                 <Image className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Images</span>
               </div>
-              <p className="text-2xl font-bold">{stats.images.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold">{stats.images.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="border-2">
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-1">
                 <Video className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Videos</span>
               </div>
-              <p className="text-2xl font-bold">{stats.videos.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold">{stats.videos.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="border-2">
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-1">
                 <Music className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Audio</span>
               </div>
-              <p className="text-2xl font-bold">{stats.audio.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold">{stats.audio.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className="border-2">
-            <CardContent className="p-4">
+          <Card className="border-2 hidden sm:block">
+            <CardContent className="p-3 md:p-4">
               <span className="text-xs text-muted-foreground">Completed</span>
-              <p className="text-2xl font-bold text-green-500">{stats.completed.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold text-green-500">{stats.completed.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className="border-2">
-            <CardContent className="p-4">
+          <Card className="border-2 hidden sm:block">
+            <CardContent className="p-3 md:p-4">
               <span className="text-xs text-muted-foreground">Failed</span>
-              <p className="text-2xl font-bold text-red-500">{stats.failed.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold text-red-500">{stats.failed.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className="border-2">
-            <CardContent className="p-4">
+          <Card className="border-2 hidden lg:block">
+            <CardContent className="p-3 md:p-4">
               <span className="text-xs text-muted-foreground">Credits Used</span>
-              <p className="text-2xl font-bold">{stats.creditsUsed.toLocaleString()}</p>
+              <p className="text-xl md:text-2xl font-bold">{stats.creditsUsed.toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
@@ -487,42 +492,98 @@ export default function UserGenerations() {
         </DialogContent>
       </Dialog>
 
-      {/* Generations Table */}
+      {/* Generations List */}
       <Card>
-        <CardHeader>
-          <CardTitle>
+        <CardHeader className="px-3 md:px-6">
+          <CardTitle className="text-base md:text-lg">
             {totalCount.toLocaleString()} Generations
             {generations.length > 0 && totalCount > generations.length && (
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                (Showing {generations.length} on this page)
+              <span className="text-xs md:text-sm font-normal text-muted-foreground ml-2">
+                (Showing {generations.length})
               </span>
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Preview</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Prompt</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Credits</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {generations.length === 0 ? (
+        <CardContent className="px-3 md:px-6">
+          {generations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No generations found for this user
+            </div>
+          ) : isMobile ? (
+            /* Mobile Card View */
+            <div className="space-y-3">
+              {generations.map((gen: Generation) => (
+                <Card key={gen.id} className="border p-3">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        {getContentIcon(gen.type)}
+                        <span className="capitalize text-sm font-medium">{gen.type}</span>
+                        {getStatusBadge(gen.status)}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{gen.prompt}</p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <code className="bg-muted px-1 py-0.5 rounded text-[10px] truncate max-w-[100px]">
+                          {gen.model_id}
+                        </code>
+                        <span>{gen.tokens_used} credits</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(gen.created_at), 'MMM d, HH:mm')}
+                        </span>
+                        {gen.status === 'completed' && (
+                          gen.is_shared ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              onClick={() => unshareFromCommunity.mutate(gen.id)}
+                              disabled={unshareFromCommunity.isPending}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                              Shared
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              onClick={() => shareToCommunity.mutate(gen)}
+                              disabled={shareToCommunity.isPending}
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            /* Desktop Table View */
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No generations found for this user
-                    </TableCell>
+                    <TableHead>Preview</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Prompt</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Credits</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : (
-                  generations.map((gen: Generation) => (
+                </TableHeader>
+                <TableBody>
+                  {generations.map((gen: Generation) => (
                     <TableRow key={gen.id}>
                       <TableCell>
                         <PreviewCell gen={gen} onClick={() => setSelectedGeneration(gen)} />
@@ -580,25 +641,27 @@ export default function UserGenerations() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           {/* Pagination Controls */}
           {totalCount > pagination.pageSize && (
-            <PaginationControls
-              page={pagination.page}
-              totalPages={pagination.totalPages}
-              totalCount={totalCount}
-              pageSize={pagination.pageSize}
-              hasPrevious={pagination.hasPrevious}
-              hasNext={pagination.hasNext}
-              onPageChange={pagination.goToPage}
-              onFirstPage={pagination.firstPage}
-              onLastPage={pagination.lastPage}
-            />
+            <div className="mt-4">
+              <PaginationControls
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                totalCount={totalCount}
+                pageSize={pagination.pageSize}
+                hasPrevious={pagination.hasPrevious}
+                hasNext={pagination.hasNext}
+                onPageChange={pagination.goToPage}
+                onFirstPage={pagination.firstPage}
+                onLastPage={pagination.lastPage}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

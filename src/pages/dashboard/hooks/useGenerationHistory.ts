@@ -14,6 +14,7 @@ export interface Generation {
   ai_caption: string | null;
   ai_hashtags: string[] | null;
   caption_generated_at: string | null;
+  completed_at?: string | null;
   provider_response?: {
     data?: {
       failMsg?: string;
@@ -32,6 +33,8 @@ export interface Generation {
   source_table?: 'generation' | 'video_job' | 'storyboard';
   video_job_id?: string | null;
   storyboard_id?: string | null;
+  model_id?: string | null;
+  model_record_id?: string | null;
 }
 
 interface UseGenerationHistoryOptions {

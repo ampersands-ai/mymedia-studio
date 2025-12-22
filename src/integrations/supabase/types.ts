@@ -1293,6 +1293,7 @@ export type Database = {
           ai_caption: string | null
           ai_hashtags: string[] | null
           caption_generated_at: string | null
+          completed_at: string | null
           created_at: string
           enhanced_prompt: string | null
           enhancement_provider: string | null
@@ -1325,6 +1326,7 @@ export type Database = {
           ai_caption?: string | null
           ai_hashtags?: string[] | null
           caption_generated_at?: string | null
+          completed_at?: string | null
           created_at?: string
           enhanced_prompt?: string | null
           enhancement_provider?: string | null
@@ -1357,6 +1359,7 @@ export type Database = {
           ai_caption?: string | null
           ai_hashtags?: string[] | null
           caption_generated_at?: string | null
+          completed_at?: string | null
           created_at?: string
           enhanced_prompt?: string | null
           enhancement_provider?: string | null
@@ -3672,10 +3675,13 @@ export type Database = {
           ai_caption: string | null
           ai_hashtags: string[] | null
           caption_generated_at: string | null
+          completed_at: string | null
           created_at: string | null
           enhanced_prompt: string | null
           id: string | null
           is_batch_output: boolean | null
+          model_id: string | null
+          model_record_id: string | null
           output_index: number | null
           output_url: string | null
           parent_generation_id: string | null

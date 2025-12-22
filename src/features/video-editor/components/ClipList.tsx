@@ -94,7 +94,7 @@ const SortableClip = ({ clip, index }: { clip: Clip; index: number }) => {
 };
 
 export const ClipList = () => {
-  const { clips, reorderClips } = useVideoEditorStore();
+  const { clips, assets, reorderClips } = useVideoEditorStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -116,7 +116,11 @@ export const ClipList = () => {
     return (
       <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
         <p>No clips added yet</p>
-        <p className="text-sm">Add media from your library above</p>
+        <p className="text-sm">
+          {assets.length > 0 
+            ? `You have ${assets.length} asset(s) in your library. Go to "Upload Media" tab to add them.`
+            : 'Upload media to get started'}
+        </p>
       </div>
     );
   }

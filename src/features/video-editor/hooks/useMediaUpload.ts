@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MediaType, MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
+import { MediaType, MediaAsset, MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
 import { useVideoEditorStore } from '../store';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -102,7 +102,7 @@ const generateVideoThumbnailBlob = (file: File): Promise<Blob | null> => {
 export const useMediaUpload = (): UseMediaUploadReturn => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { setIsUploading, setUploadProgress } = useVideoEditorStore();
+  const { setIsUploading, setUploadProgress, addAsset, addClipFromAsset, setAudioTrack } = useVideoEditorStore();
   const [isUploading, setLocalUploading] = useState(false);
   const [uploadProgress, setLocalProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -206,7 +206,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
         }
 
         // Insert into database
-        const { error: dbError } = await supabase
+        const { data: insertedAsset, error: dbError } = await supabase
           .from('video_editor_assets')
           .insert({
             user_id: user.id,
@@ -220,16 +220,51 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
             size: file.size,
             mime_type: file.type,
             storage_path: filePath,
-          });
+          })
+          .select()
+          .single();
 
-        if (dbError) {
+        if (dbError || !insertedAsset) {
           // Cleanup: delete uploaded file if DB insert fails
           await supabase.storage
             .from('generated-content')
             .remove([filePath])
             .catch(console.warn);
           
-          throw new Error(`Failed to save ${file.name}: ${dbError.message}`);
+          throw new Error(`Failed to save ${file.name}: ${dbError?.message || 'Unknown error'}`);
+        }
+
+        // Auto-add as clip to sequence
+        const mediaAsset: MediaAsset = {
+          id: insertedAsset.id,
+          type: insertedAsset.type as MediaType,
+          name: insertedAsset.name,
+          url: insertedAsset.url,
+          thumbnailUrl: insertedAsset.thumbnail_url || undefined,
+          duration: insertedAsset.duration || undefined,
+          size: insertedAsset.size,
+          mimeType: insertedAsset.mime_type,
+          uploadedAt: insertedAsset.uploaded_at,
+          storagePath: insertedAsset.storage_path || undefined,
+        };
+
+        addAsset(mediaAsset);
+        
+        if (mediaType === 'audio') {
+          setAudioTrack({
+            id: crypto.randomUUID(),
+            assetId: mediaAsset.id,
+            asset: mediaAsset,
+            volume: 0.5,
+            fadeIn: true,
+            fadeOut: true,
+            fadeInDuration: 1,
+            fadeOutDuration: 1,
+            trimStart: 0,
+            loop: false,
+          });
+        } else {
+          addClipFromAsset(mediaAsset.id);
         }
         
         // Update progress
@@ -252,7 +287,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
       setLocalUploading(false);
       setIsUploading(false);
     }
-  }, [user, queryClient, setIsUploading, setUploadProgress]);
+  }, [user, queryClient, setIsUploading, setUploadProgress, addAsset, addClipFromAsset, setAudioTrack]);
 
   return {
     uploadFiles,

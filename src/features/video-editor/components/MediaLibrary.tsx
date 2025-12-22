@@ -111,36 +111,39 @@ export const MediaLibrary = () => {
             </div>
           )}
 
-          {/* Info */}
-          <div className="p-2">
-            <p className="text-sm font-medium truncate" title={asset.name}>
-              {asset.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {formatSize(asset.size)}
-            </p>
-          </div>
-
-          {/* Actions overlay */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          {/* Info + Always visible Add button */}
+          <div className="p-2 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" title={asset.name}>
+                {asset.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formatSize(asset.size)}
+              </p>
+            </div>
             <Button
               size="sm"
               variant="secondary"
+              className="shrink-0"
               onClick={() => handleAddToSequence(asset)}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              Add
+              <Plus className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Delete button on hover */}
+          <div className="absolute top-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
-              size="sm"
+              size="icon"
               variant="destructive"
+              className="h-7 w-7"
               onClick={() => deleteAsset(asset.id)}
               disabled={isDeletingAsset}
             >
               {isDeletingAsset ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3" />
               )}
             </Button>
           </div>

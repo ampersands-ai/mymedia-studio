@@ -12,7 +12,7 @@ import {
 } from '@/features/video-editor';
 
 const VideoEditorPage = () => {
-  const { clips, getTotalDuration } = useVideoEditorStore();
+  const { clips, assets, getTotalDuration } = useVideoEditorStore();
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +28,7 @@ const VideoEditorPage = () => {
             <div>
               <h1 className="text-xl font-bold">Video Editor</h1>
               <p className="text-sm text-muted-foreground">
-                {clips.length} clips • {getTotalDuration().toFixed(1)}s total
+                {assets.length} assets • {clips.length} clips • {getTotalDuration().toFixed(1)}s total
               </p>
             </div>
           </div>

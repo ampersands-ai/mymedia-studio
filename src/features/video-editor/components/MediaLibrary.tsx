@@ -1,6 +1,7 @@
-import { Film, Image, Music, Plus, Trash2 } from 'lucide-react';
+import { Film, Image, Music, Plus, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useVideoEditorStore } from '../store';
+import { useVideoEditorAssets } from '../hooks/useVideoEditorAssets';
 import { MediaAsset } from '../types';
 import { cn } from '@/lib/utils';
 
@@ -25,9 +26,18 @@ const MediaIcon = ({ type }: { type: MediaAsset['type'] }) => {
 };
 
 export const MediaLibrary = () => {
-  const { assets, removeAsset, addClipFromAsset, setAudioTrack } = useVideoEditorStore();
+  const { addClipFromAsset, setAudioTrack, addAsset } = useVideoEditorStore();
+  const { 
+    assets, 
+    isLoading, 
+    deleteAsset, 
+    isDeletingAsset 
+  } = useVideoEditorAssets();
 
   const handleAddToSequence = (asset: MediaAsset) => {
+    // First add asset to store so clips can reference it
+    addAsset(asset);
+    
     if (asset.type === 'audio') {
       setAudioTrack({
         id: crypto.randomUUID(),
@@ -46,17 +56,27 @@ export const MediaLibrary = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading media...</span>
+      </div>
+    );
+  }
+
   if (assets.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <p>No media uploaded yet</p>
+        <p className="text-xs mt-1">Upload videos, images, or audio above</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-      {assets.map((asset) => (
+      {assets.map((asset: MediaAsset) => (
         <div
           key={asset.id}
           className="group relative bg-card border border-border rounded-lg overflow-hidden"
@@ -114,9 +134,14 @@ export const MediaLibrary = () => {
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => removeAsset(asset.id)}
+              onClick={() => deleteAsset(asset.id)}
+              disabled={isDeletingAsset}
             >
-              <Trash2 className="h-4 w-4" />
+              {isDeletingAsset ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>

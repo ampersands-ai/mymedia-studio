@@ -3041,6 +3041,57 @@ export type Database = {
         }
         Relationships: []
       }
+      video_editor_assets: {
+        Row: {
+          created_at: string | null
+          duration: number | null
+          height: number | null
+          id: string
+          mime_type: string
+          name: string
+          size: number
+          storage_path: string
+          thumbnail_url: string | null
+          type: string
+          updated_at: string | null
+          url: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration?: number | null
+          height?: number | null
+          id?: string
+          mime_type: string
+          name: string
+          size: number
+          storage_path: string
+          thumbnail_url?: string | null
+          type: string
+          updated_at?: string | null
+          url: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number | null
+          height?: number | null
+          id?: string
+          mime_type?: string
+          name?: string
+          size?: number
+          storage_path?: string
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string | null
+          url?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       video_editor_jobs: {
         Row: {
           audio_track: Json | null

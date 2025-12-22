@@ -2,19 +2,19 @@ import { useCallback } from 'react';
 import { Upload, Film, Image, Music } from 'lucide-react';
 import { useMediaUpload } from '../hooks/useMediaUpload';
 import { MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
-import { useVideoEditorStore } from '../store';
+import { useVideoEditorAssets } from '../hooks/useVideoEditorAssets';
 import { cn } from '@/lib/utils';
 
 export const MediaUploader = () => {
   const { uploadFiles, isUploading, uploadProgress } = useMediaUpload();
-  const { assets } = useVideoEditorStore();
+  const { assets } = useVideoEditorAssets();
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) {
-      uploadFiles(e.dataTransfer.files);
+      uploadFiles(e.dataTransfer.files, assets.length);
     }
-  }, [uploadFiles]);
+  }, [uploadFiles, assets.length]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -22,10 +22,10 @@ export const MediaUploader = () => {
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      uploadFiles(e.target.files);
+      uploadFiles(e.target.files, assets.length);
       e.target.value = '';
     }
-  }, [uploadFiles]);
+  }, [uploadFiles, assets.length]);
 
   const remainingSlots = MAX_FILES - assets.length;
 

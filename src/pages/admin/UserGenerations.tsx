@@ -70,7 +70,7 @@ interface Generation {
 interface UserProfile {
   id: string;
   email: string | null;
-  full_name: string | null;
+  display_name: string | null;
 }
 
 interface UserSubscription {
@@ -205,7 +205,7 @@ export default function UserGenerations() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
+        .select('id, email, display_name')
         .eq('id', userId)
         .single();
 
@@ -432,8 +432,8 @@ export default function UserGenerations() {
               <span className="font-medium text-sm md:text-base truncate">{userProfile?.email || 'Unknown'}</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {userProfile?.full_name && (
-                <span className="text-xs md:text-sm text-muted-foreground">({userProfile.full_name})</span>
+              {userProfile?.display_name && (
+                <span className="text-xs md:text-sm text-muted-foreground">({userProfile.display_name})</span>
               )}
               <Badge variant="outline" className="capitalize text-xs">
                 {userSubscription?.plan || 'freemium'}

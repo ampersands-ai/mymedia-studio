@@ -20,7 +20,7 @@ export default function UserLogs() {
         .from("user_error_logs")
         .select(`
           *,
-          profiles:user_id (email, full_name)
+          profiles:user_id (email, display_name)
         `)
         .order("created_at", { ascending: false })
         .limit(100);

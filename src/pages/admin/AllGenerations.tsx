@@ -47,8 +47,7 @@ interface Generation {
   is_shared?: boolean;
   profiles?: {
     email: string | null;
-    full_name: string | null;
-    phone_number: string | null;
+    display_name: string | null;
   };
 }
 
@@ -180,8 +179,7 @@ export default function AllGenerations() {
           workflow_execution_id,
           profiles:user_id (
             email,
-            full_name,
-            phone_number
+            display_name
           )
         `,
           // @ts-expect-error Supabase types don't include count option overload
@@ -389,8 +387,8 @@ export default function AllGenerations() {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        {gen.profiles?.full_name && (
-                          <div className="font-medium">{gen.profiles.full_name}</div>
+                        {gen.profiles?.display_name && (
+                          <div className="font-medium">{gen.profiles.display_name}</div>
                         )}
                         {gen.profiles?.email && (
                           <a 

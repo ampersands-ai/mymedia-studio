@@ -55,8 +55,7 @@ sections: [
           title: 'User Information',
           content: `
             <p><strong>Email:</strong> ${body.email}</p>
-            <p><strong>Profile Name:</strong> ${body.profile_name || 'Auto-generated'}</p>
-            <p><strong>Marketing Consent:</strong> ${body.marketing_consent ? 'Yes' : 'No'}</p>
+            <p><strong>Display Name:</strong> ${body.display_name || 'Auto-generated'}</p>
             <p><strong>Signup Method:</strong> ${body.signup_method}</p>
             <p><strong>Registered:</strong> Just now</p>
           `

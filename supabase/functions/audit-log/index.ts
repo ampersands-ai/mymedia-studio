@@ -104,9 +104,26 @@ Deno.serve(async (req) => {
       throw validationError;
     }
 
-    // Get client IP and user agent
-    const ip_address = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown').substring(0, 45);
-    const user_agent = (req.headers.get('user-agent') || 'unknown').substring(0, 255);
+    // Extract anonymized data from IP/user-agent
+    // We store only country code and device type, not raw values
+    const rawIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+    const rawUserAgent = (req.headers.get('user-agent') || '').toLowerCase();
+    
+    // Extract device type from user-agent (privacy-safe)
+    let device_type = 'unknown';
+    if (rawUserAgent.includes('mobile') || rawUserAgent.includes('android') || rawUserAgent.includes('iphone')) {
+      device_type = 'mobile';
+    } else if (rawUserAgent.includes('tablet') || rawUserAgent.includes('ipad')) {
+      device_type = 'tablet';
+    } else if (rawUserAgent.includes('bot') || rawUserAgent.includes('crawler')) {
+      device_type = 'bot';
+    } else if (rawUserAgent.length > 0) {
+      device_type = 'desktop';
+    }
+    
+    // Note: For real country detection, you'd use a geo-IP service
+    // For now, we store 'XX' as placeholder - can be enhanced with Cloudflare headers
+    const country_code = req.headers.get('cf-ipcountry') || 'XX';
 
     // Use service role to bypass RLS for inserting
     const supabaseAdmin = createClient(
@@ -120,7 +137,7 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Insert audit log with validated data
+    // Insert audit log with anonymized data (no raw IP or user-agent)
     const { error: insertError } = await supabaseAdmin
       .from('audit_logs')
       .insert({
@@ -128,8 +145,8 @@ Deno.serve(async (req) => {
         action: validatedData.action,
         resource_type: validatedData.resource_type || null,
         resource_id: validatedData.resource_id || null,
-        ip_address,
-        user_agent,
+        country_code,
+        device_type,
         metadata: validatedData.metadata,
       });
 

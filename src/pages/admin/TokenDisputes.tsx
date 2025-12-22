@@ -48,7 +48,7 @@ interface TokenDispute {
   };
   profile: {
     email: string;
-    full_name: string | null;
+    display_name: string | null;
   };
 }
 
@@ -163,7 +163,7 @@ export const TokenDisputes = () => {
           .select(`
             *,
             generation:generations(*),
-            profile:profiles(email, full_name)
+            profile:profiles(email, display_name)
           `)
           .in('status', ['pending', 'reviewed'])
           .order('created_at', { ascending: false });
@@ -649,7 +649,7 @@ export const TokenDisputes = () => {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
                           <div>
-                            <div className="font-medium">{dispute.profile.full_name || 'Unknown'}</div>
+                            <div className="font-medium">{dispute.profile.display_name || 'Unknown'}</div>
                             <div className="text-xs text-muted-foreground">{dispute.profile.email}</div>
                           </div>
                         </div>
@@ -752,7 +752,7 @@ export const TokenDisputes = () => {
               <div className="grid grid-cols-2 gap-3 p-4 bg-muted/50 rounded-lg text-sm">
                 <div>
                   <div className="text-muted-foreground text-xs">User</div>
-                  <div className="font-medium">{selectedDispute.profile.full_name || 'N/A'}</div>
+                  <div className="font-medium">{selectedDispute.profile.display_name || 'N/A'}</div>
                   <div className="text-xs text-muted-foreground">{selectedDispute.profile.email}</div>
                 </div>
                 <div>

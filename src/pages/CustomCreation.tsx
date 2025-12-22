@@ -18,6 +18,8 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useAudioUpload } from "@/hooks/useAudioUpload";
 import { useVideoUpload } from "@/hooks/useVideoUpload";
 import { useCaptionGeneration } from "@/hooks/useCaptionGeneration";
+import { useActiveGenerations } from "@/hooks/useActiveGenerations";
+import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 
 import { useSchemaHelpers } from "@/hooks/useSchemaHelpers";
 import { CreationGroupSelector } from "@/components/custom-creation/CreationGroupSelector";
@@ -54,6 +56,10 @@ const CustomCreation = () => {
   const { data: userTokens } = useUserTokens();
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
   const { data: cinematicPrompts } = useCinematicPrompts();
+  
+  // Concurrent generation limit enforcement
+  const { data: activeGenerations = [] } = useActiveGenerations();
+  const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
 
   // Filter and sort models by selected group (default to cost sorting)
   const filteredModels = useMemo(() => {
@@ -274,6 +280,9 @@ const CustomCreation = () => {
     updateProgress,
     setFirstGeneration,
     userTokens: userTokens || null,
+    // Concurrent generation limit enforcement
+    activeGenerationsCount: activeGenerations.length,
+    maxConcurrentGenerations: maxConcurrent,
   });
 
   // Wrap handleGenerate with scroll-to-output behavior for mobile

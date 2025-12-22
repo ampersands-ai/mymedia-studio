@@ -38,6 +38,9 @@ interface UseCustomGenerationOptions {
   updateProgress: (progress: Partial<OnboardingProgress['checklist']>) => void;
   setFirstGeneration: (id: string) => void;
   userTokens: UserTokens | null;
+  // Concurrent generation limit enforcement
+  activeGenerationsCount?: number;
+  maxConcurrentGenerations?: number;
 }
 
 /**
@@ -61,6 +64,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     updateProgress,
     setFirstGeneration,
     userTokens,
+    activeGenerationsCount = 0,
+    maxConcurrentGenerations = 1,
   } = options;
 
   const { user } = useAuth();
@@ -149,6 +154,16 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     
     if (!currentModel) {
       toast.error("Please select a model");
+      return;
+    }
+
+    // Concurrent generation limit check (client-side enforcement)
+    // Skip for admins (maxConcurrentGenerations = 999)
+    if (maxConcurrentGenerations !== 999 && activeGenerationsCount >= maxConcurrentGenerations) {
+      toast.error("Concurrent generation limit reached", {
+        description: `You can run ${maxConcurrentGenerations} generation(s) at a time. Please wait for current ones to complete.`,
+        duration: 5000,
+      });
       return;
     }
 
@@ -289,6 +304,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     updateProgress,
     setFirstGeneration,
     checkPrompt,
+    activeGenerationsCount,
+    maxConcurrentGenerations,
   ]);
 
   /**

@@ -1,6 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 import {
   MediaUploader,
   MediaLibrary,
@@ -8,10 +10,25 @@ import {
   OutputSettingsPanel,
   RenderButton,
   useVideoEditorStore,
+  VideoPreview,
+  AudioTrackPanel,
+  SubtitlePanel,
+  GlobalTransitionsPanel,
 } from '@/features/video-editor';
+import { useState } from 'react';
 
 const VideoEditorPage = () => {
   const { clips, assets, getTotalDuration } = useVideoEditorStore();
+  const [openSections, setOpenSections] = useState({
+    audio: true,
+    subtitles: false,
+    transitions: false,
+    output: true,
+  });
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,13 +75,75 @@ const VideoEditorPage = () => {
             </div>
           </div>
 
-          {/* Right column - Settings & Render */}
-          <div className="space-y-6">
+          {/* Right column - Settings, Preview & Render */}
+          <div className="space-y-4">
+            {/* Video Preview */}
             <div className="bg-card border rounded-lg p-4">
-              <h3 className="font-medium mb-4">Output Settings</h3>
-              <OutputSettingsPanel />
+              <h3 className="font-medium mb-4">Video Preview</h3>
+              <VideoPreview />
             </div>
 
+            {/* Audio Track */}
+            <Collapsible open={openSections.audio} onOpenChange={() => toggleSection('audio')}>
+              <div className="bg-card border rounded-lg">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                  <h3 className="font-medium">Background Audio</h3>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.audio ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <AudioTrackPanel />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+
+            {/* Subtitles */}
+            <Collapsible open={openSections.subtitles} onOpenChange={() => toggleSection('subtitles')}>
+              <div className="bg-card border rounded-lg">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                  <h3 className="font-medium">Subtitles & Captions</h3>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.subtitles ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <SubtitlePanel />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+
+            {/* Global Transitions */}
+            <Collapsible open={openSections.transitions} onOpenChange={() => toggleSection('transitions')}>
+              <div className="bg-card border rounded-lg">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                  <h3 className="font-medium">Global Transitions</h3>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.transitions ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <GlobalTransitionsPanel />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+
+            {/* Output Settings */}
+            <Collapsible open={openSections.output} onOpenChange={() => toggleSection('output')}>
+              <div className="bg-card border rounded-lg">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                  <h3 className="font-medium">Output Settings</h3>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.output ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <OutputSettingsPanel />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+
+            {/* Render Button */}
             <div className="bg-card border rounded-lg p-4">
               <h3 className="font-medium mb-4">Render</h3>
               <RenderButton />

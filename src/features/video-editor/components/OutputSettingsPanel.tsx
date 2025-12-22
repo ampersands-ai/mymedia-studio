@@ -25,10 +25,7 @@ const QUALITY_OPTIONS = [
 ];
 
 export const OutputSettingsPanel = () => {
-  const { outputSettings, updateOutputSettings, getTotalDuration, getEstimatedCredits } = useVideoEditorStore();
-
-  const totalDuration = getTotalDuration();
-  const estimatedCredits = getEstimatedCredits();
+  const { outputSettings, updateOutputSettings } = useVideoEditorStore();
 
   return (
     <div className="space-y-6">
@@ -112,29 +109,6 @@ export const OutputSettingsPanel = () => {
         </Select>
       </div>
 
-      {/* Summary */}
-      <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Total Duration</span>
-          <span className="font-medium">{totalDuration.toFixed(1)}s</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Format</span>
-          <span className="font-medium">MP4</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Quality</span>
-          <span className="font-medium uppercase">{outputSettings.quality}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">FPS</span>
-          <span className="font-medium">{outputSettings.fps}</span>
-        </div>
-        <div className="flex justify-between text-lg pt-2 border-t">
-          <span className="text-muted-foreground">Estimated Cost</span>
-          <span className="font-bold text-primary">{estimatedCredits} credits</span>
-        </div>
-      </div>
     </div>
   );
 };

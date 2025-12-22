@@ -9,3 +9,7 @@ export { ClipList } from './components/ClipList';
 export { ClipSettingsPanel } from './components/ClipSettingsPanel';
 export { OutputSettingsPanel } from './components/OutputSettingsPanel';
 export { RenderButton } from './components/RenderButton';
+export { VideoPreview } from './components/VideoPreview';
+export { AudioTrackPanel } from './components/AudioTrackPanel';
+export { SubtitlePanel } from './components/SubtitlePanel';
+export { GlobalTransitionsPanel } from './components/GlobalTransitionsPanel';

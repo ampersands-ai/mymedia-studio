@@ -138,11 +138,12 @@ export const useGenerationHistory = ({
 
       // Enrich with dispute info and source markers
       const enriched = (data || []).map(item => {
+        const rawStatus = item.status ?? 'pending';
         const normalizedStatus = item.source_table === 'video_editor_job'
-          ? (item.status === 'done'
+          ? (rawStatus === 'done'
             ? 'completed'
-            : (['queued', 'fetching', 'rendering', 'saving'].includes(item.status) ? 'processing' : item.status))
-          : item.status;
+            : (['queued', 'fetching', 'rendering', 'saving'].includes(rawStatus) ? 'processing' : rawStatus))
+          : rawStatus;
 
         return {
           ...item,

@@ -17,6 +17,7 @@ import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { isDisposableEmail, getCanonicalEmail } from "@/lib/email-validation";
 import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
+import { useUtmCapture, getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -32,6 +33,9 @@ const Auth = () => {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  
+  // Capture UTM params on page load for acquisition tracking
+  useUtmCapture();
 
   const handleTurnstileVerify = useCallback((token: string) => {
     setTurnstileToken(token);
@@ -291,6 +295,25 @@ const Auth = () => {
               email: data.user.email
             });
             // Don't block signup if verification email fails
+          }
+
+          // Save UTM attribution data for acquisition analytics
+          try {
+            const utmParams = getStoredUtmParams();
+            await supabase.functions.invoke('save-signup-attribution', {
+              body: {
+                ...utmParams,
+                signup_method: 'email',
+              }
+            });
+            clearStoredUtmParams(); // Clear after successful save
+          } catch (attrError) {
+            logger.error('Failed to save attribution', attrError instanceof Error ? attrError : new Error(String(attrError)), {
+              component: 'Auth',
+              operation: 'save_attribution',
+              userId: data.user.id
+            });
+            // Don't block signup if attribution fails
           }
         }
         

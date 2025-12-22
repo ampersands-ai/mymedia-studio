@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent, identifyUser, resetPostHog } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
+import { getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
 
 const authLogger = logger.child({ component: 'AuthContext' });
 
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Track signup event
+          // Track signup event and save attribution for new users
           if (event === 'SIGNED_IN' && session?.user) {
             const isNewUser = new Date(session.user.created_at).getTime() > Date.now() - 5000;
             if (isNewUser) {
@@ -68,6 +69,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 user_id: session.user.id,
                 email: session.user.email,
               });
+              
+              // Save UTM attribution for OAuth signups
+              const utmParams = getStoredUtmParams();
+              if (utmParams) {
+                const provider = session.user.app_metadata?.provider || 'oauth';
+                supabase.functions.invoke('save-signup-attribution', {
+                  body: {
+                    ...utmParams,
+                    signup_method: provider,
+                  }
+                }).then(() => {
+                  clearStoredUtmParams();
+                }).catch((err) => {
+                  authLogger.error('Failed to save OAuth attribution', err as Error);
+                });
+              }
             }
             identifyUser(session.user.id, {
               email: session.user.email,

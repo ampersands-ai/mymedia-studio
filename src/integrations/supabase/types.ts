@@ -1905,6 +1905,54 @@ export type Database = {
           },
         ]
       }
+      signup_attribution: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          id: string
+          landing_page: string | null
+          referral_code: string | null
+          referrer_user_id: string | null
+          signup_method: string
+          user_id: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_page?: string | null
+          referral_code?: string | null
+          referrer_user_id?: string | null
+          signup_method?: string
+          user_id: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_page?: string | null
+          referral_code?: string | null
+          referrer_user_id?: string | null
+          signup_method?: string
+          user_id?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
       storyboard_scenes: {
         Row: {
           created_at: string | null

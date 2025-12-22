@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { subDays, startOfDay, endOfDay } from "date-fns";
 
@@ -43,6 +43,8 @@ export const useGenerationFilters = () => {
   const initialStatus = searchParams.get('status');
   const initialDatePreset = searchParams.get('date');
   const initialModel = searchParams.get('model');
+  const initialSearch = searchParams.get('search');
+  const initialCollection = searchParams.get('collection');
   
   const [statusFilter, setStatusFilterState] = useState<StatusFilter>(
     isValidStatusFilter(initialStatus) ? initialStatus : 'completed'
@@ -52,6 +54,8 @@ export const useGenerationFilters = () => {
     isValidDatePreset(initialDatePreset) ? initialDatePreset : 'all'
   );
   const [modelFilter, setModelFilterState] = useState<string>(initialModel || 'all');
+  const [searchQuery, setSearchQueryState] = useState<string>(initialSearch || '');
+  const [collectionFilter, setCollectionFilterState] = useState<string>(initialCollection || 'all');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Compute date range from preset
@@ -71,7 +75,15 @@ export const useGenerationFilters = () => {
     if (urlModel && urlModel !== modelFilter) {
       setModelFilterState(urlModel);
     }
-  }, [searchParams, statusFilter, datePreset, modelFilter]);
+    const urlSearch = searchParams.get('search');
+    if (urlSearch !== null && urlSearch !== searchQuery) {
+      setSearchQueryState(urlSearch);
+    }
+    const urlCollection = searchParams.get('collection');
+    if (urlCollection && urlCollection !== collectionFilter) {
+      setCollectionFilterState(urlCollection);
+    }
+  }, [searchParams, statusFilter, datePreset, modelFilter, searchQuery, collectionFilter]);
 
   // Update URL when status filter changes
   const setStatusFilter = (filter: StatusFilter) => {
@@ -106,10 +118,32 @@ export const useGenerationFilters = () => {
     setSearchParams(searchParams, { replace: true });
   };
 
+  // Update URL when search query changes
+  const setSearchQuery = useCallback((query: string) => {
+    setSearchQueryState(query);
+    if (!query) {
+      searchParams.delete('search');
+    } else {
+      searchParams.set('search', query);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Update URL when collection filter changes
+  const setCollectionFilter = useCallback((collection: string) => {
+    setCollectionFilterState(collection);
+    if (collection === 'all') {
+      searchParams.delete('collection');
+    } else {
+      searchParams.set('collection', collection);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Reset to page 1 when any filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, contentTypeFilter, datePreset, modelFilter]);
+  }, [statusFilter, contentTypeFilter, datePreset, modelFilter, searchQuery, collectionFilter]);
 
   return {
     statusFilter,
@@ -121,6 +155,10 @@ export const useGenerationFilters = () => {
     dateRange,
     modelFilter,
     setModelFilter,
+    searchQuery,
+    setSearchQuery,
+    collectionFilter,
+    setCollectionFilter,
     currentPage,
     setCurrentPage,
   };

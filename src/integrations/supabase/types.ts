@@ -429,6 +429,42 @@ export type Database = {
         }
         Relationships: []
       }
+      asset_collections: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -897,10 +933,14 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean | null
+          model_type: string | null
           prompt: string
           quality_score: number | null
           source: string | null
+          tags: string[] | null
+          title: string | null
           updated_at: string | null
+          use_count: number | null
         }
         Insert: {
           category: string
@@ -908,10 +948,14 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          model_type?: string | null
           prompt: string
           quality_score?: number | null
           source?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string | null
+          use_count?: number | null
         }
         Update: {
           category?: string
@@ -919,12 +963,55 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          model_type?: string | null
           prompt?: string
           quality_score?: number | null
           source?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string | null
+          use_count?: number | null
         }
         Relationships: []
+      }
+      collection_items: {
+        Row: {
+          added_at: string | null
+          collection_id: string
+          generation_id: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          added_at?: string | null
+          collection_id: string
+          generation_id: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          added_at?: string | null
+          collection_id?: string
+          generation_id?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "asset_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_items_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_creations: {
         Row: {
@@ -3136,6 +3223,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_prompts: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          prompt: string
+          source_generation_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          prompt: string
+          source_generation_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          prompt?: string
+          source_generation_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_prompts_source_generation_id_fkey"
+            columns: ["source_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -4289,6 +4420,10 @@ export type Database = {
       }
       increment_blog_view_count: {
         Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_prompt_use_count: {
+        Args: { prompt_id: string }
         Returns: undefined
       }
       increment_template_use_count: {

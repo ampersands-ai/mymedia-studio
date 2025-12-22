@@ -47,6 +47,8 @@ interface UseGenerationHistoryOptions {
   contentTypeFilter: 'all' | 'image' | 'video' | 'audio' | 'storyboard' | 'video_editor';
   dateRange?: { from: Date | undefined; to: Date | undefined };
   modelFilter?: string;
+  searchQuery?: string;
+  collectionFilter?: string;
 }
 
 export const useGenerationHistory = ({
@@ -57,11 +59,24 @@ export const useGenerationHistory = ({
   contentTypeFilter,
   dateRange,
   modelFilter,
+  searchQuery,
+  collectionFilter,
 }: UseGenerationHistoryOptions) => {
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["generations-count", userId, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter],
+    queryKey: ["generations-count", userId, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter, searchQuery, collectionFilter],
     queryFn: async () => {
+      // If filtering by collection, get generation IDs first
+      let collectionGenerationIds: string[] = [];
+      if (collectionFilter && collectionFilter !== 'all') {
+        const { data: collectionItems } = await supabase
+          .from("collection_items")
+          .select("generation_id")
+          .eq("collection_id", collectionFilter);
+        collectionGenerationIds = collectionItems?.map((item: { generation_id: string }) => item.generation_id) || [];
+        if (collectionGenerationIds.length === 0) return 0;
+      }
+
       let query = supabase
         .from("user_content_history")
         .select("id", { count: 'exact', head: true } as any)
@@ -98,6 +113,16 @@ export const useGenerationHistory = ({
         query = query.eq('model_record_id', modelFilter);
       }
 
+      // Apply search filter (full-text search on prompt)
+      if (searchQuery && searchQuery.trim()) {
+        query = query.textSearch('prompt', searchQuery.trim(), { type: 'websearch' });
+      }
+
+      // Apply collection filter
+      if (collectionGenerationIds && collectionGenerationIds.length > 0) {
+        query = query.in('id', collectionGenerationIds);
+      }
+
       const { count } = await query;
       return count || 0;
     },
@@ -106,9 +131,20 @@ export const useGenerationHistory = ({
 
   // Fetch generations from unified view with server-side pagination
   const { data: generations, refetch, isRefetching, isLoading } = useQuery<Generation[]>({
-    queryKey: ["generations", userId, currentPage, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter],
+    queryKey: ["generations", userId, currentPage, statusFilter, contentTypeFilter, dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), modelFilter, searchQuery, collectionFilter],
     queryFn: async () => {
       const offset = (currentPage - 1) * itemsPerPage;
+
+      // If filtering by collection, get generation IDs first
+      let collectionGenerationIds: string[] = [];
+      if (collectionFilter && collectionFilter !== 'all') {
+        const { data: collectionItems } = await supabase
+          .from("collection_items")
+          .select("generation_id")
+          .eq("collection_id", collectionFilter);
+        collectionGenerationIds = collectionItems?.map((item: { generation_id: string }) => item.generation_id) || [];
+        if (collectionGenerationIds.length === 0) return [];
+      }
 
       // Build query on the unified view
       let query = supabase
@@ -147,6 +183,16 @@ export const useGenerationHistory = ({
       // Apply model filter
       if (modelFilter && modelFilter !== 'all') {
         query = query.eq('model_record_id', modelFilter);
+      }
+
+      // Apply search filter (full-text search on prompt)
+      if (searchQuery && searchQuery.trim()) {
+        query = query.textSearch('prompt', searchQuery.trim(), { type: 'websearch' });
+      }
+
+      // Apply collection filter
+      if (collectionGenerationIds && collectionGenerationIds.length > 0) {
+        query = query.in('id', collectionGenerationIds);
       }
 
       // Apply pagination and ordering

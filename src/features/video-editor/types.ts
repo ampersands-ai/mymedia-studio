@@ -182,7 +182,7 @@ export interface ShotstackPayload {
   timeline: ShotstackTimeline;
   output: {
     format: 'mp4';
-    resolution: 'sd' | 'hd' | '4k';
+    resolution?: 'sd' | 'hd' | '4k'; // Optional - mutually exclusive with size
     aspectRatio: string;
     fps: number;
     size?: {

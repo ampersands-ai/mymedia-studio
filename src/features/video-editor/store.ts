@@ -282,10 +282,9 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
             timeline,
             output: {
               format: 'mp4' as const,
-              resolution: outputSettings.quality,
               aspectRatio: outputSettings.aspectRatio.replace(':', ':'),
               fps: outputSettings.fps,
-              size: dimensions,
+              size: dimensions, // Use size only, not resolution (they are mutually exclusive in Shotstack)
             },
           };
         },

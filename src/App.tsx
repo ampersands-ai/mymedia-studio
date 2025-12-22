@@ -85,6 +85,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ModerationDocs = lazy(() => import("./pages/ModerationDocs"));
+const ModerationDashboard = lazy(() => import("./pages/admin/ModerationDashboard"));
 const AnimationPage = lazy(() => import("./pages/AnimationPage"));
 const VideoEditorPage = lazy(() => import("./pages/VideoEditorPage"));
 const AnimationEditorPage = lazy(() => import("./pages/AnimationEditorPage"));
@@ -205,6 +206,7 @@ const AppContent = () => {
               <Route path="model-pricing" element={<RouteErrorBoundary routeName="Admin > Model Pricing"><ModelPricing /></RouteErrorBoundary>} />
               <Route path="feature-settings" element={<RouteErrorBoundary routeName="Admin > Feature Settings"><FeatureSettings /></RouteErrorBoundary>} />
               <Route path="security" element={<RouteErrorBoundary routeName="Admin > Security"><SecurityDashboard /></RouteErrorBoundary>} />
+              <Route path="moderation" element={<RouteErrorBoundary routeName="Admin > Moderation"><ModerationDashboard /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />

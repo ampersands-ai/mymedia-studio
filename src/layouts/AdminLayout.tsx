@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, Menu, X } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu, X } from "lucide-react";
+import { AdminAlertBell } from "@/components/admin/AdminAlertBell";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
@@ -11,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const navItems = [
   { path: "/dashboard/custom-creation", label: "User Dashboard", icon: LayoutDashboard },
   { path: "/admin/dashboard", label: "Overview", icon: BarChart3 },
+  { path: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
   { path: "/admin/analytics", label: "Analytics", icon: TrendingUp },
   { path: "/admin/advanced-analytics", label: "Advanced Analytics", icon: BarChart3 },
   { path: "/admin/blog/create", label: "Create Blog", icon: PenSquare },
@@ -90,7 +92,9 @@ export const AdminLayout = () => {
       {/* Mobile Header */}
       <header className="md:hidden sticky top-0 z-40 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <h1 className="text-lg font-black">ADMIN</h1>
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <div className="flex items-center gap-2">
+          <AdminAlertBell />
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
               <Menu className="h-5 w-5" />
@@ -113,13 +117,15 @@ export const AdminLayout = () => {
             </ScrollArea>
           </SheetContent>
         </Sheet>
+        </div>
       </header>
 
       <div className="flex">
         {/* Desktop Sidebar - hidden on mobile */}
         <aside className="hidden md:block w-64 min-h-screen bg-card border-r-3 border-black brutal-shadow sticky top-0 h-screen overflow-hidden">
-          <div className="p-6 border-b-3 border-black">
+          <div className="p-6 border-b-3 border-black flex items-center justify-between">
             <h1 className="text-xl font-black">ADMIN PANEL</h1>
+            <AdminAlertBell />
           </div>
           <ScrollArea className="h-[calc(100vh-80px)]">
             <NavLinks />

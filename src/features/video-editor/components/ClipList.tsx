@@ -45,7 +45,13 @@ const FIT_OPTIONS: { value: Clip['fit']; label: string }[] = [
   { value: 'none', label: 'None' },
 ];
 
-const SortableClip = ({ clip, index }: { clip: Clip; index: number }) => {
+interface SortableClipProps {
+  clip: Clip;
+  index: number;
+  onExpand?: () => void;
+}
+
+const SortableClip = ({ clip, index, onExpand }: SortableClipProps) => {
   const { removeClip, selectClip, selectedClipId, assets, updateClip } = useVideoEditorStore();
   const asset = assets.find(a => a.id === clip.assetId);
   const isExpanded = selectedClipId === clip.id;
@@ -109,7 +115,13 @@ const SortableClip = ({ clip, index }: { clip: Clip; index: number }) => {
         <Button
           size="icon"
           variant="ghost"
-          onClick={() => selectClip(isExpanded ? null : clip.id)}
+          onClick={() => {
+            const willExpand = !isExpanded;
+            selectClip(willExpand ? clip.id : null);
+            if (willExpand && onExpand) {
+              onExpand();
+            }
+          }}
           className={cn(isExpanded && "bg-muted")}
         >
           <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
@@ -242,7 +254,11 @@ const SortableClip = ({ clip, index }: { clip: Clip; index: number }) => {
   );
 };
 
-export const ClipList = () => {
+interface ClipListProps {
+  onClipExpand?: () => void;
+}
+
+export const ClipList = ({ onClipExpand }: ClipListProps) => {
   const { clips, assets, reorderClips } = useVideoEditorStore();
 
   const sensors = useSensors(
@@ -279,7 +295,7 @@ export const ClipList = () => {
       <SortableContext items={clips.map(c => c.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
           {clips.map((clip, index) => (
-            <SortableClip key={clip.id} clip={clip} index={index} />
+            <SortableClip key={clip.id} clip={clip} index={index} onExpand={onClipExpand} />
           ))}
         </div>
       </SortableContext>

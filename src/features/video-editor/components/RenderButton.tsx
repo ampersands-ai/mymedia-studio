@@ -4,7 +4,11 @@ import { Progress } from '@/components/ui/progress';
 import { useVideoEditorRender } from '../hooks/useVideoEditorRender';
 import { useVideoEditorStore } from '../store';
 
-export const RenderButton = () => {
+interface RenderButtonProps {
+  onRenderAction?: () => void;
+}
+
+export const RenderButton = ({ onRenderAction }: RenderButtonProps) => {
   const { submitRender, cancelRender, retryRender, isRendering } = useVideoEditorRender();
   const { 
     renderStatus, 
@@ -59,7 +63,10 @@ export const RenderButton = () => {
               Download Video
             </a>
           </Button>
-          <Button variant="outline" onClick={retryRender}>
+          <Button variant="outline" onClick={() => {
+            onRenderAction?.();
+            retryRender();
+          }}>
             <RefreshCw className="h-4 w-4 mr-2" />
             New Render
           </Button>
@@ -106,7 +113,10 @@ export const RenderButton = () => {
     <div>
       {renderSummary()}
       <Button
-        onClick={submitRender}
+        onClick={() => {
+          onRenderAction?.();
+          submitRender();
+        }}
         disabled={clips.length === 0}
         size="lg"
         className="w-full"

@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MediaAsset, MediaType, MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
+import { MediaType, MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
 import { useVideoEditorStore } from '../store';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseMediaUploadReturn {
-  uploadFiles: (files: FileList | File[]) => Promise<void>;
+  uploadFiles: (files: FileList | File[], currentAssetCount?: number) => Promise<void>;
   isUploading: boolean;
   uploadProgress: number;
   error: string | null;
@@ -67,7 +68,7 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
   });
 };
 
-const generateVideoThumbnail = (file: File): Promise<string> => {
+const generateVideoThumbnailBlob = (file: File): Promise<Blob | null> => {
   return new Promise((resolve) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
@@ -84,11 +85,14 @@ const generateVideoThumbnail = (file: File): Promise<string> => {
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(video, 0, 0);
       URL.revokeObjectURL(video.src);
-      resolve(canvas.toDataURL('image/jpeg', 0.7));
+      
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.7);
     };
     
     video.onerror = () => {
-      resolve('');
+      resolve(null);
     };
     
     video.src = URL.createObjectURL(file);
@@ -97,12 +101,13 @@ const generateVideoThumbnail = (file: File): Promise<string> => {
 
 export const useMediaUpload = (): UseMediaUploadReturn => {
   const { user } = useAuth();
-  const { addAsset, assets, setIsUploading, setUploadProgress } = useVideoEditorStore();
+  const queryClient = useQueryClient();
+  const { setIsUploading, setUploadProgress } = useVideoEditorStore();
   const [isUploading, setLocalUploading] = useState(false);
   const [uploadProgress, setLocalProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadFiles = useCallback(async (files: FileList | File[]) => {
+  const uploadFiles = useCallback(async (files: FileList | File[], currentAssetCount: number = 0) => {
     if (!user) {
       toast.error('You must be logged in to upload files');
       return;
@@ -111,7 +116,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
     const fileArray = Array.from(files);
     
     // Validate file count
-    if (assets.length + fileArray.length > MAX_FILES) {
+    if (currentAssetCount + fileArray.length > MAX_FILES) {
       toast.error(`Maximum ${MAX_FILES} files allowed`);
       return;
     }
@@ -147,7 +152,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `${user.id}/video-editor/${timestamp}-${sanitizedName}`;
         
-        // Upload to Supabase storage
+        // Upload main file to Supabase storage
         const { error: uploadError } = await supabase.storage
           .from('generated-content')
           .upload(filePath, file, {
@@ -172,38 +177,71 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
 
         if (mediaType === 'video') {
           duration = await getVideoDuration(file);
-          thumbnailUrl = await generateVideoThumbnail(file);
+          
+          // Generate and upload thumbnail
+          const thumbnailBlob = await generateVideoThumbnailBlob(file);
+          if (thumbnailBlob) {
+            const thumbnailPath = filePath.replace(/\.[^.]+$/, '_thumb.jpg');
+            const { error: thumbError } = await supabase.storage
+              .from('generated-content')
+              .upload(thumbnailPath, thumbnailBlob, {
+                cacheControl: '3600',
+                contentType: 'image/jpeg',
+              });
+            
+            if (!thumbError) {
+              const { data: thumbUrlData } = supabase.storage
+                .from('generated-content')
+                .getPublicUrl(thumbnailPath);
+              thumbnailUrl = thumbUrlData.publicUrl;
+            }
+          }
         } else if (mediaType === 'audio') {
           duration = await getAudioDuration(file);
         } else if (mediaType === 'image') {
           const dimensions = await getImageDimensions(file);
           width = dimensions.width;
           height = dimensions.height;
-          thumbnailUrl = URL.createObjectURL(file);
+          thumbnailUrl = urlData.publicUrl; // Use main URL as thumbnail for images
         }
 
-        // Create asset
-        const asset: MediaAsset = {
-          id: crypto.randomUUID(),
-          type: mediaType,
-          name: file.name,
-          url: urlData.publicUrl,
-          thumbnailUrl,
-          duration,
-          width,
-          height,
-          size: file.size,
-          mimeType: file.type,
-          uploadedAt: new Date().toISOString(),
-        };
+        // Insert into database
+        const { error: dbError } = await supabase
+          .from('video_editor_assets')
+          .insert({
+            user_id: user.id,
+            type: mediaType,
+            name: file.name,
+            url: urlData.publicUrl,
+            thumbnail_url: thumbnailUrl || null,
+            duration: duration || null,
+            width: width || null,
+            height: height || null,
+            size: file.size,
+            mime_type: file.type,
+            storage_path: filePath,
+          });
 
-        addAsset(asset);
+        if (dbError) {
+          // Cleanup: delete uploaded file if DB insert fails
+          await supabase.storage
+            .from('generated-content')
+            .remove([filePath])
+            .catch(console.warn);
+          
+          throw new Error(`Failed to save ${file.name}: ${dbError.message}`);
+        }
         
         // Update progress
         const progress = Math.round(((i + 1) / fileArray.length) * 100);
         setLocalProgress(progress);
         setUploadProgress(progress);
       }
+
+      // Invalidate the assets query to refetch
+      queryClient.invalidateQueries({ 
+        queryKey: ['video-editor-assets', user.id] 
+      });
 
       toast.success(`Uploaded ${fileArray.length} file(s) successfully`);
     } catch (err) {
@@ -214,7 +252,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
       setLocalUploading(false);
       setIsUploading(false);
     }
-  }, [user, assets.length, addAsset, setIsUploading, setUploadProgress]);
+  }, [user, queryClient, setIsUploading, setUploadProgress]);
 
   return {
     uploadFiles,

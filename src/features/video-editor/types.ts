@@ -13,6 +13,7 @@ export interface MediaAsset {
   height?: number;
   size: number; // bytes
   mimeType: string;
+  storagePath?: string; // for cleanup reference
   uploadedAt: string;
 }
 

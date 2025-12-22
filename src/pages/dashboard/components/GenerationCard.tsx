@@ -74,6 +74,30 @@ const formatContentType = (contentType: string): string => {
 };
 
 /**
+ * Format settings/parameters for display (exclude internal fields)
+ */
+const formatSettings = (settings: Record<string, unknown> | null | undefined): string | null => {
+  if (!settings || Object.keys(settings).length === 0) return null;
+  
+  // Filter out internal/webhook fields and prompt (already shown)
+  const excludeKeys = ['_webhook_token', 'prompt', 'imageUrls', 'image_url', 'model', 'userId'];
+  const displaySettings = Object.entries(settings)
+    .filter(([key]) => !excludeKeys.includes(key))
+    .map(([key, value]) => {
+      // Format key: snake_case -> Title Case
+      const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      // Format value
+      if (typeof value === 'boolean') return `${formattedKey}: ${value ? 'Yes' : 'No'}`;
+      if (typeof value === 'number') return `${formattedKey}: ${value}`;
+      if (typeof value === 'string' && value.length < 30) return `${formattedKey}: ${value}`;
+      return null;
+    })
+    .filter(Boolean);
+  
+  return displaySettings.length > 0 ? displaySettings.join(' • ') : null;
+};
+
+/**
  * Calculate and format generation time
  */
 const formatGenerationTime = (generation: Generation): string | null => {
@@ -199,23 +223,31 @@ const GenerationCardComponent = ({ generation, index, onView, onDownload }: Gene
         {(() => {
           const modelInfo = getModelInfo(generation);
           const genTime = formatGenerationTime(generation);
-          if (!modelInfo && !genTime) return null;
+          const params = formatSettings(generation.settings);
+          if (!modelInfo && !genTime && !params) return null;
           return (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground flex-wrap">
-              {modelInfo && (
-                <>
-                  <span className="font-medium text-foreground/70 truncate max-w-[120px]" title={modelInfo.name}>
-                    {modelInfo.name}
-                  </span>
-                  <span className="text-muted-foreground/50">•</span>
-                  <span className="text-muted-foreground/80">{modelInfo.group}</span>
-                </>
-              )}
-              {genTime && (
-                <>
-                  {modelInfo && <span className="text-muted-foreground/50">•</span>}
-                  <span className="text-muted-foreground/80">{genTime}</span>
-                </>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground flex-wrap">
+                {modelInfo && (
+                  <>
+                    <span className="font-medium text-foreground/70 truncate max-w-[120px]" title={modelInfo.name}>
+                      {modelInfo.name}
+                    </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="text-muted-foreground/80">{modelInfo.group}</span>
+                  </>
+                )}
+                {genTime && (
+                  <>
+                    {modelInfo && <span className="text-muted-foreground/50">•</span>}
+                    <span className="text-muted-foreground/80">{genTime}</span>
+                  </>
+                )}
+              </div>
+              {params && (
+                <p className="text-[10px] text-muted-foreground/70 line-clamp-1" title={params}>
+                  {params}
+                </p>
               )}
             </div>
           );

@@ -3687,6 +3687,7 @@ export type Database = {
           parent_generation_id: string | null
           prompt: string | null
           provider_response: Json | null
+          settings: Json | null
           source_table: string | null
           status: string | null
           storage_path: string | null

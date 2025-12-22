@@ -54,6 +54,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AIModelsDashboard = lazy(() => import("./pages/admin/AIModelsDashboard"));
 const TemplatesManager = lazy(() => import("./pages/admin/TemplatesManager"));
 const UsersManager = lazy(() => import("./pages/admin/UsersManager"));
+const UserGenerations = lazy(() => import("./pages/admin/UserGenerations"));
 const AllGenerations = lazy(() => import("./pages/admin/AllGenerations"));
 const TokenDisputes = lazy(() => import("./pages/admin/TokenDisputes").then(m => ({ default: m.TokenDisputes })));
 const AnalyticsDashboard = lazy(() => import("./pages/admin/Analytics"));
@@ -180,6 +181,7 @@ const AppContent = () => {
               <Route path="models" element={<RouteErrorBoundary routeName="Admin > AI Models"><AIModelsDashboard /></RouteErrorBoundary>} />
               <Route path="templates" element={<RouteErrorBoundary routeName="Admin > Templates"><TemplatesManager /></RouteErrorBoundary>} />
               <Route path="users" element={<RouteErrorBoundary routeName="Admin > Users"><UsersManager /></RouteErrorBoundary>} />
+              <Route path="users/:userId/generations" element={<RouteErrorBoundary routeName="Admin > User Generations"><UserGenerations /></RouteErrorBoundary>} />
               <Route path="generations" element={<RouteErrorBoundary routeName="Admin > Generations"><AllGenerations /></RouteErrorBoundary>} />
               <Route path="disputes" element={<RouteErrorBoundary routeName="Admin > Token Disputes"><TokenDisputes /></RouteErrorBoundary>} />
               <Route path="analytics" element={<RouteErrorBoundary routeName="Admin > Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />

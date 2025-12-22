@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,12 +43,14 @@ import {
   X,
   Loader2,
   ArrowUpDown,
+  History,
 } from "lucide-react";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAdminUsers, type SortColumn } from "@/hooks/useAdminUsers";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function UsersManager() {
+  const navigate = useNavigate();
   const { execute } = useErrorHandler();
   const {
     users,
@@ -543,10 +546,19 @@ export default function UsersManager() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => navigate(`/admin/users/${user.id}/generations`)}
+                          title="View Generations"
+                        >
+                          <History className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => {
                             setSelectedUser(user);
                             setDialogOpen(true);
                           }}
+                          title="Add Credits"
                         >
                           <Coins className="h-4 w-4" />
                         </Button>
@@ -554,6 +566,7 @@ export default function UsersManager() {
                           variant={user.is_admin ? "destructive" : "outline"}
                           size="sm"
                           onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                          title={user.is_admin ? "Remove Admin" : "Make Admin"}
                         >
                           <Crown className="h-4 w-4" />
                         </Button>
@@ -563,6 +576,7 @@ export default function UsersManager() {
                           onClick={() =>
                             handleToggleModerationExempt(user.id, user.is_mod_exempt)
                           }
+                          title={user.is_mod_exempt ? "Remove Exemption" : "Exempt from Moderation"}
                         >
                           <ShieldOff className="h-4 w-4" />
                         </Button>

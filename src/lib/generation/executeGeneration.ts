@@ -12,9 +12,12 @@ export interface ExecuteGenerationParams {
   uploadedImageUrls?: string[];
   uploadedAudios?: File[];
   uploadedAudioUrls?: string[];
+  uploadedVideos?: File[];
+  uploadedVideoUrls?: string[];
   userId: string;
   uploadImagesToStorage: (userId: string) => Promise<string[]>;
   uploadAudiosToStorage?: (userId: string) => Promise<string[]>;
+  uploadVideosToStorage?: (userId: string) => Promise<string[]>;
   getAudioDuration?: (file: File) => Promise<number>;
   generate: (params: Record<string, unknown>) => Promise<unknown>;
   startPolling: (id: string) => void;
@@ -39,9 +42,11 @@ export async function executeGeneration({
   modelParameters,
   uploadedImages,
   uploadedAudios,
+  uploadedVideos,
   userId,
   uploadImagesToStorage,
   uploadAudiosToStorage,
+  uploadVideosToStorage,
   getAudioDuration,
   startPolling,
   navigate,
@@ -65,6 +70,14 @@ export async function executeGeneration({
     uploadedAudioUrls = await uploadAudiosToStorage(userId);
   }
 
+  // Upload videos to storage first (if any) and inject into modelParameters
+  let uploadedVideoUrls: string[] = [];
+  if (uploadedVideos?.length && uploadVideosToStorage) {
+    uploadedVideoUrls = await uploadVideosToStorage(userId);
+    // Inject video_urls into modelParameters for video_to_video models
+    modelParameters = { ...modelParameters, video_urls: uploadedVideoUrls };
+  }
+
   // Defensive check: prompt should never be in modelParameters
   // This catches any regressions where prompt accidentally gets included
   if ('prompt' in modelParameters) {
@@ -82,9 +95,12 @@ export async function executeGeneration({
     uploadedImageUrls,
     uploadedAudios,
     uploadedAudioUrls,
+    uploadedVideos,
+    uploadedVideoUrls,
     userId,
     uploadImagesToStorage,
     uploadAudiosToStorage,
+    uploadVideosToStorage,
     getAudioDuration,
     generate: async () => ({}),
     startPolling,

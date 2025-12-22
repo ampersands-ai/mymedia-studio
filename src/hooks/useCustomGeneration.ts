@@ -29,6 +29,10 @@ interface UseCustomGenerationOptions {
   uploadAudiosToStorage?: (userId: string) => Promise<string[]>;
   getAudioDuration?: (file: File) => Promise<number>;
   audioFieldInfo?: { fieldName: string | null; isRequired: boolean; maxDuration: number | null };
+  // Video upload support
+  uploadedVideos?: File[];
+  uploadVideosToStorage?: (userId: string) => Promise<string[]>;
+  videoFieldInfo?: { fieldName: string | null; isRequired: boolean; maxDuration: number | null };
   filteredModels: AIModel[];
   onboardingProgress: OnboardingProgress | null;
   updateProgress: (progress: Partial<OnboardingProgress['checklist']>) => void;
@@ -50,6 +54,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     uploadedAudios,
     uploadAudiosToStorage,
     getAudioDuration,
+    uploadedVideos,
+    uploadVideosToStorage,
     filteredModels,
     onboardingProgress,
     updateProgress,
@@ -213,9 +219,11 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         modelParameters: state.modelParameters,
         uploadedImages,
         uploadedAudios,
+        uploadedVideos,
         userId: user.id,
         uploadImagesToStorage,
         uploadAudiosToStorage,
+        uploadVideosToStorage,
         getAudioDuration,
         generate,
         startPolling,
@@ -269,9 +277,11 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     userTokens, 
     filteredModels, 
     uploadedImages,
+    uploadedVideos,
     generate,
     startPolling,
     uploadImagesToStorage,
+    uploadVideosToStorage,
     updateState,
     navigate,
     user,

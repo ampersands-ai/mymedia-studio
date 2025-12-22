@@ -222,48 +222,94 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
         
         buildShotstackPayload: () => {
           const state = get();
-          const { clips, audioTrack, outputSettings } = state;
+          const { clips, audioTrack, outputSettings, subtitleConfig } = state;
+          
+          // Find video clips for auto-captioning (we'll alias the first video with audio)
+          const videoClipsWithAudio = clips.filter((clip) => {
+            const asset = state.assets.find(a => a.id === clip.assetId);
+            return asset?.type === 'video';
+          });
+          const firstVideoClipId = videoClipsWithAudio.length > 0 ? videoClipsWithAudio[0].id : null;
           
           // Build video/image track
           let currentTime = 0;
-          const mainTrack: ShotstackTrack = {
-            clips: clips.map((clip) => {
-              const asset = state.assets.find(a => a.id === clip.assetId);
-              if (!asset) throw new Error(`Asset not found: ${clip.assetId}`);
-              
-              // Build asset object - only include volume for video assets (not images)
-              const assetObj: any = {
-                type: asset.type as 'video' | 'image',
-                src: asset.url,
-              };
-              
-              // Only add volume and trim for video assets (images don't support these)
-              if (asset.type === 'video') {
-                assetObj.volume = clip.volume;
-                if (clip.trimStart > 0) {
-                  assetObj.trim = clip.trimStart;
-                }
+          const totalDuration = clips.reduce((sum, c) => sum + c.duration, 0);
+          
+          const mainTrackClips = clips.map((clip) => {
+            const asset = state.assets.find(a => a.id === clip.assetId);
+            if (!asset) throw new Error(`Asset not found: ${clip.assetId}`);
+            
+            // Build asset object - only include volume for video assets (not images)
+            const assetObj: any = {
+              type: asset.type as 'video' | 'image',
+              src: asset.url,
+            };
+            
+            // Only add volume and trim for video assets (images don't support these)
+            if (asset.type === 'video') {
+              assetObj.volume = clip.volume;
+              if (clip.trimStart > 0) {
+                assetObj.trim = clip.trimStart;
               }
-              
-              const shotstackClip = {
-                asset: assetObj,
-                start: currentTime,
-                length: clip.duration,
-                transition: {
-                  in: mapTransition(clip.transitionIn),
-                  out: mapTransition(clip.transitionOut),
-                },
-                fit: clip.fit,
-                scale: clip.scale !== 1 ? clip.scale : undefined,
-              };
-              
-              currentTime += clip.duration;
-              return shotstackClip;
-            }),
-          };
+            }
+            
+            const shotstackClip: any = {
+              asset: assetObj,
+              start: currentTime,
+              length: clip.duration,
+              transition: {
+                in: mapTransition(clip.transitionIn),
+                out: mapTransition(clip.transitionOut),
+              },
+              fit: clip.fit,
+              scale: clip.scale !== 1 ? clip.scale : undefined,
+            };
+            
+            // Add alias to first video clip for auto-captioning
+            if (subtitleConfig.mode === 'auto' && clip.id === firstVideoClipId) {
+              shotstackClip.alias = 'speech-source';
+            }
+            
+            currentTime += clip.duration;
+            return shotstackClip;
+          });
+          
+          const mainTrack: ShotstackTrack = { clips: mainTrackClips };
+          
+          // Build tracks array - caption track goes on top (first in array)
+          const tracks: ShotstackTrack[] = [];
+          
+          // Add caption track if auto-captions enabled and we have video clips
+          if (subtitleConfig.mode === 'auto' && firstVideoClipId) {
+            const captionTrack: ShotstackTrack = {
+              clips: [{
+                asset: {
+                  type: 'caption' as any,
+                  src: 'alias://speech-source',
+                  font: {
+                    size: subtitleConfig.fontSize,
+                    color: subtitleConfig.fontColor,
+                  },
+                  background: subtitleConfig.showBackground ? {
+                    color: subtitleConfig.backgroundColor,
+                    padding: 10,
+                  } : undefined,
+                  position: subtitleConfig.position === 'top' ? 'top' 
+                    : subtitleConfig.position === 'center' ? 'center' 
+                    : 'bottom',
+                } as any,
+                start: 0,
+                length: totalDuration > 0 ? totalDuration : 'end',
+              }] as any,
+            };
+            tracks.push(captionTrack);
+          }
+          
+          // Add main video/image track
+          tracks.push(mainTrack);
           
           const timeline: any = {
-            tracks: [mainTrack],
+            tracks,
             background: outputSettings.backgroundColor,
           };
           
@@ -293,7 +339,7 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
               format: 'mp4' as const,
               aspectRatio: outputSettings.aspectRatio.replace(':', ':'),
               fps: outputSettings.fps,
-              size: dimensions, // Use size only, not resolution (they are mutually exclusive in Shotstack)
+              size: dimensions,
             },
           };
         },

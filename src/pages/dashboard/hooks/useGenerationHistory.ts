@@ -15,6 +15,7 @@ export interface Generation {
   ai_hashtags: string[] | null;
   caption_generated_at: string | null;
   completed_at?: string | null;
+  settings?: Record<string, unknown> | null;
   provider_response?: {
     data?: {
       failMsg?: string;

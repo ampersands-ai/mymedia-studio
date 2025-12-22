@@ -21,6 +21,7 @@ const getTypeIcon = (type: string) => {
   switch (type) {
     case "image": return <ImageIcon className="h-4 w-4" />;
     case "video": return <Video className="h-4 w-4" />;
+    case "video_editor": return <Video className="h-4 w-4" />;
     case "audio": return <Music className="h-4 w-4" />;
     case "text": return <FileText className="h-4 w-4" />;
     default: return <Sparkles className="h-4 w-4" />;
@@ -32,6 +33,11 @@ const getTypeIcon = (type: string) => {
  * Handles cases where database type doesn't match the actual file type
  */
 const getEffectiveType = (generation: Generation): string => {
+  // Video editor jobs are always video type
+  if (generation.source_table === 'video_editor_job' || generation.type === 'video_editor') {
+    return 'video';
+  }
+  
   const storagePath = generation.storage_path || generation.output_url;
   if (!storagePath) return generation.type;
   
@@ -169,7 +175,7 @@ const GenerationCardComponent = ({ generation, index, onView, onDownload }: Gene
             <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
             <span className="text-xs text-red-500 font-medium">Generation Failed</span>
           </div>
-        ) : ((generation.storage_path || (generation.is_video_job && generation.output_url)) && generation.status === "completed") ? (
+        ) : ((generation.storage_path || generation.output_url || (generation.is_video_job && generation.output_url) || generation.source_table === 'video_editor_job') && generation.status === "completed") ? (
           <>
             {effectiveType === "video" ? (
               <OptimizedVideoPreview

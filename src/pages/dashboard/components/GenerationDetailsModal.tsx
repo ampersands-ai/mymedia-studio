@@ -23,6 +23,7 @@ const getTypeIcon = (type: string) => {
   switch (type) {
     case "image": return <ImageIcon className="h-4 w-4" />;
     case "video": return <Video className="h-4 w-4" />;
+    case "video_editor": return <Video className="h-4 w-4" />;
     case "audio": return <Music className="h-4 w-4" />;
     case "text": return <FileText className="h-4 w-4" />;
     default: return <Sparkles className="h-4 w-4" />;
@@ -128,8 +129,8 @@ export const GenerationDetailsModal = ({
             </div>
           ) : (generation.storage_path || generation.output_url) && generation.status === "completed" ? (
             <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
-              {generation.type === "video" ? (
-                generation.is_video_job && generation.output_url ? (
+              {(generation.type === "video" || generation.type === "video_editor" || generation.source_table === 'video_editor_job') ? (
+                (generation.is_video_job || generation.source_table === 'video_editor_job') && generation.output_url ? (
                   <video
                     src={generation.output_url}
                     className="w-full h-full object-contain"

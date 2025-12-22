@@ -231,13 +231,22 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
               const asset = state.assets.find(a => a.id === clip.assetId);
               if (!asset) throw new Error(`Asset not found: ${clip.assetId}`);
               
+              // Build asset object - only include volume for video assets (not images)
+              const assetObj: any = {
+                type: asset.type as 'video' | 'image',
+                src: asset.url,
+              };
+              
+              // Only add volume and trim for video assets (images don't support these)
+              if (asset.type === 'video') {
+                assetObj.volume = clip.volume;
+                if (clip.trimStart > 0) {
+                  assetObj.trim = clip.trimStart;
+                }
+              }
+              
               const shotstackClip = {
-                asset: {
-                  type: asset.type as 'video' | 'image',
-                  src: asset.url,
-                  volume: clip.volume,
-                  trim: clip.trimStart > 0 ? clip.trimStart : undefined,
-                },
+                asset: assetObj,
                 start: currentTime,
                 length: clip.duration,
                 transition: {

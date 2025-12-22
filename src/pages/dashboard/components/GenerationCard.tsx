@@ -8,6 +8,7 @@ import { OptimizedGenerationImage } from "@/components/generation/OptimizedGener
 import { OptimizedVideoPreview } from "@/components/generation/OptimizedVideoPreview";
 import { AudioPlayer } from "./AudioPlayer";
 import type { Generation } from "../hooks/useGenerationHistory";
+import { RECORD_ID_REGISTRY } from "@/lib/models/locked/index";
 
 interface GenerationCardProps {
   generation: Generation;
@@ -41,6 +42,54 @@ const getEffectiveType = (generation: Generation): string => {
   if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) return 'image';
   
   return generation.type;
+};
+
+/**
+ * Get model metadata from registry
+ */
+const getModelInfo = (generation: Generation) => {
+  if (!generation.model_record_id) return null;
+  const module = RECORD_ID_REGISTRY[generation.model_record_id];
+  if (!module?.MODEL_CONFIG) return null;
+  return {
+    name: module.MODEL_CONFIG.modelName,
+    group: formatContentType(module.MODEL_CONFIG.contentType),
+  };
+};
+
+/**
+ * Format content type for display
+ */
+const formatContentType = (contentType: string): string => {
+  const formatMap: Record<string, string> = {
+    'prompt_to_image': 'Text to Image',
+    'image_editing': 'Image Editing',
+    'image_to_video': 'Image to Video',
+    'prompt_to_video': 'Text to Video',
+    'lip_sync': 'Lip Sync',
+    'video_to_video': 'Video to Video',
+    'prompt_to_audio': 'Audio',
+  };
+  return formatMap[contentType] || contentType;
+};
+
+/**
+ * Calculate and format generation time
+ */
+const formatGenerationTime = (generation: Generation): string | null => {
+  // Prefer completed_at, fallback to caption_generated_at
+  const completedTime = generation.completed_at || generation.caption_generated_at;
+  if (!completedTime || generation.status !== 'completed') return null;
+  
+  const startTime = new Date(generation.created_at).getTime();
+  const endTime = new Date(completedTime).getTime();
+  const seconds = Math.round((endTime - startTime) / 1000);
+  
+  if (seconds < 0 || seconds > 3600) return null; // Sanity check
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 };
 
 const getStatusBadge = (status: string, createdAt?: string) => {
@@ -145,6 +194,32 @@ const GenerationCardComponent = ({ generation, index, onView, onDownload }: Gene
           </div>
           {getStatusBadge(generation.status, generation.created_at)}
         </div>
+
+        {/* Model info row */}
+        {(() => {
+          const modelInfo = getModelInfo(generation);
+          const genTime = formatGenerationTime(generation);
+          if (!modelInfo && !genTime) return null;
+          return (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground flex-wrap">
+              {modelInfo && (
+                <>
+                  <span className="font-medium text-foreground/70 truncate max-w-[120px]" title={modelInfo.name}>
+                    {modelInfo.name}
+                  </span>
+                  <span className="text-muted-foreground/50">•</span>
+                  <span className="text-muted-foreground/80">{modelInfo.group}</span>
+                </>
+              )}
+              {genTime && (
+                <>
+                  {modelInfo && <span className="text-muted-foreground/50">•</span>}
+                  <span className="text-muted-foreground/80">{genTime}</span>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {!generation.workflow_execution_id && (
           <p className="text-xs text-foreground/80 line-clamp-1">

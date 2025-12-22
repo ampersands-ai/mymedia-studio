@@ -5,7 +5,6 @@ import {
   MediaUploader,
   MediaLibrary,
   ClipList,
-  ClipSettingsPanel,
   OutputSettingsPanel,
   RenderButton,
   useVideoEditorStore,
@@ -53,10 +52,9 @@ const VideoEditorPage = () => {
             <div>
               <h3 className="font-medium mb-3">Clip Sequence</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Drag to reorder clips. Click settings to adjust duration and transitions.
+                Drag to reorder clips. Click the arrow to expand settings.
               </p>
               <ClipList />
-              <ClipSettingsPanel />
             </div>
           </div>
 

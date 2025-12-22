@@ -75,14 +75,8 @@ const VideoEditorPage = () => {
             </div>
           </div>
 
-          {/* Right column - Settings, Preview & Render */}
+          {/* Right column - Settings & Render */}
           <div className="space-y-4">
-            {/* Video Preview */}
-            <div className="bg-card border rounded-lg p-4">
-              <h3 className="font-medium mb-4">Video Preview</h3>
-              <VideoPreview />
-            </div>
-
             {/* Audio Track */}
             <Collapsible open={openSections.audio} onOpenChange={() => toggleSection('audio')}>
               <div className="bg-card border rounded-lg">
@@ -147,6 +141,12 @@ const VideoEditorPage = () => {
             <div className="bg-card border rounded-lg p-4">
               <h3 className="font-medium mb-4">Render</h3>
               <RenderButton />
+            </div>
+
+            {/* Video Output */}
+            <div className="bg-card border rounded-lg p-4">
+              <h3 className="font-medium mb-4">Video Output</h3>
+              <VideoPreview />
             </div>
           </div>
         </div>

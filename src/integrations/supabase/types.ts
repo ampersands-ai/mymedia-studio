@@ -1536,6 +1536,39 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_logs: {
+        Row: {
+          category_scores: Json | null
+          created_at: string | null
+          exempt: boolean | null
+          flagged: boolean
+          flagged_categories: string[] | null
+          id: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          category_scores?: Json | null
+          created_at?: string | null
+          exempt?: boolean | null
+          flagged?: boolean
+          flagged_categories?: string[] | null
+          id?: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          category_scores?: Json | null
+          created_at?: string | null
+          exempt?: boolean | null
+          flagged?: boolean
+          flagged_categories?: string[] | null
+          id?: string
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           email: string

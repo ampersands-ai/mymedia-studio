@@ -7,6 +7,7 @@ import { OptimizedGenerationImage } from "@/components/generation/OptimizedGener
 import { VideoPlayer } from "./VideoPlayer";
 import { AudioPlayer } from "./AudioPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CollectionSelector } from "@/components/collections";
 import type { Generation } from "../hooks/useGenerationHistory";
 
 interface GenerationDetailsModalProps {
@@ -237,6 +238,13 @@ export const GenerationDetailsModal = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
+            {generation.status === "completed" && (
+              <CollectionSelector
+                generationId={generation.id}
+                variant="default"
+                className="w-full sm:w-auto"
+              />
+            )}
             {(generation.storage_path || generation.output_url) && generation.status === "completed" && (
               <Button
                 onClick={(e) => {

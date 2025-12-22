@@ -25,6 +25,9 @@ export type EmphasisAnimation =
   | 'heartbeat' 
   | 'rubberBand' 
   | 'flash'
+  | 'float'
+  | 'glow'
+  | 'wiggle'
   | 'none';
 
 export type ExitAnimation = 

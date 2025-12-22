@@ -48,6 +48,7 @@ import {
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAdminUsers, type SortColumn } from "@/hooks/useAdminUsers";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function UsersManager() {
   const navigate = useNavigate();
@@ -228,99 +229,77 @@ export default function UsersManager() {
     return date.toLocaleDateString();
   };
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-4xl font-black mb-2">USERS MANAGEMENT</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-4xl font-black mb-1 md:mb-2">USERS MANAGEMENT</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             View and manage user accounts, tokens, and roles
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={refresh} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline ml-1">Refresh</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Download className="h-4 w-4 mr-1" />
+              <Download className="h-4 w-4" />
             )}
-            Export CSV
+            <span className="hidden sm:inline ml-1">Export</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
         <Card className="border-2">
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Total</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl md:text-2xl font-bold mt-1">
               {isLoadingStats ? "..." : stats?.total_users.toLocaleString()}
             </p>
           </CardContent>
         </Card>
         <Card className="border-2">
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-green-500" />
+              <UserCheck className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
               <span className="text-xs text-muted-foreground">Active</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl md:text-2xl font-bold mt-1">
               {isLoadingStats ? "..." : stats?.active_users.toLocaleString()}
             </p>
           </CardContent>
         </Card>
         <Card className="border-2">
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-purple-500" />
+              <Crown className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
               <span className="text-xs text-muted-foreground">Admins</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl md:text-2xl font-bold mt-1">
               {isLoadingStats ? "..." : stats?.admin_count.toLocaleString()}
             </p>
           </CardContent>
         </Card>
         <Card className="border-2">
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-500" />
+              <Shield className="h-3 w-3 md:h-4 md:w-4 text-blue-500" />
               <span className="text-xs text-muted-foreground">Verified</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl md:text-2xl font-bold mt-1">
               {isLoadingStats ? "..." : stats?.verified_users.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-2 hidden lg:block">
-          <CardContent className="p-4">
-            <span className="text-xs text-muted-foreground">Freemium</span>
-            <p className="text-2xl font-bold mt-1">
-              {isLoadingStats ? "..." : stats?.freemium_users.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-2 hidden lg:block">
-          <CardContent className="p-4">
-            <span className="text-xs text-muted-foreground">Premium</span>
-            <p className="text-2xl font-bold mt-1">
-              {isLoadingStats ? "..." : stats?.premium_users.toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-2 hidden lg:block">
-          <CardContent className="p-4">
-            <span className="text-xs text-muted-foreground">Pro</span>
-            <p className="text-2xl font-bold mt-1">
-              {isLoadingStats ? "..." : stats?.pro_users.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -328,10 +307,10 @@ export default function UsersManager() {
 
       {/* Search and Filters */}
       <Card className="border-2">
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col gap-3">
             {/* Search */}
-            <div className="relative flex-1">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by email or name..."
@@ -344,7 +323,7 @@ export default function UsersManager() {
             {/* Filters */}
             <div className="flex flex-wrap gap-2">
               <Select value={filters.plan} onValueChange={(v) => updateFilter("plan", v === "all" ? "" : v)}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-full sm:w-[120px]">
                   <SelectValue placeholder="Plan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -358,7 +337,7 @@ export default function UsersManager() {
               </Select>
 
               <Select value={filters.status} onValueChange={(v) => updateFilter("status", v === "all" ? "" : v)}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-full sm:w-[120px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -370,7 +349,7 @@ export default function UsersManager() {
               </Select>
 
               <Select value={filters.role} onValueChange={(v) => updateFilter("role", v === "all" ? "" : v)}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-full sm:w-[120px]">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -380,22 +359,8 @@ export default function UsersManager() {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={filters.emailVerified}
-                onValueChange={(v) => updateFilter("emailVerified", v === "all" ? "" : v)}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Verified" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="true">Verified</SelectItem>
-                  <SelectItem value="false">Not Verified</SelectItem>
-                </SelectContent>
-              </Select>
-
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
                   <X className="h-4 w-4 mr-1" />
                   Clear
                 </Button>
@@ -405,10 +370,10 @@ export default function UsersManager() {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
+      {/* Users List */}
       <Card className="border-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">
+        <CardHeader className="pb-2 px-3 md:px-6">
+          <CardTitle className="text-base md:text-lg">
             {isLoading ? (
               "Loading..."
             ) : (
@@ -419,163 +384,242 @@ export default function UsersManager() {
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead
-                  className="font-bold cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("email")}
-                >
-                  <div className="flex items-center">
-                    Email
-                    <SortIcon column="email" />
-                  </div>
-                </TableHead>
-                <TableHead className="font-bold">Profile Name</TableHead>
-                <TableHead
-                  className="font-bold cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("tokens_remaining")}
-                >
-                  <div className="flex items-center">
-                    Credits
-                    <SortIcon column="tokens_remaining" />
-                  </div>
-                </TableHead>
-                <TableHead className="font-bold">Plan</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="font-bold">Role</TableHead>
-                <TableHead
-                  className="font-bold cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("last_activity_at")}
-                >
-                  <div className="flex items-center">
-                    Last Active
-                    <SortIcon column="last_activity_at" />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="font-bold cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("created_at")}
-                >
-                  <div className="flex items-center">
-                    Joined
-                    <SortIcon column="created_at" />
-                  </div>
-                </TableHead>
-                <TableHead className="font-bold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                    <p className="text-muted-foreground">Loading users...</p>
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {hasActiveFilters ? "No users match your filters" : "No users found"}
-                    </p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium max-w-[200px] truncate">
-                      <div className="flex items-center gap-1">
-                        {user.email || "N/A"}
-                        {user.email_verified && (
-                          <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+        <CardContent className="px-3 md:px-6">
+          {isLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <p className="text-muted-foreground">Loading users...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                {hasActiveFilters ? "No users match your filters" : "No users found"}
+              </p>
+            </div>
+          ) : isMobile ? (
+            /* Mobile Card View */
+            <div className="space-y-3">
+              {users.map((user) => (
+                <Card key={user.id} className="border p-3">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className="font-medium text-sm truncate">{user.email || "N/A"}</span>
+                          {user.email_verified && (
+                            <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        {user.profile_name && (
+                          <p className="text-xs text-muted-foreground truncate">{user.profile_name}</p>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {user.profile_name || "N/A"}
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-1">
-                        <Coins className="h-4 w-4 text-primary" />
-                        <span className="font-bold">
+                        <Coins className="h-3 w-3 text-primary" />
+                        <span className="font-bold text-sm">
                           {Number(user.tokens_remaining || 0).toFixed(0)}
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="outline" className="capitalize text-xs">
                         {user.plan || "freemium"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
                       <Badge
                         variant={user.subscription_status === "active" ? "default" : "secondary"}
-                        className="capitalize"
+                        className="capitalize text-xs"
                       >
                         {user.subscription_status || "active"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {user.is_admin && (
-                          <Badge className="bg-purple-500">
-                            <Crown className="h-3 w-3 mr-1" />
-                            Admin
-                          </Badge>
-                        )}
-                        {user.is_mod_exempt && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-amber-500/20 text-amber-600 border-amber-500/30"
-                          >
-                            <ShieldOff className="h-3 w-3" />
-                          </Badge>
-                        )}
+                      {user.is_admin && (
+                        <Badge className="bg-purple-500 text-xs">
+                          <Crown className="h-2 w-2 mr-1" />
+                          Admin
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Active: {formatRelativeTime(user.last_activity_at)}</span>
+                      <span>Joined: {new Date(user.created_at).toLocaleDateString()}</span>
+                    </div>
+
+                    <div className="flex gap-1 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/admin/users/${user.id}/generations`)}
+                      >
+                        <History className="h-3 w-3 mr-1" />
+                        Generations
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Coins className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant={user.is_admin ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                      >
+                        <Crown className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            /* Desktop Table View */
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead
+                      className="font-bold cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("email")}
+                    >
+                      <div className="flex items-center">
+                        Email
+                        <SortIcon column="email" />
                       </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatRelativeTime(user.last_activity_at)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/admin/users/${user.id}/generations`)}
-                          title="View Generations"
+                    </TableHead>
+                    <TableHead className="font-bold">Profile Name</TableHead>
+                    <TableHead
+                      className="font-bold cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("tokens_remaining")}
+                    >
+                      <div className="flex items-center">
+                        Credits
+                        <SortIcon column="tokens_remaining" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="font-bold">Plan</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold">Role</TableHead>
+                    <TableHead
+                      className="font-bold cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("last_activity_at")}
+                    >
+                      <div className="flex items-center">
+                        Last Active
+                        <SortIcon column="last_activity_at" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="font-bold cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("created_at")}
+                    >
+                      <div className="flex items-center">
+                        Joined
+                        <SortIcon column="created_at" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="font-bold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium max-w-[200px] truncate">
+                        <div className="flex items-center gap-1">
+                          {user.email || "N/A"}
+                          {user.email_verified && (
+                            <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[150px] truncate">
+                        {user.profile_name || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Coins className="h-4 w-4 text-primary" />
+                          <span className="font-bold">
+                            {Number(user.tokens_remaining || 0).toFixed(0)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {user.plan || "freemium"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.subscription_status === "active" ? "default" : "secondary"}
+                          className="capitalize"
                         >
-                          <History className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setDialogOpen(true);
-                          }}
-                          title="Add Credits"
-                        >
-                          <Coins className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant={user.is_admin ? "destructive" : "outline"}
-                          size="sm"
-                          onClick={() => handleToggleAdmin(user.id, user.is_admin)}
-                          title={user.is_admin ? "Remove Admin" : "Make Admin"}
-                        >
-                          <Crown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant={user.is_mod_exempt ? "destructive" : "outline"}
-                          size="sm"
-                          onClick={() =>
-                            handleToggleModerationExempt(user.id, user.is_mod_exempt)
-                          }
+                          {user.subscription_status || "active"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {user.is_admin && (
+                            <Badge className="bg-purple-500">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Admin
+                            </Badge>
+                          )}
+                          {user.is_mod_exempt && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-amber-500/20 text-amber-600 border-amber-500/30"
+                            >
+                              <ShieldOff className="h-3 w-3" />
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatRelativeTime(user.last_activity_at)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/admin/users/${user.id}/generations`)}
+                            title="View Generations"
+                          >
+                            <History className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setDialogOpen(true);
+                            }}
+                            title="Add Credits"
+                          >
+                            <Coins className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={user.is_admin ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                            title={user.is_admin ? "Remove Admin" : "Make Admin"}
+                          >
+                            <Crown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={user.is_mod_exempt ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={() =>
+                              handleToggleModerationExempt(user.id, user.is_mod_exempt)
+                            }
                           title={user.is_mod_exempt ? "Remove Exemption" : "Exempt from Moderation"}
                         >
                           <ShieldOff className="h-4 w-4" />

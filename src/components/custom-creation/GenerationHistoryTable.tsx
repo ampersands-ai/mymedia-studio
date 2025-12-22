@@ -17,8 +17,11 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { RECORD_ID_REGISTRY } from '@/lib/models/locked/index';
@@ -125,6 +128,19 @@ export const GenerationHistoryTable = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
+
+  const toggleExpandPrompt = useCallback((id: string) => {
+    setExpandedPrompts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   // Fetch recent generations
   const { data: generations, isLoading, refetch } = useQuery<HistoryGeneration[]>({
@@ -297,19 +313,38 @@ export const GenerationHistoryTable = () => {
                     )}
 
                     {/* Prompt row */}
-                    <div className="flex items-start gap-2">
-                      <p className="text-xs text-foreground/70 line-clamp-2 flex-1">
-                        {gen.prompt}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => copyPrompt(gen.prompt)}
-                        title="Copy prompt"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div className="space-y-1">
+                      <div className="flex items-start gap-2">
+                        <p className={cn(
+                          "text-xs text-foreground/70 flex-1",
+                          !expandedPrompts.has(gen.id) && "line-clamp-2"
+                        )}>
+                          {gen.prompt}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => copyPrompt(gen.prompt)}
+                          title="Copy prompt"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      {gen.prompt.length > 100 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] px-1 text-primary hover:text-primary"
+                          onClick={() => toggleExpandPrompt(gen.id)}
+                        >
+                          {expandedPrompts.has(gen.id) ? (
+                            <>Show less <ChevronUp className="h-3 w-3 ml-0.5" /></>
+                          ) : (
+                            <>Show more <ChevronDown className="h-3 w-3 ml-0.5" /></>
+                          )}
+                        </Button>
+                      )}
                     </div>
 
                     {/* Actions row */}

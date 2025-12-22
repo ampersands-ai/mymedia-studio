@@ -31,9 +31,10 @@ export interface Generation {
   workflow_execution_id?: string | null;
   is_video_job?: boolean;
   video_job_data?: Record<string, unknown>;
-  source_table?: 'generation' | 'video_job' | 'storyboard';
+  source_table?: 'generation' | 'video_job' | 'storyboard' | 'video_editor_job';
   video_job_id?: string | null;
   storyboard_id?: string | null;
+  video_editor_job_id?: string | null;
   model_id?: string | null;
   model_record_id?: string | null;
 }
@@ -43,7 +44,7 @@ interface UseGenerationHistoryOptions {
   currentPage: number;
   itemsPerPage: number;
   statusFilter: 'all' | 'completed' | 'failed' | 'pending';
-  contentTypeFilter: 'all' | 'image' | 'video' | 'audio' | 'storyboard';
+  contentTypeFilter: 'all' | 'image' | 'video' | 'audio' | 'storyboard' | 'video_editor';
 }
 
 export const useGenerationHistory = ({
@@ -72,6 +73,8 @@ export const useGenerationHistory = ({
 
       if (contentTypeFilter === 'storyboard') {
         query = query.eq('source_table', 'storyboard');
+      } else if (contentTypeFilter === 'video_editor') {
+        query = query.eq('source_table', 'video_editor_job');
       } else if (contentTypeFilter === 'video') {
         query = query.eq('type', 'video');
       } else if (contentTypeFilter !== 'all') {

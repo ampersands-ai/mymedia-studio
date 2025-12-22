@@ -3782,6 +3782,7 @@ export type Database = {
           tokens_used: number | null
           type: string | null
           user_id: string | null
+          video_editor_job_id: string | null
           video_job_id: string | null
           workflow_execution_id: string | null
         }

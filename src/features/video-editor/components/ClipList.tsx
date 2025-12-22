@@ -27,11 +27,15 @@ import {
 const TRANSITIONS: { value: TransitionType; label: string }[] = [
   { value: 'none', label: 'None' },
   { value: 'fade', label: 'Fade' },
+  { value: 'fadeToBlack', label: 'Fade to Black' },
+  { value: 'fadeToWhite', label: 'Fade to White' },
   { value: 'slideLeft', label: 'Slide Left' },
   { value: 'slideRight', label: 'Slide Right' },
   { value: 'slideUp', label: 'Slide Up' },
   { value: 'slideDown', label: 'Slide Down' },
   { value: 'zoom', label: 'Zoom' },
+  { value: 'wipeLeft', label: 'Wipe Left' },
+  { value: 'wipeRight', label: 'Wipe Right' },
 ];
 
 const FIT_OPTIONS: { value: Clip['fit']; label: string }[] = [

@@ -33,7 +33,10 @@ export const useGenerationActions = (userId: string | undefined) => {
         const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = `artifio-video-${Date.now()}.mp4`;
+        const isVideo = type === 'video' || type === 'video_editor';
+        a.download = isVideo
+          ? `artifio.ai-video-${Date.now()}.mp4`
+          : `artifio.ai-${type}-${Date.now()}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(blobUrl);
@@ -58,7 +61,8 @@ export const useGenerationActions = (userId: string | undefined) => {
           operation: 'handleDownload',
           outputUrl: outputUrl.substring(0, 100)
         });
-        toast.error(`Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'download-toast' });
+        toast.error('Download blocked by browser. Opening in a new tab…', { id: 'download-toast' });
+        window.open(outputUrl, '_blank', 'noopener,noreferrer');
         return;
       }
     }
@@ -85,8 +89,8 @@ export const useGenerationActions = (userId: string | undefined) => {
       const a = document.createElement('a');
       a.href = blobUrl;
       const extension = storagePath.split('.').pop() || type;
-      // Use artifio-video- prefix for videos
-      const prefix = type === 'video' ? 'artifio-video' : `artifio-${type}`;
+      const isVideo = type === 'video' || type === 'video_editor';
+      const prefix = isVideo ? 'artifio.ai-video' : `artifio.ai-${type}`;
       a.download = `${prefix}-${Date.now()}.${extension}`;
       document.body.appendChild(a);
       a.click();

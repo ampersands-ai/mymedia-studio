@@ -111,6 +111,8 @@ export const useGenerationHistory = ({
       // Apply content type filter
       if (contentTypeFilter === 'storyboard') {
         query = query.eq('source_table', 'storyboard');
+      } else if (contentTypeFilter === 'video_editor') {
+        query = query.eq('source_table', 'video_editor_job');
       } else if (contentTypeFilter === 'video') {
         query = query.eq('type', 'video');
       } else if (contentTypeFilter !== 'all') {
@@ -135,13 +137,22 @@ export const useGenerationHistory = ({
       const disputeMap = new Map(disputes?.map((d: { generation_id: string; status: string }) => [d.generation_id, d.status]) || []);
 
       // Enrich with dispute info and source markers
-      const enriched = (data || []).map(item => ({
-        ...item,
-        has_dispute: disputeMap.has(item.id),
-        dispute_status: disputeMap.get(item.id),
-        is_video_job: item.source_table === 'video_job',
-        video_job_data: item.video_job_id ? { id: item.video_job_id } : null,
-      }));
+      const enriched = (data || []).map(item => {
+        const normalizedStatus = item.source_table === 'video_editor_job'
+          ? (item.status === 'done'
+            ? 'completed'
+            : (['queued', 'fetching', 'rendering', 'saving'].includes(item.status) ? 'processing' : item.status))
+          : item.status;
+
+        return {
+          ...item,
+          status: normalizedStatus,
+          has_dispute: disputeMap.has(item.id),
+          dispute_status: disputeMap.get(item.id),
+          is_video_job: item.source_table === 'video_job',
+          video_job_data: item.video_job_id ? { id: item.video_job_id } : null,
+        };
+      });
 
       return enriched as Generation[];
     },

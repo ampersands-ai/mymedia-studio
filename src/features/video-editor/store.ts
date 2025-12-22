@@ -224,12 +224,16 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
           const state = get();
           const { clips, audioTrack, outputSettings, subtitleConfig } = state;
           
-          // Find video clips for auto-captioning (we'll alias the first video with audio)
+          // Determine caption source: prefer audio track (voiceover), fallback to first video
+          const hasAudioTrack = audioTrack && state.assets.find(a => a.id === audioTrack.assetId);
           const videoClipsWithAudio = clips.filter((clip) => {
             const asset = state.assets.find(a => a.id === clip.assetId);
             return asset?.type === 'video';
           });
           const firstVideoClipId = videoClipsWithAudio.length > 0 ? videoClipsWithAudio[0].id : null;
+          
+          // For auto-captions, we'll use audio track if available (voiceover), else first video
+          const useSoundtrackForCaptions = subtitleConfig.mode === 'auto' && hasAudioTrack;
           
           // Build video/image track
           let currentTime = 0;
@@ -265,8 +269,8 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
               scale: clip.scale !== 1 ? clip.scale : undefined,
             };
             
-            // Add alias to first video clip for auto-captioning
-            if (subtitleConfig.mode === 'auto' && clip.id === firstVideoClipId) {
+            // Add alias to first video clip for auto-captioning (only if no audio track)
+            if (subtitleConfig.mode === 'auto' && !useSoundtrackForCaptions && clip.id === firstVideoClipId) {
               shotstackClip.alias = 'speech-source';
             }
             
@@ -279,8 +283,9 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
           // Build tracks array - caption track goes on top (first in array)
           const tracks: ShotstackTrack[] = [];
           
-          // Add caption track if auto-captions enabled and we have video clips
-          if (subtitleConfig.mode === 'auto' && firstVideoClipId) {
+          // Add caption track if auto-captions enabled
+          const hasCaptionSource = useSoundtrackForCaptions || firstVideoClipId;
+          if (subtitleConfig.mode === 'auto' && hasCaptionSource) {
             // Caption asset structure per Shotstack API
             const captionAsset: any = {
               type: 'caption',
@@ -316,6 +321,26 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
             tracks.push(captionTrack);
           }
           
+          // If using audio track for captions, add it as a separate audio track with alias
+          if (useSoundtrackForCaptions) {
+            const audioAsset = state.assets.find(a => a.id === audioTrack!.assetId);
+            if (audioAsset) {
+              const audioClipTrack: ShotstackTrack = {
+                clips: [{
+                  asset: {
+                    type: 'audio' as any,
+                    src: audioAsset.url,
+                    volume: audioTrack!.volume,
+                  },
+                  start: 0,
+                  length: totalDuration > 0 ? totalDuration : audioAsset.duration || 'auto',
+                  alias: 'speech-source',
+                }] as any,
+              };
+              tracks.push(audioClipTrack);
+            }
+          }
+          
           // Add main video/image track
           tracks.push(mainTrack);
           
@@ -324,8 +349,8 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
             background: outputSettings.backgroundColor,
           };
           
-          // Add soundtrack if present
-          if (audioTrack) {
+          // Add soundtrack if present AND not using it for captions (avoid duplicate audio)
+          if (audioTrack && !useSoundtrackForCaptions) {
             const audioAsset = state.assets.find(a => a.id === audioTrack.assetId);
             if (audioAsset) {
               timeline.soundtrack = {

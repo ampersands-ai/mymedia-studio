@@ -42,6 +42,9 @@ const History = () => {
     dateRange,
     modelFilter,
     setModelFilter,
+    searchQuery,
+    setSearchQuery,
+    collectionFilter,
     currentPage,
     setCurrentPage,
   } = useGenerationFilters();
@@ -64,6 +67,8 @@ const History = () => {
     contentTypeFilter,
     dateRange,
     modelFilter,
+    searchQuery,
+    collectionFilter,
   });
 
   // Actions
@@ -196,6 +201,8 @@ const History = () => {
         modelFilter={modelFilter}
         onModelFilterChange={setModelFilter}
         availableModels={availableModels}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
       />
 
       <LoadingTransition

@@ -1,6 +1,8 @@
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Image as ImageIcon, Video, Music, FileText, Loader2, Clapperboard, Calendar, Layers } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Sparkles, Image as ImageIcon, Video, Music, FileText, Loader2, Clapperboard, Calendar, Layers, Search, X } from "lucide-react";
 import type { StatusFilter, ContentTypeFilter, DateRangePreset } from "../hooks/useGenerationFilters";
 
 interface GenerationFiltersProps {
@@ -13,6 +15,8 @@ interface GenerationFiltersProps {
   modelFilter: string;
   onModelFilterChange: (model: string) => void;
   availableModels?: { id: string; name: string }[];
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
 }
 
 const datePresetLabels: Record<DateRangePreset, string> = {
@@ -33,9 +37,54 @@ export const GenerationFilters = ({
   modelFilter,
   onModelFilterChange,
   availableModels = [],
+  searchQuery = '',
+  onSearchQueryChange,
 }: GenerationFiltersProps) => {
+  // Local state for debouncing
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+
+  // Sync local state with prop
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (onSearchQueryChange && localSearch !== searchQuery) {
+        onSearchQueryChange(localSearch);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localSearch, onSearchQueryChange, searchQuery]);
+
+  const clearSearch = useCallback(() => {
+    setLocalSearch('');
+    onSearchQueryChange?.('');
+  }, [onSearchQueryChange]);
+
   return (
     <div className="space-y-4 mb-6">
+      {/* Search Input */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search by prompt keywords..."
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          className="pl-9 pr-9"
+        />
+        {localSearch && (
+          <button
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Status Filter */}
       <div>
         <Tabs value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>

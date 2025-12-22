@@ -432,7 +432,9 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          country_code: string | null
           created_at: string
+          device_type: string | null
           id: string
           ip_address: string | null
           metadata: Json | null
@@ -443,7 +445,9 @@ export type Database = {
         }
         Insert: {
           action: string
+          country_code?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
@@ -454,7 +458,9 @@ export type Database = {
         }
         Update: {
           action?: string
+          country_code?: string | null
           created_at?: string
+          device_type?: string | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
@@ -1666,41 +1672,35 @@ export type Database = {
         Row: {
           country: string | null
           created_at: string
+          display_name: string | null
           email: string | null
           email_verified: boolean | null
-          full_name: string | null
           id: string
           keep_logged_in: boolean | null
           last_activity_at: string | null
-          phone_number: string | null
           updated_at: string
-          zipcode: string | null
         }
         Insert: {
           country?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
-          full_name?: string | null
           id: string
           keep_logged_in?: boolean | null
           last_activity_at?: string | null
-          phone_number?: string | null
           updated_at?: string
-          zipcode?: string | null
         }
         Update: {
           country?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
-          full_name?: string | null
           id?: string
           keep_logged_in?: boolean | null
           last_activity_at?: string | null
-          phone_number?: string | null
           updated_at?: string
-          zipcode?: string | null
         }
         Relationships: []
       }
@@ -3952,6 +3952,13 @@ export type Database = {
         Returns: number
       }
       cleanup_old_function_logs: { Args: never; Returns: undefined }
+      cleanup_old_logs_with_retention: {
+        Args: never
+        Returns: {
+          deleted_count: number
+          table_name: string
+        }[]
+      }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       decrypt_payment_id: { Args: { ciphertext: string }; Returns: string }

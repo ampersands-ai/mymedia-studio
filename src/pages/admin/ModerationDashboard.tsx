@@ -21,7 +21,7 @@ interface ModerationLog {
   category_scores: Record<string, number> | null;
   exempt: boolean;
   created_at: string;
-  profiles?: { email: string | null; full_name: string | null };
+  profiles?: { email: string | null; display_name: string | null };
 }
 
 interface RepeatOffender {
@@ -53,7 +53,7 @@ export default function ModerationDashboard() {
       
       const { data, error } = await supabase
         .from('moderation_logs')
-        .select('*, profiles!moderation_logs_user_id_fkey(email, full_name)')
+        .select('*, profiles!moderation_logs_user_id_fkey(email, display_name)')
         .gte('created_at', startDate)
         .order('created_at', { ascending: false })
         .limit(500);

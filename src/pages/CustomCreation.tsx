@@ -267,6 +267,8 @@ const CustomCreation = () => {
       });
     },
     audioFieldInfo,
+    uploadedVideos,
+    uploadVideosToStorage: _uploadVideosToStorage,
     filteredModels,
     onboardingProgress: progress,
     updateProgress,

@@ -71,11 +71,19 @@ export async function executeGeneration({
   }
 
   // Upload videos to storage first (if any) and inject into modelParameters
+  // Note: Some video-to-video models expect `video_urls` (array) while others expect `video_url` (string).
+  // We set both to keep the pipeline compatible.
   let uploadedVideoUrls: string[] = [];
   if (uploadedVideos?.length && uploadVideosToStorage) {
     uploadedVideoUrls = await uploadVideosToStorage(userId);
-    // Inject video_urls into modelParameters for video_to_video models
-    modelParameters = { ...modelParameters, video_urls: uploadedVideoUrls };
+
+    if (uploadedVideoUrls.length > 0) {
+      modelParameters = {
+        ...modelParameters,
+        video_urls: uploadedVideoUrls,
+        video_url: uploadedVideoUrls[0],
+      };
+    }
   }
 
   // Defensive check: prompt should never be in modelParameters

@@ -19,6 +19,7 @@ import { GenerationFilters } from "./components/GenerationFilters";
 import { GenerationList } from "./components/GenerationList";
 import { GenerationDetailsModal } from "./components/GenerationDetailsModal";
 import { RateLimitDisplay } from "@/components/shared/RateLimitDisplay";
+import { CollectionsSidebar } from "@/components/collections";
 import type { Generation } from "./hooks/useGenerationHistory";
 
 const ITEMS_PER_PAGE = 20;
@@ -45,6 +46,7 @@ const History = () => {
     searchQuery,
     setSearchQuery,
     collectionFilter,
+    setCollectionFilter,
     currentPage,
     setCurrentPage,
   } = useGenerationFilters();
@@ -191,57 +193,72 @@ const History = () => {
         </div>
       </div>
 
-      <GenerationFilters
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        contentTypeFilter={contentTypeFilter}
-        onContentTypeFilterChange={setContentTypeFilter}
-        datePreset={datePreset}
-        onDatePresetChange={setDatePreset}
-        modelFilter={modelFilter}
-        onModelFilterChange={setModelFilter}
-        availableModels={availableModels}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-      />
+      <div className="flex gap-6">
+        {/* Sidebar for collections */}
+        <aside className="hidden lg:block w-56 flex-shrink-0">
+          <div className="sticky top-24 space-y-4">
+            <CollectionsSidebar
+              selectedCollectionId={collectionFilter === 'all' ? null : collectionFilter}
+              onSelectCollection={(id) => setCollectionFilter(id || 'all')}
+            />
+          </div>
+        </aside>
 
-      <LoadingTransition
-        isLoading={isLoadingGenerations || isLoadingImages}
-        skeleton={<GallerySkeleton count={12} />}
-        transition="fade"
-      >
-        <GenerationList
-          generations={generations || []}
-          statusFilter={statusFilter}
-          onView={setPreviewGeneration}
-          onDownload={handleDownloadWithOnboarding}
-        />
-      </LoadingTransition>
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <GenerationFilters
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            contentTypeFilter={contentTypeFilter}
+            onContentTypeFilterChange={setContentTypeFilter}
+            datePreset={datePreset}
+            onDatePresetChange={setDatePreset}
+            modelFilter={modelFilter}
+            onModelFilterChange={setModelFilter}
+            availableModels={availableModels}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+          />
 
-      {/* Pagination Controls */}
-      {generations && generations.length > 0 && (
-        <div className="flex justify-center items-center gap-4 mt-8 mb-4">
-          <Button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-            size="sm"
+          <LoadingTransition
+            isLoading={isLoadingGenerations || isLoadingImages}
+            skeleton={<GallerySkeleton count={12} />}
+            transition="fade"
           >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground px-4">
-            Page {currentPage} of {Math.ceil((totalCount || 0) / ITEMS_PER_PAGE)}
-          </span>
-          <Button
-            onClick={() => setCurrentPage(p => p + 1)}
-            disabled={generations.length < ITEMS_PER_PAGE}
-            variant="outline"
-            size="sm"
-          >
-            Next
-          </Button>
+            <GenerationList
+              generations={generations || []}
+              statusFilter={statusFilter}
+              onView={setPreviewGeneration}
+              onDownload={handleDownloadWithOnboarding}
+            />
+          </LoadingTransition>
+
+          {/* Pagination Controls */}
+          {generations && generations.length > 0 && (
+            <div className="flex justify-center items-center gap-4 mt-8 mb-4">
+              <Button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                Page {currentPage} of {Math.ceil((totalCount || 0) / ITEMS_PER_PAGE)}
+              </span>
+              <Button
+                onClick={() => setCurrentPage(p => p + 1)}
+                disabled={generations.length < ITEMS_PER_PAGE}
+                variant="outline"
+                size="sm"
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Preview Dialog */}
       <GenerationDetailsModal

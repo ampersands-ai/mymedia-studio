@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const shotstackUrl = `https://api.shotstack.io/edit/stage/render/${job.shotstack_render_id}`;
+    const shotstackUrl = `https://api.shotstack.io/edit/v1/render/${job.shotstack_render_id}`;
     
     console.log(`[status-video-editor] Polling Shotstack for render ${job.shotstack_render_id}`);
 

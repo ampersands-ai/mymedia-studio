@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const shotstackUrl = "https://api.shotstack.io/edit/stage/render";
+    const shotstackUrl = "https://api.shotstack.io/edit/v1/render";
     
     console.log(`[render-video-editor] Submitting to Shotstack:`, JSON.stringify(shotstackPayload, null, 2));
 

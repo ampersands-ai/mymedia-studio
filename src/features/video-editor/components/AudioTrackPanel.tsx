@@ -116,16 +116,6 @@ export const AudioTrackPanel = () => {
             </div>
           </div>
 
-          {/* Loop control */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="loop" className="text-sm">Loop Audio</Label>
-            <Switch
-              id="loop"
-              checked={audioTrack.loop}
-              onCheckedChange={(checked) => updateAudioTrack({ loop: checked })}
-            />
-          </div>
-
           {/* Replace button */}
           <Button
             variant="outline"

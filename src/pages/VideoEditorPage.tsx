@@ -15,20 +15,28 @@ import {
   SubtitlePanel,
   GlobalTransitionsPanel,
 } from '@/features/video-editor';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+
+type SectionKey = 'audio' | 'subtitles' | 'transitions' | 'output' | null;
 
 const VideoEditorPage = () => {
-  const { clips, assets, getTotalDuration } = useVideoEditorStore();
-  const [openSections, setOpenSections] = useState({
-    audio: true,
-    subtitles: false,
-    transitions: false,
-    output: true,
-  });
+  const { clips, assets, getTotalDuration, selectClip } = useVideoEditorStore();
+  // Single open section - only one can be open at a time
+  const [openSection, setOpenSection] = useState<SectionKey>(null);
 
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  const toggleSection = (section: SectionKey) => {
+    // When opening a sidebar section, collapse any expanded clip
+    if (section !== openSection) {
+      selectClip(null);
+    }
+    setOpenSection(prev => prev === section ? null : section);
   };
+
+  // Collapse all sections (called from RenderButton on new render/retry)
+  const collapseAll = useCallback(() => {
+    setOpenSection(null);
+    selectClip(null);
+  }, [selectClip]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,18 +79,18 @@ const VideoEditorPage = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Drag to reorder clips. Click the arrow to expand settings.
               </p>
-              <ClipList />
+              <ClipList onClipExpand={() => setOpenSection(null)} />
             </div>
           </div>
 
           {/* Right column - Settings & Render */}
           <div className="space-y-4">
             {/* Audio Track */}
-            <Collapsible open={openSections.audio} onOpenChange={() => toggleSection('audio')}>
+            <Collapsible open={openSection === 'audio'} onOpenChange={() => toggleSection('audio')}>
               <div className="bg-card border rounded-lg">
                 <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                   <h3 className="font-medium">Background Audio</h3>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.audio ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSection === 'audio' ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="px-4 pb-4">
@@ -93,11 +101,11 @@ const VideoEditorPage = () => {
             </Collapsible>
 
             {/* Subtitles */}
-            <Collapsible open={openSections.subtitles} onOpenChange={() => toggleSection('subtitles')}>
+            <Collapsible open={openSection === 'subtitles'} onOpenChange={() => toggleSection('subtitles')}>
               <div className="bg-card border rounded-lg">
                 <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                   <h3 className="font-medium">Subtitles & Captions</h3>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.subtitles ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSection === 'subtitles' ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="px-4 pb-4">
@@ -108,11 +116,11 @@ const VideoEditorPage = () => {
             </Collapsible>
 
             {/* Global Transitions */}
-            <Collapsible open={openSections.transitions} onOpenChange={() => toggleSection('transitions')}>
+            <Collapsible open={openSection === 'transitions'} onOpenChange={() => toggleSection('transitions')}>
               <div className="bg-card border rounded-lg">
                 <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                   <h3 className="font-medium">Global Transitions</h3>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.transitions ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSection === 'transitions' ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="px-4 pb-4">
@@ -123,11 +131,11 @@ const VideoEditorPage = () => {
             </Collapsible>
 
             {/* Output Settings */}
-            <Collapsible open={openSections.output} onOpenChange={() => toggleSection('output')}>
+            <Collapsible open={openSection === 'output'} onOpenChange={() => toggleSection('output')}>
               <div className="bg-card border rounded-lg">
                 <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                   <h3 className="font-medium">Output Settings</h3>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${openSections.output ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 transition-transform ${openSection === 'output' ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="px-4 pb-4">
@@ -140,7 +148,7 @@ const VideoEditorPage = () => {
             {/* Render Button */}
             <div className="bg-card border rounded-lg p-4">
               <h3 className="font-medium mb-4">Render</h3>
-              <RenderButton />
+              <RenderButton onRenderAction={collapseAll} />
             </div>
 
             {/* Video Output */}

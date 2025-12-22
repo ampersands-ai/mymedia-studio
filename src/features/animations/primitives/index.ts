@@ -126,6 +126,26 @@ export const emphasisAnimations: Record<EmphasisAnimation, string> = {
       25%, 75% { opacity: 0; }
     }
   `,
+  float: `
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+  `,
+  glow: `
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
+      50% { filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 30px currentColor); }
+    }
+  `,
+  wiggle: `
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+      75% { transform: rotate(-3deg); }
+    }
+  `,
 };
 
 // Exit Animations
@@ -213,6 +233,9 @@ export const EMPHASIS_OPTIONS: { value: EmphasisAnimation; label: string }[] = [
   { value: 'heartbeat', label: 'Heartbeat' },
   { value: 'rubberBand', label: 'Rubber Band' },
   { value: 'flash', label: 'Flash' },
+  { value: 'float', label: 'Float' },
+  { value: 'glow', label: 'Glow' },
+  { value: 'wiggle', label: 'Wiggle' },
 ];
 
 export const EXIT_OPTIONS: { value: ExitAnimation; label: string }[] = [

@@ -140,6 +140,42 @@ export type Database = {
         }
         Relationships: []
       }
+      animation_projects: {
+        Row: {
+          audio_duration: number | null
+          audio_url: string | null
+          created_at: string
+          id: string
+          instructions: Json
+          name: string
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_duration?: number | null
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          instructions?: Json
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_duration?: number | null
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          instructions?: Json
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_call_logs: {
         Row: {
           additional_metadata: Json | null

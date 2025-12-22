@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAnimationEditor } from './hooks/useAnimationEditor';
 import { EditorCanvas } from './EditorCanvas';
 import { EditorToolbar } from './EditorToolbar';
+import { EditorTimeline } from './EditorTimeline';
 import { PropertyPanel } from './PropertyPanel';
 import { ScenePanel } from './ScenePanel';
 import { CaptionPanel } from './CaptionPanel';
@@ -127,7 +128,7 @@ export const AnimationEditor: React.FC<AnimationEditorProps> = ({
       {/* Main content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Left Panel - Scene List */}
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+        <ResizablePanel defaultSize={18} minSize={15} maxSize={25}>
           <ScenePanel
             scenes={editor.project.scenes}
             selectedSceneId={editor.selectedSceneId}
@@ -142,27 +143,49 @@ export const AnimationEditor: React.FC<AnimationEditorProps> = ({
 
         <ResizableHandle withHandle />
 
-        {/* Center - Canvas */}
-        <ResizablePanel defaultSize={55}>
-          {editor.selectedScene ? (
-            <EditorCanvas
-              scene={editor.selectedScene}
+        {/* Center - Canvas + Timeline */}
+        <ResizablePanel defaultSize={57}>
+          <div className="flex flex-col h-full">
+            {/* Canvas area */}
+            <div className="flex-1 min-h-0">
+              {editor.selectedScene ? (
+                <EditorCanvas
+                  scene={editor.selectedScene}
+                  currentTime={editor.currentTime}
+                  sceneStartTime={sceneStartTime}
+                  selectedElementId={editor.selectedElementId}
+                  mode={editor.mode}
+                  zoom={editor.settings.zoom}
+                  showGrid={editor.settings.showGrid}
+                  snapToGrid={editor.settings.snapToGrid}
+                  gridSize={editor.settings.gridSize}
+                  onSelectElement={editor.selectElement}
+                  onUpdateElement={editor.updateElement}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Select or create a scene to start editing
+                </div>
+              )}
+            </div>
+
+            {/* Timeline */}
+            <EditorTimeline
+              scenes={editor.project.scenes}
               currentTime={editor.currentTime}
-              sceneStartTime={sceneStartTime}
+              totalDuration={editor.totalDuration}
+              selectedSceneId={editor.selectedSceneId}
               selectedElementId={editor.selectedElementId}
-              mode={editor.mode}
-              zoom={editor.settings.zoom}
-              showGrid={editor.settings.showGrid}
-              snapToGrid={editor.settings.snapToGrid}
-              gridSize={editor.settings.gridSize}
+              isPlaying={editor.isPlaying}
+              onSeek={editor.seek}
+              onPlay={editor.play}
+              onPause={editor.pause}
+              onRestart={editor.restart}
+              onSelectScene={editor.selectScene}
               onSelectElement={editor.selectElement}
               onUpdateElement={editor.updateElement}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Select or create a scene to start editing
-            </div>
-          )}
+          </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />

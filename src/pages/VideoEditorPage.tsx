@@ -5,6 +5,7 @@ import {
   MediaUploader,
   MediaLibrary,
   ClipList,
+  ClipSettingsPanel,
   OutputSettingsPanel,
   RenderButton,
   useVideoEditorStore,
@@ -55,6 +56,7 @@ const VideoEditorPage = () => {
                 Drag to reorder clips. Click settings to adjust duration and transitions.
               </p>
               <ClipList />
+              <ClipSettingsPanel />
             </div>
           </div>
 

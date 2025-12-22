@@ -6,5 +6,6 @@ export { useVideoEditorRender } from './hooks/useVideoEditorRender';
 export { MediaUploader } from './components/MediaUploader';
 export { MediaLibrary } from './components/MediaLibrary';
 export { ClipList } from './components/ClipList';
+export { ClipSettingsPanel } from './components/ClipSettingsPanel';
 export { OutputSettingsPanel } from './components/OutputSettingsPanel';
 export { RenderButton } from './components/RenderButton';

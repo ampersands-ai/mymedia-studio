@@ -13,7 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,6 +170,19 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <span className="text-xl">🎬</span>,
                   "storyboard"
                 )}
+
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    isActive("/dashboard/prompts") 
+                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  )}
+                  onClick={() => handleNavigation("/dashboard/prompts")}
+                >
+                  <FileText className="h-5 w-5" />
+                  <span>Prompt Library</span>
+                </button>
 
                 <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
                 

@@ -192,6 +192,7 @@ export default function UserGenerations() {
   const queryClient = useQueryClient();
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
 
+  const isMobile = useIsMobile();
   const pagination = usePagination({
     pageSize: 50,
     initialPage: 1,
@@ -404,7 +405,7 @@ export default function UserGenerations() {
     );
   }
 
-  const isMobile = useIsMobile();
+
 
   return (
     <div className="space-y-4 md:space-y-6">

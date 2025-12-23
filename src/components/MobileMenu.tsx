@@ -55,6 +55,9 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
 
   const isActive = (path: string) => location.pathname === path;
   const isDashboard = location.pathname.startsWith("/dashboard");
+  
+  // Show dashboard-style menu when logged in (regardless of current page)
+  const showDashboardMenu = isDashboard || !!user;
 
   const renderFeatureButton = (
     path: string,
@@ -125,11 +128,26 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
 
         <ScrollArea className="flex-1 px-6">
           <div className="flex flex-col gap-2 py-4">
-            {/* Dashboard Context */}
-            {isDashboard ? (
+            {/* Dashboard Context - shown when logged in or on dashboard */}
+            {showDashboardMenu ? (
               <>
+                {/* Home link when on public pages */}
+                {!isDashboard && (
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
+                      isActive("/") 
+                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                    onClick={() => handleNavigation("/")}
+                  >
+                    <Home className="h-5 w-5" />
+                    <span>Home</span>
+                  </button>
+                )}
                 <div className="text-xs font-bold text-foreground/60 mb-2 px-2">DASHBOARD</div>
-                
+
                 {renderFeatureButton(
                   "/dashboard/custom-creation",
                   "Custom Creation",

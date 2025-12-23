@@ -213,12 +213,12 @@ export const CinematicNav = () => {
                   <ThemeToggle />
                 </div>
 
-                {/* Nav Links - Different content based on login status */}
+                {/* Mobile Nav Links - Different content based on login status */}
                 <ScrollArea className="flex-1 py-4">
                   <div className="flex flex-col gap-2 px-6">
                     {user ? (
                       <>
-                        {/* Dashboard Menu for logged-in users */}
+                        {/* Full Dashboard Menu for logged-in users on home page */}
                         <button
                           className={cn(
                             "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",

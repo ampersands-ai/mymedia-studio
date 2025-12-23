@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
+import { NotificationBell } from "@/components/notifications";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -174,6 +175,7 @@ export const DashboardLayout = () => {
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="brutal-card-sm px-2 md:px-4 py-1.5 md:py-2 bg-primary-500 text-neutral-900 border-2 border-primary-600 cursor-pointer hover:bg-primary-600 transition-colors">

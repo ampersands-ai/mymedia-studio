@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Clock, Shield } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Clock, Shield, BookOpen } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -143,6 +143,20 @@ export const DashboardLayout = () => {
                 >
                   <History className="h-5 w-5 mr-2" />
                   My Creations
+                </Button>
+              </Link>
+              <Link to="/dashboard/prompts">
+                <Button
+                  variant={isActive("/dashboard/prompts") ? "default" : "ghost"}
+                  className={cn(
+                    "text-base px-6 py-5 rounded-full",
+                    isActive("/dashboard/prompts") 
+                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  )}
+                >
+                  <BookOpen className="h-5 w-5 mr-2" />
+                  Prompts
                 </Button>
               </Link>
               {renderNavButton(

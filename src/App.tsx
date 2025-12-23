@@ -45,6 +45,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Help = lazy(() => import("./pages/Help"));
 const Features = lazy(() => import("./pages/Features"));
 const Templates = lazy(() => import("./pages/Templates"));
+const PromptLibrary = lazy(() => import("./pages/PromptLibrary"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const VideoStudio = lazy(() => import("./pages/VideoStudio"));
 const StoryboardPage = lazy(() => import("./pages/StoryboardPage"));
@@ -176,6 +177,7 @@ const AppContent = () => {
               <Route path="video-studio" element={<RouteErrorBoundary routeName="Dashboard > Video Studio"><VideoStudio /></RouteErrorBoundary>} />
               <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
+              <Route path="prompts" element={<RouteErrorBoundary routeName="Dashboard > Prompt Library"><PromptLibrary /></RouteErrorBoundary>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />

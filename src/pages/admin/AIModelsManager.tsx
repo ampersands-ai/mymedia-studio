@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Edit, Power, PowerOff, ArrowUpDown, Copy, Filter, X,
-  Download, Lock, Unlock, AlertCircle, RefreshCw
+  Download, Lock, Unlock, AlertCircle, RefreshCw, Bell, BellOff
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,6 +73,7 @@ function moduleToModel(module: ModelModule): AIModel {
     locked_file_path: config.lockedFilePath,
     locked_at: null,
     locked_by: null,
+    show_notify_on_completion: config.showNotifyOnCompletion ?? true,
   } as AIModel;
 }
 
@@ -254,6 +255,19 @@ export default function AIModelsManager() {
     const action = currentLockStatus ? "unlock" : "lock";
     downloadScript(script, `${action}-model-${recordId.slice(0, 8)}.cjs`);
     toast.success(`${action} script downloaded. Run it to ${action} the model.`);
+  };
+
+  const handleToggleNotify = (recordId: string, currentNotifyStatus: boolean) => {
+    const model = models.find(m => m.record_id === recordId);
+    if (!model) return;
+
+    const updates: ModelUpdatePayload = {
+      recordId,
+      updates: { show_notify_on_completion: !currentNotifyStatus }
+    };
+
+    setPendingChanges([...pendingChanges, updates]);
+    toast.success(`Notify toggle change queued for ${model.model_name}. Download update script to apply.`);
   };
 
   const handleDownloadPendingChanges = () => {
@@ -694,6 +708,7 @@ export default function AIModelsManager() {
                     <TableHead className="font-bold">Type</TableHead>
                     <TableHead className="font-bold">Base Cost</TableHead>
                     <TableHead className="font-bold">Order</TableHead>
+                    <TableHead className="font-bold">Notify</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Actions</TableHead>
                   </TableRow>
@@ -747,6 +762,20 @@ export default function AIModelsManager() {
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
                         {model.display_order_in_family ?? '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleNotify(model.record_id, model.show_notify_on_completion ?? true)}
+                          title={model.show_notify_on_completion !== false ? "Notification enabled - click to generate disable script" : "Notification disabled - click to generate enable script"}
+                        >
+                          {model.show_notify_on_completion !== false ? (
+                            <Bell className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <BellOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                       </TableCell>
                       <TableCell>
                         {model.is_active ? (

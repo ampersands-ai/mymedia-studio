@@ -92,6 +92,8 @@ interface InputPanelProps {
   // Cooldown props
   isOnCooldown?: boolean;
   cooldownRemaining?: number;
+  // Notify toggle visibility (per-model admin setting)
+  showNotifyOnCompletion?: boolean;
 }
 
 /**
@@ -166,6 +168,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   estimatedTokens,
   isOnCooldown = false,
   cooldownRemaining = 0,
+  showNotifyOnCompletion = true,
 }) => {
   const isDisabled = localGenerating || isGenerating || !!pollingGenerationId || isOnCooldown;
   const canGenerate =
@@ -490,15 +493,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         })()}
       </div>
 
-      {/* Notification Toggle - placed before action buttons */}
-      <div className="px-4 md:px-8">
-        <NotifyOnCompletionToggle
-          checked={notifyOnCompletion}
-          onCheckedChange={onNotifyOnCompletionChange}
-          disabled={isDisabled}
-          description="Get an email when your generation is ready"
-        />
-      </div>
+      {/* Notification Toggle - placed before action buttons (conditionally shown per model) */}
+      {showNotifyOnCompletion && (
+        <div className="px-4 md:px-8">
+          <NotifyOnCompletionToggle
+            checked={notifyOnCompletion}
+            onCheckedChange={onNotifyOnCompletionChange}
+            disabled={isDisabled}
+            description="Get an email when your generation is ready"
+          />
+        </div>
+      )}
 
       {/* Sticky action buttons at bottom - ALWAYS VISIBLE */}
       <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 pb-safe md:pb-6 border-t border-border bg-card backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">

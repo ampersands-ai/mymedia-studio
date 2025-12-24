@@ -103,6 +103,8 @@ export interface ModelConfiguration {
   locked_by?: string | null;
   locked_file_path?: string | null;
   locked_file_contents?: string | null; // TypeScript code for the model (single source of truth)
+  // UI feature toggles
+  show_notify_on_completion?: boolean;
 }
 
 

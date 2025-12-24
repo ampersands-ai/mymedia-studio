@@ -37,6 +37,8 @@ export interface AIModel {
   locked_at?: string | null;
   locked_by?: string | null;
   locked_file_path?: string | null;
+  // UI feature toggles
+  show_notify_on_completion?: boolean;
 }
 
 interface VisibilitySettings {
@@ -107,6 +109,8 @@ export const useModels = () => {
           locked_file_path: m.MODEL_CONFIG.lockedFilePath,
           locked_at: null, // Not tracked in .ts files
           locked_by: null, // Not tracked in .ts files
+          // UI feature toggles
+          show_notify_on_completion: m.MODEL_CONFIG.showNotifyOnCompletion ?? true,
         }));
     },
     staleTime: 30 * 1000, // 30 seconds
@@ -171,6 +175,7 @@ export const useModelByRecordId = (recordId: string | undefined) => {
         locked_file_path: m.MODEL_CONFIG.lockedFilePath,
         locked_at: null,
         locked_by: null,
+        show_notify_on_completion: m.MODEL_CONFIG.showNotifyOnCompletion ?? true,
       } as AIModel;
     },
     enabled: !!recordId,

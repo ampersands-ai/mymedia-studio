@@ -230,6 +230,7 @@ export interface ModelModule {
     modelFamily?: string | null;
     variantName?: string | null;
     displayOrderInFamily?: number;
+    showNotifyOnCompletion?: boolean; // Defaults to true if not specified
 
     // Lock system
     isLocked: boolean;

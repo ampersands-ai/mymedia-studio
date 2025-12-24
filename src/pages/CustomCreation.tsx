@@ -622,6 +622,7 @@ const CustomCreation = () => {
             estimatedTokens={estimatedTokens}
             isOnCooldown={isOnCooldown}
             cooldownRemaining={cooldownRemaining}
+            showNotifyOnCompletion={currentModel?.show_notify_on_completion ?? true}
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             onReset={() => {

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePromptModeration } from "@/hooks/usePromptModeration";
+import { useGenerationCooldown } from "@/hooks/useGenerationCooldown";
 import { getMaxPromptLength } from "@/lib/custom-creation-utils";
 import { CAPTION_GENERATION_COST } from "@/constants/custom-creation";
 import type { CustomCreationState } from "@/types/custom-creation";
@@ -73,6 +74,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   const queryClient = useQueryClient();
   const { generate, isGenerating } = useGeneration();
   const { checkPrompt, isChecking: isModerating } = usePromptModeration();
+  const { isOnCooldown, remainingSeconds, startCooldown, checkCooldown } = useGenerationCooldown();
 
   /**
    * Calculate token cost using model's calculateCost() function
@@ -155,6 +157,19 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     if (!currentModel) {
       toast.error("Please select a model");
       return;
+    }
+
+    // Cooldown check (12 seconds between generations)
+    // Skip for admins (maxConcurrentGenerations = 999)
+    if (maxConcurrentGenerations !== 999) {
+      const cooldownResult = checkCooldown();
+      if (!cooldownResult.allowed) {
+        toast.error("Please wait before generating again", {
+          description: `Cooldown active: ${cooldownResult.remainingSeconds}s remaining`,
+          duration: 3000,
+        });
+        return;
+      }
     }
 
     // Concurrent generation limit check (client-side enforcement)
@@ -248,6 +263,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
 
       updateState({ pollingGenerationId: genId });
 
+      // Start cooldown timer after successful generation initiation
+      startCooldown();
+
       // Invalidate credit balance to ensure UI updates after deduction
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] });
       queryClient.invalidateQueries({ queryKey: ['user-credits'] });
@@ -306,6 +324,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     checkPrompt,
     activeGenerationsCount,
     maxConcurrentGenerations,
+    checkCooldown,
+    startCooldown,
   ]);
 
   /**
@@ -392,5 +412,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     estimatedTokens,
     isGenerating,
     isModerating,
+    // Cooldown state for UI
+    isOnCooldown,
+    cooldownRemaining: remainingSeconds,
   };
 };

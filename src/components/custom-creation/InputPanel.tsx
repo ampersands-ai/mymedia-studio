@@ -10,7 +10,7 @@ import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sparkles, RotateCcw, Coins, Clock, ArrowUp } from "lucide-react";
+import { Sparkles, RotateCcw, Coins, Clock, ArrowUp, Timer } from "lucide-react";
 import { NotifyOnCompletionToggle } from "@/components/shared/NotifyOnCompletionToggle";
 import type { CreationGroup } from "@/constants/creation-groups";
 import type { 
@@ -89,6 +89,9 @@ interface InputPanelProps {
   pollingGenerationId: string | null;
   localGenerating: boolean;
   estimatedTokens: number;
+  // Cooldown props
+  isOnCooldown?: boolean;
+  cooldownRemaining?: number;
 }
 
 /**
@@ -161,8 +164,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   pollingGenerationId,
   localGenerating,
   estimatedTokens,
+  isOnCooldown = false,
+  cooldownRemaining = 0,
 }) => {
-  const isDisabled = localGenerating || isGenerating || !!pollingGenerationId;
+  const isDisabled = localGenerating || isGenerating || !!pollingGenerationId || isOnCooldown;
   const canGenerate =
     selectedModel &&
     (!isPromptRequired || prompt.trim()) &&
@@ -503,8 +508,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           size="lg"
           className="w-full gap-2 font-bold overflow-hidden"
         >
-          <Sparkles className="h-5 w-5 flex-shrink-0" />
-          <span className="flex-shrink-0">Generate</span>
+          {isOnCooldown ? (
+            <>
+              <Timer className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-shrink-0">Wait {cooldownRemaining}s</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-shrink-0">Generate</span>
+            </>
+          )}
           <div className="flex items-center gap-1 sm:gap-2 ml-auto min-w-0 flex-shrink">
             <div className="flex items-center gap-1 bg-black/10 px-1.5 sm:px-2 py-0.5 rounded">
               <Coins className="h-3 w-3 flex-shrink-0" />

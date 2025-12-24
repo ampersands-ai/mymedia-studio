@@ -256,6 +256,8 @@ const CustomCreation = () => {
     handleCancelGeneration,
     estimatedTokens,
     isGenerating,
+    isOnCooldown,
+    cooldownRemaining,
   } = useCustomGeneration({
     state,
     updateState,
@@ -618,6 +620,8 @@ const CustomCreation = () => {
             onGenerate={handleGenerateWithScroll}
             isGenerating={isGenerating || state.localGenerating}
             estimatedTokens={estimatedTokens}
+            isOnCooldown={isOnCooldown}
+            cooldownRemaining={cooldownRemaining}
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             onReset={() => {

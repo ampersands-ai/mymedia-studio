@@ -158,6 +158,28 @@ serve(async (req) => {
       }
     });
 
+    // Trigger completion notification for long-running generations
+    try {
+      const generationDuration = Math.floor((Date.now() - new Date(generation.created_at).getTime()) / 1000);
+      if (generationDuration > 30) {
+        await supabase.functions.invoke('notify-generation-complete', {
+          body: {
+            generation_id: generation_id,
+            user_id: generation.user_id,
+            generation_duration_seconds: generationDuration,
+            type: 'generation'
+          }
+        });
+        logger.info('Completion notification triggered', { 
+          metadata: { generationId: generation_id, duration: generationDuration } 
+        });
+      }
+    } catch (notifyError) {
+      logger.warn('Failed to trigger completion notification', { 
+        metadata: { generationId: generation_id } 
+      });
+    }
+
     logger.info('Processing complete', {
       metadata: { 
         generationId: generation_id,

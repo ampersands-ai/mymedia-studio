@@ -163,11 +163,33 @@ export async function callKieAI(
     });
 
     if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      logger.error('Task creation failed', undefined, { 
-        metadata: { status: createResponse.status, error: errorText } 
+      const responseText = await createResponse.text();
+      const responseHeaders = Object.fromEntries(createResponse.headers.entries());
+      
+      logger.error('KIE AI API error - full response', undefined, {
+        metadata: {
+          httpStatus: createResponse.status,
+          httpStatusText: createResponse.statusText,
+          responseHeaders: responseHeaders,
+          responseBody: responseText,
+          model: request.model,
+          recordId: request.model_record_id,
+          endpoint: createTaskUrl
+        }
       });
-      throw new Error(`Task creation failed: ${createResponse.status} - ${errorText}`);
+      
+      // Parse and surface specific error message if JSON
+      let errorMessage = `Task creation failed: ${createResponse.status} - ${createResponse.statusText}`;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorMessage = `Task creation failed: ${errorJson.message || errorJson.msg || errorJson.error || responseText}`;
+      } catch {
+        if (responseText) {
+          errorMessage = `Task creation failed: ${createResponse.status} - ${responseText}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const createData = await createResponse.json();

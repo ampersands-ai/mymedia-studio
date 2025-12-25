@@ -142,7 +142,11 @@ export async function callKieAI(
   }
   
   logger.debug('Request configuration', { 
-    metadata: { callbackUrl, payload: JSON.stringify(payload).substring(0, 500) } 
+    metadata: { 
+      callbackUrl, 
+      payloadLength: JSON.stringify(payload).length,
+      payload: JSON.stringify(payload) // Full payload - no truncation for debugging
+    } 
   });
 
   try {

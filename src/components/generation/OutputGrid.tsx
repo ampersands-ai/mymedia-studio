@@ -73,11 +73,10 @@ export const OutputGrid = ({
     return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3";
   };
 
-  // Use larger aspect ratio for fewer outputs
+  // No forced aspect ratio - let images display naturally
   const getAspectClass = () => {
     if (isAudio) return "";
-    if (outputs.length <= 4) return "aspect-[4/3]"; // Larger thumbnails for ≤4
-    return "aspect-square";
+    return ""; // Images display at natural aspect ratio with max-height constraint
   };
 
   return (

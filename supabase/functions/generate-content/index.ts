@@ -1440,6 +1440,33 @@ Deno.serve(async (req) => {
               }
             });
 
+            // Trigger completion notification for long-running generations
+            try {
+              const generationDuration = Math.floor((Date.now() - startTime) / 1000);
+              if (generationDuration > 30) {
+                await supabase.functions.invoke('notify-generation-complete', {
+                  body: {
+                    generation_id: generationId,
+                    user_id: user.id,
+                    generation_duration_seconds: generationDuration,
+                    type: 'generation'
+                  }
+                });
+                logger.info('Completion notification triggered', {
+                  userId: user.id,
+                  metadata: { generation_id: generationId, duration: generationDuration }
+                });
+              }
+            } catch (notifyError) {
+              logger.warn('Failed to trigger completion notification', {
+                userId: user.id,
+                metadata: { 
+                  generation_id: generationId, 
+                  error: notifyError instanceof Error ? notifyError.message : 'Unknown' 
+                }
+              });
+            }
+
             logger.info('Background processing completed', {
               userId: user.id,
               metadata: { generation_id: generationId }

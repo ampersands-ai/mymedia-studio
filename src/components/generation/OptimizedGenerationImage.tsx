@@ -82,7 +82,7 @@ export const OptimizedGenerationImage = ({
   }
 
   return (
-    <div ref={ref} className={`relative w-full ${className}`} onClick={onClick}>
+    <div ref={ref} className={`relative w-full max-h-[70vh] ${className}`} onClick={onClick}>
       {/* Blur placeholder */}
       {isLoading && (
         <img
@@ -99,7 +99,7 @@ export const OptimizedGenerationImage = ({
           key="fallback"
           src={fallbackUrl}
           alt={alt}
-          className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          className={`w-full h-auto max-h-[70vh] object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setIsLoading(false)}
           onError={async () => {
@@ -134,7 +134,7 @@ export const OptimizedGenerationImage = ({
             key="optimized"
             src={jpegUrl}
             alt={alt}
-            className={`w-full h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            className={`w-full h-auto max-h-[70vh] object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             loading={priority ? "eager" : "lazy"}
             onLoad={() => {
               setIsLoading(false);

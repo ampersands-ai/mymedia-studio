@@ -182,12 +182,6 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     "custom_creation"
                   )}
                   {renderFeatureItem(
-                    "/dashboard/templates",
-                    "Templates",
-                    <Layout className="h-4 w-4" />,
-                    "templates"
-                  )}
-                  {renderFeatureItem(
                     "/dashboard/storyboard",
                     "Storyboard",
                     <span className="text-base">🎬</span>,
@@ -198,6 +192,12 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     "Faceless Videos",
                     <Video className="h-4 w-4" />,
                     "faceless_videos"
+                  )}
+                  {renderFeatureItem(
+                    "/dashboard/templates",
+                    "Templates",
+                    <Layout className="h-4 w-4" />,
+                    "templates"
                   )}
                   <MenuItem 
                     path="/dashboard/history" 

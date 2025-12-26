@@ -239,12 +239,6 @@ export const CinematicNav = () => {
                             "custom_creation"
                           )}
                           {renderFeatureButton(
-                            "/dashboard/templates",
-                            "Templates",
-                            <Layout className="h-4 w-4" />,
-                            "templates"
-                          )}
-                          {renderFeatureButton(
                             "/dashboard/storyboard",
                             "Storyboard",
                             <span className="text-base">🎬</span>,
@@ -255,6 +249,12 @@ export const CinematicNav = () => {
                             "Faceless Videos",
                             <Video className="h-4 w-4" />,
                             "faceless_videos"
+                          )}
+                          {renderFeatureButton(
+                            "/dashboard/templates",
+                            "Templates",
+                            <Layout className="h-4 w-4" />,
+                            "templates"
                           )}
                           <button
                             className={cn(

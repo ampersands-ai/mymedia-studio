@@ -79,13 +79,13 @@ export const CinematicNav = () => {
         <button
           key={path}
           disabled
-          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-white/50"
+          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-muted-foreground text-sm font-bold"
         >
           <div className="flex items-center gap-3">
             {icon}
             <span>{label}</span>
           </div>
-          <span className="flex items-center gap-1 text-xs text-white/50">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             Soon
           </span>
@@ -99,17 +99,17 @@ export const CinematicNav = () => {
       <button
         key={path}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
+          "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
           isActive(path) 
-            ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-            : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+            ? "bg-primary text-primary-foreground" 
+            : "hover:bg-muted"
         )}
         onClick={() => handleNavigation(path)}
       >
         {icon}
         <span>{label}</span>
         {showAdminIndicator && (
-          <Shield className="h-3.5 w-3.5 ml-auto text-white/50" />
+          <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
         )}
       </button>
     );
@@ -197,205 +197,230 @@ export const CinematicNav = () => {
             </SheetTrigger>
             <SheetContent 
               side="right" 
-              className="w-[300px] bg-black/95 backdrop-blur-xl border-l border-white/10 p-0"
+              className="w-72 p-0 bg-background border-l"
             >
               <div className="flex flex-col h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
-                  <Link to="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                    <img 
-                      src="/logos/artifio.png" 
-                      alt="Artifio" 
-                      className="h-7 w-auto"
-                    />
-                    <span className="text-lg font-bold text-white">artifio.ai</span>
-                  </Link>
-                  <ThemeToggle />
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-black">MENU</h2>
+                    <ThemeToggle />
+                  </div>
                 </div>
 
                 {/* Mobile Nav Links - Different content based on login status */}
-                <ScrollArea className="flex-1 py-4">
-                  <div className="flex flex-col gap-2 px-6">
+                <ScrollArea className="flex-1">
+                  <div className="flex flex-col pb-6">
                     {user ? (
                       <>
-                        {/* Full Dashboard Menu for logged-in users on home page */}
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
-                          )}
-                          onClick={() => handleNavigation("/")}
-                        >
-                          <Home className="h-5 w-5" />
-                          <span>Home</span>
-                        </button>
-
-                        <div className="text-xs font-bold text-white/60 mt-4 mb-2 px-2">DASHBOARD</div>
-
-                        {renderFeatureButton(
-                          "/dashboard/custom-creation",
-                          "Custom Creation",
-                          <Sparkles className="h-5 w-5" />,
-                          "custom_creation"
-                        )}
-
-                        {renderFeatureButton(
-                          "/dashboard/templates",
-                          "Templates",
-                          <Layout className="h-5 w-5" />,
-                          "templates"
-                        )}
-
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/dashboard/history") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
-                          )}
-                          onClick={() => handleNavigation("/dashboard/history")}
-                        >
-                          <History className="h-5 w-5" />
-                          <span>My Creations</span>
-                        </button>
-
-                        {renderFeatureButton(
-                          "/dashboard/video-studio",
-                          "Faceless Videos",
-                          <Video className="h-5 w-5" />,
-                          "faceless_videos"
-                        )}
-
-                        {renderFeatureButton(
-                          "/dashboard/storyboard",
-                          "Storyboard",
-                          <span className="text-xl">🎬</span>,
-                          "storyboard"
-                        )}
-
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/dashboard/prompts") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
-                          )}
-                          onClick={() => handleNavigation("/dashboard/prompts")}
-                        >
-                          <FileText className="h-5 w-5" />
-                          <span>Prompt Library</span>
-                        </button>
-
-                        <div className="text-xs font-bold text-white/60 mt-4 mb-2 px-2">RESOURCES</div>
-
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/about") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
-                          )}
-                          onClick={() => handleNavigation("/about")}
-                        >
-                          <Info className="h-5 w-5" />
-                          <span>About</span>
-                        </button>
-
-                        {showBlogPage && (
+                        {/* Home link */}
+                        <div className="px-4 pt-4">
                           <button
                             className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                              isActive("/blog") 
-                                ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                                : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
                             )}
-                            onClick={() => handleNavigation("/blog")}
+                            onClick={() => handleNavigation("/")}
                           >
-                            <BookOpen className="h-5 w-5" />
-                            <span>Blog</span>
+                            <Home className="h-4 w-4" />
+                            <span>Home</span>
                           </button>
-                        )}
+                        </div>
 
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/faq") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+                        {/* CREATE Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">CREATE</div>
+                        <div className="space-y-1 px-4">
+                          {renderFeatureButton(
+                            "/dashboard/custom-creation",
+                            "Custom Creation",
+                            <Sparkles className="h-4 w-4" />,
+                            "custom_creation"
                           )}
-                          onClick={() => handleNavigation("/faq")}
-                        >
-                          <HelpCircle className="h-5 w-5" />
-                          <span>FAQ</span>
-                        </button>
+                          {renderFeatureButton(
+                            "/dashboard/templates",
+                            "Templates",
+                            <Layout className="h-4 w-4" />,
+                            "templates"
+                          )}
+                          {renderFeatureButton(
+                            "/dashboard/storyboard",
+                            "Storyboard",
+                            <span className="text-base">🎬</span>,
+                            "storyboard"
+                          )}
+                        </div>
 
-                        {showCommunityPage && (
+                        {/* VIDEOS Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">VIDEOS</div>
+                        <div className="space-y-1 px-4">
+                          {renderFeatureButton(
+                            "/dashboard/video-studio",
+                            "Faceless Videos",
+                            <Video className="h-4 w-4" />,
+                            "faceless_videos"
+                          )}
+                        </div>
+
+                        {/* MY STUFF Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">MY STUFF</div>
+                        <div className="space-y-1 px-4">
                           <button
                             className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                              isActive("/community") 
-                                ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                                : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/dashboard/history")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
                             )}
-                            onClick={() => handleNavigation("/community")}
+                            onClick={() => handleNavigation("/dashboard/history")}
                           >
-                            <Users className="h-5 w-5" />
-                            <span>Community</span>
+                            <History className="h-4 w-4" />
+                            <span>My Creations</span>
                           </button>
-                        )}
-
-                        <div className="text-xs font-bold text-white/60 mt-4 mb-2 px-2">ACCOUNT</div>
-
-                        <button
-                          className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                            isActive("/dashboard/settings") 
-                              ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                              : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
-                          )}
-                          onClick={() => handleNavigation("/dashboard/settings")}
-                        >
-                          <Settings className="h-5 w-5" />
-                          <span>Settings</span>
-                        </button>
-
-                        {isAdmin && (
                           <button
                             className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                              isActive("/dashboard/admin") 
-                                ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                                : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/dashboard/prompts")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
                             )}
-                            onClick={() => handleNavigation("/dashboard/admin")}
+                            onClick={() => handleNavigation("/dashboard/prompts")}
                           >
-                            <Shield className="h-5 w-5" />
-                            <span>Admin Panel</span>
+                            <FileText className="h-4 w-4" />
+                            <span>Prompt Library</span>
                           </button>
-                        )}
+                        </div>
 
-                        <button
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left text-red-400 hover:text-red-300 hover:bg-white/10 font-medium"
-                          onClick={handleSignOut}
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span>Sign Out</span>
-                        </button>
+                        {/* RESOURCES Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">RESOURCES</div>
+                        <div className="space-y-1 px-4">
+                          <button
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/about")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                            onClick={() => handleNavigation("/about")}
+                          >
+                            <Info className="h-4 w-4" />
+                            <span>About</span>
+                          </button>
+                          {showBlogPage && (
+                            <button
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                                isActive("/blog")
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted"
+                              )}
+                              onClick={() => handleNavigation("/blog")}
+                            >
+                              <BookOpen className="h-4 w-4" />
+                              <span>Blog</span>
+                            </button>
+                          )}
+                          <button
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/faq")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                            onClick={() => handleNavigation("/faq")}
+                          >
+                            <HelpCircle className="h-4 w-4" />
+                            <span>FAQ</span>
+                          </button>
+                          {showCommunityPage && (
+                            <button
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                                isActive("/community")
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted"
+                              )}
+                              onClick={() => handleNavigation("/community")}
+                            >
+                              <Users className="h-4 w-4" />
+                              <span>Community</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* ACCOUNT Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">ACCOUNT</div>
+                        <div className="space-y-1 px-4">
+                          <button
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/dashboard/settings")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                            onClick={() => handleNavigation("/dashboard/settings")}
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Settings</span>
+                          </button>
+                          {isAdmin && (
+                            <button
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                                isActive("/admin/dashboard")
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted"
+                              )}
+                              onClick={() => handleNavigation("/admin/dashboard")}
+                            >
+                              <Shield className="h-4 w-4" />
+                              <span>Admin Panel</span>
+                            </button>
+                          )}
+                          <button
+                            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10 font-bold text-sm w-full"
+                            onClick={handleSignOut}
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <>
                         {/* Marketing Menu for logged-out users */}
-                        {visibleNavItems.map((item) => (
+                        <div className="px-4 pt-4">
                           <button
-                            key={item.id}
-                            onClick={() => handleNavigation(item.href)}
-                            className="text-lg font-medium uppercase tracking-wide py-4 text-white/70 hover:text-white hover:pl-2 transition-all border-b border-white/5"
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                            onClick={() => handleNavigation("/")}
                           >
-                            {item.label}
+                            <Home className="h-4 w-4" />
+                            <span>Home</span>
                           </button>
-                        ))}
+                        </div>
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">PAGES</div>
+                        <div className="space-y-1 px-4">
+                          {visibleNavItems.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleNavigation(item.href)}
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                                isActive(item.href)
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted"
+                              )}
+                            >
+                              <span>{item.label}</span>
+                            </button>
+                          ))}
+                        </div>
                       </>
                     )}
                   </div>

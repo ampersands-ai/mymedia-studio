@@ -46,43 +46,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       metadata: { generation_id, type, duration: generation_duration_seconds } 
     });
 
-    // Get user notification preferences
-    const { data: preferences, error: prefError } = await supabase
+    // Get user notification preferences (optional - in-app notifications always work)
+    const { data: preferences } = await supabase
       .from("user_notification_preferences")
       .select("*")
       .eq("user_id", user_id)
       .single();
 
-    if (prefError || !preferences) {
-      logger.info('No notification preferences found for user, skipping notification', { userId: user_id });
-      return new Response(
-        JSON.stringify({ success: true, message: "No preferences set" }),
-        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Default preferences if none set
+    const notificationThreshold = preferences?.notification_threshold_seconds ?? 30;
+    const emailEnabled = preferences?.email_on_completion ?? false;
+    const pushEnabled = preferences?.push_on_completion ?? false;
 
-    // Check if duration exceeds threshold
-    if (generation_duration_seconds < preferences.notification_threshold_seconds) {
+    // Check if duration exceeds threshold (applies to all notification types)
+    if (generation_duration_seconds < notificationThreshold) {
       logger.debug('Generation below notification threshold', { 
         metadata: { 
           duration: generation_duration_seconds, 
-          threshold: preferences.notification_threshold_seconds 
+          threshold: notificationThreshold 
         } 
       });
       return new Response(
         JSON.stringify({ success: true, message: "Below threshold" }),
-        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if any notification is enabled
-    const emailEnabled = preferences.email_on_completion;
-    const pushEnabled = preferences.push_on_completion;
-
-    if (!emailEnabled && !pushEnabled) {
-      logger.info('All notifications disabled for this user', { userId: user_id });
-      return new Response(
-        JSON.stringify({ success: true, message: "All notifications disabled" }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -209,7 +194,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 </div>
                 
                 <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-                  You received this email because you enabled completion notifications for generations that take longer than ${preferences.notification_threshold_seconds} seconds.
+                  You received this email because you enabled completion notifications for generations that take longer than ${notificationThreshold} seconds.
                   You can update your preferences in Settings.
                 </p>
               </div>

@@ -135,7 +135,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
 
   // Section header component
   const SectionHeader = ({ children }: { children: React.ReactNode }) => (
-    <div className="text-xs font-bold text-muted-foreground mb-2 px-4 pt-4 first:pt-0">
+    <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6 first:pt-4">
       {children}
     </div>
   );

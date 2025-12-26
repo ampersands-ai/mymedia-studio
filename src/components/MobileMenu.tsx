@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
+  SheetClose,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText, X
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,7 +58,36 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   // Show dashboard-style menu when logged in (regardless of current page)
   const showDashboardMenu = isDashboard || !!user;
 
-  const renderFeatureButton = (
+  // Reusable menu item component
+  const MenuItem = ({ 
+    path, 
+    label, 
+    icon, 
+    showAdminIndicator = false 
+  }: { 
+    path: string; 
+    label: string; 
+    icon: React.ReactNode; 
+    showAdminIndicator?: boolean;
+  }) => (
+    <button
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+        isActive(path)
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-muted"
+      )}
+      onClick={() => handleNavigation(path)}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="truncate">{label}</span>
+      {showAdminIndicator && (
+        <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+      )}
+    </button>
+  );
+
+  const renderFeatureItem = (
     path: string,
     label: string,
     icon: React.ReactNode,
@@ -77,7 +105,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
         <button
           key={path}
           disabled
-          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-muted-foreground"
+          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-muted-foreground text-sm font-bold"
         >
           <div className="flex items-center gap-3">
             {icon}
@@ -95,24 +123,22 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
     const showAdminIndicator = isAdmin && (!enabled || comingSoon);
 
     return (
-      <button
+      <MenuItem 
         key={path}
-        className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-          isActive(path) 
-            ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-            : "text-muted-foreground hover:bg-card/50 hover:text-foreground font-medium backdrop-blur-sm"
-        )}
-        onClick={() => handleNavigation(path)}
-      >
-        {icon}
-        <span>{label}</span>
-        {showAdminIndicator && (
-          <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
-        )}
-      </button>
+        path={path} 
+        label={label} 
+        icon={icon} 
+        showAdminIndicator={showAdminIndicator} 
+      />
     );
   };
+
+  // Section header component
+  const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+    <div className="text-xs font-bold text-muted-foreground mb-2 px-4 pt-4 first:pt-0">
+      {children}
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -121,334 +147,169 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col p-0 pb-safe backdrop-blur-xl bg-card/95 border-l border-border/30">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/20 backdrop-blur-lg">
-          <SheetTitle className="text-left font-bold text-xl">Navigation</SheetTitle>
-        </SheetHeader>
+      <SheetContent side="right" className="w-72 p-0 bg-card border-l">
+        {/* Header */}
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black">MENU</h2>
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
+        </div>
 
-        <ScrollArea className="flex-1 px-6">
-          <div className="flex flex-col gap-2 py-4">
-            {/* Dashboard Context - shown when logged in or on dashboard */}
+        <ScrollArea className="flex-1 h-[calc(100vh-80px)]">
+          <div className="flex flex-col pb-6">
+            {/* Dashboard Context - shown when logged in */}
             {showDashboardMenu ? (
               <>
                 {/* Home link when on public pages */}
                 {!isDashboard && (
+                  <div className="px-4 pt-4">
+                    <MenuItem path="/" label="Home" icon={<Home className="h-4 w-4" />} />
+                  </div>
+                )}
+
+                {/* CREATE Section */}
+                <SectionHeader>CREATE</SectionHeader>
+                <div className="space-y-1 px-4">
+                  {renderFeatureItem(
+                    "/dashboard/custom-creation",
+                    "Custom Creation",
+                    <Sparkles className="h-4 w-4" />,
+                    "custom_creation"
+                  )}
+                  {renderFeatureItem(
+                    "/dashboard/templates",
+                    "Templates",
+                    <Layout className="h-4 w-4" />,
+                    "templates"
+                  )}
+                  {renderFeatureItem(
+                    "/dashboard/storyboard",
+                    "Storyboard",
+                    <span className="text-base">🎬</span>,
+                    "storyboard"
+                  )}
+                </div>
+
+                {/* VIDEOS Section */}
+                <SectionHeader>VIDEOS</SectionHeader>
+                <div className="space-y-1 px-4">
+                  {renderFeatureItem(
+                    "/dashboard/video-studio",
+                    "Faceless Videos",
+                    <Video className="h-4 w-4" />,
+                    "faceless_videos"
+                  )}
+                </div>
+
+                {/* MY STUFF Section */}
+                <SectionHeader>MY STUFF</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/history" 
+                    label="My Creations" 
+                    icon={<History className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/prompts" 
+                    label="Prompt Library" 
+                    icon={<FileText className="h-4 w-4" />} 
+                  />
+                </div>
+
+                {/* RESOURCES Section */}
+                <SectionHeader>RESOURCES</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
+                  {showBlogPage && (
+                    <MenuItem path="/blog" label="Blog" icon={<BookOpen className="h-4 w-4" />} />
+                  )}
+                  <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
+                  {showCommunityPage && (
+                    <MenuItem path="/community" label="Community" icon={<Users className="h-4 w-4" />} />
+                  )}
+                </div>
+
+                {/* ACCOUNT Section */}
+                <SectionHeader>ACCOUNT</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/settings" 
+                    label="Settings" 
+                    icon={<Settings className="h-4 w-4" />} 
+                  />
+                  {isAdmin && (
+                    <MenuItem 
+                      path="/admin/dashboard" 
+                      label="Admin Panel" 
+                      icon={<Shield className="h-4 w-4" />} 
+                    />
+                  )}
                   <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                      isActive("/") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/")}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10 font-bold text-sm w-full"
+                    onClick={handleSignOut}
                   >
-                    <Home className="h-5 w-5" />
-                    <span>Home</span>
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
                   </button>
-                )}
-                <div className="text-xs font-bold text-foreground/60 mb-2 px-2">DASHBOARD</div>
-
-                {renderFeatureButton(
-                  "/dashboard/custom-creation",
-                  "Custom Creation",
-                  <Sparkles className="h-5 w-5" />,
-                  "custom_creation"
-                )}
-
-                {renderFeatureButton(
-                  "/dashboard/templates",
-                  "Templates",
-                  <Layout className="h-5 w-5" />,
-                  "templates"
-                )}
-
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/history") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/history")}
-                >
-                  <History className="h-5 w-5" />
-                  <span>My Creations</span>
-                </button>
-
-                {renderFeatureButton(
-                  "/dashboard/video-studio",
-                  "Faceless Videos",
-                  <Video className="h-5 w-5" />,
-                  "faceless_videos"
-                )}
-
-                {renderFeatureButton(
-                  "/dashboard/storyboard",
-                  "Storyboard",
-                  <span className="text-xl">🎬</span>,
-                  "storyboard"
-                )}
-
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/prompts") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/dashboard/prompts")}
-                >
-                  <FileText className="h-5 w-5" />
-                  <span>Prompt Library</span>
-                </button>
-
-                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
-                
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/about") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/about")}
-                >
-                  <Info className="h-5 w-5" />
-                  <span>About</span>
-                </button>
-
-                {showBlogPage && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/blog") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/blog")}
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    <span>Blog</span>
-                  </button>
-                )}
-
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/faq") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                  onClick={() => handleNavigation("/faq")}
-                >
-                  <HelpCircle className="h-5 w-5" />
-                  <span>FAQ</span>
-                </button>
-
-                {showCommunityPage && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/community") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/community")}
-                  >
-                    <Users className="h-5 w-5" />
-                    <span>Community</span>
-                  </button>
-                )}
+                </div>
               </>
             ) : (
               <>
-                {/* Public Pages Context */}
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                    isActive("/") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                {/* Public Pages Context (logged out) */}
+                <div className="px-4 pt-4">
+                  <MenuItem path="/" label="Home" icon={<Home className="h-4 w-4" />} />
+                </div>
+
+                {/* PRODUCT Section */}
+                <SectionHeader>PRODUCT</SectionHeader>
+                <div className="space-y-1 px-4">
+                  {showFeaturesPage && (
+                    <MenuItem path="/features" label="Features" icon={<Sparkles className="h-4 w-4" />} />
                   )}
-                  onClick={() => handleNavigation("/")}
-                >
-                  <Home className="h-5 w-5" />
-                  <span>Home</span>
-                </button>
-
-                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">PRODUCT</div>
-                
-                {showFeaturesPage && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/features") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/features")}
-                  >
-                    <Sparkles className="h-5 w-5" />
-                    <span>Features</span>
-                  </button>
-                )}
-
-                {user && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left",
-                      isDashboard
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg"
-                        : "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg hover:opacity-90"
-                    )}
-                    onClick={() => handleNavigation("/dashboard/templates")}
-                  >
-                    <Layout className="h-5 w-5" />
-                    <span>Dashboard</span>
-                  </button>
-                )}
-
-                {renderFeatureButton(
-                  "/dashboard/templates",
-                  "Templates",
-                  <Layout className="h-5 w-5" />,
-                  "templates"
-                )}
-
-                {renderFeatureButton(
-                  "/dashboard/custom-creation",
-                  "Custom Creation",
-                  <Wand2 className="h-5 w-5" />,
-                  "custom_creation"
-                )}
-
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/pricing") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  {renderFeatureItem(
+                    "/dashboard/templates",
+                    "Templates",
+                    <Layout className="h-4 w-4" />,
+                    "templates"
                   )}
-                  onClick={() => handleNavigation("/pricing")}
-                >
-                  <DollarSign className="h-5 w-5" />
-                  <span>Pricing</span>
-                </button>
-
-                {renderFeatureButton(
-                  "/dashboard/storyboard",
-                  "Storyboard",
-                  <span className="text-xl">🎬</span>,
-                  "storyboard"
-                )}
-
-                {renderFeatureButton(
-                  "/dashboard/video-studio",
-                  "Faceless Videos",
-                  <Video className="h-5 w-5" />,
-                  "faceless_videos"
-                )}
-
-                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">RESOURCES</div>
-                
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/about") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  {renderFeatureItem(
+                    "/dashboard/custom-creation",
+                    "Custom Creation",
+                    <Wand2 className="h-4 w-4" />,
+                    "custom_creation"
                   )}
-                  onClick={() => handleNavigation("/about")}
-                >
-                  <Info className="h-5 w-5" />
-                  <span>About</span>
-                </button>
-
-                {showBlogPage && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/blog") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/blog")}
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    <span>Blog</span>
-                  </button>
-                )}
-
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/faq") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  <MenuItem path="/pricing" label="Pricing" icon={<DollarSign className="h-4 w-4" />} />
+                  {renderFeatureItem(
+                    "/dashboard/storyboard",
+                    "Storyboard",
+                    <span className="text-base">🎬</span>,
+                    "storyboard"
                   )}
-                  onClick={() => handleNavigation("/faq")}
-                >
-                  <HelpCircle className="h-5 w-5" />
-                  <span>FAQ</span>
-                </button>
-
-                {showCommunityPage && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/community") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/community")}
-                  >
-                    <Users className="h-5 w-5" />
-                    <span>Community</span>
-                  </button>
-                )}
-              </>
-            )}
-
-            {/* Account Section - Always visible when logged in */}
-            {user && (
-              <>
-                <div className="text-xs font-bold text-foreground/60 mt-4 mb-2 px-2">ACCOUNT</div>
-                
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                    isActive("/dashboard/settings") 
-                      ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                  {renderFeatureItem(
+                    "/dashboard/video-studio",
+                    "Faceless Videos",
+                    <Video className="h-4 w-4" />,
+                    "faceless_videos"
                   )}
-                  onClick={() => handleNavigation("/dashboard/settings")}
-                >
-                  <Settings className="h-5 w-5" />
-                  <span>Settings</span>
-                </button>
+                </div>
 
-                {isAdmin && (
-                  <button
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                      isActive("/admin/dashboard") 
-                        ? "bg-gradient-to-r from-primary-yellow to-primary-orange text-white font-semibold shadow-lg" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                    onClick={() => handleNavigation("/admin/dashboard")}
-                  >
-                    <Shield className="h-5 w-5" />
-                    <span>Admin Panel</span>
-                  </button>
-                )}
-
-                <button
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Sign Out</span>
-                </button>
+                {/* RESOURCES Section */}
+                <SectionHeader>RESOURCES</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
+                  {showBlogPage && (
+                    <MenuItem path="/blog" label="Blog" icon={<BookOpen className="h-4 w-4" />} />
+                  )}
+                  <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
+                  {showCommunityPage && (
+                    <MenuItem path="/community" label="Community" icon={<Users className="h-4 w-4" />} />
+                  )}
+                </div>
               </>
             )}
           </div>

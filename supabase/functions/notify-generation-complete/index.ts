@@ -312,6 +312,45 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     logger.logDuration('Notifications sent', startTime);
 
+    // Insert in-app notification for the bell icon
+    const inAppTitle = type === 'video_job' 
+      ? '🎬 Video Ready!' 
+      : type === 'storyboard' 
+        ? '📽️ Storyboard Complete!' 
+        : '✅ Generation Complete!';
+    
+    const inAppMessage = type === 'video_job'
+      ? `Your faceless video "${video_topic?.substring(0, 50) || 'Video'}${(video_topic?.length || 0) > 50 ? '...' : ''}" is ready to view.`
+      : type === 'storyboard'
+        ? `Your storyboard "${storyboard_title?.substring(0, 50) || 'Storyboard'}${(storyboard_title?.length || 0) > 50 ? '...' : ''}" is complete.`
+        : `Your ${contentTitle.toLowerCase()} is ready to view.`;
+
+    const actionUrl = type === 'video_job' 
+      ? '/dashboard/faceless-videos'
+      : type === 'storyboard'
+        ? '/dashboard/storyboard'
+        : '/dashboard/history';
+
+    await supabase.from("user_notifications").insert({
+      user_id,
+      type: `${type}_complete`,
+      title: inAppTitle,
+      message: inAppMessage,
+      action_url: actionUrl,
+      metadata: {
+        generation_id,
+        type,
+        duration_seconds: generation_duration_seconds,
+        video_topic,
+        storyboard_title
+      }
+    });
+
+    logger.info('In-app notification created', { 
+      userId: user_id,
+      metadata: { generation_id, type } 
+    });
+
     // Log to generation_notifications (only for standard generations)
     if (type === 'generation') {
       if (emailSent) {

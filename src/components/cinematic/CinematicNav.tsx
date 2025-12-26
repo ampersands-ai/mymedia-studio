@@ -250,22 +250,12 @@ export const CinematicNav = () => {
                             <span className="text-base">🎬</span>,
                             "storyboard"
                           )}
-                        </div>
-
-                        {/* VIDEOS Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">VIDEOS</div>
-                        <div className="space-y-1 px-4">
                           {renderFeatureButton(
                             "/dashboard/video-studio",
                             "Faceless Videos",
                             <Video className="h-4 w-4" />,
                             "faceless_videos"
                           )}
-                        </div>
-
-                        {/* MY STUFF Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">MY STUFF</div>
-                        <div className="space-y-1 px-4">
                           <button
                             className={cn(
                               "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
@@ -278,6 +268,11 @@ export const CinematicNav = () => {
                             <History className="h-4 w-4" />
                             <span>My Creations</span>
                           </button>
+                        </div>
+
+                        {/* RESOURCES Section */}
+                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">RESOURCES</div>
+                        <div className="space-y-1 px-4">
                           <button
                             className={cn(
                               "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
@@ -290,11 +285,6 @@ export const CinematicNav = () => {
                             <FileText className="h-4 w-4" />
                             <span>Prompt Library</span>
                           </button>
-                        </div>
-
-                        {/* RESOURCES Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">RESOURCES</div>
-                        <div className="space-y-1 px-4">
                           <button
                             className={cn(
                               "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",

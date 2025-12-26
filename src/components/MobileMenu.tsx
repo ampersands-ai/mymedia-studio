@@ -193,37 +193,27 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     <span className="text-base">🎬</span>,
                     "storyboard"
                   )}
-                </div>
-
-                {/* VIDEOS Section */}
-                <SectionHeader>VIDEOS</SectionHeader>
-                <div className="space-y-1 px-4">
                   {renderFeatureItem(
                     "/dashboard/video-studio",
                     "Faceless Videos",
                     <Video className="h-4 w-4" />,
                     "faceless_videos"
                   )}
-                </div>
-
-                {/* MY STUFF Section */}
-                <SectionHeader>MY STUFF</SectionHeader>
-                <div className="space-y-1 px-4">
                   <MenuItem 
                     path="/dashboard/history" 
                     label="My Creations" 
                     icon={<History className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/prompts" 
-                    label="Prompt Library" 
-                    icon={<FileText className="h-4 w-4" />} 
                   />
                 </div>
 
                 {/* RESOURCES Section */}
                 <SectionHeader>RESOURCES</SectionHeader>
                 <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/prompts" 
+                    label="Prompt Library" 
+                    icon={<FileText className="h-4 w-4" />} 
+                  />
                   <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
                   {showBlogPage && (
                     <MenuItem path="/blog" label="Blog" icon={<BookOpen className="h-4 w-4" />} />

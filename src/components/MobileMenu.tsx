@@ -147,7 +147,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-72 p-0 bg-card border-l">
+      <SheetContent side="right" className="w-72 p-0 bg-background border-l">
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">

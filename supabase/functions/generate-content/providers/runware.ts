@@ -259,25 +259,28 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     }
   });
 
-  // Build request payload with authentication and task
-  const requestBody = [
-    {
-      taskType: "authentication",
-      apiKey: API_KEY
-    },
-    taskPayload
-  ];
+  // Build request payload
+  // Runware REST API (current): uses Bearer authentication header and an array of task objects.
+  // (User API example: Authorization: Bearer <RUNWARE_API_KEY>)
+  const requestBody = [taskPayload];
 
-  logger.info('Calling Runware API', { metadata: { apiUrl, taskUUID, model: cleanModel } });
+  logger.info('Calling Runware API', {
+    metadata: {
+      apiUrl,
+      taskUUID,
+      model: cleanModel,
+      auth: 'bearer'
+    }
+  });
 
   try {
-    // Call Runware API (no Authorization header, auth is in body)
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

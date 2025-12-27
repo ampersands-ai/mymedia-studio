@@ -223,7 +223,16 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   if (inputs.negativePrompt) task.negativePrompt = inputs.negativePrompt;
   if (inputs.steps !== undefined) task.steps = inputs.steps;
   if (inputs.CFGScale !== undefined) task.CFGScale = inputs.CFGScale;
-  if (inputs.seed !== undefined && inputs.seed !== -1) task.seed = inputs.seed;
+  
+  // Seed must be a valid positive integer (1 to 9223372036854775807) - only include if valid
+  const seedValue = inputs.seed;
+  if (seedValue !== undefined && seedValue !== null && seedValue !== '' && seedValue !== -1) {
+    const seedNum = Number(seedValue);
+    if (Number.isInteger(seedNum) && seedNum >= 1) {
+      task.seed = seedNum;
+    }
+  }
+  
   if (inputs.checkNSFW !== undefined) task.checkNSFW = inputs.checkNSFW;
 
   // Safety settings

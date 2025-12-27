@@ -94,9 +94,25 @@ export const SCHEMA = Object.freeze({
     negativePrompt: {
       type: "string",
       title: "Negative Prompt",
-      default: "",
+      // No default - only send if user explicitly provides a value
       description: "Describe what to avoid in the image",
       maxLength: 2000,
+      isAdvanced: true,
+    },
+    width: {
+      type: "integer",
+      title: "Width",
+      minimum: 128,
+      maximum: 2048,
+      description: "Image width (multiple of 16)",
+      isAdvanced: true,
+    },
+    height: {
+      type: "integer",
+      title: "Height",
+      minimum: 128,
+      maximum: 2048,
+      description: "Image height (multiple of 16)",
       isAdvanced: true,
     },
     aspectRatio: {
@@ -203,25 +219,44 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 // PAYLOAD PREPARATION - Runware provider handles array wrapping
 // ============================================================================
 
+// Normalize dimension to valid Runware range (multiple of 16, 128-2048)
+function normalizeDimension(value: number): number {
+  const clamped = Math.max(128, Math.min(2048, value));
+  return Math.round(clamped / 16) * 16;
+}
+
 export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
-  // Get dimensions from aspect ratio
-  const aspectRatio = (inputs.aspectRatio || "1:1") as keyof typeof DIMENSION_PRESETS;
-  const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["1:1"];
+  // Get dimensions: use explicit width/height if provided, otherwise derive from aspectRatio
+  let width: number;
+  let height: number;
+  
+  if (inputs.width !== undefined && inputs.height !== undefined) {
+    width = normalizeDimension(Number(inputs.width));
+    height = normalizeDimension(Number(inputs.height));
+  } else {
+    const aspectRatio = (inputs.aspectRatio || "1:1") as keyof typeof DIMENSION_PRESETS;
+    const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["1:1"];
+    width = dimensions.width;
+    height = dimensions.height;
+  }
 
   const task: Record<string, unknown> = {
     taskType: MODEL_CONFIG.taskType,
     model: MODEL_CONFIG.modelId,
     positivePrompt: inputs.positivePrompt || "",
-    width: dimensions.width,
-    height: dimensions.height,
+    width,
+    height,
     numberResults: inputs.numberResults || 1,
     outputFormat: MODEL_CONFIG.outputFormat,
     outputType: MODEL_CONFIG.outputType,
     includeCost: true,
   };
 
-  // Optional parameters
-  if (inputs.negativePrompt) task.negativePrompt = inputs.negativePrompt;
+  // Only include negativePrompt if user provided a meaningful value (not empty/short)
+  if (inputs.negativePrompt && typeof inputs.negativePrompt === "string" && inputs.negativePrompt.trim().length >= 2) {
+    task.negativePrompt = inputs.negativePrompt;
+  }
+  
   if (inputs.steps !== undefined) task.steps = inputs.steps;
   if (inputs.CFGScale !== undefined) task.CFGScale = inputs.CFGScale;
   

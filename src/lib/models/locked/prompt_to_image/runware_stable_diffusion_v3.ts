@@ -20,10 +20,75 @@ export const MODEL_CONFIG = { modelId: "runware:stable-diffusion-v3", recordId: 
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/prompt_to_image/runware_stable_diffusion_v3.ts" } as const;
 
-export const SCHEMA = { properties: { positivePrompt: { renderer: "prompt", type: "string" }, outputFormat: { default: "PNG", enum: ["PNG", "JPEG", "WEBP"], type: "string" } }, required: ["positivePrompt", "outputFormat"], type: "object" } as const;
+// Dimension presets for aspect ratio mapping
+const DIMENSION_PRESETS: Record<string, { width: number; height: number }> = {
+  "1:1": { width: 1024, height: 1024 },
+  "16:9": { width: 1152, height: 640 },
+  "9:16": { width: 640, height: 1152 },
+  "4:3": { width: 1152, height: 896 },
+  "3:4": { width: 896, height: 1152 },
+};
 
-export function validate(inputs: Record<string, any>) { return inputs.positivePrompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
-export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageInference", positivePrompt: inputs.positivePrompt, outputFormat: inputs.outputFormat || "PNG", numberResults: 1, width: 1024, height: 1024, steps: 20, outputType: ["URL"], includeCost: true }; }
+// Normalize dimension to valid Runware range (multiple of 16, 128-2048)
+function normalizeDimension(value: number): number {
+  const clamped = Math.max(128, Math.min(2048, value));
+  return Math.round(clamped / 16) * 16;
+}
+
+export const SCHEMA = {
+  type: "object",
+  required: ["positivePrompt"],
+  properties: {
+    positivePrompt: { type: "string", renderer: "prompt" },
+    negativePrompt: { type: "string", description: "What to avoid in the image" },
+    outputFormat: { type: "string", default: "PNG", enum: ["PNG", "JPEG", "WEBP"] },
+    aspectRatio: { type: "string", default: "1:1", enum: ["1:1", "16:9", "9:16", "4:3", "3:4"] },
+    width: { type: "integer", minimum: 128, maximum: 2048, description: "Image width (multiple of 16)" },
+    height: { type: "integer", minimum: 128, maximum: 2048, description: "Image height (multiple of 16)" },
+  },
+} as const;
+
+export function validate(inputs: Record<string, any>) {
+  if (!inputs.positivePrompt || (typeof inputs.positivePrompt === "string" && inputs.positivePrompt.trim() === "")) {
+    return { valid: false, error: "Prompt required" };
+  }
+  return { valid: true };
+}
+
+export function preparePayload(inputs: Record<string, any>) {
+  // Get dimensions: use explicit width/height if provided, otherwise derive from aspectRatio
+  let width = 1024;
+  let height = 1024;
+  
+  if (inputs.width !== undefined && inputs.height !== undefined) {
+    width = normalizeDimension(Number(inputs.width));
+    height = normalizeDimension(Number(inputs.height));
+  } else if (inputs.aspectRatio && DIMENSION_PRESETS[inputs.aspectRatio]) {
+    const preset = DIMENSION_PRESETS[inputs.aspectRatio];
+    width = preset.width;
+    height = preset.height;
+  }
+
+  const payload: Record<string, any> = {
+    taskType: "imageInference",
+    positivePrompt: inputs.positivePrompt,
+    outputFormat: inputs.outputFormat || "PNG",
+    numberResults: 1,
+    width,
+    height,
+    steps: 20,
+    outputType: ["URL"],
+    includeCost: true,
+  };
+
+  // Only include negativePrompt if user provided a meaningful value
+  if (inputs.negativePrompt && typeof inputs.negativePrompt === "string" && inputs.negativePrompt.trim().length >= 2) {
+    payload.negativePrompt = inputs.negativePrompt.trim();
+  }
+
+  return payload;
+}
+
 export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {

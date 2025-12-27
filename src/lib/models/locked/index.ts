@@ -142,6 +142,7 @@ import * as RunwareFlux11Pro from "./prompt_to_image/runware_flux_1_1_pro";
 import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
 import * as RunwareStableDiffusionV3 from "./prompt_to_image/runware_stable_diffusion_v3";
 import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diffusion_xl";
+import * as RunwareZImageTurbo from "./prompt_to_image/Runware_Z_Image_Turbo";
 
 // Prompt to Video Models (21)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
@@ -338,6 +339,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "edc7a24b-b9da-46a7-8155-635626c0f9a3": RunwareFlux11Pro as ModelModule,                  // runware:101@1 | prompt_to_image | runware
   "c8f9b5e2-7d4a-6f3b-9e1c-5a8d3f7b4e9a": RunwareStableDiffusionV3 as ModelModule,          // runware stable diffusion v3 | prompt_to_image | runware
   "b7f8c5e2-6d4a-5f3b-8e1c-4a7d2f6b3e9a": RunwareStableDiffusionXL as ModelModule,          // runware stable diffusion xl | prompt_to_image | runware
+  "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a": RunwareZImageTurbo as ModelModule,                // Z-Image Turbo | prompt_to_image | runware
   "ac90c626-ab01-4bc0-a000-9b952ddbde0e": SeedreamV3 as ModelModule,                        // Seedream V3 | prompt_to_image | kie_ai
   "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 | prompt_to_image | kie_ai
   "d5e6f7a8-9b0c-1d2e-3f4a-5b6c7d8e9f0a": SeedreamV45_PromptToImage as ModelModule,         // Seedream V4.5 | prompt_to_image | kie_ai

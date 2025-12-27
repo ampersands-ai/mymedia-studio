@@ -590,6 +590,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 10,
     isActive: true,
   },
+  "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a": {
+    recordId: "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+    modelId: "runware:z-image@turbo",
+    modelName: "Z-Image Turbo",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 1,
+    estimatedTimeSeconds: 10,
+    isActive: true,
+  },
   "ac90c626-ab01-4bc0-a000-9b952ddbde0e": {
     recordId: "ac90c626-ab01-4bc0-a000-9b952ddbde0e",
     modelId: "bytedance/seedream",

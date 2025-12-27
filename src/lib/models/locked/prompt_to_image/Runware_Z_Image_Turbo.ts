@@ -16,8 +16,13 @@
  * @version 1.0.0
  */
 
+import { getGenerationType } from "@/lib/models/registry";
+import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { createModelFunctions, executeWithPromptField } from "@/lib/models/shared/executeModelGeneration";
+import { reserveCredits } from "@/lib/models/creditDeduction";
+import { GENERATION_STATUS } from "@/constants/generation-status";
+import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -29,7 +34,7 @@ export const MODEL_CONFIG = {
   modelName: "Z-Image Turbo",
   provider: "runware", // NEW PROVIDER
   contentType: "prompt_to_image",
-  use_api_key: "RUNWARE_API_KEY",
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
   baseCreditCost: 1,
   estimatedTimeSeconds: 10,
   costMultipliers: {
@@ -253,15 +258,56 @@ export function calculateCost(inputs: Record<string, unknown>): number {
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  return executeWithPromptField({
-    modelConfig: MODEL_CONFIG,
-    modelSchema: SCHEMA,
-    modelFunctions: createModelFunctions({
-      validate,
-      calculateCost,
-      preparePayload,
-    }),
-    params,
-    promptField: "positivePrompt",
+  const { prompt, modelParameters, userId, startPolling } = params;
+  
+  // Explicitly map prompt to positivePrompt (Runware pattern)
+  const inputs: Record<string, unknown> = { 
+    positivePrompt: prompt, 
+    ...modelParameters 
+  };
+  
+  const validation = validate(inputs);
+  if (!validation.valid) throw new Error(validation.error);
+  
+  const cost = calculateCost(inputs);
+  await reserveCredits(userId, cost);
+  
+  const { data: gen, error } = await supabase
+    .from("generations")
+    .insert({
+      user_id: userId,
+      model_id: MODEL_CONFIG.modelId,
+      model_record_id: MODEL_CONFIG.recordId,
+      type: getGenerationType(MODEL_CONFIG.contentType),
+      prompt,
+      tokens_used: cost,
+      status: GENERATION_STATUS.PENDING,
+      settings: sanitizeForStorage(modelParameters)
+    })
+    .select()
+    .single();
+  
+  if (error || !gen) throw new Error(`Failed to create generation: ${error?.message}`);
+
+  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+    body: {
+      generationId: gen.id,
+      model_config: MODEL_CONFIG,
+      model_schema: SCHEMA,
+      prompt: inputs.positivePrompt,
+      custom_parameters: preparePayload(inputs)
+    }
   });
+
+  if (funcError) {
+    await supabase
+      .from('generations')
+      .update({ status: GENERATION_STATUS.FAILED })
+      .eq('id', gen.id);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
+  }
+
+  startPolling(gen.id);
+  return gen.id;
 }

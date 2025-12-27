@@ -261,9 +261,10 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const { prompt, modelParameters, userId, startPolling } = params;
   
   // Explicitly map prompt to positivePrompt (Runware pattern)
+  // User's prompt MUST come LAST to override any stale/default value from modelParameters
   const inputs: Record<string, unknown> = { 
-    positivePrompt: prompt, 
-    ...modelParameters 
+    ...modelParameters,
+    positivePrompt: prompt
   };
   
   const validation = validate(inputs);

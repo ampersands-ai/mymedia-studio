@@ -958,6 +958,17 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 300,
     isActive: true,
   },
+  // Seedance 1.5 Pro T2V
+  "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6": {
+    recordId: "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6",
+    modelId: "bytedance/seedance-1.5-pro",
+    modelName: "Seedance 1.5 Pro",
+    provider: "kie_ai",
+    contentType: "prompt_to_video",
+    baseCreditCost: 8,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
   "b0c4d5e6-1f2a-3b4c-5d6e-7f8a9b0c1d2e": {
     recordId: "b0c4d5e6-1f2a-3b4c-5d6e-7f8a9b0c1d2e",
     modelId: "sora-2-image-to-video",
@@ -976,6 +987,17 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "image_to_video",
     baseCreditCost: 40,
     estimatedTimeSeconds: 240,
+    isActive: true,
+  },
+  // Seedance 1.5 Pro I2V
+  "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7": {
+    recordId: "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7",
+    modelId: "bytedance/seedance-1.5-pro",
+    modelName: "Seedance 1.5 Pro",
+    provider: "kie_ai",
+    contentType: "image_to_video",
+    baseCreditCost: 8,
+    estimatedTimeSeconds: 180,
     isActive: true,
   },
 

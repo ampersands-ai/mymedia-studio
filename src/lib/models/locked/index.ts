@@ -93,6 +93,7 @@ import * as WAN22Turbo_ImageToVideo from "./image_to_video/WAN_2_2_Turbo";
 import * as Wan22TurboNew_ImageToVideo from "./image_to_video/Wan_2_2_Turbo_I2V";
 import * as Wan25_ImageToVideo from "./image_to_video/Wan_2_5_I2V";
 import * as SeedanceV1ProFastRunware from "./image_to_video/Seedance_V1_0_Pro_Fast_runware";
+import * as Seedance15Pro_ImageToVideo from "./image_to_video/Seedance_1_5_Pro_I2V";
 import * as Wan26_ImageToVideo from "./image_to_video/Wan_2_6_I2V";
 
 // Video to Video Models (2)
@@ -170,6 +171,7 @@ import * as Sora2ProStoryboard_PromptToVideo from "./prompt_to_video/Sora_2_Pro_
 import * as WAN22Turbo_PromptToVideo from "./prompt_to_video/WAN_2_2_Turbo";
 import * as Wan22TurboNew_PromptToVideo from "./prompt_to_video/Wan_2_2_Turbo_T2V";
 import * as Wan25_PromptToVideo from "./prompt_to_video/Wan_2_5_T2V";
+import * as Seedance15Pro_PromptToVideo from "./prompt_to_video/Seedance_1_5_Pro_T2V";
 import * as Wan26_PromptToVideo from "./prompt_to_video/Wan_2_6_T2V";
 
 /**
@@ -368,9 +370,10 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e4ae6c36-dfcb-4fe4-94f3-46962df720b1": WAN22Turbo_ImageToVideo as ModelModule,           // WAN 2.2 Turbo | image_to_video | kie_ai
   "e4f9a0b1-6c7d-8e9f-0a1b-2c3d4e5f6a7b": Wan22TurboNew_ImageToVideo as ModelModule,        // Wan 2.2 Turbo | image_to_video | kie_ai
   "a6b1c2d3-8e9f-0a1b-2c3d-4e5f6a7b8c9d": Wan25_ImageToVideo as ModelModule,                // Wan 2.5 | image_to_video | kie_ai
+  "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7": Seedance15Pro_ImageToVideo as ModelModule,        // Seedance 1.5 Pro | image_to_video | kie_ai
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROMPT TO VIDEO MODELS (21 total)
+  // PROMPT TO VIDEO MODELS (22 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a96af675-b780-4879-a61f-7285be8766c2": GoogleVeo31Fast_PromptToVideo as ModelModule,     // Google Veo 3.1 Fast | prompt_to_video | kie_ai
   "d117daae-f3ec-4b79-b98f-adefeee21454": GoogleVeo31HQ_PromptToVideo as ModelModule,       // Google Veo 3.1 HQ | prompt_to_video | kie_ai
@@ -393,6 +396,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "0aaf528a-1334-4121-8467-331c95e8da6d": WAN22Turbo_PromptToVideo as ModelModule,          // WAN 2.2 Turbo | prompt_to_video | kie_ai
   "d3e8f9a0-5b6c-7d8e-9f0a-1b2c3d4e5f6a": Wan22TurboNew_PromptToVideo as ModelModule,       // Wan 2.2 Turbo | prompt_to_video | kie_ai
   "f5a0b1c2-7d8e-9f0a-1b2c-3d4e5f6a7b8c": Wan25_PromptToVideo as ModelModule,               // Wan 2.5 | prompt_to_video | kie_ai
+  "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6": Seedance15Pro_PromptToVideo as ModelModule,       // Seedance 1.5 Pro | prompt_to_video | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LIP SYNC MODELS (4 total)

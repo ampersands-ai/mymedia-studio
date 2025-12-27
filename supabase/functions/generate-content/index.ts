@@ -507,7 +507,8 @@ Deno.serve(async (req) => {
     }
 
     // API control parameters that models can pass but aren't user-facing schema fields
-    const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion'];
+    // NOTE: width/height are essential for Runware API but converted from aspectRatio in preparePayload
+    const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion', 'width', 'height'];
 
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(

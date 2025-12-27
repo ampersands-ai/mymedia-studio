@@ -250,6 +250,15 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
       taskPayload[promptField] = effectivePrompt;
     }
   }
+
+  // Runware rejects negativePrompt when it's present but empty/too short.
+  // Our schema defaults often use ""; omit it unless the user provided a real value.
+  if (typeof taskPayload.negativePrompt === 'string' && taskPayload.negativePrompt.trim().length < 2) {
+    delete taskPayload.negativePrompt;
+  }
+  if (typeof (taskPayload as any).negative_prompt === 'string' && (taskPayload as any).negative_prompt.trim().length < 2) {
+    delete (taskPayload as any).negative_prompt;
+  }
   
   // Ensure duration is always an integer for video tasks
   if (isVideo && taskPayload.duration !== undefined) {

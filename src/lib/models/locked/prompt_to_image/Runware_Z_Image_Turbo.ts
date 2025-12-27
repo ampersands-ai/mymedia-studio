@@ -16,12 +16,8 @@
  * @version 1.0.0
  */
 
-import { getGenerationType } from "@/lib/models/registry";
-import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
-import { reserveCredits } from "@/lib/models/creditDeduction";
-import { GENERATION_STATUS } from "@/constants/generation-status";
-import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { createModelFunctions, executeWithPromptField } from "@/lib/models/shared/executeModelGeneration";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -257,54 +253,15 @@ export function calculateCost(inputs: Record<string, unknown>): number {
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { userId, prompt, modelParameters, startPolling } = params;
-
-  // Map prompt to positivePrompt
-  const allInputs: Record<string, unknown> = {
-    ...modelParameters,
-    positivePrompt: modelParameters.positivePrompt || prompt,
-  };
-
-  const validation = validate(allInputs);
-  if (!validation.valid) throw new Error(validation.error || "Validation failed");
-
-  const cost = calculateCost(allInputs);
-  await reserveCredits(userId, cost);
-
-  const { data: generation, error: insertError } = await supabase
-    .from("generations")
-    .insert({
-      user_id: userId,
-      prompt: allInputs.positivePrompt as string,
-      model_id: MODEL_CONFIG.modelId,
-      model_record_id: MODEL_CONFIG.recordId,
-      type: getGenerationType(MODEL_CONFIG.contentType),
-      status: GENERATION_STATUS.PROCESSING,
-      tokens_used: cost,
-      settings: sanitizeForStorage(modelParameters),
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !generation) throw new Error(`Failed to create generation record: ${insertError?.message}`);
-
-  const { error: functionError } = await supabase.functions.invoke("generate-content", {
-    body: {
-      generationId: generation.id,
-      user_id: userId,
-      model_id: MODEL_CONFIG.modelId,
-      model_record_id: MODEL_CONFIG.recordId,
-      prompt: allInputs.positivePrompt,
-      custom_parameters: preparePayload(allInputs),
-      cost: cost,
-      use_api_key: MODEL_CONFIG.use_api_key,
-      model_config: MODEL_CONFIG,
-      model_schema: SCHEMA,
-    },
+  return executeWithPromptField({
+    modelConfig: MODEL_CONFIG,
+    modelSchema: SCHEMA,
+    modelFunctions: createModelFunctions({
+      validate,
+      calculateCost,
+      preparePayload,
+    }),
+    params,
+    promptField: "positivePrompt",
   });
-
-  if (functionError) throw new Error(`Generation failed: ${functionError.message}`);
-
-  startPolling(generation.id);
-  return generation.id;
 }

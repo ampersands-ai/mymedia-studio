@@ -29,7 +29,7 @@ export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFI
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;
-  const inputs: Record<string, any> = { positivePrompt: prompt, ...modelParameters };
+  const inputs: Record<string, any> = { ...modelParameters, positivePrompt: prompt };
   const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);

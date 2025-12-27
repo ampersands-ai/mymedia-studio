@@ -199,10 +199,10 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 }
 
 // ============================================================================
-// PAYLOAD PREPARATION - ARRAY STRUCTURE
+// PAYLOAD PREPARATION - Runware provider handles array wrapping
 // ============================================================================
 
-export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown>[] {
+export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
   // Get dimensions from aspect ratio
   const aspectRatio = (inputs.aspectRatio || "1:1") as keyof typeof DIMENSION_PRESETS;
   const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["1:1"];
@@ -229,8 +229,8 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   // Safety settings
   task.safety = { checkContent: false };
 
-  // Return as array (Runware's unique format)
-  return [task];
+  // Return as object - Runware provider handles array wrapping
+  return task;
 }
 
 // ============================================================================

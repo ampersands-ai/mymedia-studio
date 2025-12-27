@@ -162,10 +162,10 @@ export const SCHEMA = Object.freeze({
     seed: {
       type: "integer",
       title: "Seed",
-      default: -1,
-      minimum: -1,
-      maximum: 2147483647,
-      description: "Random seed for reproducibility. -1 = random.",
+      // No default - omit unless user explicitly sets a positive integer
+      minimum: 1,
+      maximum: Number.MAX_SAFE_INTEGER,
+      description: "Random seed for reproducibility. Leave blank for random.",
       isAdvanced: true,
     },
     checkNSFW: {
@@ -209,6 +209,20 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
     const cfg = inputs.CFGScale as number;
     if (cfg < 0 || cfg > 20) {
       return { valid: false, error: "CFG Scale must be between 0 and 20" };
+    }
+  }
+
+  if (inputs.seed !== undefined && inputs.seed !== null && inputs.seed !== "") {
+    const seedNum = Number(inputs.seed);
+
+    // Backwards compatibility: older saved settings used -1 to mean "random"
+    if (seedNum <= 0) {
+      // Treat as "unset"; preparePayload will omit the seed
+      return { valid: true };
+    }
+
+    if (!Number.isInteger(seedNum) || seedNum > Number.MAX_SAFE_INTEGER) {
+      return { valid: false, error: `Seed must be an integer between 1 and ${Number.MAX_SAFE_INTEGER}` };
     }
   }
 
@@ -260,11 +274,11 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   if (inputs.steps !== undefined) task.steps = inputs.steps;
   if (inputs.CFGScale !== undefined) task.CFGScale = inputs.CFGScale;
   
-  // Seed must be a valid positive integer (1 to 9223372036854775807) - only include if valid
+  // Seed must be a valid positive integer (and within JS safe integer range) - only include if valid
   const seedValue = inputs.seed;
-  if (seedValue !== undefined && seedValue !== null && seedValue !== '' && seedValue !== -1) {
+  if (seedValue !== undefined && seedValue !== null && seedValue !== '') {
     const seedNum = Number(seedValue);
-    if (Number.isInteger(seedNum) && seedNum >= 1) {
+    if (Number.isInteger(seedNum) && seedNum >= 1 && seedNum <= Number.MAX_SAFE_INTEGER) {
       task.seed = seedNum;
     }
   }

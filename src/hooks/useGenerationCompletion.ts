@@ -28,6 +28,7 @@ interface UseGenerationCompletionOptions {
  */
 export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCompletionOptions) => {
   const completedGenerationsRef = useRef<Set<string>>(new Set());
+  const retryAttemptsRef = useRef<Map<string, number>>(new Map());
 
   const processCompletion = useCallback(async (generationId: string) => {
     // Prevent duplicate processing
@@ -317,15 +318,37 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
         } as any);
 
         if (outputs.length === 0) {
-          logger.warn('No outputs found for completed generation', {
+          const attempt = (retryAttemptsRef.current.get(generationId) ?? 0) + 1;
+          retryAttemptsRef.current.set(generationId, attempt);
+
+          // Avoid caching “completed” when outputs haven’t landed yet (race condition).
+          // Retry a few times so users don’t need to refresh.
+          if (attempt <= 5) {
+            const delayMs = 600 * attempt;
+            logger.warn('Completed generation has no outputs yet, retrying', {
+              generationId,
+              attempt,
+              delayMs,
+              parentId: parentData.id,
+              isBatchOutput: parentData.is_batch_output,
+            } as any);
+
+            setTimeout(() => {
+              processCompletion(generationId);
+            }, delayMs);
+            return;
+          }
+
+          logger.error('Completed generation still has no outputs after retries', {
             generationId,
+            attempts: attempt,
             parentId: parentData.id,
-            parentHasStoragePath: !!parentData.storage_path,
-            isBatchOutput: parentData.is_batch_output,
-            childrenCount: childrenData?.length || 0
           } as any);
+          onError?.('Generation completed but outputs are not available yet. Please try again.');
+          return;
         }
 
+        retryAttemptsRef.current.delete(generationId);
         completedGenerationsRef.current.add(generationId);
         onComplete(outputs, parentData.id);
       } else if (parentData.status === 'failed' || parentData.status === 'error') {
@@ -362,6 +385,7 @@ export const useGenerationCompletion = ({ onComplete, onError }: UseGenerationCo
 
   const clearCompletedCache = useCallback(() => {
     completedGenerationsRef.current.clear();
+    retryAttemptsRef.current.clear();
   }, []);
 
   return {

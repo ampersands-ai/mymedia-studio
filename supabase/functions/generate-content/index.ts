@@ -1169,7 +1169,13 @@ Deno.serve(async (req) => {
         
         // API control parameters that models can pass but aren't user-facing schema fields
         // These are used by providers for routing/configuration but shouldn't be exposed to users
-        const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion'];
+        // Also includes derived parameters (width/height from aspectRatio, outputType, includeCost, safety, etc.)
+        const API_CONTROL_PARAMS = [
+          'taskType', 'model', 'version', 'apiVersion',
+          'width', 'height',           // Derived from aspectRatio in preparePayload
+          'outputType', 'outputFormat', // API-specific output settings
+          'includeCost', 'safety',      // Runware-specific API fields
+        ];
         
         // Filter to only allowed parameters (schema + API control params)
         const allowedParams: Record<string, unknown> = {};

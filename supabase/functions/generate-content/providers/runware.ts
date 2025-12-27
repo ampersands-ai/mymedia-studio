@@ -187,12 +187,38 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
   
   // CRITICAL: Always include width/height from parameters if provided
   // These are essential Runware API fields that may not be in schema
-  // (frontend converts aspectRatio -> width/height in preparePayload)
+  // (frontend may convert aspectRatio -> width/height in preparePayload)
+  const normalizeDimension = (raw: unknown, key: 'width' | 'height'): number => {
+    const num = Number(raw);
+    if (!Number.isFinite(num)) {
+      throw new Error(`Invalid ${key}: must be a number`);
+    }
+
+    const intVal = Math.round(num);
+    if (intVal < 128 || intVal > 2048) {
+      throw new Error(`Invalid ${key}: must be between 128 and 2048`);
+    }
+    if (intVal % 16 !== 0) {
+      throw new Error(`Invalid ${key}: must be a multiple of 16`);
+    }
+
+    return intVal;
+  };
+
   if (params.width !== undefined) {
-    taskPayload.width = params.width;
+    taskPayload.width = normalizeDimension(params.width, 'width');
   }
   if (params.height !== undefined) {
-    taskPayload.height = params.height;
+    taskPayload.height = normalizeDimension(params.height, 'height');
+  }
+
+  if (taskPayload.width !== undefined || taskPayload.height !== undefined) {
+    logger.info('Normalized dimensions', {
+      metadata: {
+        width: taskPayload.width,
+        height: taskPayload.height,
+      },
+    });
   }
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)

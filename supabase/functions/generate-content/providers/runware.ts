@@ -184,6 +184,16 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
       taskPayload[key] = value;
     }
   }
+  
+  // CRITICAL: Always include width/height from parameters if provided
+  // These are essential Runware API fields that may not be in schema
+  // (frontend converts aspectRatio -> width/height in preparePayload)
+  if (params.width !== undefined) {
+    taskPayload.width = params.width;
+  }
+  if (params.height !== undefined) {
+    taskPayload.height = params.height;
+  }
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
   const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];

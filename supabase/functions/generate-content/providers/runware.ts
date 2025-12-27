@@ -185,40 +185,13 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     }
   }
   
-  // CRITICAL: Always include width/height from parameters if provided
-  // These are essential Runware API fields that may not be in schema
-  // (frontend may convert aspectRatio -> width/height in preparePayload)
-  const normalizeDimension = (raw: unknown, key: 'width' | 'height'): number => {
-    const num = Number(raw);
-    if (!Number.isFinite(num)) {
-      throw new Error(`Invalid ${key}: must be a number`);
-    }
-
-    const intVal = Math.round(num);
-    if (intVal < 128 || intVal > 2048) {
-      throw new Error(`Invalid ${key}: must be between 128 and 2048`);
-    }
-    if (intVal % 16 !== 0) {
-      throw new Error(`Invalid ${key}: must be a multiple of 16`);
-    }
-
-    return intVal;
-  };
-
+  // Width/height are passed through from preparePayload - models handle normalization
+  // This is a simple pass-through; models ensure dimensions are multiples of 16 and within 128-2048
   if (params.width !== undefined) {
-    taskPayload.width = normalizeDimension(params.width, 'width');
+    taskPayload.width = params.width;
   }
   if (params.height !== undefined) {
-    taskPayload.height = normalizeDimension(params.height, 'height');
-  }
-
-  if (taskPayload.width !== undefined || taskPayload.height !== undefined) {
-    logger.info('Normalized dimensions', {
-      metadata: {
-        width: taskPayload.width,
-        height: taskPayload.height,
-      },
-    });
+    taskPayload.height = params.height;
   }
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)
@@ -251,13 +224,14 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     }
   }
 
-  // Runware rejects negativePrompt when it's present but empty/too short.
-  // Our schema defaults often use ""; omit it unless the user provided a real value.
+  // SAFETY NET: Runware rejects negativePrompt when present but empty/too short.
+  // Models should already handle this via preparePayload, but this is defensive.
   if (typeof taskPayload.negativePrompt === 'string' && taskPayload.negativePrompt.trim().length < 2) {
     delete taskPayload.negativePrompt;
   }
-  if (typeof (taskPayload as any).negative_prompt === 'string' && (taskPayload as any).negative_prompt.trim().length < 2) {
-    delete (taskPayload as any).negative_prompt;
+  if (typeof (taskPayload as Record<string, unknown>).negative_prompt === 'string' && 
+      ((taskPayload as Record<string, unknown>).negative_prompt as string).trim().length < 2) {
+    delete (taskPayload as Record<string, unknown>).negative_prompt;
   }
   
   // Ensure duration is always an integer for video tasks

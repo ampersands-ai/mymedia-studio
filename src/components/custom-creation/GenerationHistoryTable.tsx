@@ -207,9 +207,11 @@ export const GenerationHistoryTable = () => {
   }, []);
 
   const openOutput = useCallback((storagePath: string | null, outputUrl: string | null) => {
-    const url = storagePath 
-      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/generations/${storagePath}`
-      : outputUrl;
+    // Prioritize output_url (already contains correct full URL from database)
+    const url = outputUrl 
+      || (storagePath 
+          ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/generated-content/${storagePath}`
+          : null);
     
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');

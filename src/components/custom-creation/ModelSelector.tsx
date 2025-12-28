@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Clock, Coins, Images, ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Clock, Coins, Images, ChevronDown, Search, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { CreationGroup } from "@/constants/creation-groups";
@@ -18,7 +19,7 @@ interface ModelSelectorProps {
 }
 
 /**
- * Model selection dropdown with logos, cost, time, and cross-group indicators
+ * Model selection dropdown with logos, cost, time, search, and provider chips
  */
 const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
   models,
@@ -29,7 +30,25 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const currentModel = models.find(m => String(m.record_id) === String(selectedModel));
+
+  // Filter models based on search query
+  const filteredModels = useMemo(() => {
+    if (!searchQuery.trim()) return models;
+    const query = searchQuery.toLowerCase();
+    return models.filter(m => 
+      m.model_name.toLowerCase().includes(query) ||
+      m.provider?.toLowerCase().includes(query) ||
+      m.model_family?.toLowerCase().includes(query)
+    );
+  }, [models, searchQuery]);
+
+  // Clear search when closing
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) setSearchQuery("");
+  };
 
   if (isLoading) {
     return (
@@ -64,8 +83,15 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-foreground truncate">
-            {model.model_name}
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground truncate">
+              {model.model_name}
+            </span>
+            {model.provider && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 shrink-0">
+                {model.provider}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
@@ -104,12 +130,12 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
     );
   };
 
-  // Mobile: Inline collapsible list
+  // Mobile: Inline collapsible list with search
   if (isMobile) {
     return (
       <div className="space-y-2">
         <label className="text-sm font-medium text-foreground">AI Model</label>
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center gap-2">
               {currentModel && <ModelCard model={currentModel} isSelected={true} />}
@@ -120,19 +146,42 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2 mt-2">
-            {models
+            {/* Search input for mobile */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search models..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {filteredModels
               .filter(m => String(m.record_id) !== String(selectedModel))
               .map((model) => (
                 <div
                   key={model.record_id}
                   onClick={() => {
                     onModelChange(String(model.record_id));
-                    setIsOpen(false);
+                    handleOpenChange(false);
                   }}
                 >
                   <ModelCard model={model} isSelected={false} />
                 </div>
               ))}
+            {filteredModels.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No models found for "{searchQuery}"
+              </p>
+            )}
           </CollapsibleContent>
         </Collapsible>
       </div>

@@ -9,6 +9,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
 import { useModels } from "@/hooks/useModels";
+import { useModelHealthCheck } from "@/hooks/useModelHealthCheck";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useModelSchema } from "@/hooks/useModelSchema";
 import { useCustomCreationState } from "@/hooks/useCustomCreationState";
@@ -54,6 +55,12 @@ const CustomCreation = () => {
   // Models and user data
   const { data: allModels, isLoading: modelsLoading } = useModels();
   const { data: userTokens } = useUserTokens();
+  
+  // Run model health check to detect stale cache issues
+  useModelHealthCheck(
+    allModels?.map(m => m.record_id) || [],
+    modelsLoading
+  );
   const { progress, updateProgress, setFirstGeneration, markComplete, dismiss } = useOnboarding();
   const { data: cinematicPrompts } = useCinematicPrompts();
   

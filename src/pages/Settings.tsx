@@ -7,6 +7,7 @@ import { NotificationPreferences } from "@/components/settings/NotificationPrefe
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
 import { AccountSection } from "@/components/settings/AccountSection";
+import { AppCacheSection } from "@/components/settings/AppCacheSection";
 import { CreditActivityLog } from "@/components/credits/CreditActivityLog";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useUserTokens } from "@/hooks/useUserTokens";
@@ -104,6 +105,7 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="account" className="space-y-4 mt-6">
+            <AppCacheSection />
             <AccountSection />
           </TabsContent>
 

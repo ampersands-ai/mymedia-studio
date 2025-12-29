@@ -36,7 +36,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "image_editing",
   use_api_key: "RUNWARE_API_KEY_IMAGE_EDITING",
-  baseCreditCost: 0.20,
+  baseCreditCost: 0.4,
   estimatedTimeSeconds: 12,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },

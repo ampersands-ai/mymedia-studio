@@ -63,8 +63,8 @@ export const MODEL_CONFIG = {
 export const SCHEMA = Object.freeze({
   type: "object",
   required: ["inputImage", "inputAudio"],
-  imageField: "inputImage",
-  audioField: "inputAudio",
+  imageInputField: "inputImage",
+  audioInputField: "inputAudio",
   properties: {
     inputImage: {
       type: "string",

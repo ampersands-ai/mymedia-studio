@@ -26,6 +26,13 @@ export function createSafeErrorResponse(
   } else if (errorMsg.includes('not found')) {
     safeMessage = 'Resource not found';
     status = 404;
+  } else if (
+    errorMsg.includes('safety system') ||
+    errorMsg.includes('rejected by the safety') ||
+    errorMsg.includes('content policy')
+  ) {
+    safeMessage = 'Request rejected by safety system';
+    status = 400;
   } else if (errorMsg.includes('invalid') || errorMsg.includes('validation')) {
     safeMessage = 'Invalid request parameters';
     status = 400;

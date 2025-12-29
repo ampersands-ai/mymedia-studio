@@ -1357,7 +1357,18 @@ Deno.serve(async (req) => {
             metadata: { task_id: taskId, generation_id: createdGeneration.id }
           });
 
-          const { error: updateError } = await supabase
+          // CRITICAL: Save provider_task_id - this is required for async polling to work
+          logger.info('CRITICAL: Saving provider_task_id for async generation', {
+            userId: user.id,
+            metadata: { 
+              taskId, 
+              generationId: createdGeneration.id,
+              model_id: model.id,
+              provider: model.provider
+            }
+          });
+
+          const { error: updateError, data: updateData } = await supabase
             .from('generations')
             .update({
               provider_task_id: taskId,
@@ -1365,12 +1376,57 @@ Deno.serve(async (req) => {
               provider_request: providerRequest,
               provider_response: providerResponse.metadata
             })
-            .eq('id', createdGeneration.id);
+            .eq('id', createdGeneration.id)
+            .select('id, provider_task_id');
 
           if (updateError) {
-            logger.error('Failed to update generation with task ID', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'), {
+            // CRITICAL: This is a fatal error - without task_id, polling cannot work
+            logger.error('CRITICAL: Failed to save provider_task_id', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'), {
               userId: user.id,
-              metadata: { generation_id: createdGeneration.id }
+              metadata: { 
+                taskId, 
+                generation_id: createdGeneration.id,
+                error_message: updateError?.message
+              }
+            });
+            
+            // Refund tokens since the generation cannot be tracked
+            if (!isTestMode) {
+              await supabase.rpc('increment_tokens', {
+                user_id_param: user.id,
+                amount: tokenCost
+              });
+            }
+            
+            // Update generation status to failed
+            await supabase
+              .from('generations')
+              .update({
+                status: 'failed',
+                provider_response: { 
+                  error: 'Failed to save task ID - generation cannot be tracked',
+                  original_task_id: taskId
+                }
+              })
+              .eq('id', createdGeneration.id);
+            
+            throw new Error('Failed to save task ID - generation cannot be tracked. Tokens have been refunded.');
+          }
+
+          // Verify the update succeeded
+          if (!updateData || updateData.length === 0) {
+            logger.error('CRITICAL: provider_task_id save returned no data', undefined, {
+              userId: user.id,
+              metadata: { taskId, generation_id: createdGeneration.id }
+            });
+          } else {
+            logger.info('provider_task_id saved successfully', {
+              userId: user.id,
+              metadata: { 
+                taskId, 
+                generation_id: createdGeneration.id,
+                verified_task_id: updateData[0].provider_task_id
+              }
             });
           }
 

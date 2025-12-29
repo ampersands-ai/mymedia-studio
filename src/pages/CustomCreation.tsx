@@ -121,6 +121,10 @@ const CustomCreation = () => {
   } = useOutputProcessor({
     onComplete: (outputs, parentId) => {
       logger.info('OutputProcessor onComplete called', { outputCount: outputs.length, parentId });
+      
+      // Reset cooldown since generation completed successfully
+      resetCooldown();
+      
       updateState({
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
@@ -265,6 +269,7 @@ const CustomCreation = () => {
     isGenerating,
     isOnCooldown,
     cooldownRemaining,
+    resetCooldown,
   } = useCustomGeneration({
     state,
     updateState,

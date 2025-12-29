@@ -37,8 +37,8 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "lip_sync",
   use_api_key: "RUNWARE_API_KEY_VIDEO",
-  baseCreditCost: 22.5, // Default: 4.5 credits/sec × 5s estimate
-  creditPerSecond: 4.5,
+  baseCreditCost: 25, // Default: 4.5 credits/sec × 5s estimate
+  creditPerSecond: 5,
   maxAudioDuration: 60,
   estimatedTimeSeconds: 900,
   costMultipliers: {},

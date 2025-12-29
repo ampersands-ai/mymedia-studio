@@ -1343,8 +1343,8 @@ Deno.serve(async (req) => {
           metadata: { generation_id: createdGeneration.id }
         });
 
-        // Check if this is a webhook-based provider
-        const isWebhookProvider = model.provider === 'kie_ai' && providerResponse.metadata?.task_id;
+        // Check if this is a webhook-based provider (KIE AI or Runware async models)
+        const isWebhookProvider = (model.provider === 'kie_ai' || model.provider === 'runware') && providerResponse.metadata?.task_id;
 
         if (isWebhookProvider) {
           // For webhook providers, update with task_id and mark as processing

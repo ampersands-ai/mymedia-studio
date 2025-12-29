@@ -1,5 +1,5 @@
 /** Flux.1 Dev (prompt_to_image) - Record: f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c */
-import { getGenerationType } from '@/lib/models/registry';
+import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
@@ -8,48 +8,113 @@ import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
 import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
-export const MODEL_CONFIG = { modelId: "runware:101@1", recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c", modelName: "Flux.1 Dev", provider: "runware", contentType: "prompt_to_image",
-  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 0.4, estimatedTimeSeconds: 15, costMultipliers: {}, apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl, payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
+export const MODEL_CONFIG = {
+  modelId: "runware:101@1",
+  recordId: "f311e8bd-d7a8-4f81-b186-3ac6a5aefe8c",
+  modelName: "Flux.1 Dev",
+  provider: "runware",
+  contentType: "prompt_to_image",
+  use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
+  baseCreditCost: 0.4,
+  estimatedTimeSeconds: 15,
+  costMultipliers: {},
+  apiEndpoint: API_ENDPOINTS.RUNWARE.fullUrl,
+  payloadStructure: "flat",
+  maxImages: 0,
+  defaultOutputs: 1,
   // UI metadata
   isActive: true,
   logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "1 Dev",
+  variantName: "Flux.1 Dev",
   displayOrderInFamily: 2,
 
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/prompt_to_image/Flux_1_Dev.ts" } as const;
+  lockedFilePath: "src/lib/models/locked/prompt_to_image/Flux_1_Dev.ts",
+} as const;
 
-export const SCHEMA = { properties: { CFGScale: { default: 3.5, showToUser: false, type: "number" }, checkNSFW: { default: true, showToUser: false, type: "boolean" }, height: { default: 1152, showToUser: false, type: "number" }, includeCost: { default: true, showToUser: false, type: "boolean" }, numberResults: { default: 1, showToUser: false, title: "number of images", type: "number" }, outputFormat: { default: "WEBP", enum: ["WEBP", "JPEG", "PNG"], title: "Output Format", type: "string" }, outputQuality: { default: 85, showToUser: false, type: "number" }, outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" }, positivePrompt: { renderer: "prompt", type: "string" }, scheduler: { default: "FlowMatchEulerDiscreteScheduler", showToUser: false, type: "string" }, steps: { default: 28, showToUser: false, type: "number" }, taskType: { default: "imageInference", showToUser: false, type: "string" }, width: { default: 896, showToUser: false, type: "number" } }, required: ["positivePrompt", "numberResults", "outputFormat"], type: "object" } as const;
+export const SCHEMA = {
+  properties: {
+    CFGScale: { default: 3.5, showToUser: false, type: "number" },
+    checkNSFW: { default: true, showToUser: false, type: "boolean" },
+    height: { default: 1152, showToUser: false, type: "number" },
+    includeCost: { default: true, showToUser: false, type: "boolean" },
+    numberResults: { default: 1, showToUser: false, title: "number of images", type: "number" },
+    outputFormat: { default: "WEBP", enum: ["WEBP", "JPEG", "PNG"], title: "Output Format", type: "string" },
+    outputQuality: { default: 85, showToUser: false, type: "number" },
+    outputType: { default: ["URL"], items: { format: "uri", type: "string" }, showToUser: false, type: "array" },
+    positivePrompt: { renderer: "prompt", type: "string" },
+    scheduler: { default: "FlowMatchEulerDiscreteScheduler", showToUser: false, type: "string" },
+    steps: { default: 28, showToUser: false, type: "number" },
+    taskType: { default: "imageInference", showToUser: false, type: "string" },
+    width: { default: 896, showToUser: false, type: "number" },
+  },
+  required: ["positivePrompt", "numberResults", "outputFormat"],
+  type: "object",
+} as const;
 
-export function validate(inputs: Record<string, any>) { return inputs.positivePrompt ? { valid: true } : { valid: false, error: "Prompt required" }; }
-export function preparePayload(inputs: Record<string, any>) { return { taskType: "imageInference", positivePrompt: inputs.positivePrompt, numberResults: inputs.numberResults || 1, outputFormat: inputs.outputFormat || "WEBP", width: 896, height: 1152, steps: 28, CFGScale: 3.5, scheduler: "FlowMatchEulerDiscreteScheduler", includeCost: true, checkNSFW: true, outputType: ["URL"], outputQuality: 85 }; }
-export function calculateCost(_inputs: Record<string, any>) { return MODEL_CONFIG.baseCreditCost; }
+export function validate(inputs: Record<string, any>) {
+  return inputs.positivePrompt ? { valid: true } : { valid: false, error: "Prompt required" };
+}
+export function preparePayload(inputs: Record<string, any>) {
+  return {
+    taskType: "imageInference",
+    positivePrompt: inputs.positivePrompt,
+    numberResults: inputs.numberResults || 1,
+    outputFormat: inputs.outputFormat || "WEBP",
+    width: 896,
+    height: 1152,
+    steps: 28,
+    CFGScale: 3.5,
+    scheduler: "FlowMatchEulerDiscreteScheduler",
+    includeCost: true,
+    checkNSFW: true,
+    outputType: ["URL"],
+    outputQuality: 85,
+  };
+}
+export function calculateCost(_inputs: Record<string, any>) {
+  return MODEL_CONFIG.baseCreditCost;
+}
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;
   const inputs: Record<string, any> = { ...modelParameters, positivePrompt: prompt };
-  const validation = validate(inputs); if (!validation.valid) throw new Error(validation.error);
+  const validation = validate(inputs);
+  if (!validation.valid) throw new Error(validation.error);
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  const { data: gen, error } = await supabase.from("generations").insert({ user_id: userId, model_id: MODEL_CONFIG.modelId, model_record_id: MODEL_CONFIG.recordId, type: getGenerationType(MODEL_CONFIG.contentType), prompt, tokens_used: cost, status: GENERATION_STATUS.PENDING, settings: sanitizeForStorage(modelParameters) }).select().single(); // (edge function will process)
+  const { data: gen, error } = await supabase
+    .from("generations")
+    .insert({
+      user_id: userId,
+      model_id: MODEL_CONFIG.modelId,
+      model_record_id: MODEL_CONFIG.recordId,
+      type: getGenerationType(MODEL_CONFIG.contentType),
+      prompt,
+      tokens_used: cost,
+      status: GENERATION_STATUS.PENDING,
+      settings: sanitizeForStorage(modelParameters),
+    })
+    .select()
+    .single(); // (edge function will process)
   if (error || !gen) throw new Error(`Failed: ${error?.message}`);
 
   // Call edge function to handle API call server-side
   // This keeps API keys secure and avoids CORS issues
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+  const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: inputs.positivePrompt,
-      custom_parameters: preparePayload(inputs)
-    }
+      custom_parameters: preparePayload(inputs),
+    },
   });
 
   if (funcError) {
-    await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
+    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
     const errorMessage = await extractEdgeFunctionError(funcError);
     throw new Error(errorMessage);
   }

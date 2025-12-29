@@ -61,15 +61,15 @@ export const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "text-sm px-4 py-2 rounded-full font-medium",
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
                       ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600"
+                        ? "bg-primary-500 text-black hover:bg-primary-600 hover:text-black border-2 border-primary-600"
                         : "text-foreground hover:bg-muted"
                     )}
                   >
-                    <Sparkles className="h-4 w-4 mr-1.5" />
-                    Create
-                    <ChevronDown className="h-4 w-4 ml-1" />
+                    <Sparkles className="h-4 w-4" />
+                    <span>Create</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 bg-background z-50">
@@ -118,15 +118,15 @@ export const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "text-sm px-4 py-2 rounded-full font-medium",
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
                       ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600"
+                        ? "bg-primary-500 text-black hover:bg-primary-600 hover:text-black border-2 border-primary-600"
                         : "text-foreground hover:bg-muted"
                     )}
                   >
-                    <History className="h-4 w-4 mr-1.5" />
-                    Library
-                    <ChevronDown className="h-4 w-4 ml-1" />
+                    <History className="h-4 w-4" />
+                    <span>Library</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 bg-background z-50">

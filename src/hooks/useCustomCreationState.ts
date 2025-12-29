@@ -242,15 +242,31 @@ export const useCustomCreationState = () => {
   }, []);
 
   /**
-   * Reset all state to initial values
+   * Reset all state to initial values (full reset including saved state)
    */
   const resetState = useCallback(() => {
-    setState(prev => ({
-      ...INITIAL_STATE,
-      selectedGroup: prev.selectedGroup, // Keep selected group
-      selectedModel: prev.selectedModel, // Keep selected model
-      modelParameters: prev.modelParameters, // Keep parameters with schema defaults
-    }));
+    // Clear all persisted state
+    localStorage.removeItem('customCreation_state');
+    localStorage.removeItem(POLLING_ID_KEY);
+    clearCriticalId(POLLING_ID_KEY);
+    
+    // Also clear any session storage for uploads
+    sessionStorage.removeItem('uploadedImages');
+    sessionStorage.removeItem('uploadedAudios');
+    sessionStorage.removeItem('uploadedVideos');
+    
+    // Clear all model-specific upload storage keys
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && (key.startsWith('uploadedImages_') || key.startsWith('uploadedAudios_') || key.startsWith('uploadedVideos_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    
+    // Reset to initial state completely
+    setState(INITIAL_STATE);
   }, []);
 
   /**

@@ -53,7 +53,7 @@ export const MODEL_CONFIG = {
   outputQuality: 85,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/seedance.png",
+  logoUrl: "/logos/seedream.png",
   modelFamily: "Seedance",
   variantName: "Seedance V1 Pro Fast",
   displayOrderInFamily: 2,

@@ -148,9 +148,9 @@ export function calculateCost(_inputs: Record<string, unknown>, audioDurationSec
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { 
-    modelParameters, 
-    userId, 
+  const {
+    modelParameters,
+    userId,
     startPolling,
     uploadedImages,
     uploadImagesToStorage,

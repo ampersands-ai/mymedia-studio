@@ -33,7 +33,7 @@ import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 export const MODEL_CONFIG = {
   modelId: "klingai:avatar@2.0-standard",
   recordId: "c1d2e3f4-5a6b-0c1d-2e3f-4a5b6c7d8e9f",
-  modelName: "KlingAI Avatar 2.0 Standard",
+  modelName: "KlingAI Avatar 2.0",
   provider: "runware",
   contentType: "lip_sync",
   use_api_key: "RUNWARE_API_KEY_VIDEO",
@@ -51,7 +51,7 @@ export const MODEL_CONFIG = {
   outputFormat: "mp4",
   isActive: true,
   logoUrl: "/logos/kling.png",
-  modelFamily: "KlingAI Avatar",
+  modelFamily: "Kling Avatar",
   variantName: "Kling V2 Standard",
   displayOrderInFamily: 1,
   isLocked: true,

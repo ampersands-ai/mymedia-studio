@@ -1232,6 +1232,20 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 180,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IMAGE TO IMAGE MODELS (Runware)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": {
+    recordId: "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+    modelId: "runware:108@20",
+    modelName: "Z-Image Edit",
+    provider: "runware",
+    contentType: "image_to_image",
+    baseCreditCost: 0.20,
+    estimatedTimeSeconds: 12,
+    isActive: true,
+  },
 };
 
 /**

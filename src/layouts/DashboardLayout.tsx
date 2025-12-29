@@ -63,7 +63,7 @@ export const DashboardLayout = () => {
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
                       ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
-                        ? "bg-primary-500 text-black hover:bg-primary-600 hover:text-black border-2 border-primary-600"
+                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
                         : "text-foreground hover:bg-muted"
                     )}
                   >
@@ -120,7 +120,7 @@ export const DashboardLayout = () => {
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
                       ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
-                        ? "bg-primary-500 text-black hover:bg-primary-600 hover:text-black border-2 border-primary-600"
+                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
                         : "text-foreground hover:bg-muted"
                     )}
                   >

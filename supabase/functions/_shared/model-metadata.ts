@@ -1358,6 +1358,28 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 10,
     isActive: true,
   },
+  // Runware Seedance 1.0 Pro Fast (I2V)
+  "a1b2c3d4-e5f6-0a1b-2c3d-4e5f6a7b8c9d": {
+    recordId: "a1b2c3d4-e5f6-0a1b-2c3d-4e5f6a7b8c9d",
+    modelId: "bytedance:2@2",
+    modelName: "Seedance 1.0 Pro Fast (I2V)",
+    provider: "runware",
+    contentType: "image_to_video",
+    baseCreditCost: 2.5,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
+  // Runware Seedance 1.0 Pro Fast (T2V)
+  "b2c3d4e5-f6a7-1b2c-3d4e-5f6a7b8c9d0e": {
+    recordId: "b2c3d4e5-f6a7-1b2c-3d4e-5f6a7b8c9d0e",
+    modelId: "bytedance:2@2",
+    modelName: "Seedance 1.0 Pro Fast",
+    provider: "runware",
+    contentType: "prompt_to_video",
+    baseCreditCost: 2.0,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
 };
 
 /**

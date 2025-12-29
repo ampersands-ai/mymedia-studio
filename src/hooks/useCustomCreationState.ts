@@ -250,10 +250,19 @@ export const useCustomCreationState = () => {
     localStorage.removeItem(POLLING_ID_KEY);
     clearCriticalId(POLLING_ID_KEY);
     
-    // Also clear any session storage for uploads
+    // Clear legacy session storage keys
     sessionStorage.removeItem('uploadedImages');
     sessionStorage.removeItem('uploadedAudios');
     sessionStorage.removeItem('uploadedVideos');
+    
+    // CRITICAL: Clear the "default" and "null" fallback keys explicitly
+    // These get used when model becomes null during reset
+    sessionStorage.removeItem('uploadedImages_default');
+    sessionStorage.removeItem('uploadedImages_null');
+    sessionStorage.removeItem('uploadedAudios_default');
+    sessionStorage.removeItem('uploadedAudios_null');
+    sessionStorage.removeItem('uploadedVideos_default');
+    sessionStorage.removeItem('uploadedVideos_null');
     
     // Clear all model-specific upload storage keys
     const keysToRemove: string[] = [];

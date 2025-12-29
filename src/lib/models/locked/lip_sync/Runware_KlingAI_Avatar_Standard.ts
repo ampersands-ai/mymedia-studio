@@ -114,19 +114,17 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 // ============================================================================
 
 export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
-  const task: Record<string, unknown> = {
+  return {
     taskType: MODEL_CONFIG.taskType,
     model: MODEL_CONFIG.modelId,
     outputFormat: MODEL_CONFIG.outputFormat,
     numberResults: inputs.numberResults || 1,
     includeCost: true,
     inputs: {
-      image: inputs.inputImage,
-      audio: inputs.inputAudio,
+      image: inputs.inputImage,  // Map schema field to Runware API format
+      audio: inputs.inputAudio,  // Map schema field to Runware API format
     },
   };
-
-  return task;
 }
 
 // ============================================================================
@@ -209,7 +207,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: "",
-      custom_parameters: inputs, // Pass raw inputs - preparePayload is called by the provider
+      custom_parameters: preparePayload(inputs), // Use preparePayload for correct Runware nested format
+      preCalculatedCost: cost, // Pass audio-duration-based cost to edge function
     },
   });
 

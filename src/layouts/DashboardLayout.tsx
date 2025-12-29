@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown, Clapperboard, Info, HelpCircle, LayoutTemplate } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown, Clapperboard, Info, HelpCircle, LayoutTemplate, Film } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -100,7 +100,7 @@ export const DashboardLayout = () => {
                   {isFeatureEnabled('storyboard') || isAdmin ? (
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard/storyboard" className={cn("flex items-center cursor-pointer", isActive("/dashboard/storyboard") && "bg-muted")}>
-                        <span className="mr-2">🎬</span>
+                        <Film className="mr-2 h-4 w-4" />
                         Storyboard
                         {isAdmin && (!isFeatureEnabled('storyboard') || isFeatureComingSoon('storyboard')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
                       </Link>

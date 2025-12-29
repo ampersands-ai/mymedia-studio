@@ -29,10 +29,8 @@ export const CreationGroupSelector: React.FC<CreationGroupSelectorProps> = ({
   const { isGroupEnabled, isGroupComingSoon } = useFeatureFlags();
   const { isAdmin } = useAdminRole();
 
-  // Filter groups based on feature flags (admins see all groups)
-  const visibleGroups = CREATION_GROUPS.filter((group) => 
-    isAdmin || isGroupEnabled(group.id)
-  );
+  // Show all groups to all users
+  const visibleGroups = CREATION_GROUPS;
 
   const renderGroupButton = (group: typeof CREATION_GROUPS[number]) => {
     const isComingSoon = isGroupComingSoon(group.id);

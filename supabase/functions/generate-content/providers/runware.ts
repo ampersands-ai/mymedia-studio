@@ -58,64 +58,41 @@ async function convertFrameImagesToRunwareFormat(
   frameImages: string[],
   logger: EdgeLogger
 ): Promise<Array<{inputImage: string}>> {
-  const converted = [];
+  logger.info('Normalizing legacy frame images format', {
+    metadata: { frameCount: frameImages.length }
+  });
 
-  for (const imageUrl of frameImages) {
-    const dataUri = await fetchAndConvertToDataUri(imageUrl, logger);
-    converted.push({ inputImage: dataUri });
-  }
-
-  return converted;
+  return frameImages.map((imageUrl) => ({ inputImage: imageUrl }));
 }
 
 /**
- * Process frameImages to ensure they're in correct Runware format with data URIs
- * Handles both legacy string[] and structured [{inputImage: string}] formats
+ * Normalize frameImages into Runware format: [{ inputImage: string }]
+ *
+ * NOTE: We intentionally DO NOT fetch/inline remote images here.
+ * - Keeps payload size small and avoids base64 overhead
+ * - Uses stable URLs (signed/public) produced by upstream upload steps
  */
 async function processFrameImages(
   frameImages: unknown,
   logger: EdgeLogger
 ): Promise<Array<{inputImage: string}>> {
-  // Already in structured format: [{inputImage: string}]
+  // Already in structured format: [{ inputImage: string }]
   if (isStructuredFrameImages(frameImages)) {
-    logger.info('Frame images already in structured format', { 
-      metadata: { frameCount: frameImages.length } 
+    logger.info('Frame images already in structured format', {
+      metadata: { frameCount: frameImages.length }
     });
-    
-    const processed: Array<{inputImage: string}> = [];
-    
-    for (const frame of frameImages) {
-      const imageValue = frame.inputImage;
-      
-      // Already a data URI - use as is
-      if (imageValue.startsWith('data:')) {
-        processed.push({ inputImage: imageValue });
-      }
-      // HTTP URL - fetch and convert to data URI (Runware requires data URIs)
-      else if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
-        const dataUri = await fetchAndConvertToDataUri(imageValue, logger);
-        processed.push({ inputImage: dataUri });
-      }
-      // Unknown format - log warning and pass through
-      else {
-        logger.info('Unknown image format in frameImages, passing through', { 
-          metadata: { format: imageValue.substring(0, 20) } 
-        });
-        processed.push({ inputImage: imageValue });
-      }
-    }
-    
-    return processed;
+
+    // Ensure we only pass through strings
+    return frameImages
+      .map((f) => ({ inputImage: String(f.inputImage) }))
+      .filter((f) => f.inputImage.length > 0);
   }
-  
-  // Legacy format: string[] of URLs
+
+  // Legacy format: string[] of URLs/data URIs
   if (Array.isArray(frameImages) && frameImages.length > 0 && typeof frameImages[0] === 'string') {
-    logger.info('Converting legacy frame images format', { 
-      metadata: { frameCount: frameImages.length } 
-    });
     return await convertFrameImagesToRunwareFormat(frameImages as string[], logger);
   }
-  
+
   // Empty or invalid
   logger.info('No valid frame images found', { metadata: { type: typeof frameImages } });
   return [];
@@ -256,13 +233,17 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
 
   // API control parameters that models pass via preparePayload for Runware API
   // These are NOT in the schema (user-facing) but are required by the API
+  // IMPORTANT: keep this list aligned with generate-content/index.ts (schema enforcement)
   const API_CONTROL_PARAMS = [
-    'width', 'height',           // Derived from aspectRatio in preparePayload
+    'width', 'height',            // Derived from aspectRatio in preparePayload
     'outputType', 'outputFormat', // API-specific output settings
-    'outputQuality',             // JPEG/WebP quality setting
-    'includeCost',               // Request cost info in response
-    'providerSettings',          // Provider-specific settings (e.g., openai: {quality, background})
-    'numberResults',             // Number of outputs
+    'outputQuality',              // JPEG/WebP quality setting
+    'includeCost',                // Request cost info in response
+    'providerSettings',           // Provider-specific settings (e.g., openai: {quality, background})
+    'numberResults',              // Number of outputs
+
+    // Runware video models: I2V payload carries images here
+    'frameImages',
   ];
 
   // Add parameters that exist in the schema (user-facing)

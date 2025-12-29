@@ -173,19 +173,13 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 )}
 
                 {/* CREATE Section */}
-                <SectionHeader>CREATE</SectionHeader>
+                <SectionHeader>STUDIO</SectionHeader>
                 <div className="space-y-1 px-4">
                   {renderFeatureItem(
                     "/dashboard/custom-creation",
-                    "Custom Creation",
+                    "Generate Content",
                     <Sparkles className="h-4 w-4" />,
                     "custom_creation"
-                  )}
-                  {renderFeatureItem(
-                    "/dashboard/storyboard",
-                    "Storyboard",
-                    <span className="text-base">🎬</span>,
-                    "storyboard"
                   )}
                   {renderFeatureItem(
                     "/dashboard/video-studio",
@@ -193,6 +187,22 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     <Video className="h-4 w-4" />,
                     "faceless_videos"
                   )}
+                  <MenuItem 
+                    path="/video-editor" 
+                    label="Video Editor" 
+                    icon={<Clapperboard className="h-4 w-4" />} 
+                  />
+                  {renderFeatureItem(
+                    "/dashboard/storyboard",
+                    "Storyboard",
+                    <span className="text-base">🎬</span>,
+                    "storyboard"
+                  )}
+                </div>
+
+                {/* LIBRARY Section */}
+                <SectionHeader>LIBRARY</SectionHeader>
+                <div className="space-y-1 px-4">
                   {renderFeatureItem(
                     "/dashboard/templates",
                     "Templates",
@@ -204,29 +214,11 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     label="My Creations" 
                     icon={<History className="h-4 w-4" />} 
                   />
-                </div>
-
-                {/* RESOURCES Section */}
-                <SectionHeader>RESOURCES</SectionHeader>
-                <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/video-editor" 
-                    label="Video Editor" 
-                    icon={<Clapperboard className="h-4 w-4" />} 
-                  />
                   <MenuItem 
                     path="/dashboard/prompts" 
                     label="Prompt Library" 
                     icon={<FileText className="h-4 w-4" />} 
                   />
-                  <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
-                  {showBlogPage && (
-                    <MenuItem path="/blog" label="Blog" icon={<BookOpen className="h-4 w-4" />} />
-                  )}
-                  <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
-                  {showCommunityPage && (
-                    <MenuItem path="/community" label="Community" icon={<Users className="h-4 w-4" />} />
-                  )}
                 </div>
 
                 {/* ACCOUNT Section */}
@@ -237,6 +229,8 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                     label="Settings" 
                     icon={<Settings className="h-4 w-4" />} 
                   />
+                  <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
+                  <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
                   {isAdmin && (
                     <MenuItem 
                       path="/admin/dashboard" 

@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown, Clapperboard, Info, HelpCircle } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown, Clapperboard, Info, HelpCircle, LayoutTemplate } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -55,20 +55,20 @@ export const DashboardLayout = () => {
 
             {/* Desktop Navigation - Dropdowns */}
             <nav className="hidden md:flex items-center gap-2">
-              {/* CREATE Dropdown */}
+              {/* STUDIO Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
-                      ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
+                      ["/dashboard/custom-creation", "/dashboard/video-studio", "/dashboard/storyboard", "/video-editor"].some(p => isActive(p))
                         ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
                         : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
                     <Sparkles className="h-4 w-4" />
-                    <span>Create</span>
+                    <span>Studio</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -77,17 +77,8 @@ export const DashboardLayout = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard/custom-creation" className={cn("flex items-center cursor-pointer", isActive("/dashboard/custom-creation") && "bg-muted")}>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Custom
+                        Generate Content
                         {isAdmin && (!isFeatureEnabled('custom_creation') || isFeatureComingSoon('custom_creation')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
-                      </Link>
-                    </DropdownMenuItem>
-                  ) : null}
-                  {isFeatureEnabled('templates') || isAdmin ? (
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard/templates" className={cn("flex items-center cursor-pointer", isActive("/dashboard/templates") && "bg-muted")}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Templates
-                        {isAdmin && (!isFeatureEnabled('templates') || isFeatureComingSoon('templates')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
                       </Link>
                     </DropdownMenuItem>
                   ) : null}
@@ -95,11 +86,17 @@ export const DashboardLayout = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard/video-studio" className={cn("flex items-center cursor-pointer", isActive("/dashboard/video-studio") && "bg-muted")}>
                         <Video className="mr-2 h-4 w-4" />
-                        Videos
+                        Faceless Videos
                         {isAdmin && (!isFeatureEnabled('faceless_videos') || isFeatureComingSoon('faceless_videos')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
                       </Link>
                     </DropdownMenuItem>
                   ) : null}
+                  <DropdownMenuItem asChild>
+                    <Link to="/video-editor" className={cn("flex items-center cursor-pointer", isActive("/video-editor") && "bg-muted")}>
+                      <Clapperboard className="mr-2 h-4 w-4" />
+                      Video Editor
+                    </Link>
+                  </DropdownMenuItem>
                   {isFeatureEnabled('storyboard') || isAdmin ? (
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard/storyboard" className={cn("flex items-center cursor-pointer", isActive("/dashboard/storyboard") && "bg-muted")}>
@@ -119,7 +116,7 @@ export const DashboardLayout = () => {
                     variant="ghost"
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
-                      ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
+                      ["/dashboard/history", "/dashboard/prompts", "/dashboard/templates"].some(p => isActive(p))
                         ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
                         : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
@@ -130,6 +127,15 @@ export const DashboardLayout = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                  {isFeatureEnabled('templates') || isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/templates" className={cn("flex items-center cursor-pointer", isActive("/dashboard/templates") && "bg-muted")}>
+                        <LayoutTemplate className="mr-2 h-4 w-4" />
+                        Templates
+                        {isAdmin && (!isFeatureEnabled('templates') || isFeatureComingSoon('templates')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/history" className={cn("flex items-center cursor-pointer", isActive("/dashboard/history") && "bg-muted")}>
                       <History className="mr-2 h-4 w-4" />
@@ -140,45 +146,6 @@ export const DashboardLayout = () => {
                     <Link to="/dashboard/prompts" className={cn("flex items-center cursor-pointer", isActive("/dashboard/prompts") && "bg-muted")}>
                       <BookOpen className="mr-2 h-4 w-4" />
                       Prompts
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* RESOURCES Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
-                      ["/video-editor", "/about", "/faq"].some(p => isActive(p))
-                        ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
-                        : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
-                    )}
-                  >
-                    <Info className="h-4 w-4" />
-                    <span>Resources</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/video-editor" className={cn("flex items-center cursor-pointer", isActive("/video-editor") && "bg-muted")}>
-                      <Clapperboard className="mr-2 h-4 w-4" />
-                      Video Editor
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/about" className={cn("flex items-center cursor-pointer", isActive("/about") && "bg-muted")}>
-                      <Info className="mr-2 h-4 w-4" />
-                      About
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/faq" className={cn("flex items-center cursor-pointer", isActive("/faq") && "bg-muted")}>
-                      <HelpCircle className="mr-2 h-4 w-4" />
-                      FAQ
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -212,6 +179,19 @@ export const DashboardLayout = () => {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about" className="flex items-center cursor-pointer">
+                      <Info className="mr-2 h-4 w-4" />
+                      <span>About</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/faq" className="flex items-center cursor-pointer">
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>FAQ</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>

@@ -1060,8 +1060,21 @@ Deno.serve(async (req) => {
         const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
         const missingParams: string[] = [];
         
+        // For Runware video models with frameImages, the inputImage is nested inside frameImages array
+        const hasFrameImages = Array.isArray(validatedParameters.frameImages) && 
+          validatedParameters.frameImages.length > 0 &&
+          (validatedParameters.frameImages as Array<Record<string, unknown>>).some(
+            (frame: Record<string, unknown>) => frame?.inputImage !== undefined
+          );
+        
         for (const requiredParam of model.input_schema.required) {
           if (promptAliases.includes(requiredParam)) continue; // already handled above
+          
+          // Skip inputImage validation if it's present in frameImages (I2V models)
+          if (requiredParam === 'inputImage' && hasFrameImages) {
+            continue;
+          }
+          
           if (validatedParameters[requiredParam] === undefined) {
             missingParams.push(requiredParam);
           }
@@ -1074,7 +1087,8 @@ Deno.serve(async (req) => {
               missing: missingParams,
               provided: Object.keys(validatedParameters),
               schema_required: model.input_schema.required,
-              declared_image_field: (model.input_schema as any)?.imageInputField
+              declared_image_field: (model.input_schema as any)?.imageInputField,
+              hasFrameImages
             }
           });
           throw new Error(error);

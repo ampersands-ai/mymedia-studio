@@ -56,7 +56,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/seedance.png",
   modelFamily: "Seedance",
-  variantName: "Seedance 1.5 Pro",
+  variantName: "Seedance V1.5 Pro",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

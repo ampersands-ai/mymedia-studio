@@ -246,8 +246,16 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     'frameImages',
   ];
 
+  // KlingAI Avatar models need special handling - inputImage/inputAudio go in nested "inputs" object
+  const isKlingAIAvatar = isVideo && cleanModel.startsWith('klingai:avatar@');
+  const klingAIAvatarFields = ['inputImage', 'inputAudio'];
+
   // Add parameters that exist in the schema (user-facing)
   for (const [key, value] of Object.entries(params)) {
+    // Skip KlingAI Avatar fields - they'll be handled separately in nested inputs
+    if (isKlingAIAvatar && klingAIAvatarFields.includes(key)) {
+      continue;
+    }
     if (schemaProperties[key]) {
       taskPayload[key] = value;
     }
@@ -262,18 +270,11 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
 
   // KlingAI Avatar (Runware) expects nested inputs: { inputs: { image, audio } }
   // while our schema remains user-facing: { inputImage, inputAudio }.
-  if (isVideo && cleanModel.startsWith('klingai:avatar@')) {
-    const inputImage = params.inputImage;
-    const inputAudio = params.inputAudio;
-
+  if (isKlingAIAvatar) {
     taskPayload.inputs = {
-      image: inputImage,
-      audio: inputAudio,
+      image: params.inputImage,
+      audio: params.inputAudio,
     };
-
-    // Remove top-level fields that Runware doesn't accept for this model.
-    delete (taskPayload as Record<string, unknown>).inputImage;
-    delete (taskPayload as Record<string, unknown>).inputAudio;
   }
   const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
   const promptField = promptAliases.find(alias => schemaProperties[alias]);

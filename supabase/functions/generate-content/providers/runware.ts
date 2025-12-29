@@ -178,20 +178,29 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     model: cleanModel,
   };
 
-  // ONLY add parameters that exist in the schema
+  // API control parameters that models pass via preparePayload for Runware API
+  // These are NOT in the schema (user-facing) but are required by the API
+  const API_CONTROL_PARAMS = [
+    'width', 'height',           // Derived from aspectRatio in preparePayload
+    'outputType', 'outputFormat', // API-specific output settings
+    'outputQuality',             // JPEG/WebP quality setting
+    'includeCost',               // Request cost info in response
+    'providerSettings',          // Provider-specific settings (e.g., openai: {quality, background})
+    'numberResults',             // Number of outputs
+  ];
+
+  // Add parameters that exist in the schema (user-facing)
   for (const [key, value] of Object.entries(params)) {
     if (schemaProperties[key]) {
       taskPayload[key] = value;
     }
   }
   
-  // Width/height are passed through from preparePayload - models handle normalization
-  // This is a simple pass-through; models ensure dimensions are multiples of 16 and within 128-2048
-  if (params.width !== undefined) {
-    taskPayload.width = params.width;
-  }
-  if (params.height !== undefined) {
-    taskPayload.height = params.height;
+  // Pass through API control parameters from preparePayload (not in schema but required by API)
+  for (const key of API_CONTROL_PARAMS) {
+    if (params[key] !== undefined) {
+      taskPayload[key] = params[key];
+    }
   }
 
   // Handle prompt fields dynamically (prompt, positivePrompt, positive_prompt)

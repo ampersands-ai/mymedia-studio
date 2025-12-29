@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Shield, Layout } from "lucide-react";
+import { Coins, Shield, ChevronDown, Sparkles, History, Video, BookOpen, LayoutTemplate, Wand2, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -11,19 +10,21 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import logoImage from "@/assets/logo.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { availableCredits, isLoading } = useUserCredits();
-  const { isPageEnabled } = useFeatureFlags();
   
   const creditBalance = isLoading ? null : availableCredits;
   const [isScrolled, setIsScrolled] = useState(false);
-  
-  const showFeaturesPage = isPageEnabled('features');
-  const showBlogPage = isPageEnabled('blog');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,22 +61,55 @@ export const GlobalHeader = () => {
           </Link>
 
           {/* Center - Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {showFeaturesPage && (
-              <button 
-                onClick={() => navigate("/features")}
-                className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-              >
-                Features
-              </button>
-            )}
-            {showBlogPage && (
-              <button 
-                onClick={() => navigate("/blog")}
-                className="text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-              >
-                Blog
-              </button>
+          <nav className="hidden md:flex items-center space-x-6">
+            {user && (
+              <>
+                {/* Create Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
+                    <Sparkles className="h-4 w-4" />
+                    Create
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="cursor-pointer">
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Custom Creation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="cursor-pointer">
+                      <LayoutTemplate className="h-4 w-4 mr-2" />
+                      Templates
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/videos")} className="cursor-pointer">
+                      <Video className="h-4 w-4 mr-2" />
+                      Videos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/storyboard")} className="cursor-pointer">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Storyboard
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Library Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
+                    <History className="h-4 w-4" />
+                    Library
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer">
+                      <History className="h-4 w-4 mr-2" />
+                      Creations
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/prompts")} className="cursor-pointer">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Prompts
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
           </nav>
 
@@ -92,15 +126,6 @@ export const GlobalHeader = () => {
               </button>
             )}
 
-            {user && (
-              <button
-                onClick={() => navigate("/dashboard/templates")}
-                className="px-4 py-2 rounded-full backdrop-blur-lg bg-gradient-to-r from-primary-yellow to-primary-orange text-white border border-border/30 flex items-center gap-2 hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
-              >
-                <Layout className="h-5 w-5" />
-                Dashboard
-              </button>
-            )}
 
             {creditBalance !== null && (
               <button

@@ -1246,6 +1246,118 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 12,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NEW RUNWARE MODELS (9 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // ChatGPT Image 1.5
+  "1a2b3c4d-5e6f-7a8b-9c0d-ef1234567890": {
+    recordId: "1a2b3c4d-5e6f-7a8b-9c0d-ef1234567890",
+    modelId: "runware:112@1",
+    modelName: "ChatGPT Image 1.5",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.30,
+    estimatedTimeSeconds: 15,
+    isActive: true,
+  },
+  
+  // FLUX.2 [dev] I2I
+  "2b3c4d5e-6f7a-8b9c-0d1e-f12345678901": {
+    recordId: "2b3c4d5e-6f7a-8b9c-0d1e-f12345678901",
+    modelId: "runware:102@2",
+    modelName: "FLUX.2 [dev] I2I",
+    provider: "runware",
+    contentType: "image_editing",
+    baseCreditCost: 0.50,
+    estimatedTimeSeconds: 20,
+    isActive: true,
+  },
+  
+  // FLUX.2 [dev] T2I
+  "3c4d5e6f-7a8b-9c0d-1e2f-012345678902": {
+    recordId: "3c4d5e6f-7a8b-9c0d-1e2f-012345678902",
+    modelId: "runware:102@2",
+    modelName: "FLUX.2 [dev] T2I",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.50,
+    estimatedTimeSeconds: 18,
+    isActive: true,
+  },
+  
+  // Wan2.5-Preview Image
+  "4d5e6f7a-8b9c-0d1e-2f3a-123456789012": {
+    recordId: "4d5e6f7a-8b9c-0d1e-2f3a-123456789012",
+    modelId: "runware:107@1",
+    modelName: "Wan2.5-Preview Image",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.30,
+    estimatedTimeSeconds: 15,
+    isActive: true,
+  },
+  
+  // Flux.1 [Schnell] New
+  "5e6f7a8b-9c0d-1e2f-3a4b-234567890123": {
+    recordId: "5e6f7a8b-9c0d-1e2f-3a4b-234567890123",
+    modelId: "runware:100@1",
+    modelName: "Flux.1 [Schnell]",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.10,
+    estimatedTimeSeconds: 8,
+    isActive: true,
+  },
+  
+  // Flux.1 [Dev] New
+  "6f7a8b9c-0d1e-2f3a-4b5c-345678901234": {
+    recordId: "6f7a8b9c-0d1e-2f3a-4b5c-345678901234",
+    modelId: "runware:101@1",
+    modelName: "Flux.1 [Dev]",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.40,
+    estimatedTimeSeconds: 15,
+    isActive: true,
+  },
+  
+  // HiDream-I1 Full
+  "7a8b9c0d-1e2f-3a4b-5c6d-456789012345": {
+    recordId: "7a8b9c0d-1e2f-3a4b-5c6d-456789012345",
+    modelId: "runware:97@3",
+    modelName: "HiDream-I1 Full",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.80,
+    estimatedTimeSeconds: 25,
+    isActive: true,
+  },
+  
+  // HiDream-i1 Dev
+  "8b9c0d1e-2f3a-4b5c-6d7e-567890123456": {
+    recordId: "8b9c0d1e-2f3a-4b5c-6d7e-567890123456",
+    modelId: "runware:97@2",
+    modelName: "HiDream-i1 Dev",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.50,
+    estimatedTimeSeconds: 18,
+    isActive: true,
+  },
+  
+  // HiDream-i1 Fast
+  "9c0d1e2f-3a4b-5c6d-7e8f-678901234567": {
+    recordId: "9c0d1e2f-3a4b-5c6d-7e8f-678901234567",
+    modelId: "runware:97@1",
+    modelName: "HiDream-i1 Fast",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.30,
+    estimatedTimeSeconds: 10,
+    isActive: true,
+  },
 };
 
 /**

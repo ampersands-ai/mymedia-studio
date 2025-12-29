@@ -53,7 +53,7 @@ export const MODEL_CONFIG = {
   // UI metadata
   isActive: true,
   logoUrl: "/logos/openai.png",
-  modelFamily: "ChatGPT",
+  modelFamily: "OpenAI",
   variantName: "ChatGPT Image 1.5",
   displayOrderInFamily: 1,
   // Lock system

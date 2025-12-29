@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "prompt_to_video",
   use_api_key: "RUNWARE_API_KEY_VIDEO",
-  baseCreditCost: 2.0,
+  baseCreditCost: 3.5,
   estimatedTimeSeconds: 60,
   costMultipliers: {
     duration: { 4: 1, 8: 2, 12: 3 },
@@ -52,9 +52,9 @@ export const MODEL_CONFIG = {
   outputQuality: 85,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/bytedance.png",
+  logoUrl: "/logos/seedance.png",
   modelFamily: "Seedance",
-  variantName: "Seedance 1.0 Pro Fast",
+  variantName: "Seedance V1.0 Pro Fast",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

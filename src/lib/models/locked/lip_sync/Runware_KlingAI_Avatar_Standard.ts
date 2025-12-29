@@ -40,7 +40,7 @@ export const MODEL_CONFIG = {
   baseCreditCost: 22.5, // Default: 4.5 credits/sec × 5s estimate
   creditPerSecond: 4.5,
   maxAudioDuration: 60,
-  estimatedTimeSeconds: 90,
+  estimatedTimeSeconds: 900,
   costMultipliers: {},
   apiEndpoint: "https://api.runware.ai/v1",
   payloadStructure: "array",
@@ -121,8 +121,8 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     numberResults: inputs.numberResults || 1,
     includeCost: true,
     inputs: {
-      image: inputs.inputImage,  // Map schema field to Runware API format
-      audio: inputs.inputAudio,  // Map schema field to Runware API format
+      image: inputs.inputImage, // Map schema field to Runware API format
+      audio: inputs.inputAudio, // Map schema field to Runware API format
     },
   };
 }

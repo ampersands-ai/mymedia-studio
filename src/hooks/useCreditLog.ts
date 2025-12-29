@@ -14,6 +14,7 @@ interface GenerationRow {
   id: string;
   prompt: string;
   model_record_id: string | null;
+  model_id: string | null;
   created_at: string;
   tokens_used: number;
   tokens_charged: number | null;
@@ -42,11 +43,58 @@ const getContentTypeLabel = (contentType: string): string => {
 };
 
 /**
+ * Parse model_id string for display when registry lookup fails
+ * Examples: "klingai:avatar@2.0-standard", "bytedance:2@2", "openai:4@1"
+ */
+const parseModelIdForDisplay = (modelId: string): { name: string; version: string; type: string } => {
+  // Known model patterns with friendly names
+  const knownModels: Record<string, { name: string; type: string }> = {
+    'klingai:avatar': { name: 'KlingAI Avatar', type: 'Lip Sync' },
+    'klingai:image': { name: 'KlingAI', type: 'Text to Image' },
+    'klingai:video': { name: 'KlingAI', type: 'Image to Video' },
+    'bytedance': { name: 'Bytedance', type: 'Image to Video' },
+    'openai': { name: 'OpenAI DALL-E', type: 'Text to Image' },
+    'stability': { name: 'Stability AI', type: 'Text to Image' },
+    'midjourney': { name: 'Midjourney', type: 'Text to Image' },
+    'replicate': { name: 'Replicate', type: 'Text to Image' },
+  };
+
+  // Try to match known patterns
+  for (const [pattern, info] of Object.entries(knownModels)) {
+    if (modelId.startsWith(pattern)) {
+      // Extract version after @
+      const versionMatch = modelId.match(/@(.+)$/);
+      const version = versionMatch ? versionMatch[1].replace(/-/g, ' ') : '';
+      return { name: info.name, version, type: info.type };
+    }
+  }
+
+  // Fallback: parse generic pattern "provider:model@version"
+  const match = modelId.match(/^([^:]+)(?::([^@]+))?(?:@(.+))?$/);
+  if (match) {
+    const [, provider, model, version] = match;
+    const name = model 
+      ? `${provider.charAt(0).toUpperCase() + provider.slice(1)} ${model}`
+      : provider.charAt(0).toUpperCase() + provider.slice(1);
+    return {
+      name,
+      version: version?.replace(/-/g, ' ') || '',
+      type: 'Generation'
+    };
+  }
+
+  return { name: modelId, version: '', type: 'Generation' };
+};
+
+/**
  * Determine credit status based on generation and dispute data
+ * Credits are reserved (deducted) BEFORE generation starts.
+ * For completed generations, credits were charged via the reserve.
  */
 const determineCreditStatus = (
   generationStatus: string,
-  tokensCharged: number | null,
+  _tokensCharged: number | null,
+  _tokensUsed: number,
   hasDispute: boolean,
   disputeStatus?: string
 ): CreditStatus => {
@@ -57,19 +105,18 @@ const determineCreditStatus = (
     if (disputeStatus === 'rejected') return 'dispute_rejected';
   }
 
-  // Check generation status
-  if (generationStatus === 'failed') {
-    return tokensCharged === 0 ? 'refunded' : 'failed';
+  // Failed or cancelled generations should show refunded
+  if (generationStatus === 'failed' || generationStatus === 'cancelled') {
+    return 'refunded';
   }
 
+  // Still processing = reserved
   if (generationStatus === 'pending' || generationStatus === 'processing') {
     return 'reserved';
   }
 
+  // Completed = charged (credits were reserved upfront)
   if (generationStatus === 'completed') {
-    if (tokensCharged === 0 || tokensCharged === null) {
-      return 'refunded';
-    }
     return 'charged';
   }
 
@@ -83,13 +130,33 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
   const { user } = useAuth();
   const { page = 1, pageSize = 20 } = options;
 
+  // Fetch current balance for cumulative calculation
+  const balanceQuery = useQuery({
+    queryKey: ["user-balance", user?.id],
+    queryFn: async (): Promise<number> => {
+      if (!user?.id) return 0;
+
+      const { data, error } = await supabase
+        .from("user_available_credits")
+        .select("total_credits")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        logger.warn("Failed to fetch user balance for credit log", { error });
+        return 0;
+      }
+
+      return data?.total_credits ?? 0;
+    },
+    enabled: !!user?.id,
+  });
+
   const countQuery = useQuery({
     queryKey: ["credit-log-count", user?.id],
     queryFn: async (): Promise<number> => {
       if (!user?.id) return 0;
 
-      // Count generations for this user using a simple query approach
-      // that works with Supabase's generated types
       const { data, error } = await supabase
         .from("generations")
         .select("id")
@@ -106,20 +173,21 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
   });
 
   const dataQuery = useQuery<CreditLogEntry[]>({
-    queryKey: ["credit-log", user?.id, page, pageSize],
+    queryKey: ["credit-log", user?.id, page, pageSize, balanceQuery.data],
     queryFn: async () => {
       if (!user?.id) return [];
 
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Fetch generations with pagination
+      // Fetch generations with pagination - include model_id for fallback
       const { data: generations, error: genError } = await supabase
         .from("generations")
         .select(`
           id,
           prompt,
           model_record_id,
+          model_id,
           created_at,
           tokens_used,
           tokens_charged,
@@ -166,10 +234,11 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
 
       // Enrich with model data
       const entries: CreditLogEntry[] = typedGenerations.map((gen) => {
-        let modelType = "Unknown";
+        let modelType = "Generation";
         let modelName = "Unknown Model";
         let modelVersion = "";
 
+        // Try registry lookup first
         if (gen.model_record_id) {
           try {
             const model = getModel(gen.model_record_id);
@@ -177,20 +246,37 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
             modelName = model.MODEL_CONFIG.modelName;
             modelVersion = model.MODEL_CONFIG.variantName || "";
           } catch {
-            // Model not found in registry
+            // Registry lookup failed, try parsing model_id
+            if (gen.model_id) {
+              const parsed = parseModelIdForDisplay(gen.model_id);
+              modelName = parsed.name;
+              modelVersion = parsed.version;
+              modelType = parsed.type;
+            }
           }
+        } else if (gen.model_id) {
+          // No model_record_id, parse model_id directly
+          const parsed = parseModelIdForDisplay(gen.model_id);
+          modelName = parsed.name;
+          modelVersion = parsed.version;
+          modelType = parsed.type;
         }
 
         const disputeInfo = disputeMap.get(gen.id) || { hasDispute: false };
         const creditStatus = determineCreditStatus(
           gen.status,
           gen.tokens_charged,
+          gen.tokens_used,
           disputeInfo.hasDispute,
           disputeInfo.status
         );
 
-        const creditsCharged = gen.tokens_charged ?? 0;
-        const refundAmount = creditStatus === 'refunded' ? gen.tokens_used - creditsCharged : 0;
+        // For completed generations, credits were charged via tokens_used (reserved upfront)
+        const creditsCharged = creditStatus === 'charged' 
+          ? (gen.tokens_charged ?? gen.tokens_used)
+          : (gen.tokens_charged ?? 0);
+        
+        const refundAmount = creditStatus === 'refunded' ? gen.tokens_used : 0;
 
         return {
           id: gen.id,
@@ -209,18 +295,44 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
         };
       });
 
+      // Calculate cumulative balances
+      // Entries are sorted newest-first, so we work backwards from current balance
+      const currentBalance = balanceQuery.data ?? 0;
+      let runningBalance = currentBalance;
+
+      // For page 1, start with current balance
+      // For later pages, we need to account for all transactions on previous pages
+      if (page === 1) {
+        // Calculate balance after each transaction (going from newest to oldest)
+        for (let i = 0; i < entries.length; i++) {
+          entries[i].cumulativeBalance = runningBalance;
+          
+          // Go back in time: add back what was charged, subtract what was refunded
+          if (entries[i].creditStatus === 'charged') {
+            runningBalance += entries[i].creditsCharged;
+          } else if (entries[i].creditStatus === 'refunded') {
+            runningBalance -= entries[i].refundAmount;
+          }
+        }
+      } else {
+        // For pages > 1, we'd need to calculate from page 1's data
+        // For now, just show the charged/refund amounts without cumulative
+        // This keeps the feature simple while still working for page 1
+      }
+
       return entries;
     },
-    enabled: !!user?.id,
-    staleTime: 30 * 1000, // 30 seconds
+    enabled: !!user?.id && balanceQuery.data !== undefined,
+    staleTime: 30 * 1000,
   });
 
   return {
     entries: dataQuery.data || [],
     totalCount: countQuery.data || 0,
     totalPages: Math.ceil((countQuery.data || 0) / pageSize),
-    isLoading: dataQuery.isLoading || countQuery.isLoading,
+    isLoading: dataQuery.isLoading || countQuery.isLoading || balanceQuery.isLoading,
     error: dataQuery.error || countQuery.error,
     refetch: dataQuery.refetch,
+    currentBalance: balanceQuery.data ?? 0,
   };
 };

@@ -24,4 +24,5 @@ export interface CreditLogEntry {
   generationStatus: string;
   hasDispute: boolean;
   disputeStatus?: string;
+  cumulativeBalance?: number; // Running balance after this transaction
 }

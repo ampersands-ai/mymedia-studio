@@ -1,8 +1,8 @@
 /**
  * Seedance 1.5 Pro Image-to-Video
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * High-quality image-to-video generation with optional audio
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - I2V: Requires 1-2 reference images
@@ -11,7 +11,7 @@
  * - Durations: 4s, 8s, 12s
  * - Audio generation option (doubles cost)
  * - Fixed lens option for camera stability
- * 
+ *
  * @locked
  * @model bytedance/seedance-1.5-pro
  * @provider kie.ai
@@ -58,7 +58,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/seedance.png",
   modelFamily: "Seedance",
-  variantName: "1.5 Pro I2V",
+  variantName: "Seedance 1.5 Pro",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

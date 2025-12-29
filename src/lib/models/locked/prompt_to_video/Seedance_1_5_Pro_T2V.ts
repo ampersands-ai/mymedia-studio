@@ -1,8 +1,8 @@
 /**
  * Seedance 1.5 Pro Text-to-Video
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * High-quality text-to-video generation with optional audio
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Pure T2V: No image input
@@ -10,7 +10,7 @@
  * - Durations: 4s, 8s, 12s
  * - Audio generation option (doubles cost)
  * - Fixed lens option for camera stability
- * 
+ *
  * @locked
  * @model bytedance/seedance-1.5-pro
  * @provider kie.ai
@@ -56,7 +56,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/seedance.png",
   modelFamily: "Seedance",
-  variantName: "1.5 Pro T2V",
+  variantName: "Seedance 1.5 Pro",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

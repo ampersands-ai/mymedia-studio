@@ -26,7 +26,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "Flux.1 Dev",
+  variantName: "Flux 1 Dev",
   displayOrderInFamily: 2,
 
   // Lock system

@@ -455,21 +455,21 @@ export const OutputLightbox = ({
           </DialogTitle>
         </DialogHeader>
 
-          {/* Image Preview - Centered, viewport-relative size */}
-          <div className="flex items-center justify-center rounded-xl my-3 overflow-hidden flex-shrink-0 h-[40vh] sm:h-[45vh] lg:h-[50vh] bg-muted/20 relative">
+          {/* Image Preview - Centered, respects natural aspect ratio */}
+          <div className="flex items-center justify-center rounded-xl my-3 overflow-hidden flex-shrink-0 max-h-[60vh] bg-muted/20 relative">
             {hasAnyEdits ? (
               <img 
                 key={`edited-${currentIndex}-${getCurrentEntry()?.id}`}
                 src={getCurrentImageUrl()} 
                 alt="Edited preview"
-                className={`w-full h-full ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
+                className={`max-w-full max-h-[60vh] w-auto h-auto ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
               />
             ) : (
               <OptimizedGenerationPreview
                 key={`original-${currentOutput.storage_path}`}
                 storagePath={currentOutput.storage_path}
                 contentType={contentType}
-                className={`w-full h-full ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
+                className={`max-w-full max-h-[60vh] w-auto h-auto ${displayMode === 'fit' ? 'object-contain' : 'object-cover'}`}
               />
             )}
             {/* Edit badges */}

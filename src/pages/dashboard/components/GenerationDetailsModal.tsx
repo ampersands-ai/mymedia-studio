@@ -129,7 +129,7 @@ export const GenerationDetailsModal = ({
               </div>
             </div>
           ) : (generation.storage_path || generation.output_url) && generation.status === "completed" ? (
-            <div className="aspect-video relative overflow-hidden bg-muted rounded-lg">
+            <div className="relative overflow-hidden bg-muted rounded-lg flex items-center justify-center max-h-[60vh]">
               {(generation.type === "video" || generation.type === "video_editor" || generation.source_table === 'video_editor_job') ? (
                 (generation.is_video_job || generation.source_table === 'video_editor_job') && generation.output_url ? (
                   <video
@@ -148,7 +148,7 @@ export const GenerationDetailsModal = ({
               ) : generation.type === "image" ? (
                 <ImageWithOptimizedLoading
                   generation={generation}
-                  className="w-full h-full object-contain"
+                  className="max-w-full max-h-[60vh] w-auto h-auto object-contain"
                 />
               ) : generation.type === "audio" ? (
                 <AudioPlayer

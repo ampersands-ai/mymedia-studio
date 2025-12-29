@@ -64,7 +64,7 @@ export const DashboardLayout = () => {
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
                         ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
-                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
+                        : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -121,7 +121,7 @@ export const DashboardLayout = () => {
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
                         ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
-                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
+                        : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
                     <History className="h-4 w-4" />
@@ -154,7 +154,7 @@ export const DashboardLayout = () => {
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/video-editor", "/about", "/faq"].some(p => isActive(p))
                         ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
-                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
+                        : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
                     <Info className="h-4 w-4" />

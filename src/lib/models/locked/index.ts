@@ -159,11 +159,13 @@ import * as RunwareHiDreamI1Fast from "./prompt_to_image/Runware_HiDream_I1_Fast
 // Prompt to Video Models (21)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
 
-// Lip Sync Models (4)
+// Lip Sync Models (6)
 import * as KlingV1AvatarStandard_LipSync from "./lip_sync/Kling_V1_Avatar_Standard";
 import * as KlingAIAvatarV1Pro_LipSync from "./lip_sync/Kling_AI_Avatar_V1_Pro";
 import * as Infinitalk_LipSync from "./lip_sync/Infinitalk_from_audio";
 import * as Wan22SpeechToVideo_LipSync from "./lip_sync/Wan_2_2_Speech_to_Video";
+import * as RunwareKlingAIAvatarStandard from "./lip_sync/Runware_KlingAI_Avatar_Standard";
+import * as RunwareSyncLipsync2 from "./lip_sync/Runware_Sync_Lipsync2";
 import * as GoogleVeo31HQ_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_HQ";
 import * as GrokImagine_PromptToVideo from "./prompt_to_video/Grok_Imagine";
 import * as Hailuo02Pro_PromptToVideo from "./prompt_to_video/Hailuo_02_Pro_T2V";
@@ -426,12 +428,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "b2c3d4e5-f6a7-1b2c-3d4e-5f6a7b8c9d0e": RunwareSeedanceProFastT2V as ModelModule,         // Seedance 1.0 Pro Fast | prompt_to_video | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // LIP SYNC MODELS (4 total)
+  // LIP SYNC MODELS (6 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d": KlingV1AvatarStandard_LipSync as ModelModule,   // Kling Avatar Standard | lip_sync | kie_ai
   "b8c9d0e1-2f3a-4b5c-6d7e-8f9a0b1c2d3e": KlingAIAvatarV1Pro_LipSync as ModelModule,      // Kling Avatar Pro | lip_sync | kie_ai
   "a9b0c1d2-3e4f-5a6b-7c8d-9e0f1a2b3c4d": Infinitalk_LipSync as ModelModule,              // Infinitalk | lip_sync | kie_ai
   "c0d1e2f3-4a5b-6c7d-8e9f-0a1b2c3d4e5f": Wan22SpeechToVideo_LipSync as ModelModule,      // Wan 2.2 Speech-to-Video | lip_sync | kie_ai
+  "c1d2e3f4-5a6b-0c1d-2e3f-4a5b6c7d8e9f": RunwareKlingAIAvatarStandard as ModelModule,    // KlingAI Avatar 2.0 Standard | lip_sync | runware
+  "d2e3f4a5-6b7c-1d2e-3f4a-5b6c7d8e9f0a": RunwareSyncLipsync2 as ModelModule,             // Sync Lipsync-2 | lip_sync | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VIDEO TO VIDEO MODELS (2 total)

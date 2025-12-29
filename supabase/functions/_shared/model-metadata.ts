@@ -1380,6 +1380,34 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 60,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RUNWARE LIP SYNC MODELS (2 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // KlingAI Avatar 2.0 Standard
+  "c1d2e3f4-5a6b-0c1d-2e3f-4a5b6c7d8e9f": {
+    recordId: "c1d2e3f4-5a6b-0c1d-2e3f-4a5b6c7d8e9f",
+    modelId: "klingai:avatar@2.0-standard",
+    modelName: "KlingAI Avatar 2.0 Standard",
+    provider: "runware",
+    contentType: "lip_sync",
+    baseCreditCost: 5.0,
+    estimatedTimeSeconds: 90,
+    isActive: true,
+  },
+  
+  // Sync Lipsync-2
+  "d2e3f4a5-6b7c-1d2e-3f4a-5b6c7d8e9f0a": {
+    recordId: "d2e3f4a5-6b7c-1d2e-3f4a-5b6c7d8e9f0a",
+    modelId: "sync:lipsync-2@1",
+    modelName: "Sync Lipsync-2",
+    provider: "runware",
+    contentType: "lip_sync",
+    baseCreditCost: 4.0,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
 };
 
 /**

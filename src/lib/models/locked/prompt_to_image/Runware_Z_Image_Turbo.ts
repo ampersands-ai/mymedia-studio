@@ -1,15 +1,15 @@
 /**
  * Runware Z-Image Turbo (Text-to-Image)
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * NEW PROVIDER: Runware (NOT KIE.AI)
  * - External endpoint: https://api.runware.ai/v1
  * - Payload: ARRAY of task objects (unique structure)
  * - Uses taskType: "imageInference"
  * - Uses positivePrompt (not prompt)
  * - Width/height instead of aspect_ratio
- * 
+ *
  * @locked
  * @model runware:z-image@turbo
  * @provider runware
@@ -51,7 +51,7 @@ export const MODEL_CONFIG = {
   // UI metadata
   isActive: true,
   logoUrl: "/logos/runware.png",
-  modelFamily: "Runware",
+  modelFamily: "Z-Image",
   variantName: "Z-Image Turbo",
   displayOrderInFamily: 1,
   // Lock system
@@ -243,7 +243,7 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   // Get dimensions: use explicit width/height if provided, otherwise derive from aspectRatio
   let width: number;
   let height: number;
-  
+
   if (inputs.width !== undefined && inputs.height !== undefined) {
     width = normalizeDimension(Number(inputs.width));
     height = normalizeDimension(Number(inputs.height));
@@ -270,19 +270,19 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   if (inputs.negativePrompt && typeof inputs.negativePrompt === "string" && inputs.negativePrompt.trim().length >= 2) {
     task.negativePrompt = inputs.negativePrompt;
   }
-  
+
   if (inputs.steps !== undefined) task.steps = inputs.steps;
   if (inputs.CFGScale !== undefined) task.CFGScale = inputs.CFGScale;
-  
+
   // Seed must be a valid positive integer (and within JS safe integer range) - only include if valid
   const seedValue = inputs.seed;
-  if (seedValue !== undefined && seedValue !== null && seedValue !== '') {
+  if (seedValue !== undefined && seedValue !== null && seedValue !== "") {
     const seedNum = Number(seedValue);
     if (Number.isInteger(seedNum) && seedNum >= 1 && seedNum <= Number.MAX_SAFE_INTEGER) {
       task.seed = seedNum;
     }
   }
-  
+
   if (inputs.checkNSFW !== undefined) task.checkNSFW = inputs.checkNSFW;
 
   // Safety settings
@@ -308,20 +308,20 @@ export function calculateCost(inputs: Record<string, unknown>): number {
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling } = params;
-  
+
   // Explicitly map prompt to positivePrompt (Runware pattern)
   // User's prompt MUST come LAST to override any stale/default value from modelParameters
-  const inputs: Record<string, unknown> = { 
+  const inputs: Record<string, unknown> = {
     ...modelParameters,
-    positivePrompt: prompt
+    positivePrompt: prompt,
   };
-  
+
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
-  
+
   const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
-  
+
   const { data: gen, error } = await supabase
     .from("generations")
     .insert({
@@ -332,28 +332,25 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       prompt,
       tokens_used: cost,
       status: GENERATION_STATUS.PENDING,
-      settings: sanitizeForStorage(modelParameters)
+      settings: sanitizeForStorage(modelParameters),
     })
     .select()
     .single();
-  
+
   if (error || !gen) throw new Error(`Failed to create generation: ${error?.message}`);
 
-  const { error: funcError } = await supabase.functions.invoke('generate-content', {
+  const { error: funcError } = await supabase.functions.invoke("generate-content", {
     body: {
       generationId: gen.id,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: inputs.positivePrompt,
-      custom_parameters: preparePayload(inputs)
-    }
+      custom_parameters: preparePayload(inputs),
+    },
   });
 
   if (funcError) {
-    await supabase
-      .from('generations')
-      .update({ status: GENERATION_STATUS.FAILED })
-      .eq('id', gen.id);
+    await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
     const errorMessage = await extractEdgeFunctionError(funcError);
     throw new Error(errorMessage);
   }

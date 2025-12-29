@@ -511,10 +511,12 @@ Deno.serve(async (req) => {
     const API_CONTROL_PARAMS = [
       'taskType', 'model', 'version', 'apiVersion',
       'width', 'height',
-      // Runware/OpenAI image options that are not part of the user-facing schema
+      // Runware/OpenAI image/video options that are not part of the user-facing schema
       'outputType', 'outputFormat', 'outputQuality',
       'includeCost', 'safety',
       'providerSettings',
+      // Runware I2V uses nested frameImages instead of top-level inputImage
+      'frameImages',
     ];
 
     // Validate and filter parameters against schema
@@ -1214,6 +1216,7 @@ Deno.serve(async (req) => {
           'outputQuality',              // JPEG/WebP quality setting
           'includeCost', 'safety',      // Runware-specific API fields
           'providerSettings',           // Provider-specific settings (e.g., openai: { quality, background })
+          'frameImages',                // Runware I2V payload (nested inputImage)
         ];
         
         // Filter to only allowed parameters (schema + API control params)

@@ -11,6 +11,49 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+/**
+ * Type guard: Check if frameImages is already in Runware format [{inputImage: string}]
+ */
+function isStructuredFrameImages(
+  frameImages: unknown
+): frameImages is Array<{ inputImage: string }> {
+  return (
+    Array.isArray(frameImages) &&
+    frameImages.length > 0 &&
+    typeof frameImages[0] === 'object' &&
+    frameImages[0] !== null &&
+    'inputImage' in frameImages[0] &&
+    typeof (frameImages[0] as { inputImage: unknown }).inputImage === 'string'
+  );
+}
+
+/**
+ * Fetch an HTTP URL and convert to data URI for Runware API
+ */
+async function fetchAndConvertToDataUri(
+  url: string,
+  logger: EdgeLogger
+): Promise<string> {
+  logger.info('Fetching image for conversion', { metadata: { url: url.substring(0, 80) } });
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+  }
+
+  const imageBuffer = await response.arrayBuffer();
+  const uint8Array = new Uint8Array(imageBuffer);
+  const base64 = uint8ArrayToBase64(uint8Array);
+  const contentType = response.headers.get('content-type') || 'image/png';
+  const dataUri = `data:${contentType};base64,${base64}`;
+
+  logger.info('Converted to data URI', { metadata: { size_kb: Math.round(dataUri.length / 1024) } });
+  return dataUri;
+}
+
+/**
+ * Convert legacy string[] frameImages to Runware format
+ */
 async function convertFrameImagesToRunwareFormat(
   frameImages: string[],
   logger: EdgeLogger
@@ -18,31 +61,64 @@ async function convertFrameImagesToRunwareFormat(
   const converted = [];
 
   for (const imageUrl of frameImages) {
-    logger.info('Fetching frame image', { metadata: { imageUrl: imageUrl.substring(0, 80) } });
-
-    try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch frame image: ${response.status} ${response.statusText}`);
-      }
-
-      const imageBuffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(imageBuffer);
-      const base64 = uint8ArrayToBase64(uint8Array);
-      const contentType = response.headers.get('content-type') || 'image/png';
-      const dataUri = `data:${contentType};base64,${base64}`;
-
-      logger.info('Converted frame image', { metadata: { size_kb: Math.round(dataUri.length / 1024) } });
-      converted.push({ inputImage: dataUri });
-
-    } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to convert frame image', errorObj);
-      throw new Error(`Failed to convert frame image: ${errorObj.message}`);
-    }
+    const dataUri = await fetchAndConvertToDataUri(imageUrl, logger);
+    converted.push({ inputImage: dataUri });
   }
 
   return converted;
+}
+
+/**
+ * Process frameImages to ensure they're in correct Runware format with data URIs
+ * Handles both legacy string[] and structured [{inputImage: string}] formats
+ */
+async function processFrameImages(
+  frameImages: unknown,
+  logger: EdgeLogger
+): Promise<Array<{inputImage: string}>> {
+  // Already in structured format: [{inputImage: string}]
+  if (isStructuredFrameImages(frameImages)) {
+    logger.info('Frame images already in structured format', { 
+      metadata: { frameCount: frameImages.length } 
+    });
+    
+    const processed: Array<{inputImage: string}> = [];
+    
+    for (const frame of frameImages) {
+      const imageValue = frame.inputImage;
+      
+      // Already a data URI - use as is
+      if (imageValue.startsWith('data:')) {
+        processed.push({ inputImage: imageValue });
+      }
+      // HTTP URL - fetch and convert to data URI (Runware requires data URIs)
+      else if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
+        const dataUri = await fetchAndConvertToDataUri(imageValue, logger);
+        processed.push({ inputImage: dataUri });
+      }
+      // Unknown format - log warning and pass through
+      else {
+        logger.info('Unknown image format in frameImages, passing through', { 
+          metadata: { format: imageValue.substring(0, 20) } 
+        });
+        processed.push({ inputImage: imageValue });
+      }
+    }
+    
+    return processed;
+  }
+  
+  // Legacy format: string[] of URLs
+  if (Array.isArray(frameImages) && frameImages.length > 0 && typeof frameImages[0] === 'string') {
+    logger.info('Converting legacy frame images format', { 
+      metadata: { frameCount: frameImages.length } 
+    });
+    return await convertFrameImagesToRunwareFormat(frameImages as string[], logger);
+  }
+  
+  // Empty or invalid
+  logger.info('No valid frame images found', { metadata: { type: typeof frameImages } });
+  return [];
 }
 
 interface RunwareVideoResult {
@@ -249,10 +325,9 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
   }
 
   // Convert frameImages to Runware format for video tasks
+  // Handles both legacy string[] and structured [{inputImage: string}] formats
   if (isVideo && taskPayload.frameImages !== undefined && taskPayload.frameImages !== null) {
-    const frameImages = taskPayload.frameImages as string[];
-    logger.info('Converting frame images', { metadata: { frameCount: frameImages.length } });
-    taskPayload.frameImages = await convertFrameImagesToRunwareFormat(frameImages, logger);
+    taskPayload.frameImages = await processFrameImages(taskPayload.frameImages, logger);
   }
 
   // Add uploadEndpoint for direct upload to storage (if provided by caller)

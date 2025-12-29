@@ -34,7 +34,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "Kling Avatar",
-  variantName: "V1 Pro (1080p)",
+  variantName: "Kling V1 Pro",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,
@@ -105,7 +105,17 @@ export function calculateCost(_inputs: Record<string, any>, audioDurationSeconds
 }
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { prompt, modelParameters, uploadedImages, uploadedAudios, userId, uploadImagesToStorage, uploadAudiosToStorage, startPolling, getAudioDuration } = params;
+  const {
+    prompt,
+    modelParameters,
+    uploadedImages,
+    uploadedAudios,
+    userId,
+    uploadImagesToStorage,
+    uploadAudiosToStorage,
+    startPolling,
+    getAudioDuration,
+  } = params;
   const inputs: Record<string, any> = { ...modelParameters };
   if (prompt) inputs.prompt = prompt;
 

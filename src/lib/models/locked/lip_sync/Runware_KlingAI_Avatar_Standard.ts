@@ -37,9 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "lip_sync",
   use_api_key: "RUNWARE_API_KEY_VIDEO",
-  baseCreditCost: 22.5, // Default: 4.5 credits/sec × 5s estimate
-  creditPerSecond: 4.5,
-  maxAudioDuration: 60,
+  baseCreditCost: 5.0,
   estimatedTimeSeconds: 90,
   costMultipliers: {},
   apiEndpoint: "https://api.runware.ai/v1",
@@ -52,7 +50,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/kling.png",
   modelFamily: "KlingAI Avatar",
-  variantName: "Avatar 2.0 Standard",
+  variantName: "Kling V2 Standard",
   displayOrderInFamily: 1,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/lip_sync/Runware_KlingAI_Avatar_Standard.ts",
@@ -65,8 +63,8 @@ export const MODEL_CONFIG = {
 export const SCHEMA = Object.freeze({
   type: "object",
   required: ["inputImage", "inputAudio"],
-  imageInputField: "inputImage",
-  audioInputField: "inputAudio",
+  imageField: "inputImage",
+  audioField: "inputAudio",
   properties: {
     inputImage: {
       type: "string",
@@ -133,14 +131,10 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
 // COST CALCULATION
 // ============================================================================
 
-export function calculateCost(inputs: Record<string, unknown>, audioDurationSeconds?: number): number {
-  const ratePerSecond = MODEL_CONFIG.creditPerSecond;
-  // Default to 5 seconds if audio duration not provided
-  const duration = audioDurationSeconds || 5;
-  // Cap at max audio duration
-  const cappedDuration = Math.min(duration, MODEL_CONFIG.maxAudioDuration);
+export function calculateCost(inputs: Record<string, unknown>): number {
+  const base = MODEL_CONFIG.baseCreditCost;
   const numResults = (inputs.numberResults || 1) as number;
-  return Math.round(ratePerSecond * cappedDuration * numResults * 100) / 100;
+  return Math.round(base * numResults * 100) / 100;
 }
 
 // ============================================================================
@@ -148,40 +142,16 @@ export function calculateCost(inputs: Record<string, unknown>, audioDurationSeco
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { 
-    modelParameters, 
-    userId, 
-    startPolling,
-    uploadedImages,
-    uploadImagesToStorage,
-    uploadedAudios,
-    uploadAudiosToStorage,
-    getAudioDuration,
-  } = params;
+  const { modelParameters, userId, startPolling } = params;
 
-  const inputs: Record<string, unknown> = { ...modelParameters };
-
-  // Upload image if provided
-  if (uploadedImages && uploadedImages.length > 0 && uploadImagesToStorage) {
-    const imageUrls = await uploadImagesToStorage(userId);
-    inputs.inputImage = imageUrls[0];
-  }
-
-  // Upload audio and get duration
-  let audioDuration: number | undefined;
-  if (uploadedAudios && uploadedAudios.length > 0 && uploadAudiosToStorage) {
-    const audioUrls = await uploadAudiosToStorage(userId);
-    inputs.inputAudio = audioUrls[0];
-    if (getAudioDuration) {
-      audioDuration = await getAudioDuration(uploadedAudios[0]);
-    }
-  }
+  const inputs: Record<string, unknown> = {
+    ...modelParameters,
+  };
 
   const validation = validate(inputs);
   if (!validation.valid) throw new Error(validation.error);
 
-  // Calculate cost based on actual audio duration (4.5 credits per second)
-  const cost = calculateCost(inputs, audioDuration);
+  const cost = calculateCost(inputs);
   await reserveCredits(userId, cost);
 
   const { data: gen, error } = await supabase

@@ -110,11 +110,19 @@ async function pollForVideoResult(
   apiUrl: string,
   logger: EdgeLogger
 ): Promise<RunwareVideoResult> {
-  const maxAttempts = 8;
-  const delays = [1500, 2500, 4000, 6000, 8000, 10000, 12000, 15000]; // ~60s total
+  // Extended polling for video generation models (KlingAI Avatar can take 2-3 minutes)
+  const maxAttempts = 20;
+  // Total ~180 seconds (3 minutes) - start faster then slow down
+  const delays = [
+    2000, 3000, 4000, 5000, 6000,   // 20s - initial fast polling
+    8000, 8000, 10000, 10000,       // 36s - medium polling  
+    12000, 12000, 12000,            // 36s - slower polling
+    15000, 15000, 15000, 15000,     // 60s - slow polling
+    15000, 15000, 15000, 15000      // 60s - final slow polling (total ~212s / ~3.5min)
+  ];
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+    await new Promise(resolve => setTimeout(resolve, delays[attempt] || 15000));
 
     logger.info('Polling for video result', { metadata: { attempt: attempt + 1, maxAttempts, taskUUID } });
 
@@ -167,7 +175,7 @@ async function pollForVideoResult(
     }
   }
 
-  throw new Error("Video generation timed out after 60 seconds");
+  throw new Error("Video generation timed out after 3.5 minutes");
 }
 
 /**

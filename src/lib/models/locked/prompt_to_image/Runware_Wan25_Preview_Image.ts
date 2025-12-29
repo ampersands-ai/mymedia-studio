@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 0.20,
+  baseCreditCost: 0.2,
   estimatedTimeSeconds: 15,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -52,9 +52,9 @@ export const MODEL_CONFIG = {
   outputType: ["URL"],
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "Wan2.5-Preview Image",
+  variantName: "Wan 2.5 Preview",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

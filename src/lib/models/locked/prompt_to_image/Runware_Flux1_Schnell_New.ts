@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 0.12,
+  baseCreditCost: 0.2,
   estimatedTimeSeconds: 5,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -54,9 +54,9 @@ export const MODEL_CONFIG = {
   scheduler: "FlowMatchEulerDiscreteScheduler",
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "Flux.1 [Schnell]",
+  variantName: "Flux 1 Schnell",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

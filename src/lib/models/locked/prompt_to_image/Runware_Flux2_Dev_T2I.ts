@@ -38,7 +38,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 0.30,
+  baseCreditCost: 1.2,
   estimatedTimeSeconds: 12,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -55,9 +55,9 @@ export const MODEL_CONFIG = {
   acceleration: "high",
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "FLUX.2 [dev]",
+  variantName: "Flux 2 Dev",
   displayOrderInFamily: 3,
   // Lock system
   isLocked: true,

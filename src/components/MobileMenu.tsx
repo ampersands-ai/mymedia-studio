@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetClose,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, X, Clapperboard, Film
+  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, Clapperboard, Film
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -150,14 +149,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
       <SheetContent side="right" className="w-72 p-0 bg-background border-l">
         {/* Header */}
         <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black">MENU</h2>
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-4 w-4" />
-              </Button>
-            </SheetClose>
-          </div>
+          <h2 className="text-lg font-black">MENU</h2>
         </div>
 
         <ScrollArea className="flex-1 h-[calc(100vh-80px)]">

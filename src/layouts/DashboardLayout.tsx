@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Clock, Shield, BookOpen } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -18,12 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 /**
  * DashboardLayout - Layout component for authenticated dashboard pages.
@@ -43,65 +37,6 @@ export const DashboardLayout = () => {
     navigate("/");
   };
 
-  const renderNavButton = (
-    path: string,
-    label: string,
-    icon: React.ReactNode,
-    featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard'
-  ) => {
-    const enabled = isFeatureEnabled(featureId);
-    const comingSoon = isFeatureComingSoon(featureId);
-
-    // Admin bypass: always show features even if disabled/coming soon
-    if (!enabled && !isAdmin) return null;
-
-    // For non-admins, show disabled coming soon state
-    if (comingSoon && !isAdmin) {
-      return (
-        <TooltipProvider key={path}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                disabled
-                className="text-base px-6 py-5 rounded-full opacity-50 cursor-not-allowed"
-              >
-                {icon}
-                <span className="mr-1">{label}</span>
-                <Clock className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Coming soon</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-
-    // Admin indicator for disabled/coming soon features
-    const showAdminIndicator = isAdmin && (!enabled || comingSoon);
-
-    return (
-      <Link to={path} key={path}>
-        <Button
-          variant={isActive(path) ? "default" : "ghost"}
-          className={cn(
-            "text-sm px-4 py-4 rounded-full",
-            isActive(path) 
-              ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-              : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-          )}
-        >
-          {icon}
-          {label}
-          {showAdminIndicator && (
-            <Shield className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
-          )}
-        </Button>
-      </Link>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -118,69 +53,97 @@ export const DashboardLayout = () => {
               <span className="font-black text-lg md:text-xl text-foreground">artifio.ai</span>
             </Link>
 
-            {/* Desktop Navigation - Grouped */}
-            <nav className="hidden md:flex items-center gap-1">
-              {/* CREATE Group */}
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/30">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2">Create</span>
-                {renderNavButton(
-                  "/dashboard/custom-creation",
-                  "Custom",
-                  <Sparkles className="h-4 w-4 mr-1.5" />,
-                  "custom_creation"
-                )}
-                {renderNavButton(
-                  "/dashboard/templates",
-                  "Templates",
-                  <Sparkles className="h-4 w-4 mr-1.5" />,
-                  "templates"
-                )}
-                {renderNavButton(
-                  "/dashboard/video-studio",
-                  "Videos",
-                  <Video className="h-4 w-4 mr-1.5" />,
-                  "faceless_videos"
-                )}
-                {renderNavButton(
-                  "/dashboard/storyboard",
-                  "Storyboard",
-                  <span className="mr-1.5">🎬</span>,
-                  "storyboard"
-                )}
-              </div>
-
-              {/* LIBRARY Group */}
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/30">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2">Library</span>
-                <Link to="/dashboard/history">
+            {/* Desktop Navigation - Dropdowns */}
+            <nav className="hidden md:flex items-center gap-2">
+              {/* CREATE Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
-                    variant={isActive("/dashboard/history") ? "default" : "ghost"}
+                    variant="ghost"
                     className={cn(
-                      "text-sm px-4 py-4 rounded-full",
-                      isActive("/dashboard/history") 
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                      "text-sm px-4 py-2 rounded-full font-medium",
+                      ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
+                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600"
+                        : "text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1.5" />
+                    Create
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                  {isFeatureEnabled('custom_creation') || isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/custom-creation" className={cn("flex items-center cursor-pointer", isActive("/dashboard/custom-creation") && "bg-muted")}>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Custom
+                        {isAdmin && (!isFeatureEnabled('custom_creation') || isFeatureComingSoon('custom_creation')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {isFeatureEnabled('templates') || isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/templates" className={cn("flex items-center cursor-pointer", isActive("/dashboard/templates") && "bg-muted")}>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Templates
+                        {isAdmin && (!isFeatureEnabled('templates') || isFeatureComingSoon('templates')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {isFeatureEnabled('faceless_videos') || isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/video-studio" className={cn("flex items-center cursor-pointer", isActive("/dashboard/video-studio") && "bg-muted")}>
+                        <Video className="mr-2 h-4 w-4" />
+                        Videos
+                        {isAdmin && (!isFeatureEnabled('faceless_videos') || isFeatureComingSoon('faceless_videos')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {isFeatureEnabled('storyboard') || isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/storyboard" className={cn("flex items-center cursor-pointer", isActive("/dashboard/storyboard") && "bg-muted")}>
+                        <span className="mr-2">🎬</span>
+                        Storyboard
+                        {isAdmin && (!isFeatureEnabled('storyboard') || isFeatureComingSoon('storyboard')) && <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* LIBRARY Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "text-sm px-4 py-2 rounded-full font-medium",
+                      ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
+                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600"
+                        : "text-foreground hover:bg-muted"
                     )}
                   >
                     <History className="h-4 w-4 mr-1.5" />
-                    Creations
+                    Library
+                    <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
-                </Link>
-                <Link to="/dashboard/prompts">
-                  <Button
-                    variant={isActive("/dashboard/prompts") ? "default" : "ghost"}
-                    className={cn(
-                      "text-sm px-4 py-4 rounded-full",
-                      isActive("/dashboard/prompts") 
-                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                    )}
-                  >
-                    <BookOpen className="h-4 w-4 mr-1.5" />
-                    Prompts
-                  </Button>
-                </Link>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/history" className={cn("flex items-center cursor-pointer", isActive("/dashboard/history") && "bg-muted")}>
+                      <History className="mr-2 h-4 w-4" />
+                      Creations
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/prompts" className={cn("flex items-center cursor-pointer", isActive("/dashboard/prompts") && "bg-muted")}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Prompts
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">

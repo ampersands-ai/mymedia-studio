@@ -63,7 +63,7 @@ export const DashboardLayout = () => {
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
-                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
                         : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
@@ -120,7 +120,7 @@ export const DashboardLayout = () => {
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
-                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
                         : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >
@@ -153,7 +153,7 @@ export const DashboardLayout = () => {
                     className={cn(
                       "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/video-editor", "/about", "/faq"].some(p => isActive(p))
-                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        ? "bg-primary-500 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600 [&]:text-neutral-900 [&>svg]:text-neutral-900 [&>span]:text-neutral-900"
                         : "text-neutral-200 hover:text-neutral-100 hover:bg-neutral-800 data-[state=open]:bg-neutral-800"
                     )}
                   >

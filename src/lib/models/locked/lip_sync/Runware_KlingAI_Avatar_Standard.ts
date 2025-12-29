@@ -209,7 +209,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: "",
-      custom_parameters: preparePayload(inputs),
+      custom_parameters: inputs, // Pass raw inputs - preparePayload is called by the provider
     },
   });
 

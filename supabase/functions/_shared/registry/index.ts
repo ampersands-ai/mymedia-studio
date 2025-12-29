@@ -26,6 +26,7 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
   const typeMap: Record<string, 'image' | 'video' | 'audio' | 'text'> = {
     'prompt_to_image': 'image',
     'image_editing': 'image',
+    'image_to_image': 'image',
     'image_to_video': 'video',
     'prompt_to_video': 'video',
     'lip_sync': 'video',

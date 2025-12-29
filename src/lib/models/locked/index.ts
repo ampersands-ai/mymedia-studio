@@ -29,6 +29,7 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
   const typeMap: Record<string, 'image' | 'video' | 'audio' | 'text'> = {
     'prompt_to_image': 'image',
     'image_editing': 'image',
+    'image_to_image': 'image',
     'image_to_video': 'video',
     'prompt_to_video': 'video',
     'lip_sync': 'video',
@@ -67,6 +68,7 @@ import * as RemoveBackgroundRunware from "./image_editing/Remove_Background_runw
 import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
+import * as RunwareZImageI2I from "./image_editing/Runware_Z_Image_I2I";
 
 // Image to Video Models (24)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
@@ -307,6 +309,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d": Seedream45 as ModelModule,                        // Seedream 4.5 | image_editing | kie_ai
   "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
+  "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": RunwareZImageI2I as ModelModule,                  // Z-Image Edit | image_to_image | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO IMAGE MODELS (32 total)

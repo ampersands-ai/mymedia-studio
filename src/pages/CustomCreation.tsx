@@ -643,9 +643,17 @@ const CustomCreation = () => {
             onReset={() => {
               handleCancelGeneration(state.pollingGenerationId);
               stopPolling();
+              
+              // CRITICAL: Clear all persisted storage FIRST before clearing React state
+              // This prevents upload hooks from restoring old data when model becomes null
+              resetState();
+              
+              // Then clear React state (hooks won't find anything to restore)
               setUploadedImages([]);
               setUploadedAudios([]);
               setUploadedVideos([]);
+              
+              // Clear file inputs
               if (fileInputRef.current) {
                 fileInputRef.current.value = '';
               }
@@ -655,7 +663,6 @@ const CustomCreation = () => {
               if (videoFileInputRef.current) {
                 videoFileInputRef.current.value = '';
               }
-              resetState();
             }}
             isPolling={isPolling}
             pollingGenerationId={state.pollingGenerationId}

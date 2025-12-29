@@ -31,13 +31,18 @@ export const CreditActivityLog = () => {
     toast.success("Prompt copied to clipboard");
   };
 
-  const truncatePrompt = (prompt: string, maxLength = 50) => {
+  const truncatePrompt = (prompt: string, maxLength = 40) => {
     if (prompt.length <= maxLength) return prompt;
     return prompt.substring(0, maxLength) + "...";
   };
 
   const truncateId = (id: string) => {
-    return `#${id.substring(0, 8)}...`;
+    return `#${id.substring(0, 6)}`;
+  };
+
+  const formatBalance = (balance: number | undefined) => {
+    if (balance === undefined) return "-";
+    return balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   if (isLoading) {
@@ -94,22 +99,23 @@ export const CreditActivityLog = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-md border border-border/50 overflow-hidden">
-          <Table>
+        <div className="overflow-x-auto rounded-md border border-border/50">
+          <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead className="w-[160px]">Date</TableHead>
-                <TableHead className="min-w-[200px]">Prompt</TableHead>
-                <TableHead className="w-[180px]">Model</TableHead>
-                <TableHead className="w-[120px]">Version</TableHead>
-                <TableHead className="w-[150px] text-right">Credits</TableHead>
+                <TableHead className="w-20">ID</TableHead>
+                <TableHead className="w-24">Date</TableHead>
+                <TableHead className="w-[280px]">Prompt</TableHead>
+                <TableHead className="w-32">Model</TableHead>
+                <TableHead className="w-24">Version</TableHead>
+                <TableHead className="w-28 text-right">Credits</TableHead>
+                <TableHead className="w-28 text-right">Balance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {entries.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-muted/20">
-                  <TableCell>
+                  <TableCell className="py-2">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -130,50 +136,61 @@ export const CreditActivityLog = () => {
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {format(entry.date, "MMM d, yyyy")}
-                    <br />
-                    <span className="text-xs opacity-70">{format(entry.date, "h:mm a")}</span>
+                  <TableCell className="text-xs text-muted-foreground py-2">
+                    <div>{format(entry.date, "MMM d")}</div>
+                    <div className="opacity-70">{format(entry.date, "h:mm a")}</div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-sm truncate max-w-[180px] cursor-default">
-                              {truncatePrompt(entry.prompt)}
+                            <span className="text-sm truncate block max-w-[220px] cursor-default">
+                              {entry.prompt ? (
+                                truncatePrompt(entry.prompt)
+                              ) : (
+                                <span className="text-muted-foreground italic">Audio-driven generation</span>
+                              )}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="bottom" className="max-w-[400px]">
-                            <p className="text-sm whitespace-pre-wrap">{entry.prompt}</p>
+                            <p className="text-sm whitespace-pre-wrap">
+                              {entry.prompt || "No text prompt (audio-driven generation)"}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => handleCopyPrompt(entry.prompt)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                      {entry.prompt && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 shrink-0 opacity-60 hover:opacity-100"
+                          onClick={() => handleCopyPrompt(entry.prompt)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <span className="text-muted-foreground text-xs">{entry.modelType}:</span>
-                      <br />
-                      <span className="font-medium">{entry.modelName}</span>
+                  <TableCell className="py-2">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">{entry.modelType}</span>
+                      <div className="font-medium text-sm truncate max-w-[120px]">{entry.modelName}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-xs text-muted-foreground py-2">
                     {entry.modelVersion || "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right py-2">
                     <CreditStatusBadge 
                       status={entry.creditStatus} 
                       amount={entry.creditStatus === 'refunded' ? entry.refundAmount : entry.creditsCharged || entry.creditsReserved}
                     />
+                  </TableCell>
+                  <TableCell className="text-right py-2">
+                    <span className="text-sm font-medium tabular-nums">
+                      {formatBalance(entry.cumulativeBalance)}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

@@ -467,7 +467,30 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     // Extract content URL (imageURL or videoURL)
     let contentUrl = result.imageURL || result.videoURL;
     
-    // If no immediate URL for video, poll for async result
+    // KlingAI Avatar models can take up to 30 minutes - return async immediately
+    // The frontend will poll using poll-runware-status
+    const isLongRunningModel = cleanModel.startsWith('klingai:avatar@');
+    
+    if (!contentUrl && isVideo && isLongRunningModel) {
+      logger.info('Long-running model detected - returning async task ID', { 
+        metadata: { taskUUID, model: cleanModel } 
+      });
+      
+      // Return async response - no output_data, just task_id
+      return {
+        output_data: new Uint8Array(0), // Empty - signals async provider
+        file_extension: 'mp4',
+        file_size: 0,
+        metadata: {
+          task_id: taskUUID, // This triggers async handling in index.ts
+          model: cleanModel,
+          is_async: true,
+          provider: 'runware',
+        }
+      };
+    }
+    
+    // For other video models, poll for async result (shorter timeout)
     if (!contentUrl && isVideo) {
       logger.info('No immediate video URL - starting polling', { metadata: { taskUUID } });
       const polledResult = await pollForVideoResult(taskUUID, API_KEY, apiUrl, logger);

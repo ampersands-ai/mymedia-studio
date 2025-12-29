@@ -181,7 +181,11 @@ const CustomCreation = () => {
       // Proactively check provider status and recover/refund if needed
       execute(
         async () => {
-          const { data, error } = await supabase.functions.invoke('poll-kie-status', {
+          // Determine which poll function to use based on provider
+          const isRunwareModel = currentModel?.provider === 'runware';
+          const pollFunction = isRunwareModel ? 'poll-runware-status' : 'poll-kie-status';
+          
+          const { data, error } = await supabase.functions.invoke(pollFunction, {
             body: { generation_id: state.pollingGenerationId }
           });
 
@@ -204,13 +208,13 @@ const CustomCreation = () => {
           showErrorToast: false,
           context: {
             component: 'CustomCreation',
-            operation: 'pollKieStatus',
+            operation: 'pollProviderStatus',
             generationId: state.pollingGenerationId
           }
         }
       );
     }
-  }, [processorError, state.pollingGenerationId, execute, updateState]);
+  }, [processorError, state.pollingGenerationId, execute, updateState, currentModel?.provider]);
 
   // Image upload
   const {

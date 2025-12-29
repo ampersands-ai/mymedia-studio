@@ -9,7 +9,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "qwen/text-to-image",
   recordId: "36246bd4-f2e5-472b-bcf8-3dd99bc313d8",
-  modelName: "Qwen Text to Image",
+  modelName: "Qwen",
   provider: "kie_ai",
   contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE",

@@ -61,14 +61,14 @@ import * as IdeogramV3Reframe from "./image_editing/Ideogram_V3_Reframe";
 import * as MidjourneyI2I from "./image_editing/Midjourney_I2I";
 import * as NanoBananaEdit from "./image_editing/Nano_Banana_by_Google_edit";
 import * as NanoBananaProEditing from "./image_editing/Nano_Banana_Pro";
-import * as QwenImageEditor from "./image_editing/Qwen_Image_Editor";
+import * as QwenImageEditorPro from "./image_editing/Qwen_Image_Editor_Pro";
 import * as QwenImageToImage from "./image_editing/Qwen_Image_to_Image";
 import * as RemoveBackgroundKie from "./image_editing/Remove_Background_kie_ai";
 import * as RemoveBackgroundRunware from "./image_editing/Remove_Background_runware";
 import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
-import * as RunwareZImageI2I from "./image_editing/Runware_Z_Image_I2I";
+import * as QwenImageEditorLite from "./image_editing/Qwen_Image_Editor_Lite";
 
 // Image to Video Models (24)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
@@ -302,14 +302,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c": MidjourneyI2I as ModelModule,                     // Midjourney I2I | image_editing | kie_ai
   "a70d01a3-05de-4918-b934-55a7e5e5d407": NanoBananaEdit as ModelModule,                     // Nano Banana by Google | image_editing | kie_ai
   "b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e": NanoBananaProEditing as ModelModule,              // Nano Banana Pro | image_editing | kie_ai
-  "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditor as ModelModule,                   // Qwen Image Editor | image_editing | kie_ai
+  "b6d430f1-e823-4192-bf72-0dba29079931": QwenImageEditorPro as ModelModule,                // Qwen Image Editor Pro | image_editing | kie_ai
   "99532b69-d951-4431-87e3-1d88a9c8ee73": QwenImageToImage as ModelModule,                  // Qwen Image to Image | image_editing | kie_ai
   "58b8b09f-57fd-42e3-ae2d-689e9ea3064d": RemoveBackgroundKie as ModelModule,               // Remove Background | image_editing | kie_ai
   "d1d8b152-e123-4375-8f55-c0d0a699009b": RemoveBackgroundRunware as ModelModule,           // Remove Background | image_editing | runware
   "a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d": Seedream45 as ModelModule,                        // Seedream 4.5 | image_editing | kie_ai
   "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
-  "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": RunwareZImageI2I as ModelModule,                  // Z-Image Edit | image_to_image | runware
+  "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": QwenImageEditorLite as ModelModule,               // Qwen Image Editor Lite | image_editing | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO IMAGE MODELS (32 total)

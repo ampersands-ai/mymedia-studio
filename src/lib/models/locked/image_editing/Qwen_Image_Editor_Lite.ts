@@ -1,9 +1,9 @@
 /**
- * Runware Z-Image Image-to-Image
+ * Qwen Image Editor Lite (image_editing) - Runware.ai
  *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
  *
- * NEW PROVIDER: Runware (NOT KIE.AI)
+ * Provider: Runware.ai (NOT KIE.AI)
  * - External endpoint: https://api.runware.ai/v1
  * - Payload: ARRAY of task objects (unique structure)
  * - Uses taskType: "imageInference"
@@ -32,10 +32,10 @@ import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 export const MODEL_CONFIG = {
   modelId: "runware:108@20",
   recordId: "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
-  modelName: "Z-Image Edit",
+  modelName: "Qwen Image Editor Lite",
   provider: "runware",
-  contentType: "image_to_image",
-  use_api_key: "RUNWARE_API_KEY_IMAGE_TO_IMAGE",
+  contentType: "image_editing",
+  use_api_key: "RUNWARE_API_KEY_IMAGE_EDITING",
   baseCreditCost: 0.20,
   estimatedTimeSeconds: 12,
   costMultipliers: {
@@ -51,13 +51,13 @@ export const MODEL_CONFIG = {
   outputType: ["URL"],
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
-  modelFamily: "Z-Image",
-  variantName: "Z-Image Edit",
-  displayOrderInFamily: 2,
+  logoUrl: "/logos/qwen.png",
+  modelFamily: "Qwen",
+  variantName: "Image Editor Lite",
+  displayOrderInFamily: 3,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/image_editing/Runware_Z_Image_I2I.ts",
+  lockedFilePath: "src/lib/models/locked/image_editing/Qwen_Image_Editor_Lite.ts",
 } as const;
 
 // ============================================================================

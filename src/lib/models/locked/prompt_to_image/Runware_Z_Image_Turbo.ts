@@ -50,7 +50,7 @@ export const MODEL_CONFIG = {
   outputType: ["URL"],
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/runware.png",
+  logoUrl: "/logos/artifio.png",
   modelFamily: "Z-Image",
   variantName: "Z-Image Turbo",
   displayOrderInFamily: 1,

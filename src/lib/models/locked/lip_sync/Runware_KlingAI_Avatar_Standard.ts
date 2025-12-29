@@ -207,8 +207,15 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,
       prompt: "",
-      custom_parameters: preparePayload(inputs), // Use preparePayload for correct Runware nested format
-      preCalculatedCost: cost, // Pass audio-duration-based cost to edge function
+      // Pass schema-required fields (inputImage/inputAudio) PLUS API control params needed by Runware provider
+      custom_parameters: {
+        ...inputs,
+        taskType: MODEL_CONFIG.taskType,
+        outputFormat: MODEL_CONFIG.outputFormat,
+        numberResults: inputs.numberResults || 1,
+        includeCost: true,
+      },
+      preCalculatedCost: cost,
     },
   });
 

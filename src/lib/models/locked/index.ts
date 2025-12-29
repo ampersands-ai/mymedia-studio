@@ -69,6 +69,7 @@ import * as Seedream45 from "./image_editing/Seedream_4_5";
 import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 import * as QwenImageEditorLite from "./image_editing/Qwen_Image_Editor_Lite";
+import * as RunwareFlux2DevI2I from "./image_editing/Runware_Flux2_Dev_I2I";
 
 // Image to Video Models (24)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
@@ -145,6 +146,14 @@ import * as RunwareFlux1Schnell from "./prompt_to_image/runware_flux_1_schnell";
 import * as RunwareStableDiffusionV3 from "./prompt_to_image/runware_stable_diffusion_v3";
 import * as RunwareStableDiffusionXL from "./prompt_to_image/runware_stable_diffusion_xl";
 import * as RunwareZImageTurbo from "./prompt_to_image/Runware_Z_Image_Turbo";
+import * as RunwareChatGPTImage15 from "./prompt_to_image/Runware_ChatGPT_Image_15";
+import * as RunwareFlux2DevT2I from "./prompt_to_image/Runware_Flux2_Dev_T2I";
+import * as RunwareWan25PreviewImage from "./prompt_to_image/Runware_Wan25_Preview_Image";
+import * as RunwareFlux1SchnellNew from "./prompt_to_image/Runware_Flux1_Schnell_New";
+import * as RunwareFlux1DevNew from "./prompt_to_image/Runware_Flux1_Dev_New";
+import * as RunwareHiDreamI1Full from "./prompt_to_image/Runware_HiDream_I1_Full";
+import * as RunwareHiDreamI1Dev from "./prompt_to_image/Runware_HiDream_I1_Dev";
+import * as RunwareHiDreamI1Fast from "./prompt_to_image/Runware_HiDream_I1_Fast";
 
 // Prompt to Video Models (21)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
@@ -310,6 +319,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "57f1e8f3-e4e3-42bd-bd9e-2f2ac6eee41d": SeedreamV4_ImageEditing as ModelModule,           // Seedream V4 | image_editing | kie_ai
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
   "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": QwenImageEditorLite as ModelModule,               // Qwen Image Editor Lite | image_editing | runware
+  "2b3c4d5e-6f7a-8b9c-0d1e-f12345678901": RunwareFlux2DevI2I as ModelModule,                 // FLUX.2 [dev] I2I | image_editing | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO IMAGE MODELS (32 total)
@@ -347,6 +357,14 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "c0e4f338-683a-4b5d-8289-518f2b5ea983": SeedreamV4_PromptToImage as ModelModule,          // Seedream V4 | prompt_to_image | kie_ai
   "d5e6f7a8-9b0c-1d2e-3f4a-5b6c7d8e9f0a": SeedreamV45_PromptToImage as ModelModule,         // Seedream V4.5 | prompt_to_image | kie_ai
   "f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e": UltraDetailV0 as ModelModule,                     // Ultra Detail V0 | prompt_to_image | kie_ai
+  "1a2b3c4d-5e6f-7a8b-9c0d-ef1234567890": RunwareChatGPTImage15 as ModelModule,             // ChatGPT Image 1.5 | prompt_to_image | runware
+  "3c4d5e6f-7a8b-9c0d-1e2f-012345678902": RunwareFlux2DevT2I as ModelModule,                // FLUX.2 [dev] T2I | prompt_to_image | runware
+  "4d5e6f7a-8b9c-0d1e-2f3a-123456789012": RunwareWan25PreviewImage as ModelModule,          // Wan2.5-Preview Image | prompt_to_image | runware
+  "5e6f7a8b-9c0d-1e2f-3a4b-234567890123": RunwareFlux1SchnellNew as ModelModule,            // Flux.1 [Schnell] | prompt_to_image | runware
+  "6f7a8b9c-0d1e-2f3a-4b5c-345678901234": RunwareFlux1DevNew as ModelModule,                // Flux.1 [Dev] | prompt_to_image | runware
+  "7a8b9c0d-1e2f-3a4b-5c6d-456789012345": RunwareHiDreamI1Full as ModelModule,              // HiDream-I1 Full | prompt_to_image | runware
+  "8b9c0d1e-2f3a-4b5c-6d7e-567890123456": RunwareHiDreamI1Dev as ModelModule,               // HiDream-i1 Dev | prompt_to_image | runware
+  "9c0d1e2f-3a4b-5c6d-7e8f-678901234567": RunwareHiDreamI1Fast as ModelModule,              // HiDream-i1 Fast | prompt_to_image | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE TO VIDEO MODELS (22 total)

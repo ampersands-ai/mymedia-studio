@@ -87,7 +87,7 @@ export const DashboardLayout = () => {
         <Button
           variant={isActive(path) ? "default" : "ghost"}
           className={cn(
-            "text-base px-6 py-5 rounded-full",
+            "text-sm px-4 py-4 rounded-full",
             isActive(path) 
               ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
               : "text-foreground hover:bg-muted hover:text-foreground font-medium"
@@ -118,60 +118,69 @@ export const DashboardLayout = () => {
               <span className="font-black text-lg md:text-xl text-foreground">artifio.ai</span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-2">
-              {renderNavButton(
-                "/dashboard/templates",
-                "Templates",
-                <Sparkles className="h-5 w-5 mr-2" />,
-                "templates"
-              )}
-              {renderNavButton(
-                "/dashboard/custom-creation",
-                "Custom Creation",
-                <Sparkles className="h-5 w-5 mr-2" />,
-                "custom_creation"
-              )}
-              <Link to="/dashboard/history">
-                <Button
-                  variant={isActive("/dashboard/history") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/history") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <History className="h-5 w-5 mr-2" />
-                  My Creations
-                </Button>
-              </Link>
-              <Link to="/dashboard/prompts">
-                <Button
-                  variant={isActive("/dashboard/prompts") ? "default" : "ghost"}
-                  className={cn(
-                    "text-base px-6 py-5 rounded-full",
-                    isActive("/dashboard/prompts") 
-                      ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
-                      : "text-foreground hover:bg-muted hover:text-foreground font-medium"
-                  )}
-                >
-                  <BookOpen className="h-5 w-5 mr-2" />
-                  Prompts
-                </Button>
-              </Link>
-              {renderNavButton(
-                "/dashboard/video-studio",
-                "Faceless Videos",
-                <Video className="h-5 w-5 mr-2" />,
-                "faceless_videos"
-              )}
-              {renderNavButton(
-                "/dashboard/storyboard",
-                "Storyboard",
-                <span className="mr-2">🎬</span>,
-                "storyboard"
-              )}
+            {/* Desktop Navigation - Grouped */}
+            <nav className="hidden md:flex items-center gap-1">
+              {/* CREATE Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/30">
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2">Create</span>
+                {renderNavButton(
+                  "/dashboard/custom-creation",
+                  "Custom",
+                  <Sparkles className="h-4 w-4 mr-1.5" />,
+                  "custom_creation"
+                )}
+                {renderNavButton(
+                  "/dashboard/templates",
+                  "Templates",
+                  <Sparkles className="h-4 w-4 mr-1.5" />,
+                  "templates"
+                )}
+                {renderNavButton(
+                  "/dashboard/video-studio",
+                  "Videos",
+                  <Video className="h-4 w-4 mr-1.5" />,
+                  "faceless_videos"
+                )}
+                {renderNavButton(
+                  "/dashboard/storyboard",
+                  "Storyboard",
+                  <span className="mr-1.5">🎬</span>,
+                  "storyboard"
+                )}
+              </div>
+
+              {/* LIBRARY Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/30">
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2">Library</span>
+                <Link to="/dashboard/history">
+                  <Button
+                    variant={isActive("/dashboard/history") ? "default" : "ghost"}
+                    className={cn(
+                      "text-sm px-4 py-4 rounded-full",
+                      isActive("/dashboard/history") 
+                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                  >
+                    <History className="h-4 w-4 mr-1.5" />
+                    Creations
+                  </Button>
+                </Link>
+                <Link to="/dashboard/prompts">
+                  <Button
+                    variant={isActive("/dashboard/prompts") ? "default" : "ghost"}
+                    className={cn(
+                      "text-sm px-4 py-4 rounded-full",
+                      isActive("/dashboard/prompts") 
+                        ? "bg-primary-500 text-neutral-900 font-semibold border-2 border-primary-600 hover:bg-primary-600" 
+                        : "text-foreground hover:bg-muted hover:text-foreground font-medium"
+                    )}
+                  >
+                    <BookOpen className="h-4 w-4 mr-1.5" />
+                    Prompts
+                  </Button>
+                </Link>
+              </div>
             </nav>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">

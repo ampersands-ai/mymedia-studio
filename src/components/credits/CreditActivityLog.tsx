@@ -9,8 +9,9 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { CreditStatusBadge } from "./CreditStatusBadge";
 import { useCreditLog } from "@/hooks/useCreditLog";
 import { format } from "date-fns";
-import { Copy, ExternalLink, Receipt } from "lucide-react";
+import { Copy, Download, ExternalLink, FileText, Receipt } from "lucide-react";
 import { toast } from "sonner";
+import { exportToCSV, exportToPDF } from "@/lib/utils/creditLogExport";
 
 export const CreditActivityLog = () => {
   const navigate = useNavigate();
@@ -87,16 +88,72 @@ export const CreditActivityLog = () => {
     );
   }
 
+  const handleExportCSV = () => {
+    try {
+      exportToCSV(entries);
+      toast.success("CSV exported successfully");
+    } catch (error) {
+      toast.error("Failed to export CSV");
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportToPDF(entries);
+      toast.success("PDF opened in new window");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to export PDF");
+    }
+  };
+
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Receipt className="h-5 w-5" />
-          Credit Activity Log
-        </CardTitle>
-        <CardDescription>
-          {totalCount} total transactions • Showing {entries.length} on this page
-        </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Credit Activity Log
+            </CardTitle>
+            <CardDescription>
+              {totalCount} total transactions • Showing {entries.length} on this page
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    className="gap-1.5"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">CSV</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Download as CSV</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPDF}
+                    className="gap-1.5"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="hidden sm:inline">PDF</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Export as PDF</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="overflow-x-auto rounded-md border border-border/50">

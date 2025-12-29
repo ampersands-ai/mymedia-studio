@@ -74,7 +74,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   const queryClient = useQueryClient();
   const { generate, isGenerating } = useGeneration();
   const { checkPrompt, isChecking: isModerating } = usePromptModeration();
-  const { isOnCooldown, remainingSeconds, startCooldown, checkCooldown } = useGenerationCooldown();
+  const { isOnCooldown, remainingSeconds, startCooldown, checkCooldown, resetCooldown } = useGenerationCooldown();
 
   /**
    * Calculate token cost using model's calculateCost() function
@@ -415,5 +415,6 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     // Cooldown state for UI
     isOnCooldown,
     cooldownRemaining: remainingSeconds,
+    resetCooldown,
   };
 };

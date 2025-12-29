@@ -98,8 +98,9 @@ const SCHEDULERS = [
 
 export const SCHEMA = Object.freeze({
   type: "object",
-  required: ["positivePrompt", "referenceImages"],
+  required: ["positivePrompt", "image_url"],
   promptField: "positivePrompt",
+  imageInputField: "image_url",
   properties: {
     positivePrompt: {
       type: "string",
@@ -109,15 +110,10 @@ export const SCHEMA = Object.freeze({
       maxLength: 2000,
       renderer: "prompt",
     },
-    referenceImages: {
-      type: "array",
+    image_url: {
+      type: "string",
       title: "Reference Image",
       description: "The image to edit/transform",
-      minItems: 1,
-      maxItems: 1,
-      items: {
-        type: "string",
-      },
       renderer: "image",
     },
     negativePrompt: {
@@ -237,12 +233,8 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
   }
 
   // Validate reference image
-  const refImages = inputs.referenceImages as string[] | undefined;
-  if (!refImages || !Array.isArray(refImages) || refImages.length === 0) {
+  if (!inputs.image_url) {
     return { valid: false, error: "Reference image is required" };
-  }
-  if (refImages.length > 1) {
-    return { valid: false, error: "Only one reference image is allowed" };
   }
 
   // Validate number results
@@ -311,7 +303,7 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     taskType: MODEL_CONFIG.taskType,
     model: MODEL_CONFIG.modelId,
     positivePrompt: inputs.positivePrompt || "",
-    referenceImages: inputs.referenceImages,
+    referenceImages: [inputs.image_url],
     width,
     height,
     numberResults: inputs.numberResults || 1,
@@ -365,11 +357,11 @@ export function calculateCost(inputs: Record<string, unknown>): number {
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, userId, startPolling, uploadedImages } = params;
 
-  // Build inputs with reference images from uploaded images
+  // Build inputs with image_url from uploaded images
   const inputs: Record<string, unknown> = {
     ...modelParameters,
     positivePrompt: prompt,
-    referenceImages: uploadedImages || modelParameters.referenceImages,
+    image_url: uploadedImages?.[0] || modelParameters.image_url,
   };
 
   const validation = validate(inputs);

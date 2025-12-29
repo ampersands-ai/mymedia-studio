@@ -508,7 +508,14 @@ Deno.serve(async (req) => {
 
     // API control parameters that models can pass but aren't user-facing schema fields
     // NOTE: width/height are essential for Runware API but converted from aspectRatio in preparePayload
-    const API_CONTROL_PARAMS = ['taskType', 'model', 'version', 'apiVersion', 'width', 'height'];
+    const API_CONTROL_PARAMS = [
+      'taskType', 'model', 'version', 'apiVersion',
+      'width', 'height',
+      // Runware/OpenAI image options that are not part of the user-facing schema
+      'outputType', 'outputFormat', 'outputQuality',
+      'includeCost', 'safety',
+      'providerSettings',
+    ];
 
     // Validate and filter parameters against schema, applying defaults for missing values
     function validateAndFilterParameters(
@@ -1175,7 +1182,9 @@ Deno.serve(async (req) => {
           'taskType', 'model', 'version', 'apiVersion',
           'width', 'height',           // Derived from aspectRatio in preparePayload
           'outputType', 'outputFormat', // API-specific output settings
+          'outputQuality',              // JPEG/WebP quality setting
           'includeCost', 'safety',      // Runware-specific API fields
+          'providerSettings',           // Provider-specific settings (e.g., openai: { quality, background })
         ];
         
         // Filter to only allowed parameters (schema + API control params)

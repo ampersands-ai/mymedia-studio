@@ -35,7 +35,7 @@ export const MODEL_CONFIG = {
   provider: "runware", // NEW PROVIDER
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 0.15,
+  baseCreditCost: 1,
   estimatedTimeSeconds: 10,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -50,7 +50,7 @@ export const MODEL_CONFIG = {
   outputType: ["URL"],
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/runware.png",
+  logoUrl: "/logos/artifio.png",
   modelFamily: "Z-Image",
   variantName: "Z-Image Turbo",
   displayOrderInFamily: 1,
@@ -104,7 +104,6 @@ export const SCHEMA = Object.freeze({
       title: "Width",
       minimum: 128,
       maximum: 2048,
-      showToUser: false,
       description: "Image width (multiple of 16)",
       isAdvanced: true,
     },
@@ -113,7 +112,6 @@ export const SCHEMA = Object.freeze({
       title: "Height",
       minimum: 128,
       maximum: 2048,
-      showToUser: false,
       description: "Image height (multiple of 16)",
       isAdvanced: true,
     },
@@ -139,8 +137,7 @@ export const SCHEMA = Object.freeze({
       title: "Number of Images",
       default: 1,
       minimum: 1,
-      maximum: 1,
-      showToUser: false,
+      maximum: 4,
       description: "How many images to generate",
     },
     steps: {
@@ -149,7 +146,6 @@ export const SCHEMA = Object.freeze({
       default: 9,
       minimum: 1,
       maximum: 50,
-      showToUser: false,
       description: "Number of inference steps. More steps = better quality but slower.",
       isAdvanced: true,
     },
@@ -160,7 +156,6 @@ export const SCHEMA = Object.freeze({
       minimum: 0,
       maximum: 20,
       step: 0.5,
-      showToUser: false,
       description: "How closely to follow the prompt. 0 = automatic.",
       isAdvanced: true,
     },
@@ -170,7 +165,6 @@ export const SCHEMA = Object.freeze({
       // No default - omit unless user explicitly sets a positive integer
       minimum: 1,
       maximum: Number.MAX_SAFE_INTEGER,
-      showToUser: false,
       description: "Random seed for reproducibility. Leave blank for random.",
       isAdvanced: true,
     },
@@ -178,12 +172,11 @@ export const SCHEMA = Object.freeze({
       type: "boolean",
       title: "NSFW Check",
       default: true,
-      showToUser: false,
       description: "Check generated images for NSFW content",
       isAdvanced: true,
     },
   },
-  "x-order": ["positivePrompt", "aspectRatio", "negativePrompt"],
+  "x-order": ["positivePrompt", "aspectRatio", "numberResults", "negativePrompt"],
 });
 
 // ============================================================================

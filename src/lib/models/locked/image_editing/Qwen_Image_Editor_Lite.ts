@@ -118,7 +118,7 @@ export const SCHEMA = Object.freeze({
       items: {
         type: "string",
       },
-      renderer: "imageUpload",
+      renderer: "image",
     },
     negativePrompt: {
       type: "string",

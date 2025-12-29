@@ -61,10 +61,10 @@ export const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/custom-creation", "/dashboard/templates", "/dashboard/video-studio", "/dashboard/storyboard"].some(p => isActive(p))
-                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
-                        : "text-foreground hover:bg-muted"
+                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
                     )}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -118,10 +118,10 @@ export const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/dashboard/history", "/dashboard/prompts"].some(p => isActive(p))
-                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
-                        : "text-foreground hover:bg-muted"
+                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
                     )}
                   >
                     <History className="h-4 w-4" />
@@ -151,10 +151,10 @@ export const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5 focus-visible:ring-0 focus-visible:ring-offset-0",
                       ["/video-editor", "/about", "/faq"].some(p => isActive(p))
-                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
-                        : "text-foreground hover:bg-muted"
+                        ? "bg-primary-500 text-neutral-900 hover:bg-primary-600 border-2 border-primary-600 data-[state=open]:bg-primary-600"
+                        : "text-foreground hover:bg-muted data-[state=open]:bg-muted"
                     )}
                   >
                     <Info className="h-4 w-4" />

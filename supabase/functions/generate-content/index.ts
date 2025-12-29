@@ -517,17 +517,21 @@ Deno.serve(async (req) => {
       'providerSettings',
     ];
 
-    // Validate and filter parameters against schema, applying defaults for missing values
+    // Validate and filter parameters against schema
+    // IMPORTANT: Some models pass a fully-prepared provider payload (via preparePayload). In that case,
+    // we must NOT inject schema defaults for fields the user didn't send, otherwise we mutate the API payload.
     function validateAndFilterParameters(
       parameters: Record<string, unknown>,
-      schema: { properties?: Record<string, unknown> }
+      schema: { properties?: Record<string, unknown> },
+      options: { applyDefaults?: boolean } = {}
     ): Record<string, unknown> {
       if (!schema?.properties) return parameters;
+
+      const applyDefaults = options.applyDefaults !== false;
 
       const allowedKeys = Object.keys(schema.properties);
       const filtered: Record<string, unknown> = {};
       const appliedDefaults: string[] = [];
-
 
       for (const key of allowedKeys) {
         const schemaProperty = schema.properties[key] as {
@@ -542,26 +546,25 @@ Deno.serve(async (req) => {
         if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
           // If candidate is empty, undefined, or null
           if (candidateValue === "" || candidateValue === undefined || candidateValue === null) {
-            // Use default if available, otherwise omit parameter
-            if (schemaProperty.default !== undefined) {
+            // Only inject defaults when enabled
+            if (applyDefaults && schemaProperty.default !== undefined) {
               filtered[key] = schemaProperty.default;
               appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (was empty)`);
             }
-            // Else: omit the parameter entirely - don't add to filtered
-          } 
+            // Else: omit the parameter entirely
+          }
           // If value provided but not in enum
           else if (!schemaProperty.enum.includes(candidateValue)) {
-            // Use default if available
-            if (schemaProperty.default !== undefined) {
+            // Use default if available and defaults are enabled
+            if (applyDefaults && schemaProperty.default !== undefined) {
               filtered[key] = schemaProperty.default;
               appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (invalid: ${JSON.stringify(candidateValue)})`);
             } else {
-              // No default - return clear 400 error
-            const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
+              const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
               logger.error('Invalid parameter value', undefined, { metadata: { key, value: candidateValue } });
               throw new Error(error);
             }
-          } 
+          }
           // Valid value - use as is
           else {
             filtered[key] = candidateValue;
@@ -570,19 +573,16 @@ Deno.serve(async (req) => {
         // Non-enum fields
         else if (candidateValue !== undefined && candidateValue !== null && candidateValue !== '') {
           filtered[key] = candidateValue;
-        } 
+        }
         // Fall back to schema default if available
-        else if (schemaProperty?.default !== undefined) {
+        else if (applyDefaults && schemaProperty?.default !== undefined) {
           filtered[key] = schemaProperty.default;
           appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)}`);
         }
-        // Otherwise, include the provided value (might be undefined) only if explicitly provided
-        else if (candidateValue !== undefined) {
-          filtered[key] = candidateValue;
-        }
+        // Otherwise, do not inject anything (keeps prepared payloads stable)
       }
-      
-      // Preserve API control parameters (e.g., taskType for Midjourney routing)
+
+      // Preserve API control parameters (e.g., taskType for routing)
       for (const controlParam of API_CONTROL_PARAMS) {
         if (controlParam in parameters && parameters[controlParam] !== undefined) {
           filtered[controlParam] = parameters[controlParam];
@@ -593,10 +593,11 @@ Deno.serve(async (req) => {
         metadata: {
           original_keys: Object.keys(parameters).length,
           filtered_keys: Object.keys(filtered).length,
-          defaults_applied: appliedDefaults.length
+          defaults_applied: appliedDefaults.length,
+          defaults_enabled: applyDefaults
         }
       });
-      
+
       return filtered;
     }
 
@@ -623,9 +624,23 @@ Deno.serve(async (req) => {
     // Provider-specific parameter mappings have been moved to provider preprocessing functions
     // See preprocessKieAiParameters() and preprocessRunwareParameters() in providers/
 
+    // If a model already prepared a provider-ready payload (e.g., Runware preparePayload),
+    // do NOT inject schema defaults for missing fields like aspectRatio/quality/background.
+    const isPreparedRunwarePayload =
+      model.provider === 'runware' &&
+      typeof (parameters as Record<string, unknown>)?.taskType === 'string' &&
+      typeof (parameters as Record<string, unknown>)?.model === 'string' &&
+      (((parameters as Record<string, unknown>)?.width !== undefined) || ((parameters as Record<string, unknown>)?.height !== undefined)) &&
+      (
+        (parameters as Record<string, unknown>)?.providerSettings !== undefined ||
+        (parameters as Record<string, unknown>)?.outputType !== undefined ||
+        (parameters as Record<string, unknown>)?.outputFormat !== undefined
+      );
+
     let validatedParameters = validateAndFilterParameters(
       parameters,
-      model.input_schema || { properties: {}, required: [] }
+      model.input_schema || { properties: {}, required: [] },
+      { applyDefaults: !isPreparedRunwarePayload }
     );
 
     // Coerce parameter types based on schema (e.g., "true" -> true for booleans)

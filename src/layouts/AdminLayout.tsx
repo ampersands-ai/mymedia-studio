@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu, X } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu } from "lucide-react";
 import { AdminAlertBell } from "@/components/admin/AdminAlertBell";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -103,14 +103,7 @@ export const AdminLayout = () => {
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0">
             <div className="p-4 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-black">ADMIN PANEL</h2>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </SheetClose>
-              </div>
+              <h2 className="text-lg font-black">ADMIN PANEL</h2>
             </div>
             <ScrollArea className="h-[calc(100vh-65px)]">
               <NavLinks onItemClick={() => setMobileMenuOpen(false)} />

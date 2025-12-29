@@ -98,6 +98,7 @@ import * as Wan25_ImageToVideo from "./image_to_video/Wan_2_5_I2V";
 import * as SeedanceV1ProFastRunware from "./image_to_video/Seedance_V1_0_Pro_Fast_runware";
 import * as Seedance15Pro_ImageToVideo from "./image_to_video/Seedance_1_5_Pro_I2V";
 import * as Wan26_ImageToVideo from "./image_to_video/Wan_2_6_I2V";
+import * as RunwareSeedanceProFastI2V from "./image_to_video/Runware_Seedance_Pro_Fast_I2V";
 
 // Video to Video Models (2)
 import * as TopazVideoUpscale from "./video_to_video/Topaz_Video_Upscale";
@@ -185,6 +186,7 @@ import * as Wan22TurboNew_PromptToVideo from "./prompt_to_video/Wan_2_2_Turbo_T2
 import * as Wan25_PromptToVideo from "./prompt_to_video/Wan_2_5_T2V";
 import * as Seedance15Pro_PromptToVideo from "./prompt_to_video/Seedance_1_5_Pro_T2V";
 import * as Wan26_PromptToVideo from "./prompt_to_video/Wan_2_6_T2V";
+import * as RunwareSeedanceProFastT2V from "./prompt_to_video/Runware_Seedance_Pro_Fast_T2V";
 
 /**
  * Generation execution parameters
@@ -394,6 +396,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e4f9a0b1-6c7d-8e9f-0a1b-2c3d4e5f6a7b": Wan22TurboNew_ImageToVideo as ModelModule,        // Wan 2.2 Turbo | image_to_video | kie_ai
   "a6b1c2d3-8e9f-0a1b-2c3d-4e5f6a7b8c9d": Wan25_ImageToVideo as ModelModule,                // Wan 2.5 | image_to_video | kie_ai
   "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7": Seedance15Pro_ImageToVideo as ModelModule,        // Seedance 1.5 Pro | image_to_video | kie_ai
+  "a1b2c3d4-e5f6-0a1b-2c3d-4e5f6a7b8c9d": RunwareSeedanceProFastI2V as ModelModule,         // Seedance 1.0 Pro Fast (I2V) | image_to_video | runware
   
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO VIDEO MODELS (22 total)
@@ -420,6 +423,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "d3e8f9a0-5b6c-7d8e-9f0a-1b2c3d4e5f6a": Wan22TurboNew_PromptToVideo as ModelModule,       // Wan 2.2 Turbo | prompt_to_video | kie_ai
   "f5a0b1c2-7d8e-9f0a-1b2c-3d4e5f6a7b8c": Wan25_PromptToVideo as ModelModule,               // Wan 2.5 | prompt_to_video | kie_ai
   "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6": Seedance15Pro_PromptToVideo as ModelModule,       // Seedance 1.5 Pro | prompt_to_video | kie_ai
+  "b2c3d4e5-f6a7-1b2c-3d4e-5f6a7b8c9d0e": RunwareSeedanceProFastT2V as ModelModule,         // Seedance 1.0 Pro Fast | prompt_to_video | runware
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LIP SYNC MODELS (4 total)

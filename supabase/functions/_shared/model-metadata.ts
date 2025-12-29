@@ -249,7 +249,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   "b6d430f1-e823-4192-bf72-0dba29079931": {
     recordId: "b6d430f1-e823-4192-bf72-0dba29079931",
     modelId: "qwen/image-edit",
-    modelName: "Qwen Image Editor",
+    modelName: "Qwen Image Editor Pro",
     provider: "kie_ai",
     contentType: "image_editing",
     baseCreditCost: 1,
@@ -1234,14 +1234,14 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // IMAGE TO IMAGE MODELS (Runware)
+  // QWEN IMAGE EDITOR LITE (Runware)
   // ═══════════════════════════════════════════════════════════════════════════
   "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": {
     recordId: "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
     modelId: "runware:108@20",
-    modelName: "Z-Image Edit",
+    modelName: "Qwen Image Editor Lite",
     provider: "runware",
-    contentType: "image_to_image",
+    contentType: "image_editing",
     baseCreditCost: 0.20,
     estimatedTimeSeconds: 12,
     isActive: true,

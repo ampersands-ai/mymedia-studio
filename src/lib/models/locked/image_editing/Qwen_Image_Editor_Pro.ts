@@ -1,4 +1,4 @@
-/** Qwen Image Editor (image_editing) - Record: 58a5db33-7729-48e8-88e5-ee05ea4c0c13 */
+/** Qwen Image Editor Pro (image_editing) - Kie.ai - Record: b6d430f1-e823-4192-bf72-0dba29079931 */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -9,7 +9,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 export const MODEL_CONFIG = {
   modelId: "qwen/image-edit",
   recordId: "b6d430f1-e823-4192-bf72-0dba29079931",
-  modelName: "Qwen Image Editor",
+  modelName: "Qwen Image Editor Pro",
   provider: "kie_ai",
   contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING",
@@ -34,11 +34,11 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/qwen.png",
   modelFamily: "Qwen",
-  variantName: "Image Editor",
+  variantName: "Image Editor Pro",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,
-  lockedFilePath: "src/lib/models/locked/image_editing/Qwen_Image_Editor.ts",
+  lockedFilePath: "src/lib/models/locked/image_editing/Qwen_Image_Editor_Pro.ts",
 } as const;
 
 export const SCHEMA = {

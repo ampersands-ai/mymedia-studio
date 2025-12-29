@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown } from "lucide-react";
+import { Sparkles, Coins, History, Video, Settings, LogOut, Shield, BookOpen, ChevronDown, Clapperboard, Info, HelpCircle } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -140,6 +140,45 @@ export const DashboardLayout = () => {
                     <Link to="/dashboard/prompts" className={cn("flex items-center cursor-pointer", isActive("/dashboard/prompts") && "bg-muted")}>
                       <BookOpen className="mr-2 h-4 w-4" />
                       Prompts
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* RESOURCES Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "text-base px-5 py-2.5 rounded-full font-semibold gap-1.5",
+                      ["/video-editor", "/about", "/faq"].some(p => isActive(p))
+                        ? "bg-primary-500 !text-black hover:bg-primary-600 hover:!text-black border-2 border-primary-600 [&>svg]:!text-black [&>span]:!text-black"
+                        : "text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Info className="h-4 w-4" />
+                    <span>Resources</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/video-editor" className={cn("flex items-center cursor-pointer", isActive("/video-editor") && "bg-muted")}>
+                      <Clapperboard className="mr-2 h-4 w-4" />
+                      Video Editor
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about" className={cn("flex items-center cursor-pointer", isActive("/about") && "bg-muted")}>
+                      <Info className="mr-2 h-4 w-4" />
+                      About
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/faq" className={cn("flex items-center cursor-pointer", isActive("/faq") && "bg-muted")}>
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      FAQ
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

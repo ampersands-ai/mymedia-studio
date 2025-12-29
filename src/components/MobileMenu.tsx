@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText, X
+  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText, X, Clapperboard
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -210,6 +210,11 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 <SectionHeader>RESOURCES</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
+                    path="/video-editor" 
+                    label="Video Editor" 
+                    icon={<Clapperboard className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
                     path="/dashboard/prompts" 
                     label="Prompt Library" 
                     icon={<FileText className="h-4 w-4" />} 
@@ -291,6 +296,11 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 {/* RESOURCES Section */}
                 <SectionHeader>RESOURCES</SectionHeader>
                 <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/video-editor" 
+                    label="Video Editor" 
+                    icon={<Clapperboard className="h-4 w-4" />} 
+                  />
                   <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
                   {showBlogPage && (
                     <MenuItem path="/blog" label="Blog" icon={<BookOpen className="h-4 w-4" />} />

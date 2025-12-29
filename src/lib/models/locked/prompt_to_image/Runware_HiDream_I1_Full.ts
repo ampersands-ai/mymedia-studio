@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 0.28,
+  baseCreditCost: 1.25,
   estimatedTimeSeconds: 20,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -56,7 +56,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/artifio.png",
   modelFamily: "HiDream",
-  variantName: "HiDream-I1 Full",
+  variantName: "HiDream Full",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

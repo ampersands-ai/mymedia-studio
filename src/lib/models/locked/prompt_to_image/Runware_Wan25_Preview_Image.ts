@@ -33,7 +33,7 @@ import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 export const MODEL_CONFIG = {
   modelId: "runware:201@10",
   recordId: "4d5e6f7a-8b9c-0d1e-2f3a-123456789012",
-  modelName: "Wan2.5-Preview Image",
+  modelName: "Wan 2.5 Preview",
   provider: "runware",
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",

@@ -35,7 +35,7 @@ export const MODEL_CONFIG = {
   provider: "runware", // NEW PROVIDER
   contentType: "prompt_to_image",
   use_api_key: "RUNWARE_API_KEY_PROMPT_TO_IMAGE",
-  baseCreditCost: 1,
+  baseCreditCost: 0.15,
   estimatedTimeSeconds: 10,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },

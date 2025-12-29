@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, Layout, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, FileText, X, Clapperboard
+  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, X, Clapperboard, Film
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -195,7 +195,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   {renderFeatureItem(
                     "/dashboard/storyboard",
                     "Storyboard",
-                    <span className="text-base">🎬</span>,
+                    <Film className="h-4 w-4" />,
                     "storyboard"
                   )}
                 </div>
@@ -206,7 +206,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   {renderFeatureItem(
                     "/dashboard/templates",
                     "Templates",
-                    <Layout className="h-4 w-4" />,
+                    <LayoutTemplate className="h-4 w-4" />,
                     "templates"
                   )}
                   <MenuItem 
@@ -217,7 +217,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   <MenuItem 
                     path="/dashboard/prompts" 
                     label="Prompt Library" 
-                    icon={<FileText className="h-4 w-4" />} 
+                    icon={<BookOpen className="h-4 w-4" />} 
                   />
                 </div>
 
@@ -263,7 +263,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   {renderFeatureItem(
                     "/dashboard/templates",
                     "Templates",
-                    <Layout className="h-4 w-4" />,
+                    <LayoutTemplate className="h-4 w-4" />,
                     "templates"
                   )}
                   {renderFeatureItem(
@@ -276,7 +276,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   {renderFeatureItem(
                     "/dashboard/storyboard",
                     "Storyboard",
-                    <span className="text-base">🎬</span>,
+                    <Film className="h-4 w-4" />,
                     "storyboard"
                   )}
                   {renderFeatureItem(

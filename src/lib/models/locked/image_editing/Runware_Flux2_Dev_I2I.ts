@@ -35,11 +35,11 @@ import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 export const MODEL_CONFIG = {
   modelId: "runware:400@1",
   recordId: "2b3c4d5e-6f7a-8b9c-0d1e-f12345678901",
-  modelName: "FLUX.2 [dev] Edit",
+  modelName: "FLUX.2 Dev",
   provider: "runware",
   contentType: "image_editing",
   use_api_key: "RUNWARE_API_KEY_IMAGE_TO_IMAGE",
-  baseCreditCost: 0.35,
+  baseCreditCost: 1.5,
   estimatedTimeSeconds: 14,
   costMultipliers: {
     numberResults: { 1: 1, 2: 2, 3: 3, 4: 4 },
@@ -56,9 +56,9 @@ export const MODEL_CONFIG = {
   acceleration: "high",
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
-  variantName: "FLUX.2 [dev] Edit",
+  variantName: "Flux 2 Dev",
   displayOrderInFamily: 4,
   // Lock system
   isLocked: true,

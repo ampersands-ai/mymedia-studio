@@ -346,8 +346,9 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     }
 
     // Check for inference result in response
-    const inferenceResult = responseData.data?.find((item: { taskUUID: string; imageURL?: string; imageUUID?: string; videoURL?: string }) =>
-      item.taskUUID === taskUUID && (item.imageURL || item.imageUUID || item.videoURL)
+    // For async video, we may only get a task acknowledgment (taskType + taskUUID) without immediate videoURL
+    const inferenceResult = responseData.data?.find((item: { taskUUID: string; taskType?: string; imageURL?: string; imageUUID?: string; videoURL?: string }) =>
+      item.taskUUID === taskUUID && (item.imageURL || item.imageUUID || item.videoURL || (isVideo && item.taskType === 'videoInference'))
     );
     
     if (!inferenceResult) {
@@ -364,6 +365,16 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     }
     
     const result = inferenceResult;
+    
+    logger.info('Inference result found', { 
+      metadata: { 
+        hasVideoURL: !!result.videoURL, 
+        hasImageURL: !!result.imageURL, 
+        taskType: result.taskType,
+        isAsyncVideo: isVideo && !result.videoURL && result.taskType === 'videoInference',
+        taskUUID 
+      } 
+    });
 
     // Check for errors
     if (result.error) {

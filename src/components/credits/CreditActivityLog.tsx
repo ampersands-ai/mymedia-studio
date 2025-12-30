@@ -186,7 +186,7 @@ export const CreditActivityLog = () => {
                             <ExternalLink className="h-3 w-3 ml-1" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent side="right" align="start">
                           <p>Click to view generation</p>
                           <p className="text-xs text-muted-foreground font-mono">{entry.id}</p>
                         </TooltipContent>

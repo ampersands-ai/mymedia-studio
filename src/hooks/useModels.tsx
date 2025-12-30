@@ -39,6 +39,8 @@ export interface AIModel {
   locked_file_path?: string | null;
   // UI feature toggles
   show_notify_on_completion?: boolean;
+  // Pricing display
+  is_per_second_pricing?: boolean;
 }
 
 interface VisibilitySettings {
@@ -111,6 +113,8 @@ export const useModels = () => {
           locked_by: null, // Not tracked in .ts files
           // UI feature toggles
           show_notify_on_completion: m.MODEL_CONFIG.showNotifyOnCompletion ?? true,
+          // Pricing display
+          is_per_second_pricing: (m.MODEL_CONFIG as any).isPerSecondPricing ?? false,
         }));
     },
     staleTime: 30 * 1000, // 30 seconds
@@ -176,6 +180,7 @@ export const useModelByRecordId = (recordId: string | undefined) => {
         locked_at: null,
         locked_by: null,
         show_notify_on_completion: m.MODEL_CONFIG.showNotifyOnCompletion ?? true,
+        is_per_second_pricing: (m.MODEL_CONFIG as any).isPerSecondPricing ?? false,
       } as AIModel;
     },
     enabled: !!recordId,

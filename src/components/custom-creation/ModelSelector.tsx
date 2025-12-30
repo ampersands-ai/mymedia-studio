@@ -96,7 +96,7 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Coins className="h-3 w-3" />
-              {model.base_token_cost.toFixed(2)}
+              {model.base_token_cost.toFixed(2)}{(model as any).is_per_second_pricing ? '/s' : ''}
             </span>
             {model.estimated_time_seconds && (
               <span className="flex items-center gap-1">
@@ -214,7 +214,7 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Coins className="h-3 w-3" />
-                      {currentModel.base_token_cost.toFixed(2)}
+                      {currentModel.base_token_cost.toFixed(2)}{(currentModel as any).is_per_second_pricing ? '/s' : ''}
                     </span>
                     {currentModel.estimated_time_seconds && (
                       <span className="flex items-center gap-1">
@@ -270,7 +270,7 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Coins className="h-3 w-3" />
-                        {model.base_token_cost.toFixed(2)}
+                        {model.base_token_cost.toFixed(2)}{(model as any).is_per_second_pricing ? '/s' : ''}
                       </span>
                       {model.estimated_time_seconds && (
                         <span className="flex items-center gap-1">

@@ -251,17 +251,8 @@ const CustomCreation = () => {
     fileInputRef: audioFileInputRef,
   } = useAudioUpload(modelConfig);
 
-  // Extract isPerSecondPricing flag from locked model config
-  const isPerSecondPricing = useMemo(() => {
-    if (!state.selectedModel) return false;
-    try {
-      const { getModel } = require("@/lib/models/registry");
-      const modelModule = getModel(state.selectedModel);
-      return modelModule?.MODEL_CONFIG?.isPerSecondPricing ?? false;
-    } catch {
-      return false;
-    }
-  }, [state.selectedModel]);
+  // Get isPerSecondPricing from current model (flows through AIModel type)
+  const isPerSecondPricing = currentModel?.is_per_second_pricing ?? false;
 
   // Check if audio has been uploaded (for per-second pricing display)
   const hasAudioUploaded = useMemo(() => {

@@ -142,11 +142,11 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
               )}
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="font-medium truncate">{currentModel.model_name}</span>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
-                  <div className="flex items-center gap-0.5">
-                    <Coins className="w-3 h-3" />
-                    <span>{currentModel.base_token_cost}</span>
-                  </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                      <div className="flex items-center gap-0.5">
+                        <Coins className="w-3 h-3" />
+                        <span>{currentModel.base_token_cost}{currentModel.is_per_second_pricing ? '/s' : ''}</span>
+                      </div>
                   {currentModel.default_outputs && currentModel.default_outputs > 1 && (
                     <div className="flex items-center gap-0.5">
                       {(() => { const Icon = getOutputIcon(currentModel.content_type); return <Icon className="w-3 h-3" />; })()}
@@ -208,7 +208,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                             <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
                               <div className="flex items-center gap-0.5">
                                 <Coins className="w-3 h-3" />
-                                <span>{stats.cost}</span>
+                                <span>{stats.cost}{model.is_per_second_pricing ? '/s' : ''}</span>
                               </div>
                               {stats.outputs && stats.outputs > 1 && (
                                 <div className="flex items-center gap-0.5">
@@ -289,9 +289,9 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                                   {model.variant_name || model.model_name}
                                 </span>
                                 <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
-                                  <div className="flex items-center gap-0.5">
+                              <div className="flex items-center gap-0.5">
                                     <Coins className="w-3 h-3" />
-                                    <span>{model.base_token_cost}</span>
+                                    <span>{model.base_token_cost}{model.is_per_second_pricing ? '/s' : ''}</span>
                                   </div>
                                 {model.default_outputs && model.default_outputs > 1 && (
                                     <div className="flex items-center gap-0.5">
@@ -342,26 +342,26 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                 )}
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="font-medium truncate">{currentModel.model_name}</span>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
-                    <div className="flex items-center gap-0.5">
-                      <Coins className="w-3 h-3" />
-                      <span>{currentModel.base_token_cost}</span>
-                    </div>
-                    {currentModel.default_outputs && currentModel.default_outputs > 1 && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                       <div className="flex items-center gap-0.5">
-                        {(() => { const Icon = getOutputIcon(currentModel.content_type); return <Icon className="w-3 h-3" />; })()}
-                        <span>×{currentModel.default_outputs}</span>
+                        <Coins className="w-3 h-3" />
+                        <span>{currentModel.base_token_cost}{currentModel.is_per_second_pricing ? '/s' : ''}</span>
                       </div>
-                    )}
+                      {currentModel.default_outputs && currentModel.default_outputs > 1 && (
+                        <div className="flex items-center gap-0.5">
+                          {(() => { const Icon = getOutputIcon(currentModel.content_type); return <Icon className="w-3 h-3" />; })()}
+                          <span>×{currentModel.default_outputs}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <span className="text-muted-foreground">Select a model</span>
-            )}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
+              ) : (
+                <span className="text-muted-foreground">Select a model</span>
+              )}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
         <DropdownMenuContent 
           className="w-[350px] max-h-[400px] overflow-y-auto bg-background border-border z-50 p-1"
           style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}
@@ -403,7 +403,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                           <div className="flex items-center gap-0.5">
                             <Coins className="w-3 h-3" />
-                            <span>{stats.cost}</span>
+                            <span>{stats.cost}{model.is_per_second_pricing ? '/s' : ''}</span>
                           </div>
                           {stats.outputs && stats.outputs > 1 && (
                             <div className="flex items-center gap-0.5">
@@ -476,7 +476,7 @@ export const ModelFamilySelector: React.FC<ModelFamilySelectorProps> = ({
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                               <div className="flex items-center gap-0.5">
                                 <Coins className="w-3 h-3" />
-                                <span>{model.base_token_cost}</span>
+                                <span>{model.base_token_cost}{model.is_per_second_pricing ? '/s' : ''}</span>
                               </div>
                               {model.default_outputs && model.default_outputs > 1 && (
                                 <div className="flex items-center gap-0.5">

@@ -256,6 +256,9 @@ export interface ModelModule {
     // Lock system
     isLocked: boolean;
     lockedFilePath: string;
+    
+    // Pricing display
+    isPerSecondPricing?: boolean;
   };
   SCHEMA: ModelJsonSchema;
   validate: (inputs: Record<string, unknown>) => ValidationResult;

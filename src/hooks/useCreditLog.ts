@@ -296,27 +296,79 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
       });
 
       // Calculate cumulative balances
-      // Entries are sorted newest-first, so the most recent entry should show current balance
-      // Working backwards: balance BEFORE a charge was higher, BEFORE a refund was lower
+      // Entries are sorted newest-first.
+      // For each row we show the balance *after* that transaction (i.e., the current balance at that point in time).
+      // When going backwards in time:
+      // - charged: balance before was higher (+charged)
+      // - refunded: balance before was lower (-refund)
       const currentBalance = balanceQuery.data ?? 0;
-      
-      if (page === 1) {
-        // Start with current balance for the newest entry
-        let runningBalance = currentBalance;
-        
+
+      let startingBalance = currentBalance;
+
+      // If we're not on the first page, compute the balance at the top of this page by
+      // rewinding all newer transactions (pages before this one).
+      if (from > 0 && from <= 1000) {
+        const { data: newerGenerations, error: newerError } = await supabase
+          .from("generations")
+          .select("id, tokens_used, tokens_charged, status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .range(0, from - 1);
+
+        if (newerError) {
+          logger.warn("Failed to fetch newer credit log entries for balance calculation", { error: newerError });
+        } else if (newerGenerations && newerGenerations.length > 0) {
+          const newerIds = (newerGenerations as Array<Pick<GenerationRow, "id" | "tokens_used" | "tokens_charged" | "status">>).map(g => g.id);
+
+          const [{ data: newerDisputes }, { data: newerDisputeHistory }] = await Promise.all([
+            supabase.from("token_dispute_reports").select("generation_id, status").in("generation_id", newerIds),
+            supabase.from("token_dispute_history").select("generation_id, status").in("generation_id", newerIds),
+          ]);
+
+          const newerDisputeMap = new Map<string, { hasDispute: boolean; status?: string }>();
+          (newerDisputes as DisputeRow[] | null)?.forEach((d) => {
+            newerDisputeMap.set(d.generation_id, { hasDispute: true, status: d.status });
+          });
+          (newerDisputeHistory as DisputeRow[] | null)?.forEach((d) => {
+            if (!newerDisputeMap.has(d.generation_id)) {
+              newerDisputeMap.set(d.generation_id, { hasDispute: true, status: d.status });
+            }
+          });
+
+          // Apply deltas from newest -> oldest for all newer rows
+          let running = currentBalance;
+          for (const gen of newerGenerations as Array<Pick<GenerationRow, "id" | "tokens_used" | "tokens_charged" | "status">>) {
+            const disputeInfo = newerDisputeMap.get(gen.id) || { hasDispute: false };
+            const status = determineCreditStatus(
+              gen.status,
+              gen.tokens_charged,
+              gen.tokens_used,
+              disputeInfo.hasDispute,
+              disputeInfo.status
+            );
+
+            if (status === "charged") {
+              running += gen.tokens_charged ?? gen.tokens_used;
+            } else if (status === "refunded") {
+              running -= gen.tokens_used;
+            }
+          }
+
+          startingBalance = running;
+        }
+      }
+
+      // Apply balances for the current page
+      {
+        let runningBalance = startingBalance;
         for (let i = 0; i < entries.length; i++) {
-          // This entry's balance is the running balance at this point in time
           entries[i].cumulativeBalance = runningBalance;
-          
-          // Calculate what the balance was BEFORE this transaction
-          // If charged: before this charge, balance was higher by the charged amount
-          // If refunded: before this refund, balance was lower by the refund amount
-          if (entries[i].creditStatus === 'charged') {
+
+          if (entries[i].creditStatus === "charged") {
             runningBalance += entries[i].creditsCharged;
-          } else if (entries[i].creditStatus === 'refunded') {
+          } else if (entries[i].creditStatus === "refunded") {
             runningBalance -= entries[i].refundAmount;
           }
-          // Reserved/pending don't affect the balance calculation for past entries
         }
       }
 

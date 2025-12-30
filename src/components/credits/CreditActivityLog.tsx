@@ -155,9 +155,9 @@ export const CreditActivityLog = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 overflow-x-hidden">
         <div className="rounded-md border border-border/50">
-          <Table>
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead className="whitespace-nowrap">ID</TableHead>
@@ -202,7 +202,7 @@ export const CreditActivityLog = () => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-sm truncate block max-w-[220px] cursor-default">
+                            <span className="text-sm truncate block min-w-0 cursor-default">
                               {entry.prompt ? (
                                 truncatePrompt(entry.prompt)
                               ) : (

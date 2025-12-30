@@ -272,9 +272,10 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
         );
 
         // For completed generations, credits were charged via tokens_used (reserved upfront)
+        // Note: tokens_charged can be 0 even for completed, so fall back to tokens_used
         const creditsCharged = creditStatus === 'charged' 
-          ? (gen.tokens_charged ?? gen.tokens_used)
-          : (gen.tokens_charged ?? 0);
+          ? (gen.tokens_charged || gen.tokens_used)
+          : (gen.tokens_charged || 0);
         
         const refundAmount = creditStatus === 'refunded' ? gen.tokens_used : 0;
 
@@ -348,7 +349,7 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
             );
 
             if (status === "charged") {
-              running += gen.tokens_charged ?? gen.tokens_used;
+              running += gen.tokens_charged || gen.tokens_used;
             } else if (status === "refunded") {
               running -= gen.tokens_used;
             }

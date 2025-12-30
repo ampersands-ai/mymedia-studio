@@ -948,7 +948,8 @@ async function assembleVideo(
       videoClips.push({
         asset: {
           type: 'video',
-          src: videoUrl
+          src: videoUrl,
+          volume: 0 // Mute background video audio
         },
         start: currentTime,
         length: clipDuration,

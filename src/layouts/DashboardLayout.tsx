@@ -47,7 +47,7 @@ export const DashboardLayout = () => {
 
             {/* Desktop Navigation - Dropdowns */}
             <nav className="hidden md:flex items-center gap-3">
-              <StudioDropdown align="start" />
+              <StudioDropdown align="center" />
               <LibraryDropdown align="start" />
             </nav>
 

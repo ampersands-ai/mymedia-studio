@@ -164,59 +164,59 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   </div>
                 )}
 
-                {/* STUDIO - Image */}
+                {/* IMAGE */}
                 <SectionHeader>IMAGE</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
-                    path="/dashboard/custom-creation?type=text-to-image" 
+                    path="/dashboard/custom-creation?group=image_editing" 
+                    label="Image to Image" 
+                    icon={<Sparkles className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?group=prompt_to_image" 
                     label="Text to Image" 
                     icon={<Sparkles className="h-4 w-4" />} 
                   />
                 </div>
 
-                {/* STUDIO - Video */}
+                {/* VIDEO */}
                 <SectionHeader>VIDEO</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
-                    path="/dashboard/custom-creation?type=text-to-video" 
+                    path="/dashboard/custom-creation?group=prompt_to_video" 
                     label="Text to Video" 
                     icon={<Video className="h-4 w-4" />} 
                   />
                   <MenuItem 
-                    path="/dashboard/custom-creation?type=image-to-video" 
+                    path="/dashboard/custom-creation?group=image_to_video" 
                     label="Image to Video" 
+                    icon={<Film className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?group=video_to_video" 
+                    label="Video to Video" 
                     icon={<Video className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?group=lip_sync" 
+                    label="Custom Avatar (Lip Sync)" 
+                    icon={<Sparkles className="h-4 w-4" />} 
                   />
                 </div>
 
-                {/* STUDIO - Audio */}
+                {/* AUDIO */}
                 <SectionHeader>AUDIO</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
-                    path="/dashboard/custom-creation?type=audio" 
+                    path="/dashboard/custom-creation?group=prompt_to_audio" 
                     label="Audio Studio" 
                     icon={<Sparkles className="h-4 w-4" />} 
                   />
                 </div>
 
-                {/* STUDIO - Editing */}
+                {/* EDITING */}
                 <SectionHeader>EDITING</SectionHeader>
                 <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/dashboard/custom-creation?type=image-to-image" 
-                    label="Image to Image" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?type=video-to-video" 
-                    label="Video to Video" 
-                    icon={<Video className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?type=custom-avatar" 
-                    label="Custom Avatar" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
                   <MenuItem 
                     path="/video-editor" 
                     label="Video Stitching" 

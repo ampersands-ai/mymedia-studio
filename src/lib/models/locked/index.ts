@@ -70,6 +70,8 @@ import * as SeedreamV4_ImageEditing from "./image_editing/Seedream_V4";
 import * as RunwareUpscale from "./image_editing/runware_upscale";
 import * as QwenImageEditorLite from "./image_editing/Qwen_Image_Editor_Lite";
 import * as RunwareFlux2DevI2I from "./image_editing/Runware_Flux2_Dev_I2I";
+import * as TopazImageUpscale from "./image_editing/Topaz_Image_Upscale";
+import * as GPTImage15I2I from "./image_editing/GPT_Image_1_5_I2I";
 
 // Image to Video Models (24)
 import * as GoogleVeo31Fast_ImageToVideo from "./image_to_video/Google_Veo_3_1_Fast";
@@ -155,6 +157,7 @@ import * as RunwareFlux1DevNew from "./prompt_to_image/Runware_Flux1_Dev_New";
 import * as RunwareHiDreamI1Full from "./prompt_to_image/Runware_HiDream_I1_Full";
 import * as RunwareHiDreamI1Dev from "./prompt_to_image/Runware_HiDream_I1_Dev";
 import * as RunwareHiDreamI1Fast from "./prompt_to_image/Runware_HiDream_I1_Fast";
+import * as GPTImage15T2I from "./prompt_to_image/GPT_Image_1_5_T2I";
 
 // Prompt to Video Models (21)
 import * as GoogleVeo31Fast_PromptToVideo from "./prompt_to_video/Google_Veo_3_1_Fast";
@@ -324,6 +327,8 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "f14e7b76-98a8-47c7-a0bc-e58dc9ba811c": RunwareUpscale as ModelModule,                    // runware:upscale | image_editing | runware
   "f5a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c": QwenImageEditorLite as ModelModule,               // Qwen Image Editor Lite | image_editing | runware
   "2b3c4d5e-6f7a-8b9c-0d1e-f12345678901": RunwareFlux2DevI2I as ModelModule,                 // FLUX.2 [dev] I2I | image_editing | runware
+  "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d": TopazImageUpscale as ModelModule,                  // Topaz Image Upscale | image_editing | kie_ai
+  "c3d4e5f6-7b8c-9d0e-1f2a-3b4c5d6e7f8a": GPTImage15I2I as ModelModule,                      // GPT Image 1.5 I2I | image_editing | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO IMAGE MODELS (32 total)
@@ -369,6 +374,7 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "7a8b9c0d-1e2f-3a4b-5c6d-456789012345": RunwareHiDreamI1Full as ModelModule,              // HiDream-I1 Full | prompt_to_image | runware
   "8b9c0d1e-2f3a-4b5c-6d7e-567890123456": RunwareHiDreamI1Dev as ModelModule,               // HiDream-i1 Dev | prompt_to_image | runware
   "9c0d1e2f-3a4b-5c6d-7e8f-678901234567": RunwareHiDreamI1Fast as ModelModule,              // HiDream-i1 Fast | prompt_to_image | runware
+  "b2c3d4e5-6a7b-8c9d-0e1f-2a3b4c5d6e7f": GPTImage15T2I as ModelModule,                     // GPT Image 1.5 T2I | prompt_to_image | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE TO VIDEO MODELS (22 total)

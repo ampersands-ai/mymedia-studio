@@ -306,6 +306,26 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 90,
     isActive: true,
   },
+  "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d": {
+    recordId: "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    modelId: "topaz/image-upscale",
+    modelName: "Topaz Image Upscale",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 5,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
+  "c3d4e5f6-7b8c-9d0e-1f2a-3b4c5d6e7f8a": {
+    recordId: "c3d4e5f6-7b8c-9d0e-1f2a-3b4c5d6e7f8a",
+    modelId: "gpt-image/1.5-image-to-image",
+    modelName: "GPT Image 1.5",
+    provider: "kie_ai",
+    contentType: "image_editing",
+    baseCreditCost: 4,
+    estimatedTimeSeconds: 30,
+    isActive: true,
+  },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROMPT TO IMAGE MODELS (32 total)
@@ -638,6 +658,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "prompt_to_image",
     baseCreditCost: 3.5,
     estimatedTimeSeconds: 45,
+    isActive: true,
+  },
+  "b2c3d4e5-6a7b-8c9d-0e1f-2a3b4c5d6e7f": {
+    recordId: "b2c3d4e5-6a7b-8c9d-0e1f-2a3b4c5d6e7f",
+    modelId: "gpt-image/1.5-text-to-image",
+    modelName: "GPT Image 1.5",
+    provider: "kie_ai",
+    contentType: "prompt_to_image",
+    baseCreditCost: 4,
+    estimatedTimeSeconds: 30,
     isActive: true,
   },
 

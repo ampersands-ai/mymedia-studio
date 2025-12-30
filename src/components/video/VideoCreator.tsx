@@ -12,7 +12,7 @@ import { captionPresets } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 import type { VideoJobInput } from '@/types/video';
 import { SelectedMedia } from './BackgroundMediaSelector';
-import { downloadFromUrl } from '@/lib/downloads/downloadManager';
+import { downloadFromUrl, downloadFromStorage } from '@/lib/downloads/downloadManager';
 import { 
   saveCriticalId, 
   loadCriticalId, 
@@ -532,7 +532,7 @@ export function VideoCreator() {
     }
   };
 
-  // Handle Video Download
+  // Handle Video Download - use storage download for Supabase URLs
   const handleDownloadVideo = async () => {
     if (!state.videoUrl) {
       toast.error('No video available to download');
@@ -540,12 +540,38 @@ export function VideoCreator() {
     }
     
     setIsDownloading(true);
+    const filename = `faceless-video-${state.jobId || Date.now()}.mp4`;
+    
     try {
-      const success = await downloadFromUrl(state.videoUrl, { 
-        filename: `faceless-video-${state.jobId}.mp4` 
-      });
+      let success = false;
+      
+      // Check if this is a Supabase storage URL and extract the path
+      const supabaseMatch = state.videoUrl.match(/supabase\.co\/storage\/v1\/object\/(?:public|sign)\/([^?]+)/);
+      
+      if (supabaseMatch) {
+        // Extract bucket and path from the URL
+        const fullPath = supabaseMatch[1];
+        const pathParts = fullPath.split('/');
+        const bucket = pathParts[0];
+        const storagePath = pathParts.slice(1).join('/');
+        
+        success = await downloadFromStorage(storagePath, { 
+          filename,
+          bucket,
+          showErrorToast: false,
+        });
+      } else {
+        // Fallback to direct URL download
+        success = await downloadFromUrl(state.videoUrl, { 
+          filename,
+          showErrorToast: false,
+        });
+      }
+      
       if (success) {
         toast.success('Video downloaded successfully!');
+      } else {
+        toast.error('Failed to download video. Try right-clicking the video and "Save video as..."');
       }
     } catch (error) {
       logger.error('Video download failed', error instanceof Error ? error : new Error(String(error)));

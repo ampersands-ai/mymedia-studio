@@ -141,7 +141,10 @@ export async function downloadFromUrl(
   let anchorElement: HTMLAnchorElement | null = null;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+    });
 
     if (!response.ok) {
       throw new NetworkError('Failed to download file', response.status, undefined, {
@@ -150,9 +153,20 @@ export async function downloadFromUrl(
     }
 
     const blob = await response.blob();
-    const finalFilename = filename || extractFilenameFromUrl(url) || `download-${Date.now()}`;
+    
+    // Validate blob has content
+    if (blob.size === 0) {
+      throw new NetworkError('Downloaded file is empty', 0, undefined, { url });
+    }
 
-    blobUrl = window.URL.createObjectURL(blob);
+    const finalFilename = filename || extractFilenameFromUrl(url) || `download-${Date.now()}`;
+    
+    // Ensure proper MIME type for video files
+    const finalBlob = finalFilename.endsWith('.mp4') 
+      ? new Blob([blob], { type: 'video/mp4' })
+      : blob;
+
+    blobUrl = window.URL.createObjectURL(finalBlob);
     anchorElement = document.createElement('a');
     anchorElement.href = blobUrl;
     anchorElement.download = finalFilename;
@@ -164,7 +178,7 @@ export async function downloadFromUrl(
     logger.info('File downloaded successfully', {
       url,
       filename: finalFilename,
-      fileSize: blob.size,
+      fileSize: finalBlob.size,
     });
 
     return true;
@@ -178,13 +192,18 @@ export async function downloadFromUrl(
     return false;
   } finally {
     if (blobUrl) {
+      // Longer delay for video files to ensure download completes
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl!);
-      }, 100);
+      }, 1500);
     }
 
     if (anchorElement && anchorElement.parentNode) {
-      document.body.removeChild(anchorElement);
+      setTimeout(() => {
+        if (anchorElement && anchorElement.parentNode) {
+          document.body.removeChild(anchorElement);
+        }
+      }, 1500);
     }
   }
 }

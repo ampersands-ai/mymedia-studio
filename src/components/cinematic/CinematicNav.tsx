@@ -185,7 +185,7 @@ export const CinematicNav = () => {
                 <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
                   <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer">
                     <History className="h-4 w-4 mr-2" />
-                    Creations
+                    History
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/dashboard/prompts")} className="cursor-pointer">
                     <MessageSquare className="h-4 w-4 mr-2" />

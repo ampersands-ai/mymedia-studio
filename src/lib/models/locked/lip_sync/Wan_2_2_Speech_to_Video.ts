@@ -20,11 +20,11 @@ export const MODEL_CONFIG = {
   contentType: "lip_sync",
   use_api_key: "KIE_AI_API_KEY_LIP_SYNC",
   baseCreditCost: 36, // Default: 580p × 4s = 9 × 4
-  estimatedTimeSeconds: 180,
+  estimatedTimeSeconds: 680,
   pricingPerSecond: {
-    "480p": 6,
-    "580p": 9,
-    "720p": 12,
+    "480p": 24,
+    "580p": 36,
+    "720p": 48,
   },
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",
@@ -76,10 +76,10 @@ export const SCHEMA = {
     resolution: {
       type: "string",
       title: "Resolution",
-      default: "580p",
+      default: "480p",
       enum: ["480p", "580p", "720p"],
       enumLabels: {
-        "480p": "480p (12 credits/s)",
+        "480p": "480p (6 credits/s)",
         "580p": "580p (9 credits/s)",
         "720p": "720p (12 credits/s)",
       },
@@ -223,13 +223,13 @@ export function preparePayload(inputs: Record<string, any>) {
 
 export function calculateCost(inputs: Record<string, any>) {
   const resolution = inputs.resolution || "580p";
-  
+
   // Fixed 4-second video duration (max audio length)
   const videoDuration = 4;
-  
+
   // Pricing per second by resolution
   const ratePerSecond = MODEL_CONFIG.pricingPerSecond[resolution as keyof typeof MODEL_CONFIG.pricingPerSecond] || 9;
-  
+
   return Math.ceil(ratePerSecond * videoDuration);
 }
 

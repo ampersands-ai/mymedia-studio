@@ -27,7 +27,7 @@ export const MODEL_CONFIG = {
   maxImages: 1,
   maxAudios: 1,
   maxFileSize: 10 * 1024 * 1024, // 10MB
-  maxAudioDuration: 14, // Max 15 seconds
+  maxAudioDuration: 15, // Max 15 seconds
   defaultOutputs: 1,
   costMultipliers: null,
   // UI metadata

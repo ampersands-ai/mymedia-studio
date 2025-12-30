@@ -19,7 +19,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "lip_sync",
   use_api_key: "KIE_AI_API_KEY_LIP_SYNC",
-  baseCreditCost: 6, // Default: 580p × 5s = 9 × 5
+  baseCreditCost: 36, // Default: 580p × 4s = 9 × 4
   estimatedTimeSeconds: 180,
   pricingPerSecond: {
     "480p": 6,
@@ -32,6 +32,7 @@ export const MODEL_CONFIG = {
   maxAudios: 1,
   maxFileSize: 10 * 1024 * 1024, // 10MB
   defaultOutputs: 1,
+  costMultipliers: null,
   // UI metadata
   isActive: true,
   logoUrl: "/logos/wan.png",
@@ -68,7 +69,7 @@ export const SCHEMA = {
       type: "string",
       format: "uri",
       title: "Audio File",
-      description: "Audio for lip-sync. Formats: MP3, WAV, OGG, M4A (max 10MB)",
+      description: "Audio for lip-sync (max 4 seconds). Formats: MP3, WAV, OGG, M4A (max 10MB)",
       renderer: "audio",
       maxDuration: 4,
     },
@@ -222,15 +223,13 @@ export function preparePayload(inputs: Record<string, any>) {
 
 export function calculateCost(inputs: Record<string, any>) {
   const resolution = inputs.resolution || "580p";
-  const numFrames = inputs.num_frames || 81;
-  const fps = inputs.frames_per_second || 16;
-
-  // Calculate video duration in seconds
-  const videoDuration = numFrames / fps;
-
+  
+  // Fixed 4-second video duration (max audio length)
+  const videoDuration = 4;
+  
   // Pricing per second by resolution
   const ratePerSecond = MODEL_CONFIG.pricingPerSecond[resolution as keyof typeof MODEL_CONFIG.pricingPerSecond] || 9;
-
+  
   return Math.ceil(ratePerSecond * videoDuration);
 }
 

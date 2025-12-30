@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, ChevronDown, Video, Clapperboard, LayoutTemplate, BookOpen } from "lucide-react";
+import { Sparkles, ChevronDown, Video, Clapperboard, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -92,15 +92,6 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               >
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">Storyboard</span>
-              </Link>
-            )}
-            {(isFeatureEnabled('templates') || isAdmin) && (
-              <Link
-                to="/dashboard/templates"
-                className="flex items-center gap-3 p-3 rounded-xl bg-background/60 hover:bg-muted/80 border border-transparent hover:border-border transition-all duration-200"
-              >
-                <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Templates</span>
               </Link>
             )}
           </div>

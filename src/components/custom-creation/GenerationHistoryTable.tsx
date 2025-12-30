@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { RECORD_ID_REGISTRY } from '@/lib/models/locked/index';
+import { getDisplayableParameters } from '@/lib/utils/parameterDisplayFilter';
 
 interface HistoryGeneration {
   id: string;
@@ -42,9 +43,6 @@ interface HistoryGeneration {
 }
 
 const ITEMS_LIMIT = 10;
-
-// Keys to exclude from settings display
-const EXCLUDE_SETTINGS_KEYS = ['_webhook_token', 'prompt', 'imageUrls', 'image_url', 'model', 'userId'];
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -105,24 +103,6 @@ const formatGenerationTime = (createdAt: string, completedAt: string | null): st
   return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 };
 
-const formatSettings = (settings: Record<string, unknown> | null): { key: string; value: string }[] => {
-  if (!settings) return [];
-  
-  return Object.entries(settings)
-    .filter(([key]) => !EXCLUDE_SETTINGS_KEYS.includes(key))
-    .map(([key, value]) => {
-      const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      let formattedValue: string;
-      
-      if (typeof value === 'boolean') formattedValue = value ? 'Yes' : 'No';
-      else if (typeof value === 'number') formattedValue = String(value);
-      else if (typeof value === 'string' && value.length < 50) formattedValue = value;
-      else return null;
-      
-      return { key: formattedKey, value: formattedValue };
-    })
-    .filter((item): item is { key: string; value: string } => item !== null);
-};
 
 export const GenerationHistoryTable = () => {
   const { user } = useAuth();
@@ -253,7 +233,7 @@ export const GenerationHistoryTable = () => {
               {generations.map((gen) => {
                 const modelInfo = getModelInfo(gen.model_record_id);
                 const genTime = formatGenerationTime(gen.created_at, gen.completed_at);
-                const settings = formatSettings(gen.settings);
+                const settings = getDisplayableParameters(gen.settings, gen.model_record_id);
                 
                 return (
                   <div 
@@ -297,13 +277,13 @@ export const GenerationHistoryTable = () => {
                     {/* Parameters row */}
                     {settings.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {settings.slice(0, 5).map((param, idx) => (
+                        {settings.slice(0, 5).map((param) => (
                           <Badge 
-                            key={idx} 
+                            key={param.key} 
                             variant="secondary" 
                             className="text-[10px] px-1.5 py-0 font-normal"
                           >
-                            {param.key}: {param.value}
+                            {param.label}: {param.value}
                           </Badge>
                         ))}
                         {settings.length > 5 && (

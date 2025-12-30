@@ -61,8 +61,9 @@ export const SCHEMA = {
       type: "string",
       format: "uri",
       title: "Audio File",
-      description: "Audio file for lip-sync. Formats: mp3, wav, ogg, m4a, flac, aac, wma (max 10MB)",
+      description: "Audio file for lip-sync (max 14 seconds). Formats: mp3, wav, ogg, m4a, flac, aac, wma (max 10MB)",
       renderer: "audio",
+      maxDuration: 14,
     },
     resolution: {
       default: "480p",

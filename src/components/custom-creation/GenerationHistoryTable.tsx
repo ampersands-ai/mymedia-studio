@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,7 +104,7 @@ const formatGenerationTime = (createdAt: string, completedAt: string | null): st
 };
 
 
-export const GenerationHistoryTable = () => {
+export const GenerationHistoryTable = memo(function GenerationHistoryTable() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -355,4 +355,4 @@ export const GenerationHistoryTable = () => {
       </CardContent>
     </Card>
   );
-};
+});

@@ -36,11 +36,11 @@ export const useCinematicPrompts = () => {
   return useQuery({
     queryKey: ['cinematic-prompts'],
     queryFn: async () => {
+      // Query the public view which is pre-ordered by quality_score
+      // and excludes internal metrics (quality_score, use_count)
       const { data, error } = await supabase
-        .from('cinematic_prompts')
-        .select('*')
-        .eq('is_active', true)
-        .order('quality_score', { ascending: false, nullsFirst: false });
+        .from('cinematic_prompts_public')
+        .select('*');
 
       if (error) {
         logger.error('Error fetching cinematic prompts', error);
@@ -58,16 +58,19 @@ export const useCinematicPrompts = () => {
  */
 export const getSurpriseMePromptFromDb = (
   creationType: CreationType,
-  dbPrompts: Array<{ prompt: string; category: string }> | undefined
+  dbPrompts: Array<{ prompt: string | null; category: string | null }> | undefined
 ): string => {
   // If no database prompts, use hardcoded fallback
   if (!dbPrompts || dbPrompts.length === 0) {
     return getHardcodedPrompt(creationType);
   }
 
-  // Filter prompts by category
+  // Filter prompts by category (handle null values)
   const category = categoryMap[creationType];
-  const filteredPrompts = dbPrompts.filter(p => p.category === category);
+  const filteredPrompts = dbPrompts.filter(
+    (p): p is { prompt: string; category: string } => 
+      p.prompt !== null && p.category !== null && p.category === category
+  );
   
   // If no prompts for this category, use hardcoded fallback
   if (filteredPrompts.length === 0) {

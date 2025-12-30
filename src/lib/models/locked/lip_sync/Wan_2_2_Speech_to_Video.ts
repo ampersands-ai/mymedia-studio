@@ -22,7 +22,7 @@ export const MODEL_CONFIG = {
   baseCreditCost: 45, // Default: 580p × 5s = 9 × 5
   estimatedTimeSeconds: 180,
   pricingPerSecond: {
-    "480p": 12,
+    "480p": 6,
     "580p": 9,
     "720p": 12,
   },

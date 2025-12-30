@@ -77,6 +77,7 @@ export const SCHEMA = Object.freeze({
       title: "Audio File",
       description: "Audio URL or UUID for lip-sync (MP3, WAV)",
       renderer: "audio",
+      maxDuration: 60,
     },
     syncMode: {
       type: "string",

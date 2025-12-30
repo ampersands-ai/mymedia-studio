@@ -113,6 +113,16 @@ const CustomCreation = () => {
   const audioFieldInfo = schemaHelpers.getAudioFieldInfo(modelConfig);
   const videoFieldInfo = schemaHelpers.getVideoFieldInfo(modelConfig);
 
+  // Extract maxDuration from locked file schema (overrides database value)
+  const effectiveAudioMaxDuration = useMemo(() => {
+    if (!modelSchema?.audioInputField || !modelSchema?.properties) {
+      return audioFieldInfo.maxDuration;
+    }
+    const audioFieldKey = modelSchema.audioInputField as string;
+    const audioField = modelSchema.properties[audioFieldKey] as { maxDuration?: number } | undefined;
+    return audioField?.maxDuration ?? audioFieldInfo.maxDuration;
+  }, [modelSchema, audioFieldInfo.maxDuration]);
+
   // Output processor (independent module for handling generation outputs)
   const { 
     isProcessing: isPolling, 
@@ -633,7 +643,7 @@ const CustomCreation = () => {
             onRemoveAudio={() => { removeAudio(); updateState({ generateCaption: false }); }}
             audioFieldName={audioFieldInfo.fieldName}
             isAudioRequired={audioFieldInfo.isRequired}
-            audioMaxDuration={audioFieldInfo.maxDuration}
+            audioMaxDuration={effectiveAudioMaxDuration}
             audioFileInputRef={audioFileInputRef}
             onAudioDurationChange={(duration) => updateState({ audioDuration: duration })}
             uploadedVideo={uploadedVideos[0] || null}

@@ -1150,7 +1150,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // LIP SYNC MODELS (4 total)
+  // LIP SYNC MODELS (6 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d": {
     recordId: "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
@@ -1189,6 +1189,26 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     provider: "kie_ai",
     contentType: "lip_sync",
     baseCreditCost: 30,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "d3e4f5a6-0b1c-2d3e-4f5a-6b7c8d9e0f1a": {
+    recordId: "d3e4f5a6-0b1c-2d3e-4f5a-6b7c8d9e0f1a",
+    modelId: "wan/2-2-animate-move",
+    modelName: "Wan 2.2 Animate Move",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
+    isActive: true,
+  },
+  "e4f5a6b7-1c2d-3e4f-5a6b-7c8d9e0f1a2b": {
+    recordId: "e4f5a6b7-1c2d-3e4f-5a6b-7c8d9e0f1a2b",
+    modelId: "wan/2-2-animate-replace",
+    modelName: "Wan 2.2 Animate Replace",
+    provider: "kie_ai",
+    contentType: "lip_sync",
+    baseCreditCost: 15,
     estimatedTimeSeconds: 180,
     isActive: true,
   },

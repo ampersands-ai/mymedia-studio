@@ -39,6 +39,8 @@ export const MODEL_CONFIG = {
   // Lock system
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/lip_sync/Infinitalk_from_audio.ts",
+  // Pricing display
+  isPerSecondPricing: true,
 } as const;
 
 export const SCHEMA = {
@@ -122,8 +124,8 @@ export function preparePayload(inputs: Record<string, any>) {
 
 export function calculateCost(inputs: Record<string, any>, audioDurationSeconds?: number) {
   const resolution = inputs.resolution || "480p";
-  // Default to 5 seconds if audio duration not provided
-  const duration = audioDurationSeconds || 5;
+  // Default to 1 second if audio duration not provided (shows per-second rate)
+  const duration = audioDurationSeconds || 1;
 
   // Pricing per second by resolution
   const ratePerSecond: Record<string, number> = {

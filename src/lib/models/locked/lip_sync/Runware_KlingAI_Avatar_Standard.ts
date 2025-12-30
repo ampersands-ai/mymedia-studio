@@ -56,6 +56,8 @@ export const MODEL_CONFIG = {
   displayOrderInFamily: 1,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/lip_sync/Runware_KlingAI_Avatar_Standard.ts",
+  // Pricing display
+  isPerSecondPricing: true,
 } as const;
 
 // ============================================================================
@@ -134,8 +136,8 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
 
 export function calculateCost(_inputs: Record<string, unknown>, audioDurationSeconds?: number): number {
   const ratePerSecond = MODEL_CONFIG.creditPerSecond;
-  // Default to 5 seconds if audio duration not provided
-  const duration = audioDurationSeconds || 5;
+  // Default to 1 second if audio duration not provided (shows per-second rate)
+  const duration = audioDurationSeconds || 1;
   // Cap at max audio duration
   const cappedDuration = Math.min(duration, MODEL_CONFIG.maxAudioDuration);
   const numResults = (_inputs.numberResults || 1) as number;

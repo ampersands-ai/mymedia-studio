@@ -251,6 +251,23 @@ const CustomCreation = () => {
     fileInputRef: audioFileInputRef,
   } = useAudioUpload(modelConfig);
 
+  // Extract isPerSecondPricing flag from locked model config
+  const isPerSecondPricing = useMemo(() => {
+    if (!state.selectedModel) return false;
+    try {
+      const { getModel } = require("@/lib/models/registry");
+      const modelModule = getModel(state.selectedModel);
+      return modelModule?.MODEL_CONFIG?.isPerSecondPricing ?? false;
+    } catch {
+      return false;
+    }
+  }, [state.selectedModel]);
+
+  // Check if audio has been uploaded (for per-second pricing display)
+  const hasAudioUploaded = useMemo(() => {
+    return uploadedAudios.length > 0 && state.audioDuration != null;
+  }, [uploadedAudios.length, state.audioDuration]);
+
   // Video upload
   const {
     uploadedVideos,
@@ -677,6 +694,8 @@ const CustomCreation = () => {
               (currentModel?.show_notify_on_completion ?? true) && 
               (currentModel?.estimated_time_seconds ?? 0) >= 30
             }
+            isPerSecondPricing={isPerSecondPricing}
+            hasAudioUploaded={hasAudioUploaded}
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             onReset={() => {

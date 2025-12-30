@@ -48,6 +48,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
       >
         <Link
           to="/dashboard/history"
+          onClick={() => setOpenDropdown(null)}
           className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
         >
           <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
@@ -60,6 +61,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         </Link>
         <Link
           to="/dashboard/prompts"
+          onClick={() => setOpenDropdown(null)}
           className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
         >
           <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
@@ -73,6 +75,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         {(isFeatureEnabled('templates') || isAdmin) && (
           <Link
             to="/dashboard/templates"
+            onClick={() => setOpenDropdown(null)}
             className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
           >
             <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">

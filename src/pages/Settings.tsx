@@ -96,7 +96,16 @@ const Settings = () => {
             <SubscriptionSection subscription={subscription} />
           </TabsContent>
 
-          <TabsContent value="credits" className="space-y-4 mt-6 -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16">
+          <TabsContent 
+            value="credits" 
+            className="space-y-4 mt-6"
+            style={{ 
+              marginLeft: 'calc(-50vw + 50%)', 
+              marginRight: 'calc(-50vw + 50%)', 
+              paddingLeft: 'max(1rem, calc(50vw - 600px))',
+              paddingRight: 'max(1rem, calc(50vw - 600px))'
+            }}
+          >
             <CreditActivityLog />
           </TabsContent>
 

@@ -3,8 +3,9 @@ import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { SessionWarning } from "@/components/SessionWarning";
+import type { CreationGroup } from "@/constants/creation-groups";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
@@ -40,6 +41,7 @@ const CustomCreation = () => {
   const { execute } = useErrorHandler();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const outputSectionRef = useRef<HTMLDivElement>(null);
 
   // State management
@@ -448,6 +450,18 @@ const CustomCreation = () => {
       setStateSelectedModel(String(filteredModels[0].record_id));
     }
   }, [filteredModels, state.selectedModel, setStateSelectedModel]);
+
+  // Sync URL group param to state on mount and URL changes
+  useEffect(() => {
+    const urlGroup = searchParams.get('group');
+    if (urlGroup && urlGroup !== state.selectedGroup) {
+      const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
+                           'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
+      if (validGroups.includes(urlGroup)) {
+        setStateSelectedGroup(urlGroup as CreationGroup);
+      }
+    }
+  }, [searchParams, state.selectedGroup, setStateSelectedGroup]);
 
   // Track onboarding: navigatedToTextToImage when user selects prompt_to_image group
   useEffect(() => {

@@ -65,6 +65,7 @@ export const SCHEMA = {
       title: "Reference Images (Optional)",
       description: "Up to 5 images to use as reference. Formats: .jpeg, .jpg, .png, .webp",
       renderer: "image",
+      showToUser: false,
       items: { type: "string", format: "uri" },
       maxItems: 5,
     },

@@ -56,6 +56,7 @@ export const SCHEMA = {
     },
     filesUrl: {
       type: "array",
+      title: "Image",
       description:
         "Up to 5 image URLs to serve as reference or source material. Supported formats: .jfif, .pjpeg, .jpeg, .pjp, .jpg, .png, .webp",
       renderer: "image",

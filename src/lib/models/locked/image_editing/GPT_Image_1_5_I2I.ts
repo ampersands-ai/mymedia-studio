@@ -1,14 +1,14 @@
 /**
  * GPT Image 1.5 Image-to-Image
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Image editing/transformation
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Image field: input_urls (ARRAY)
  * - Aspect ratios: 1:1, 2:3, 3:2
  * - Quality: medium (4 credits), high (11 credits)
- * 
+ *
  * @locked
  * @model gpt-image/1.5-image-to-image
  * @provider kie.ai
@@ -52,9 +52,9 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/gpt-image.png",
-  modelFamily: "GPT Image",
-  variantName: "1.5 I2I",
+  logoUrl: "/logos/openai.png",
+  modelFamily: "OpenAI",
+  variantName: "ChatGPT 1.5",
   displayOrderInFamily: 2,
   // Lock system
   isLocked: true,

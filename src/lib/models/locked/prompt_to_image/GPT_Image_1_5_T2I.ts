@@ -1,13 +1,13 @@
 /**
  * GPT Image 1.5 Text-to-Image
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Photorealistic image generation
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Aspect ratios: 1:1, 2:3, 3:2
  * - Quality: medium (balanced), high (slow/detailed)
- * 
+ *
  * @locked
  * @model gpt-image/1.5-text-to-image
  * @provider kie.ai
@@ -50,9 +50,9 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/gpt-image.png",
-  modelFamily: "GPT Image",
-  variantName: "1.5 T2I",
+  logoUrl: "/logos/openai.png",
+  modelFamily: "OpenAI",
+  variantName: "ChatGPT 1.5",
   displayOrderInFamily: 1,
   // Lock system
   isLocked: true,

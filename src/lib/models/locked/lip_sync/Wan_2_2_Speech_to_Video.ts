@@ -19,7 +19,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "lip_sync",
   use_api_key: "KIE_AI_API_KEY_LIP_SYNC",
-  baseCreditCost: 45, // Default: 580p × 5s = 9 × 5
+  baseCreditCost: 6, // Default: 580p × 5s = 9 × 5
   estimatedTimeSeconds: 180,
   pricingPerSecond: {
     "480p": 6,

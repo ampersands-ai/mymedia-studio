@@ -96,7 +96,7 @@ const Settings = () => {
             <SubscriptionSection subscription={subscription} />
           </TabsContent>
 
-          <TabsContent value="credits" className="space-y-4 mt-6">
+          <TabsContent value="credits" className="space-y-4 mt-6 -mx-4 sm:-mx-8 lg:-mx-16 px-4 sm:px-8 lg:px-16">
             <CreditActivityLog />
           </TabsContent>
 

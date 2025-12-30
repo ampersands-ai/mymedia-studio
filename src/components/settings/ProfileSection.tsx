@@ -25,7 +25,7 @@ const profileNameSchema = z
   });
 
 interface ProfileData {
-  profile_name: string;
+  display_name: string;
   email_verified: boolean;
 }
 
@@ -50,7 +50,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
         body: {
           userId: user.id,
           email: user.email,
-          profileName: profileData.profile_name || ""
+          profileName: profileData.display_name || ""
         }
       });
       
@@ -83,12 +83,12 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
       await execute(
         async () => {
           // Validate profile name
-          const result = profileNameSchema.safeParse(profileData.profile_name);
+          const result = profileNameSchema.safeParse(profileData.display_name);
 
           if (!result.success) {
             const errors: Record<string, string> = {};
             result.error.errors.forEach((err) => {
-              errors['profile_name'] = err.message;
+              errors['display_name'] = err.message;
             });
             setValidationErrors(errors);
             setLoading(false);
@@ -98,14 +98,14 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
           const { error } = await supabase
             .from("profiles")
             .update({
-              profile_name: profileData.profile_name,
+              display_name: profileData.display_name,
             })
             .eq("id", user?.id);
 
           if (error) {
             // Handle unique constraint violation
             if (error.code === '23505') {
-              setValidationErrors({ profile_name: "This profile name is already taken" });
+              setValidationErrors({ display_name: "This profile name is already taken" });
               setLoading(false);
               return;
             }
@@ -120,7 +120,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
                 resource_type: 'profile',
                 resource_id: user?.id,
                 metadata: {
-                  updated_fields: ['profile_name']
+                  updated_fields: ['display_name']
                 }
               }
             });
@@ -141,7 +141,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
               routeName: 'Settings',
               description: 'Updated profile settings',
               metadata: {
-                fields_changed: ['profile_name'],
+                fields_changed: ['display_name'],
               },
             });
           } catch (trackError) {
@@ -176,22 +176,22 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
       <CardContent>
         <form onSubmit={handleUpdateProfile} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="profile_name">Profile Name</Label>
+            <Label htmlFor="display_name">Profile Name</Label>
             <Input
-              id="profile_name"
-              value={profileData.profile_name || ''}
+              id="display_name"
+              value={profileData.display_name || ''}
               onChange={(e) => {
-                setProfileData({ ...profileData, profile_name: e.target.value });
-                setValidationErrors(prev => ({ ...prev, profile_name: "" }));
+                setProfileData({ ...profileData, display_name: e.target.value });
+                setValidationErrors(prev => ({ ...prev, display_name: "" }));
               }}
               placeholder="Creator_XXXXX"
               aria-label="Profile name"
-              className={cn(validationErrors.profile_name && "border-red-500")}
+              className={cn(validationErrors.display_name && "border-red-500")}
             />
-            {validationErrors.profile_name && (
+            {validationErrors.display_name && (
               <p className="text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                {validationErrors.profile_name}
+                {validationErrors.display_name}
               </p>
             )}
             <p className="text-xs text-muted-foreground">

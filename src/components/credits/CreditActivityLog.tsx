@@ -107,15 +107,15 @@ export const CreditActivityLog = () => {
   };
 
   return (
-    <Card className="glass-card">
-      <CardHeader>
+    <Card className="glass-card w-full">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-xl">
               <Receipt className="h-5 w-5" />
               Credit Activity Log
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1">
               {totalCount} total transactions • Showing {entries.length} on this page
             </CardDescription>
           </div>
@@ -155,24 +155,24 @@ export const CreditActivityLog = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 overflow-x-hidden">
-        <div className="rounded-md border border-border/50">
-          <Table className="w-full table-fixed">
+      <CardContent className="space-y-4 px-6">
+        <div className="rounded-lg border border-border/50 overflow-hidden">
+          <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="whitespace-nowrap">ID</TableHead>
-                <TableHead className="whitespace-nowrap">Date</TableHead>
-                <TableHead>Prompt</TableHead>
-                <TableHead className="whitespace-nowrap">Model</TableHead>
-                <TableHead className="whitespace-nowrap hidden lg:table-cell">Version</TableHead>
-                <TableHead className="text-right whitespace-nowrap">Credits</TableHead>
-                <TableHead className="text-right whitespace-nowrap">Balance</TableHead>
+                <TableHead className="w-[80px] whitespace-nowrap py-3">ID</TableHead>
+                <TableHead className="w-[100px] whitespace-nowrap py-3">Date</TableHead>
+                <TableHead className="py-3">Prompt</TableHead>
+                <TableHead className="w-[140px] whitespace-nowrap py-3">Model</TableHead>
+                <TableHead className="w-[100px] whitespace-nowrap hidden xl:table-cell py-3">Version</TableHead>
+                <TableHead className="w-[100px] text-right whitespace-nowrap py-3">Credits</TableHead>
+                <TableHead className="w-[120px] text-right whitespace-nowrap py-3">Balance After</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {entries.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-muted/20">
-                  <TableCell className="py-2">
+                  <TableCell className="py-3">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -193,18 +193,18 @@ export const CreditActivityLog = () => {
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground py-2">
-                    <div>{format(entry.date, "MMM d")}</div>
+                  <TableCell className="text-xs text-muted-foreground py-3">
+                    <div>{format(entry.date, "MMM d, yyyy")}</div>
                     <div className="opacity-70">{format(entry.date, "h:mm a")}</div>
                   </TableCell>
-                  <TableCell className="py-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-2 min-w-0">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-sm truncate block min-w-0 cursor-default">
+                            <span className="text-sm truncate cursor-default">
                               {entry.prompt ? (
-                                truncatePrompt(entry.prompt)
+                                truncatePrompt(entry.prompt, 50)
                               ) : (
                                 <span className="text-muted-foreground italic">Audio-driven generation</span>
                               )}
@@ -221,31 +221,31 @@ export const CreditActivityLog = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-5 w-5 shrink-0 opacity-60 hover:opacity-100"
+                          className="h-6 w-6 shrink-0 opacity-60 hover:opacity-100"
                           onClick={() => handleCopyPrompt(entry.prompt)}
                         >
-                          <Copy className="h-3 w-3" />
+                          <Copy className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="py-2">
+                  <TableCell className="py-3">
                     <div className="text-xs">
-                      <span className="text-muted-foreground hidden sm:inline">{entry.modelType}</span>
-                      <div className="font-medium text-sm truncate max-w-[100px] lg:max-w-[120px]">{entry.modelName}</div>
+                      <span className="text-muted-foreground">{entry.modelType}</span>
+                      <div className="font-medium text-sm truncate">{entry.modelName}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground py-2 hidden lg:table-cell">
+                  <TableCell className="text-xs text-muted-foreground py-3 hidden xl:table-cell">
                     {entry.modelVersion || "-"}
                   </TableCell>
-                  <TableCell className="text-right py-2">
+                  <TableCell className="text-right py-3">
                     <CreditStatusBadge 
                       status={entry.creditStatus} 
                       amount={entry.creditStatus === 'refunded' ? entry.refundAmount : entry.creditsCharged || entry.creditsReserved}
                     />
                   </TableCell>
-                  <TableCell className="text-right py-2">
-                    <span className="text-sm font-medium tabular-nums">
+                  <TableCell className="text-right py-3">
+                    <span className="text-sm font-semibold tabular-nums">
                       {formatBalance(entry.cumulativeBalance)}
                     </span>
                   </TableCell>

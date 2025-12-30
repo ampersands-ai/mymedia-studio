@@ -66,7 +66,6 @@ export function prefetchOnIdle(importFn: () => Promise<any>, timeout = 2000) {
  */
 export async function preloadOnHover(routePath: string): Promise<void> {
   const routeMap: Record<string, () => Promise<any>> = {
-    '/create': () => import('../pages/Create'),
     '/templates': () => import('../pages/Templates'),
     '/pricing': () => import('../pages/Pricing'),
     '/playground': () => import('../pages/Playground'),

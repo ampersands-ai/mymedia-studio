@@ -1,6 +1,3 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 import {
@@ -43,18 +40,11 @@ const VideoEditorPage = () => {
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
         <div className="space-y-6">
           {/* Page Header */}
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/dashboard/history">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black">Video Editor</h1>
-              <p className="text-sm md:text-base text-foreground/80 font-medium">
-                {assets.length} assets • {clips.length} clips • {getTotalDuration().toFixed(1)}s total
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black">Video Editor</h1>
+            <p className="text-sm md:text-base text-foreground/80 font-medium">
+              {assets.length} assets • {clips.length} clips • {getTotalDuration().toFixed(1)}s total
+            </p>
           </div>
 
           {/* Main content */}

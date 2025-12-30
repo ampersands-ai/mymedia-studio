@@ -19,10 +19,9 @@ export function useRoutePreload() {
     
     // Public routes
     prefetchOnIdle(() => import('../pages/IndexV2'), 3500);
-    prefetchOnIdle(() => import('../pages/Create'), 4000);
-    prefetchOnIdle(() => import('../pages/Templates'), 4500);
-    prefetchOnIdle(() => import('../pages/Pricing'), 5000);
-    prefetchOnIdle(() => import('../pages/Auth'), 5500);
+    prefetchOnIdle(() => import('../pages/Templates'), 4000);
+    prefetchOnIdle(() => import('../pages/Pricing'), 4500);
+    prefetchOnIdle(() => import('../pages/Auth'), 5000);
   }, []);
 }
 
@@ -34,7 +33,6 @@ export function usePrefetchOnHover(routePath: string) {
     '/': () => import('../pages/IndexV2'),
     '/old-home': () => import('../pages/IndexV2'),
     '/auth': () => import('../pages/Auth'),
-    '/create': () => import('../pages/Create'),
     '/templates': () => import('../pages/Templates'),
     '/pricing': () => import('../pages/Pricing'),
     '/playground': () => import('../pages/Playground'),

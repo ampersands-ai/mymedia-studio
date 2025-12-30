@@ -10,8 +10,14 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Menu, Home, Wand2, Settings, LogOut, Shield,
-  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, Clapperboard, Film
+  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, History, Video, Clock, Clapperboard, Film,
+  ChevronDown, Palette, ImagePlus, Music, CircleUser, Repeat, FolderOpen
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +32,8 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(true);
   
   const showFeaturesPage = isPageEnabled('features');
   const showBlogPage = isPageEnabled('blog');
@@ -132,7 +140,29 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
     );
   };
 
-  // Section header component
+  // Collapsible section header component
+  const CollapsibleSectionHeader = ({ 
+    children, 
+    isOpen, 
+    icon 
+  }: { 
+    children: React.ReactNode; 
+    isOpen: boolean;
+    icon: React.ReactNode;
+  }) => (
+    <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-black text-foreground uppercase tracking-wide px-4 py-3 hover:bg-muted/50 rounded-lg transition-colors">
+      <div className="flex items-center gap-2">
+        {icon}
+        {children}
+      </div>
+      <ChevronDown className={cn(
+        "h-4 w-4 transition-transform duration-200",
+        isOpen && "rotate-180"
+      )} />
+    </CollapsibleTrigger>
+  );
+
+  // Section header component (non-collapsible)
   const SectionHeader = ({ children }: { children: React.ReactNode }) => (
     <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6 first:pt-4">
       {children}
@@ -164,102 +194,108 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   </div>
                 )}
 
-                {/* IMAGE */}
-                <SectionHeader>IMAGE</SectionHeader>
-                <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=image_editing" 
-                    label="Image to Image" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=prompt_to_image" 
-                    label="Text to Image" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
+                {/* STUDIO Section - Collapsible */}
+                <div className="pt-4 px-2">
+                  <Collapsible open={studioOpen} onOpenChange={setStudioOpen}>
+                    <CollapsibleSectionHeader isOpen={studioOpen} icon={<Sparkles className="h-4 w-4 text-primary-orange" />}>
+                      Studio
+                    </CollapsibleSectionHeader>
+                    <CollapsibleContent className="space-y-1 px-2 pt-2">
+                      {/* Image */}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-2">Image</p>
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=image_editing" 
+                        label="Image to Image" 
+                        icon={<Palette className="h-4 w-4" />} 
+                      />
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=prompt_to_image" 
+                        label="Text to Image" 
+                        icon={<ImagePlus className="h-4 w-4" />} 
+                      />
+
+                      {/* Video */}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Video</p>
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=prompt_to_video" 
+                        label="Text to Video" 
+                        icon={<Video className="h-4 w-4" />} 
+                      />
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=image_to_video" 
+                        label="Image to Video" 
+                        icon={<Film className="h-4 w-4" />} 
+                      />
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=video_to_video" 
+                        label="Video to Video" 
+                        icon={<Repeat className="h-4 w-4" />} 
+                      />
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=lip_sync" 
+                        label="Custom Avatar" 
+                        icon={<CircleUser className="h-4 w-4" />} 
+                      />
+
+                      {/* Audio */}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Audio</p>
+                      <MenuItem 
+                        path="/dashboard/custom-creation?group=prompt_to_audio" 
+                        label="Audio Studio" 
+                        icon={<Music className="h-4 w-4" />} 
+                      />
+
+                      {/* Editing */}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Editing</p>
+                      <MenuItem 
+                        path="/dashboard/video-editor" 
+                        label="Video Stitching" 
+                        icon={<Clapperboard className="h-4 w-4" />} 
+                      />
+
+                      {/* Storytelling */}
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Storytelling</p>
+                      {renderFeatureItem(
+                        "/dashboard/video-studio",
+                        "Faceless Videos",
+                        <Video className="h-4 w-4" />,
+                        "faceless_videos"
+                      )}
+                      {renderFeatureItem(
+                        "/dashboard/storyboard",
+                        "Storyboard",
+                        <BookOpen className="h-4 w-4" />,
+                        "storyboard"
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
 
-                {/* VIDEO */}
-                <SectionHeader>VIDEO</SectionHeader>
-                <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=prompt_to_video" 
-                    label="Text to Video" 
-                    icon={<Video className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=image_to_video" 
-                    label="Image to Video" 
-                    icon={<Film className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=video_to_video" 
-                    label="Video to Video" 
-                    icon={<Video className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=lip_sync" 
-                    label="Custom Avatar (Lip Sync)" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
-                </div>
-
-                {/* AUDIO */}
-                <SectionHeader>AUDIO</SectionHeader>
-                <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/dashboard/custom-creation?group=prompt_to_audio" 
-                    label="Audio Studio" 
-                    icon={<Sparkles className="h-4 w-4" />} 
-                  />
-                </div>
-
-                {/* EDITING */}
-                <SectionHeader>EDITING</SectionHeader>
-                <div className="space-y-1 px-4">
-                  <MenuItem 
-                    path="/dashboard/video-editor" 
-                    label="Video Stitching" 
-                    icon={<Clapperboard className="h-4 w-4" />} 
-                  />
-                </div>
-
-                {/* STORYTELLING */}
-                <SectionHeader>STORYTELLING</SectionHeader>
-                <div className="space-y-1 px-4">
-                  {renderFeatureItem(
-                    "/dashboard/video-studio",
-                    "Faceless Videos",
-                    <Video className="h-4 w-4" />,
-                    "faceless_videos"
-                  )}
-                  {renderFeatureItem(
-                    "/dashboard/storyboard",
-                    "Storyboard",
-                    <Film className="h-4 w-4" />,
-                    "storyboard"
-                  )}
-                </div>
-
-                {/* LIBRARY Section */}
-                <SectionHeader>LIBRARY</SectionHeader>
-                <div className="space-y-1 px-4">
-                  {renderFeatureItem(
-                    "/dashboard/templates",
-                    "Templates",
-                    <LayoutTemplate className="h-4 w-4" />,
-                    "templates"
-                  )}
-                  <MenuItem 
-                    path="/dashboard/history" 
-                    label="My Creations" 
-                    icon={<History className="h-4 w-4" />} 
-                  />
-                  <MenuItem 
-                    path="/dashboard/prompts" 
-                    label="Prompt Library" 
-                    icon={<BookOpen className="h-4 w-4" />} 
-                  />
+                {/* LIBRARY Section - Collapsible */}
+                <div className="pt-2 px-2">
+                  <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
+                    <CollapsibleSectionHeader isOpen={libraryOpen} icon={<FolderOpen className="h-4 w-4 text-primary-orange" />}>
+                      Library
+                    </CollapsibleSectionHeader>
+                    <CollapsibleContent className="space-y-1 px-2 pt-2">
+                      {renderFeatureItem(
+                        "/dashboard/templates",
+                        "Templates",
+                        <LayoutTemplate className="h-4 w-4" />,
+                        "templates"
+                      )}
+                      <MenuItem 
+                        path="/dashboard/history" 
+                        label="My Creations" 
+                        icon={<History className="h-4 w-4" />} 
+                      />
+                      <MenuItem 
+                        path="/dashboard/prompts" 
+                        label="Prompt Library" 
+                        icon={<BookOpen className="h-4 w-4" />} 
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
 
                 {/* ACCOUNT Section */}

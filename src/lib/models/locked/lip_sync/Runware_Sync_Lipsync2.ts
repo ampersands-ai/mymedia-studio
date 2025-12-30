@@ -54,6 +54,8 @@ export const MODEL_CONFIG = {
   displayOrderInFamily: 1,
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/lip_sync/Runware_Sync_Lipsync2.ts",
+  // Pricing display - flat rate, not per-second
+  isPerSecondPricing: false,
 } as const;
 
 // ============================================================================

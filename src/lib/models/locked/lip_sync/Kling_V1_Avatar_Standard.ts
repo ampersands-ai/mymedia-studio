@@ -39,6 +39,8 @@ export const MODEL_CONFIG = {
   // Lock system
   isLocked: true,
   lockedFilePath: "src/lib/models/locked/lip_sync/Kling_V1_Avatar_Standard.ts",
+  // Pricing display
+  isPerSecondPricing: true,
 } as const;
 
 export const SCHEMA = {
@@ -98,8 +100,8 @@ export function preparePayload(inputs: Record<string, any>) {
 export function calculateCost(_inputs: Record<string, any>, audioDurationSeconds?: number) {
   // Fixed 720p at 4 credits/second
   const ratePerSecond = 4;
-  // Default to 5 seconds if audio duration not provided
-  const duration = audioDurationSeconds || 5;
+  // Default to 1 second if audio duration not provided (shows per-second rate)
+  const duration = audioDurationSeconds || 1;
   // Cap at 15 seconds
   const cappedDuration = Math.min(duration, 15);
   return Math.ceil(ratePerSecond * cappedDuration);

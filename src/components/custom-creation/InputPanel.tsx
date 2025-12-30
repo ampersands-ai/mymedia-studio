@@ -95,6 +95,9 @@ interface InputPanelProps {
   maxConcurrentGenerations?: number;
   // Notify toggle visibility (per-model admin setting)
   showNotifyOnCompletion?: boolean;
+  // Per-second pricing display props
+  isPerSecondPricing?: boolean;
+  hasAudioUploaded?: boolean;
 }
 
 /**
@@ -170,6 +173,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   activeGenerationsCount = 0,
   maxConcurrentGenerations = 1,
   showNotifyOnCompletion = true,
+  isPerSecondPricing = false,
+  hasAudioUploaded = false,
 }) => {
   // Disable if in cooldown OR at concurrent generation limit
   const isDisabled = localGenerating || isOnCooldown || (activeGenerationsCount >= maxConcurrentGenerations);
@@ -529,7 +534,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           <div className="flex items-center gap-1 sm:gap-2 ml-auto min-w-0 flex-shrink">
             <div className="flex items-center gap-1 bg-black/10 px-1.5 sm:px-2 py-0.5 rounded">
               <Coins className="h-3 w-3 flex-shrink-0" />
-              <span className="text-xs truncate">~{estimatedTokens.toFixed(2)}</span>
+              <span className="text-xs truncate">
+                {isPerSecondPricing && !hasAudioUploaded 
+                  ? `${estimatedTokens.toFixed(1)}/s` 
+                  : `~${estimatedTokens.toFixed(2)}`}
+              </span>
             </div>
             {selectedModelData?.estimated_time_seconds && (
               <div className="hidden xs:flex items-center gap-1 bg-black/10 px-1.5 sm:px-2 py-0.5 rounded">

@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   provider: "runware",
   contentType: "lip_sync",
   use_api_key: "RUNWARE_API_KEY_VIDEO",
-  baseCreditCost: 4.0,
+  baseCreditCost: 4.0, // 4 credits flat rate (video-to-video)
   estimatedTimeSeconds: 60,
   costMultipliers: {},
   apiEndpoint: "https://api.runware.ai/v1",

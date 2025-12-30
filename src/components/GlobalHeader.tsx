@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Shield, ChevronDown, Sparkles, History, Video, BookOpen, LayoutTemplate, Wand2, MessageSquare } from "lucide-react";
+import { Coins, Shield, ChevronDown, Sparkles, History, Video, BookOpen, LayoutTemplate, MessageSquare, Palette, ImagePlus, Film, Music, CircleUser, Repeat } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
@@ -15,6 +15,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
 export const GlobalHeader = () => {
@@ -64,51 +66,113 @@ export const GlobalHeader = () => {
           <nav className="hidden md:flex items-center space-x-6">
             {user && (
               <>
-                {/* Create Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
-                    <Sparkles className="h-4 w-4" />
-                    Create
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="cursor-pointer">
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Custom Creation
+              {/* Studio Dropdown - Grand pill button with all creation groups */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-primary-yellow to-primary-orange text-neutral-900 font-bold text-base shadow-lg shadow-primary-orange/30 hover:shadow-xl hover:shadow-primary-orange/40 hover:scale-105 transition-all duration-300">
+                  <Sparkles className="h-5 w-5" />
+                  Studio
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-80 p-4 bg-card/95 backdrop-blur-xl border-2 border-primary-orange/30 z-[60] shadow-2xl shadow-primary-orange/20 rounded-2xl">
+                  <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">Generate Content</DropdownMenuLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=image_editing")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <Palette className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Image to Image</div>
+                        <div className="text-[10px] text-muted-foreground">Image Editing</div>
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="cursor-pointer">
-                      <LayoutTemplate className="h-4 w-4 mr-2" />
-                      Templates
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=prompt_to_image")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <ImagePlus className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Text to Image</div>
+                        <div className="text-[10px] text-muted-foreground">No reference</div>
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/videos")} className="cursor-pointer">
-                      <Video className="h-4 w-4 mr-2" />
-                      Videos
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=prompt_to_video")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <Video className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Text to Video</div>
+                        <div className="text-[10px] text-muted-foreground">No reference</div>
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/storyboard")} className="cursor-pointer">
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Storyboard
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=image_to_video")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <Film className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Image to Video</div>
+                        <div className="text-[10px] text-muted-foreground">Image referenced</div>
+                      </div>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=video_to_video")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <Repeat className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Video to Video</div>
+                        <div className="text-[10px] text-muted-foreground">Video editing</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=lip_sync")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto">
+                      <CircleUser className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Custom Avatar</div>
+                        <div className="text-[10px] text-muted-foreground">Audio to video</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation?group=prompt_to_audio")} className="cursor-pointer flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary-orange/10 h-auto col-span-2">
+                      <Music className="h-6 w-6 text-primary-orange" />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm">Audio Studio</div>
+                        <div className="text-[10px] text-muted-foreground">Sounds to songs</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </div>
+                  <DropdownMenuSeparator className="my-3" />
+                  <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">More Tools</DropdownMenuLabel>
+                  <div className="space-y-1">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="cursor-pointer flex items-center gap-3 p-3 rounded-xl hover:bg-primary-orange/10">
+                      <LayoutTemplate className="h-5 w-5 text-primary-orange" />
+                      <div>
+                        <div className="font-semibold text-sm">Templates</div>
+                        <div className="text-[10px] text-muted-foreground">Pre-built workflows</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/storyboard")} className="cursor-pointer flex items-center gap-3 p-3 rounded-xl hover:bg-primary-orange/10">
+                      <BookOpen className="h-5 w-5 text-primary-orange" />
+                      <div>
+                        <div className="font-semibold text-sm">Storyboard</div>
+                        <div className="text-[10px] text-muted-foreground">Visual storytelling</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                {/* Library Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
-                    <History className="h-4 w-4" />
-                    Library
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer">
-                      <History className="h-4 w-4 mr-2" />
-                      History
+              {/* Library Dropdown - Grand pill button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 text-white font-bold text-base shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300">
+                  <History className="h-5 w-5" />
+                  Library
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-64 p-4 bg-card/95 backdrop-blur-xl border-2 border-purple-500/30 z-[60] shadow-2xl shadow-purple-500/20 rounded-2xl">
+                  <div className="space-y-2">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer flex items-center gap-3 p-4 rounded-xl hover:bg-purple-500/10">
+                      <History className="h-6 w-6 text-purple-500" />
+                      <div>
+                        <div className="font-semibold text-base">History</div>
+                        <div className="text-xs text-muted-foreground">View your creations</div>
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/prompts")} className="cursor-pointer">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Prompts
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/prompts")} className="cursor-pointer flex items-center gap-3 p-4 rounded-xl hover:bg-purple-500/10">
+                      <MessageSquare className="h-6 w-6 text-purple-500" />
+                      <div>
+                        <div className="font-semibold text-base">Prompts</div>
+                        <div className="text-xs text-muted-foreground">Saved prompt library</div>
+                      </div>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               </>
             )}
           </nav>

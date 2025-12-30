@@ -4010,6 +4010,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cinematic_prompts_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string | null
+          is_active: boolean | null
+          prompt: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          prompt?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          prompt?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
       community_creations_public: {
         Row: {
           content_type: string | null
@@ -4116,7 +4143,6 @@ export type Database = {
           thumbnail_url: string | null
           tips: Json | null
           title: string | null
-          token_cost: number | null
           tutorial_content: string | null
           updated_at: string | null
           use_cases: Json | null
@@ -4147,7 +4173,6 @@ export type Database = {
           thumbnail_url?: string | null
           tips?: Json | null
           title?: string | null
-          token_cost?: number | null
           tutorial_content?: string | null
           updated_at?: string | null
           use_cases?: Json | null
@@ -4178,7 +4203,6 @@ export type Database = {
           thumbnail_url?: string | null
           tips?: Json | null
           title?: string | null
-          token_cost?: number | null
           tutorial_content?: string | null
           updated_at?: string | null
           use_cases?: Json | null

@@ -45,7 +45,7 @@ export const MODEL_CONFIG = {
 // FROZEN SCHEMA
 export const SCHEMA = {
   type: "object",
-  imageInputField: "filesUrl",
+  // imageInputField: "filesUrl",
   properties: {
     prompt: { type: "string", renderer: "prompt", title: "Prompt" },
     size: {

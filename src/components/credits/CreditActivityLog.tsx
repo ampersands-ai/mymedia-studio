@@ -156,7 +156,7 @@ export const CreditActivityLog = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6 px-8 lg:px-10">
-        <div className="rounded-lg border border-border/50">
+        <div className="rounded-lg border border-border/50 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">

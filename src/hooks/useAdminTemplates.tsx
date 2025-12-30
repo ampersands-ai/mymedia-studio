@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { TemplateLandingPage, TemplateCategory } from "@/hooks/useTemplateLanding";
+import type { TemplateLandingPageAdmin, TemplateCategory } from "@/hooks/useTemplateLanding";
 
 // CRUD operations for template landing pages
 export function useAdminTemplates() {
@@ -17,12 +17,12 @@ export function useAdminTemplates() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as TemplateLandingPage[];
+      return data as TemplateLandingPageAdmin[];
     },
   });
 
   const createTemplate = useMutation({
-    mutationFn: async (template: Partial<TemplateLandingPage>) => {
+    mutationFn: async (template: Partial<TemplateLandingPageAdmin>) => {
       const { data, error } = await supabase
         .from("template_landing_pages")
         .insert([template as any])
@@ -42,7 +42,7 @@ export function useAdminTemplates() {
   });
 
   const updateTemplate = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TemplateLandingPage> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TemplateLandingPageAdmin> }) => {
       const { data, error } = await supabase
         .from("template_landing_pages")
         .update(updates as any)

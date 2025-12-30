@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePostHog } from "./usePostHog";
 
+// Public view type - excludes sensitive metrics
 export interface TemplateLandingPage {
   id: string;
   slug: string;
@@ -26,15 +27,19 @@ export interface TemplateLandingPage {
   faqs: Record<string, unknown>;
   workflow_id: string | null;
   default_settings: Record<string, unknown>;
-  token_cost: number | null;
   related_template_ids: string[] | null;
-  view_count: number;
-  use_count: number;
-  conversion_rate: number | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Full admin type - includes all metrics (for admin pages that query base table)
+export interface TemplateLandingPageAdmin extends TemplateLandingPage {
+  token_cost: number | null;
+  view_count: number;
+  use_count: number;
+  conversion_rate: number | null;
 }
 
 export interface TemplateCategory {
@@ -95,7 +100,7 @@ export function useRelatedTemplates(templateIds: string[] | null) {
 
       const { data, error } = await supabase
         .from("template_landing_pages_public")
-        .select("id, slug, category_slug, title, subtitle, thumbnail_url, token_cost")
+        .select("id, slug, category_slug, title, subtitle, thumbnail_url")
         .in("id", templateIds)
         .limit(4);
 

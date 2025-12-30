@@ -69,13 +69,6 @@ export function TemplateSEOHead({ template }: TemplateSEOHeadProps) {
         price: "0",
         priceCurrency: "USD",
       },
-      ...(template.use_count > 0 && {
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.8",
-          reviewCount: template.use_count,
-        },
-      }),
     };
 
     let scriptTag = document.querySelector('script[type="application/ld+json"]#template-schema') as HTMLScriptElement;

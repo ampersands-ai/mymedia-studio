@@ -100,8 +100,8 @@ export default function TemplateLanding() {
           subtitle={template.subtitle}
           beforeImage={template.hero_before_image}
           afterImage={template.hero_after_image}
-          tokenCost={template.token_cost}
-          useCount={template.use_count}
+          tokenCost={null}
+          useCount={0}
           onTryTemplate={handleTryTemplate}
         />
 
@@ -135,12 +135,12 @@ export default function TemplateLanding() {
           title: t.title || '',
           subtitle: t.subtitle,
           thumbnail_url: t.thumbnail_url,
-          token_cost: t.token_cost,
+          token_cost: null,
         }))} />
 
         <TemplateBottomCTA
           title={template.title}
-          tokenCost={template.token_cost}
+          tokenCost={null}
           onTryTemplate={handleTryTemplate}
         />
       </main>

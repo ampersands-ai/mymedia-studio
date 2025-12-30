@@ -108,7 +108,7 @@ export const CreditActivityLog = () => {
 
   return (
     <Card className="glass-card w-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-6 px-8 lg:px-10">
         <div className="flex items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -155,24 +155,24 @@ export const CreditActivityLog = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 px-6">
-        <div className="rounded-lg border border-border/50 overflow-hidden">
+      <CardContent className="space-y-6 px-8 lg:px-10">
+        <div className="rounded-lg border border-border/50">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="w-[80px] whitespace-nowrap py-3">ID</TableHead>
-                <TableHead className="w-[100px] whitespace-nowrap py-3">Date</TableHead>
-                <TableHead className="py-3">Prompt</TableHead>
-                <TableHead className="w-[140px] whitespace-nowrap py-3">Model</TableHead>
-                <TableHead className="w-[100px] whitespace-nowrap hidden xl:table-cell py-3">Version</TableHead>
-                <TableHead className="w-[100px] text-right whitespace-nowrap py-3">Credits</TableHead>
-                <TableHead className="w-[120px] text-right whitespace-nowrap py-3">Balance After</TableHead>
+                <TableHead className="whitespace-nowrap py-4 px-4">ID</TableHead>
+                <TableHead className="whitespace-nowrap py-4 px-4">Date</TableHead>
+                <TableHead className="py-4 px-4">Prompt</TableHead>
+                <TableHead className="whitespace-nowrap py-4 px-4">Model</TableHead>
+                <TableHead className="whitespace-nowrap hidden xl:table-cell py-4 px-4">Version</TableHead>
+                <TableHead className="text-right whitespace-nowrap py-4 px-4">Credits</TableHead>
+                <TableHead className="text-right whitespace-nowrap py-4 px-4">Balance After</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {entries.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-muted/20">
-                  <TableCell className="py-3">
+                  <TableCell className="py-4 px-4">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -193,16 +193,16 @@ export const CreditActivityLog = () => {
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground py-3">
+                  <TableCell className="text-xs text-muted-foreground py-4 px-4">
                     <div>{format(entry.date, "MMM d, yyyy")}</div>
                     <div className="opacity-70">{format(entry.date, "h:mm a")}</div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-4 px-4">
                     <div className="flex items-center gap-2 min-w-0">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-sm truncate cursor-default">
+                            <span className="text-sm truncate cursor-default max-w-[300px]">
                               {entry.prompt ? (
                                 truncatePrompt(entry.prompt, 50)
                               ) : (
@@ -229,22 +229,22 @@ export const CreditActivityLog = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-4 px-4">
                     <div className="text-xs">
                       <span className="text-muted-foreground">{entry.modelType}</span>
-                      <div className="font-medium text-sm truncate">{entry.modelName}</div>
+                      <div className="font-medium text-sm">{entry.modelName}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground py-3 hidden xl:table-cell">
+                  <TableCell className="text-xs text-muted-foreground py-4 px-4 hidden xl:table-cell">
                     {entry.modelVersion || "-"}
                   </TableCell>
-                  <TableCell className="text-right py-3">
+                  <TableCell className="text-right py-4 px-4">
                     <CreditStatusBadge 
                       status={entry.creditStatus} 
                       amount={entry.creditStatus === 'refunded' ? entry.refundAmount : entry.creditsCharged || entry.creditsReserved}
                     />
                   </TableCell>
-                  <TableCell className="text-right py-3">
+                  <TableCell className="text-right py-4 px-4">
                     <span className="text-sm font-semibold tabular-nums">
                       {formatBalance(entry.cumulativeBalance)}
                     </span>

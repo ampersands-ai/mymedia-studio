@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, Home, Sparkles, Layout, History, Video, FileText, Info, BookOpen, HelpCircle, Users, Settings, LogOut, Shield, Clock } from "lucide-react";
+import { Menu, Home, Sparkles, Layout, History, Video, FileText, Info, BookOpen, HelpCircle, Users, Settings, LogOut, Shield, Clock, Coins, ChevronDown, LayoutTemplate, Wand2, MessageSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useUserCredits } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
@@ -23,9 +30,11 @@ export const CinematicNav = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { isFeatureEnabled, isFeatureComingSoon, isPageEnabled } = useFeatureFlags();
+  const { availableCredits, isLoading: creditsLoading } = useUserCredits();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const creditBalance = creditsLoading ? null : availableCredits;
   const showBlogPage = isPageEnabled('blog');
   const showCommunityPage = isPageEnabled('community');
 
@@ -135,36 +144,102 @@ export const CinematicNav = () => {
           <span className="text-xl font-bold text-white">artifio.ai</span>
         </Link>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav Links - Different for logged in vs logged out */}
         <div className="hidden md:flex items-center gap-8">
-          {visibleNavItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.href}
-              className="text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {user ? (
+            <>
+              {/* Create Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
+                  <Sparkles className="h-4 w-4" />
+                  Create
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/custom-creation")} className="cursor-pointer">
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Custom Creation
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/templates")} className="cursor-pointer">
+                    <LayoutTemplate className="h-4 w-4 mr-2" />
+                    Templates
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/videos")} className="cursor-pointer">
+                    <Video className="h-4 w-4 mr-2" />
+                    Videos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/storyboard")} className="cursor-pointer">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Storyboard
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Library Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-white/90 hover:text-primary-orange transition-colors font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
+                  <History className="h-4 w-4" />
+                  Library
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48 bg-card border-border z-[60]">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer">
+                    <History className="h-4 w-4 mr-2" />
+                    Creations
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/prompts")} className="cursor-pointer">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Prompts
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            visibleNavItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.href}
+                className="text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
+              >
+                {item.label}
+              </Link>
+            ))
+          )}
         </div>
 
         {/* Desktop CTA + Theme Toggle */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          {user ? (
-            <Link
-              to="/dashboard/custom-creation"
-              className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
-            >
-              Dashboard
-            </Link>
-          ) : (
+          
+          {!user && (
             <Link
               to="/auth"
               className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
             >
               Sign In
             </Link>
+          )}
+
+          {creditBalance !== null && (
+            <button
+              onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'usage' } })}
+              className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
+            >
+              <Coins className="h-5 w-5 text-primary-orange" />
+              <span className="font-bold text-base">
+                {creditBalance.toLocaleString()}
+              </span>
+            </button>
+          )}
+
+          {isAdmin && (
+            <button
+              onClick={() => navigate("/admin/dashboard")}
+              className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+            >
+              <Shield className="h-5 w-5" />
+              Admin
+            </button>
           )}
         </div>
 

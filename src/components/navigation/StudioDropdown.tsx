@@ -24,6 +24,12 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           className="bg-gradient-to-r from-primary-yellow to-primary-orange text-neutral-900 font-bold text-base px-6 py-2.5 rounded-full shadow-lg shadow-primary-orange/30 hover:shadow-xl hover:shadow-primary-orange/40 hover:scale-105 transition-all duration-300 gap-2 border-2 border-primary-orange/50"
+          onPointerDown={(e) => {
+            if (openDropdown !== "studio") {
+              e.preventDefault();
+              setOpenDropdown("studio");
+            }
+          }}
         >
           <Sparkles className="h-5 w-5" />
           <span>Studio</span>

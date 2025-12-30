@@ -24,6 +24,12 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           className="bg-gradient-to-r from-violet-500 to-purple-600 text-white font-bold text-base px-6 py-2.5 rounded-full shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300 gap-2 border-2 border-purple-400/50"
+          onPointerDown={(e) => {
+            if (openDropdown !== "library") {
+              e.preventDefault();
+              setOpenDropdown("library");
+            }
+          }}
         >
           <History className="h-5 w-5" />
           <span>Library</span>

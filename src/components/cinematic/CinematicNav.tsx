@@ -11,7 +11,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useUserCredits } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { StudioDropdown, LibraryDropdown } from "@/components/navigation";
+import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
@@ -142,10 +142,10 @@ export const CinematicNav = () => {
         {/* Desktop Nav Links - Different for logged in vs logged out */}
         <div className="hidden md:flex items-center gap-4">
           {user ? (
-            <>
+            <NavDropdownProvider>
               <StudioDropdown align="center" />
               <LibraryDropdown align="center" />
-            </>
+            </NavDropdownProvider>
           ) : (
             visibleNavItems.map((item) => (
               <Link

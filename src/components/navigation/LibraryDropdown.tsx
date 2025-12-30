@@ -3,6 +3,7 @@ import { History, ChevronDown, MessageSquare, LayoutTemplate } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useNavDropdown } from "./NavDropdownContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +17,10 @@ interface LibraryDropdownProps {
 export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
   const { isFeatureEnabled } = useFeatureFlags();
   const { isAdmin } = useAdminRole();
+  const { openDropdown, setOpenDropdown } = useNavDropdown();
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={openDropdown === "library"} onOpenChange={(open) => setOpenDropdown(open ? "library" : null)}>
       <DropdownMenuTrigger asChild>
         <Button
           className="bg-gradient-to-r from-violet-500 to-purple-600 text-white font-bold text-base px-6 py-2.5 rounded-full shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300 gap-2 border-2 border-purple-400/50"

@@ -6,7 +6,7 @@ import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NotificationBell } from "@/components/notifications";
 import { supabase } from "@/integrations/supabase/client";
-import { StudioDropdown, LibraryDropdown } from "@/components/navigation";
+import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,10 +46,12 @@ export const DashboardLayout = () => {
             </Link>
 
             {/* Desktop Navigation - Dropdowns */}
-            <nav className="hidden md:flex items-center gap-3">
-              <StudioDropdown align="center" />
-              <LibraryDropdown align="start" />
-            </nav>
+            <NavDropdownProvider>
+              <nav className="hidden md:flex items-center gap-3">
+                <StudioDropdown align="center" />
+                <LibraryDropdown align="start" />
+              </nav>
+            </NavDropdownProvider>
 
             <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
               <NotificationBell />

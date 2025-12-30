@@ -35,6 +35,18 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
     try {
       const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) throw error;
+      
+      // Check if the response contains an error message
+      if (data?.error) {
+        const errorMsg = data.error;
+        if (errorMsg.includes('No Stripe customer found')) {
+          toast.error('No subscription found. Please subscribe to a plan first.');
+        } else {
+          toast.error(errorMsg);
+        }
+        return;
+      }
+      
       if (data?.url) {
         window.open(data.url, '_blank');
       }

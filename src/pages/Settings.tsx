@@ -18,7 +18,7 @@ const Settings = () => {
   const location = useLocation();
   const defaultTab = (location.state as {defaultTab?: string})?.defaultTab || 'profile';
   const [profileData, setProfileData] = useState({
-    profile_name: "",
+    display_name: "",
     email_verified: false,
   });
   
@@ -55,7 +55,7 @@ const Settings = () => {
         if (error) throw error;
         if (data) {
           setProfileData({
-            profile_name: data.profile_name || "",
+            display_name: data.display_name || "",
             email_verified: data.email_verified || false,
           });
         }

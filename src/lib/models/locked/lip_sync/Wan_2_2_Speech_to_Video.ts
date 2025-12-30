@@ -37,7 +37,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.2 Speech-to-Video",
+  variantName: "Wan 2.2 Avatar",
   displayOrderInFamily: 5,
   // Lock system
   isLocked: true,

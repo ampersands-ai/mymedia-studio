@@ -1,15 +1,15 @@
 /**
  * Wan 2.2 Animate Replace
- * 
+ *
  * LOCKED MODEL FILE - DO NOT MODIFY WITHOUT REVIEW
- * 
+ *
  * Replace subject in video with image while preserving motion
  * - Endpoint: /api/v1/jobs/createTask (wrapper structure)
  * - Requires: video + image
  * - Resolutions: 480p, 580p, 720p
  * - Pricing per second: 480p=3, 580p=5, 720p=6.5 credits
  * - Max duration: 30 seconds
- * 
+ *
  * @locked
  * @model wan/2-2-animate-replace
  * @provider kie.ai
@@ -34,7 +34,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "lip_sync",
   use_api_key: "KIE_AI_API_KEY_LIP_SYNC",
-  baseCreditCost: 15, // Default: 480p × 5s = 3 × 5
+  baseCreditCost: 3, // Default: 480p × 5s = 3 × 5
   estimatedTimeSeconds: 180,
   pricingPerSecond: {
     "480p": 3,
@@ -54,7 +54,7 @@ export const MODEL_CONFIG = {
   isActive: true,
   logoUrl: "/logos/wan.png",
   modelFamily: "Wan",
-  variantName: "2.2 Animate Replace",
+  variantName: "Wan 2.2 Replace",
   displayOrderInFamily: 6,
   // Lock system
   isLocked: true,
@@ -82,7 +82,8 @@ export const SCHEMA = Object.freeze({
       type: "string",
       format: "uri",
       title: "Replacement Image",
-      description: "Image to replace subject in video. Will be resized/cropped to match aspect ratio. Formats: JPEG, PNG, WebP (max 10MB)",
+      description:
+        "Image to replace subject in video. Will be resized/cropped to match aspect ratio. Formats: JPEG, PNG, WebP (max 10MB)",
       renderer: "image",
     },
     resolution: {
@@ -152,7 +153,15 @@ export function calculateCost(inputs: Record<string, unknown>, videoDuration?: n
 // ============================================================================
 
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
-  const { userId, modelParameters, uploadedVideos, uploadedImages, uploadVideosToStorage, uploadImagesToStorage, startPolling } = params;
+  const {
+    userId,
+    modelParameters,
+    uploadedVideos,
+    uploadedImages,
+    uploadVideosToStorage,
+    uploadImagesToStorage,
+    startPolling,
+  } = params;
 
   const allInputs: Record<string, unknown> = { ...modelParameters };
 

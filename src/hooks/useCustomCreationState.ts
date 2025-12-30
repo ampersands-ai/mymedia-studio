@@ -243,6 +243,7 @@ export const useCustomCreationState = () => {
 
   /**
    * Reset all state to initial values (full reset including saved state)
+   * Preserves the current group and model selection
    */
   const resetState = useCallback(() => {
     // Clear all persisted state
@@ -274,8 +275,12 @@ export const useCustomCreationState = () => {
     }
     keysToRemove.forEach(key => sessionStorage.removeItem(key));
     
-    // Reset to initial state completely
-    setState(INITIAL_STATE);
+    // Reset to initial state but preserve current group and model
+    setState(prev => ({
+      ...INITIAL_STATE,
+      selectedGroup: prev.selectedGroup,
+      selectedModel: prev.selectedModel,
+    }));
   }, []);
 
   /**

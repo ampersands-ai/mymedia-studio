@@ -6,7 +6,6 @@ import { useAdminRole } from "@/hooks/useAdminRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -31,15 +30,23 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align={align} 
-        className="w-[480px] p-5 bg-card/95 backdrop-blur-xl border-2 border-primary-orange/30 rounded-2xl shadow-2xl shadow-primary-orange/20 z-[100]"
+        className="w-[580px] p-5 bg-card/95 backdrop-blur-xl border-2 border-primary-orange/30 rounded-2xl shadow-2xl shadow-primary-orange/20 z-[100]"
       >
-        {/* Generate Content - 4 Subgroups */}
-        <p className="text-xs font-bold text-primary-orange uppercase tracking-wider mb-3 px-1">Generate Content</p>
-        
-        <div className="grid grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-5 gap-3 mb-4">
           {/* Image */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">Image</p>
+            <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Image</p>
+            <Link
+              to="/dashboard/custom-creation?group=image_editing"
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
+                <Palette className="h-4 w-4" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xs text-foreground">Image to Image</p>
+              </div>
+            </Link>
             <Link
               to="/dashboard/custom-creation?group=prompt_to_image"
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
@@ -55,7 +62,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
 
           {/* Video */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">Video</p>
+            <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Video</p>
             <Link
               to="/dashboard/custom-creation?group=prompt_to_video"
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
@@ -78,38 +85,6 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
                 <p className="font-semibold text-xs text-foreground">Image to Video</p>
               </div>
             </Link>
-          </div>
-
-          {/* Audio */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">Audio</p>
-            <Link
-              to="/dashboard/custom-creation?group=prompt_to_audio"
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
-            >
-              <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
-                <Music className="h-4 w-4" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-xs text-foreground">Audio Studio</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Editing */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">Editing</p>
-            <Link
-              to="/dashboard/custom-creation?group=image_editing"
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
-            >
-              <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
-                <Palette className="h-4 w-4" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-xs text-foreground">Image to Image</p>
-              </div>
-            </Link>
             <Link
               to="/dashboard/custom-creation?group=video_to_video"
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
@@ -129,9 +104,31 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
                 <CircleUser className="h-4 w-4" />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-xs text-foreground">Custom Avatar</p>
+                <p className="font-semibold text-xs text-foreground text-[10px]">Custom Avatar</p>
+                <p className="text-[8px] text-muted-foreground">(Lip Sync)</p>
               </div>
             </Link>
+          </div>
+
+          {/* Audio */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Audio</p>
+            <Link
+              to="/dashboard/custom-creation?group=prompt_to_audio"
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
+                <Music className="h-4 w-4" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xs text-foreground">Audio Studio</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Editing */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Editing</p>
             <Link
               to="/video-editor"
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
@@ -144,30 +141,34 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
           </div>
-        </div>
 
-        <DropdownMenuSeparator className="bg-border/50 my-3" />
-
-        {/* Storytelling */}
-        <div>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-1">Storytelling</p>
-          <div className="grid grid-cols-2 gap-2">
+          {/* Storytelling */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Storytelling</p>
             {(isFeatureEnabled('faceless_videos') || isAdmin) && (
               <Link
                 to="/dashboard/video-studio"
-                className="flex items-center gap-3 p-3 rounded-xl bg-background/60 hover:bg-muted/80 border border-transparent hover:border-border transition-all duration-200"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
               >
-                <Video className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Faceless Videos</span>
+                <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
+                  <Video className="h-4 w-4" />
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-xs text-foreground">Faceless Videos</p>
+                </div>
               </Link>
             )}
             {(isFeatureEnabled('storyboard') || isAdmin) && (
               <Link
                 to="/dashboard/storyboard"
-                className="flex items-center gap-3 p-3 rounded-xl bg-background/60 hover:bg-muted/80 border border-transparent hover:border-border transition-all duration-200"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
               >
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Storyboard</span>
+                <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-xs text-foreground">Storyboard</p>
+                </div>
               </Link>
             )}
           </div>

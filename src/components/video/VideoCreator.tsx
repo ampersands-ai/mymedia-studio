@@ -93,6 +93,7 @@ export function VideoCreator() {
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const queryClient = useQueryClient();
   const { createJob, isCreating } = useVideoJobs();
@@ -531,6 +532,29 @@ export function VideoCreator() {
     }
   };
 
+  // Handle Video Download
+  const handleDownloadVideo = async () => {
+    if (!state.videoUrl) {
+      toast.error('No video available to download');
+      return;
+    }
+    
+    setIsDownloading(true);
+    try {
+      const success = await downloadFromUrl(state.videoUrl, { 
+        filename: `faceless-video-${state.jobId}.mp4` 
+      });
+      if (success) {
+        toast.success('Video downloaded successfully!');
+      }
+    } catch (error) {
+      logger.error('Video download failed', error instanceof Error ? error : new Error(String(error)));
+      toast.error('Failed to download video. Try right-clicking the video and "Save video as..."');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   // Copy to clipboard handlers
   const handleCopyCaption = async () => {
     if (!state.caption) return;
@@ -728,13 +752,16 @@ export function VideoCreator() {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 justify-center mb-4">
                 <Button
-                  onClick={() => downloadFromUrl(state.videoUrl, { 
-                    filename: `faceless-video-${state.jobId}.mp4` 
-                  })}
+                  onClick={handleDownloadVideo}
+                  disabled={isDownloading}
                   className="min-h-[44px]"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Video
+                  {isDownloading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  {isDownloading ? 'Downloading...' : 'Download Video'}
                 </Button>
                 
                 <Button

@@ -70,7 +70,7 @@ export const SCHEMA = {
       title: "Audio File",
       description: "Audio for lip-sync. Formats: MP3, WAV, OGG, M4A (max 10MB)",
       renderer: "audio",
-      maxDuration: 14,
+      maxDuration: 4,
     },
     resolution: {
       type: "string",

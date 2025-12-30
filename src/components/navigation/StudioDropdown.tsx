@@ -144,7 +144,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Editing</p>
             <Link
-              to="/video-editor"
+              to="/dashboard/video-editor"
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">

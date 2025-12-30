@@ -296,28 +296,28 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
       });
 
       // Calculate cumulative balances
-      // Entries are sorted newest-first, so we work backwards from current balance
+      // Entries are sorted newest-first, so the most recent entry should show current balance
+      // Working backwards: balance BEFORE a charge was higher, BEFORE a refund was lower
       const currentBalance = balanceQuery.data ?? 0;
-      let runningBalance = currentBalance;
-
-      // For page 1, start with current balance
-      // For later pages, we need to account for all transactions on previous pages
+      
       if (page === 1) {
-        // Calculate balance after each transaction (going from newest to oldest)
+        // Start with current balance for the newest entry
+        let runningBalance = currentBalance;
+        
         for (let i = 0; i < entries.length; i++) {
+          // This entry's balance is the running balance at this point in time
           entries[i].cumulativeBalance = runningBalance;
           
-          // Go back in time: add back what was charged, subtract what was refunded
+          // Calculate what the balance was BEFORE this transaction
+          // If charged: before this charge, balance was higher by the charged amount
+          // If refunded: before this refund, balance was lower by the refund amount
           if (entries[i].creditStatus === 'charged') {
             runningBalance += entries[i].creditsCharged;
           } else if (entries[i].creditStatus === 'refunded') {
             runningBalance -= entries[i].refundAmount;
           }
+          // Reserved/pending don't affect the balance calculation for past entries
         }
-      } else {
-        // For pages > 1, we'd need to calculate from page 1's data
-        // For now, just show the charged/refund amounts without cumulative
-        // This keeps the feature simple while still working for page 1
       }
 
       return entries;

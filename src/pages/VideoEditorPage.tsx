@@ -39,28 +39,24 @@ const VideoEditorPage = () => {
   }, [selectClip]);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/dashboard/create">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold">Video Editor</h1>
-              <p className="text-sm text-muted-foreground">
-                {assets.length} assets • {clips.length} clips • {getTotalDuration().toFixed(1)}s total
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link to="/dashboard/history">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Video Editor</h1>
+          <p className="text-sm text-muted-foreground">
+            {assets.length} assets • {clips.length} clips • {getTotalDuration().toFixed(1)}s total
+          </p>
         </div>
-      </header>
+      </div>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-6">
+      <div>
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left column - Upload, Library & Clips */}
           <div className="lg:col-span-2 space-y-6">
@@ -158,7 +154,7 @@ const VideoEditorPage = () => {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

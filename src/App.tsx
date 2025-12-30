@@ -29,7 +29,7 @@ const IndexMinimal = lazy(() => import("./pages/IndexMinimal"));
 const CreateMinimal = lazy(() => import("./pages/CreateMinimal"));
 const StoryboardMinimal = lazy(() => import("./pages/StoryboardMinimal"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Create = lazy(() => import("./pages/Create"));
+
 const CreateWorkflow = lazy(() => import("./pages/CreateWorkflow"));
 const CustomCreation = lazy(() => import("./pages/CustomCreation"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -169,7 +169,7 @@ const AppContent = () => {
           <Route path="/storyboard-minimal" element={<RouteErrorBoundary routeName="Storyboard Minimal"><StoryboardMinimal /></RouteErrorBoundary>} />
                 <Route path="/auth" element={<RouteErrorBoundary routeName="Auth"><Auth /></RouteErrorBoundary>} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-              <Route path="create" element={<RouteErrorBoundary routeName="Dashboard > Create"><Create /></RouteErrorBoundary>} />
+              
               <Route path="create-workflow" element={<RouteErrorBoundary routeName="Dashboard > Create Workflow"><CreateWorkflow /></RouteErrorBoundary>} />
               <Route path="custom-creation" element={<RouteErrorBoundary routeName="Dashboard > Custom Creation"><CustomCreation /></RouteErrorBoundary>} />
               <Route path="templates" element={<RouteErrorBoundary routeName="Dashboard > Templates"><Templates /></RouteErrorBoundary>} />
@@ -178,6 +178,7 @@ const AppContent = () => {
               <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
               <Route path="prompts" element={<RouteErrorBoundary routeName="Dashboard > Prompt Library"><PromptLibrary /></RouteErrorBoundary>} />
+              <Route path="video-editor" element={<RouteErrorBoundary routeName="Dashboard > Video Editor"><VideoEditorPage /></RouteErrorBoundary>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
@@ -229,7 +230,6 @@ const AppContent = () => {
             <Route path="/reset-password" element={<RouteErrorBoundary routeName="Reset Password"><ResetPassword /></RouteErrorBoundary>} />
             <Route path="/moderation-docs" element={<RouteErrorBoundary routeName="Moderation Docs"><ModerationDocs /></RouteErrorBoundary>} />
             <Route path="/animation-page" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Page"><AnimationPage /></RouteErrorBoundary></ProtectedRoute>} />
-            <Route path="/video-editor" element={<ProtectedRoute><RouteErrorBoundary routeName="Video Editor"><VideoEditorPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/animation-editor" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Editor"><AnimationEditorPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

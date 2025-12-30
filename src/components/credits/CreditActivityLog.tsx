@@ -156,17 +156,17 @@ export const CreditActivityLog = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="overflow-x-auto rounded-md border border-border/50">
-          <Table className="min-w-[900px]">
+        <div className="rounded-md border border-border/50">
+          <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="w-20">ID</TableHead>
-                <TableHead className="w-24">Date</TableHead>
-                <TableHead className="w-[280px]">Prompt</TableHead>
-                <TableHead className="w-32">Model</TableHead>
-                <TableHead className="w-24">Version</TableHead>
-                <TableHead className="w-28 text-right">Credits</TableHead>
-                <TableHead className="w-28 text-right">Balance</TableHead>
+                <TableHead className="whitespace-nowrap">ID</TableHead>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead>Prompt</TableHead>
+                <TableHead className="whitespace-nowrap">Model</TableHead>
+                <TableHead className="whitespace-nowrap hidden lg:table-cell">Version</TableHead>
+                <TableHead className="text-right whitespace-nowrap">Credits</TableHead>
+                <TableHead className="text-right whitespace-nowrap">Balance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -231,11 +231,11 @@ export const CreditActivityLog = () => {
                   </TableCell>
                   <TableCell className="py-2">
                     <div className="text-xs">
-                      <span className="text-muted-foreground">{entry.modelType}</span>
-                      <div className="font-medium text-sm truncate max-w-[120px]">{entry.modelName}</div>
+                      <span className="text-muted-foreground hidden sm:inline">{entry.modelType}</span>
+                      <div className="font-medium text-sm truncate max-w-[100px] lg:max-w-[120px]">{entry.modelName}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground py-2">
+                  <TableCell className="text-xs text-muted-foreground py-2 hidden lg:table-cell">
                     {entry.modelVersion || "-"}
                   </TableCell>
                   <TableCell className="text-right py-2">

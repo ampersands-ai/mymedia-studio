@@ -658,10 +658,11 @@ const CustomCreation = () => {
             advancedOpen={state.advancedOpen}
             onAdvancedOpenChange={(open) => updateState({ advancedOpen: open })}
             onGenerate={handleGenerateWithScroll}
-            isGenerating={isGenerating || state.localGenerating}
             estimatedTokens={estimatedTokens}
             isOnCooldown={isOnCooldown}
             cooldownRemaining={cooldownRemaining}
+            activeGenerationsCount={activeGenerations.length}
+            maxConcurrentGenerations={maxConcurrent}
             showNotifyOnCompletion={
               (currentModel?.show_notify_on_completion ?? true) && 
               (currentModel?.estimated_time_seconds ?? 0) >= 30
@@ -693,7 +694,6 @@ const CustomCreation = () => {
               }
             }}
             isPolling={isPolling}
-            pollingGenerationId={state.pollingGenerationId}
             localGenerating={state.localGenerating}
             advancedOptionsRef={advancedOptionsRef}
           />

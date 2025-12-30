@@ -84,14 +84,15 @@ interface InputPanelProps {
   advancedOptionsRef: React.RefObject<HTMLDivElement>;
   onGenerate: () => void;
   onReset: () => void;
-  isGenerating: boolean;
   isPolling: boolean;
-  pollingGenerationId: string | null;
   localGenerating: boolean;
   estimatedTokens: number;
   // Cooldown props
   isOnCooldown?: boolean;
   cooldownRemaining?: number;
+  // Concurrent generation limit props
+  activeGenerationsCount?: number;
+  maxConcurrentGenerations?: number;
   // Notify toggle visibility (per-model admin setting)
   showNotifyOnCompletion?: boolean;
 }
@@ -162,15 +163,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   advancedOptionsRef,
   onGenerate,
   onReset,
-  isGenerating,
-  pollingGenerationId,
   localGenerating,
   estimatedTokens,
   isOnCooldown = false,
   cooldownRemaining = 0,
+  activeGenerationsCount = 0,
+  maxConcurrentGenerations = 1,
   showNotifyOnCompletion = true,
 }) => {
-  const isDisabled = localGenerating || isGenerating || !!pollingGenerationId || isOnCooldown;
+  // Disable if in cooldown OR at concurrent generation limit
+  const isDisabled = localGenerating || isOnCooldown || (activeGenerationsCount >= maxConcurrentGenerations);
   const canGenerate =
     selectedModel &&
     (!isPromptRequired || prompt.trim()) &&

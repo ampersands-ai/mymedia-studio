@@ -47,7 +47,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         className="w-72 p-4 bg-card/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 z-[100]"
       >
         <Link
-          to="/dashboard/creations"
+          to="/dashboard/history"
           className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
         >
           <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">

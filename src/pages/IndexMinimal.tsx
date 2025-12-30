@@ -82,7 +82,7 @@ const IndexMinimal = () => {
               </p>
 
               <div className="pt-4 flex gap-4">
-                <Link to="/dashboard/create">
+                <Link to="/dashboard/custom-creation">
                   <Button 
                     size="lg" 
                     className="rounded-full px-8 py-6 text-lg font-normal backdrop-blur-xl bg-white text-black hover:bg-white/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -185,7 +185,7 @@ const IndexMinimal = () => {
             Ready to Create Without Chaos?
           </h2>
           
-          <Link to="/dashboard/create">
+          <Link to="/dashboard/custom-creation">
             <Button 
               size="lg" 
               className="rounded-full px-12 py-7 text-xl font-normal backdrop-blur-xl bg-white text-black hover:bg-white/90 shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all"

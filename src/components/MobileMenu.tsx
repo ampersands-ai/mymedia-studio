@@ -218,7 +218,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 <SectionHeader>EDITING</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
-                    path="/video-editor" 
+                    path="/dashboard/video-editor" 
                     label="Video Stitching" 
                     icon={<Clapperboard className="h-4 w-4" />} 
                   />
@@ -332,7 +332,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 <SectionHeader>RESOURCES</SectionHeader>
                 <div className="space-y-1 px-4">
                   <MenuItem 
-                    path="/video-editor" 
+                    path="/dashboard/video-editor" 
                     label="Video Editor" 
                     icon={<Clapperboard className="h-4 w-4" />} 
                   />

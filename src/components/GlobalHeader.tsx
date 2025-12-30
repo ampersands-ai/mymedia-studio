@@ -156,7 +156,7 @@ export const GlobalHeader = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="w-64 p-4 bg-card/95 backdrop-blur-xl border-2 border-purple-500/30 z-[60] shadow-2xl shadow-purple-500/20 rounded-2xl">
                   <div className="space-y-2">
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/creations")} className="cursor-pointer flex items-center gap-3 p-4 rounded-xl hover:bg-purple-500/10">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/history")} className="cursor-pointer flex items-center gap-3 p-4 rounded-xl hover:bg-purple-500/10">
                       <History className="h-6 w-6 text-purple-500" />
                       <div>
                         <div className="font-semibold text-base">History</div>

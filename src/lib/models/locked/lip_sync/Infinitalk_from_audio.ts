@@ -27,7 +27,7 @@ export const MODEL_CONFIG = {
   maxImages: 1,
   maxAudios: 1,
   maxFileSize: 10 * 1024 * 1024, // 10MB
-  maxAudioDuration: 15, // Max 15 seconds
+  maxAudioDuration: 14, // Max 15 seconds
   defaultOutputs: 1,
   costMultipliers: null,
   // UI metadata
@@ -69,7 +69,7 @@ export const SCHEMA = {
       default: "480p",
       enum: ["480p", "720p"],
       enumLabels: {
-        "480p": "480p (Budget - 1.5 credits/s)",
+        "480p": "480p (Standard - 1.5 credits/s)",
         "720p": "720p (HD - 6 credits/s)",
       },
       type: "string",
@@ -80,6 +80,7 @@ export const SCHEMA = {
       minimum: 10000,
       maximum: 1000000,
       title: "Seed",
+      showToUser: false,
       description: "Random seed for reproducibility (10000-1000000)",
     },
   },

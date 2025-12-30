@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { History, ChevronDown, MessageSquare } from "lucide-react";
+import { History, ChevronDown, MessageSquare, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +14,9 @@ interface LibraryDropdownProps {
 }
 
 export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
+  const { isFeatureEnabled } = useFeatureFlags();
+  const { isAdmin } = useAdminRole();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,7 +46,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         </Link>
         <Link
           to="/dashboard/prompts"
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
         >
           <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
             <MessageSquare className="h-5 w-5" />
@@ -51,6 +56,20 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
             <p className="text-sm text-muted-foreground">Saved prompt library</p>
           </div>
         </Link>
+        {(isFeatureEnabled('templates') || isAdmin) && (
+          <Link
+            to="/dashboard/templates"
+            className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+          >
+            <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <LayoutTemplate className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-foreground">Templates</p>
+              <p className="text-sm text-muted-foreground">Pre-built workflows</p>
+            </div>
+          </Link>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -41,7 +41,7 @@ const CustomCreation = () => {
   const { execute } = useErrorHandler();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const outputSectionRef = useRef<HTMLDivElement>(null);
 
   // State management
@@ -451,17 +451,27 @@ const CustomCreation = () => {
     }
   }, [filteredModels, state.selectedModel, setStateSelectedModel]);
 
-  // Sync URL group param to state on mount and URL changes
+  // Sync URL group param to state on mount only
   useEffect(() => {
     const urlGroup = searchParams.get('group');
-    if (urlGroup && urlGroup !== state.selectedGroup) {
+    if (urlGroup) {
       const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
                            'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
       if (validGroups.includes(urlGroup)) {
         setStateSelectedGroup(urlGroup as CreationGroup);
       }
     }
-  }, [searchParams, state.selectedGroup, setStateSelectedGroup]);
+    // Only run on mount - intentionally exclude state.selectedGroup to prevent loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync state changes back to URL (when user clicks group buttons)
+  useEffect(() => {
+    const currentUrlGroup = searchParams.get('group');
+    if (state.selectedGroup !== currentUrlGroup) {
+      setSearchParams({ group: state.selectedGroup }, { replace: true });
+    }
+  }, [state.selectedGroup, searchParams, setSearchParams]);
 
   // Track onboarding: navigatedToTextToImage when user selects prompt_to_image group
   useEffect(() => {

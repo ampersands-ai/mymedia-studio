@@ -76,7 +76,7 @@ const Settings = () => {
     <div className="min-h-screen bg-background">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
 
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
@@ -89,33 +89,32 @@ const Settings = () => {
           </TabsList>
 
           <TabsContent value="profile" className="space-y-4 mt-6">
-            <ProfileSection profileData={profileData} setProfileData={setProfileData} />
+            <div className="max-w-4xl">
+              <ProfileSection profileData={profileData} setProfileData={setProfileData} />
+            </div>
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-4 mt-6">
-            <SubscriptionSection subscription={subscription} />
+            <div className="max-w-4xl">
+              <SubscriptionSection subscription={subscription} />
+            </div>
           </TabsContent>
 
-          <TabsContent 
-            value="credits" 
-            className="space-y-4 mt-6"
-            style={{ 
-              marginLeft: 'calc(-50vw + 50%)', 
-              marginRight: 'calc(-50vw + 50%)', 
-              paddingLeft: 'max(1rem, calc(50vw - 600px))',
-              paddingRight: 'max(1rem, calc(50vw - 600px))'
-            }}
-          >
+          <TabsContent value="credits" className="space-y-4 mt-6">
             <CreditActivityLog />
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-4 mt-6">
-            <NotificationPreferences />
+            <div className="max-w-4xl">
+              <NotificationPreferences />
+            </div>
           </TabsContent>
 
           <TabsContent value="account" className="space-y-4 mt-6">
-            <AppCacheSection />
-            <AccountSection />
+            <div className="max-w-4xl">
+              <AppCacheSection />
+              <AccountSection />
+            </div>
           </TabsContent>
 
         </Tabs>

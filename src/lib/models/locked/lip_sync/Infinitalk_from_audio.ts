@@ -20,7 +20,7 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "lip_sync",
   use_api_key: "KIE_AI_API_KEY_LIP_SYNC",
-  baseCreditCost: 7.5, // Default: 480p × 5s estimate = 1.5 × 5
+  baseCreditCost: 1.5, // 1.5 credits/second at 480p
   estimatedTimeSeconds: 120,
   apiEndpoint: "/api/v1/jobs/createTask",
   payloadStructure: "wrapper",

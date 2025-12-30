@@ -29,13 +29,6 @@ export function generateSoftwareApplicationSchema(
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
-    aggregateRating: template.use_count > 10 ? {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: template.use_count,
-      bestRating: "5",
-      worstRating: "1",
-    } : undefined,
     image: template.hero_after_image || template.thumbnail_url,
     url: `https://artifio.ai/templates/${template.category_slug}/${template.slug}`,
   };
@@ -55,7 +48,6 @@ export function generateHowToSchema(
     name: `How to ${template.title}`,
     description: template.subtitle || template.meta_description,
     image: template.hero_after_image || template.thumbnail_url,
-    totalTime: template.token_cost ? `PT${Math.ceil(template.token_cost / 10)}M` : undefined,
     estimatedCost: {
       "@type": "MonetaryAmount",
       currency: "USD",
@@ -209,6 +201,6 @@ export function generateSitemapEntry(template: TemplateLandingPage): string {
     <loc>https://artifio.ai/templates/${template.category_slug}/${template.slug}</loc>
     <lastmod>${new Date(template.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${template.use_count > 100 ? '0.8' : '0.6'}</priority>
+    <priority>0.7</priority>
   </url>`;
 }

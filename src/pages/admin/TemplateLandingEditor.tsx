@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { ImageUploader } from "@/components/admin/template-landing/ImageUploader";
 import { ArrowLeft, Save, Eye } from "lucide-react";
-import type { TemplateLandingPage, TemplateCategory } from "@/hooks/useTemplateLanding";
+import type { TemplateLandingPageAdmin, TemplateCategory } from "@/hooks/useTemplateLanding";
 
 export default function TemplateLandingEditor() {
   const { id } = useParams<{ id: string }>();
@@ -42,12 +42,12 @@ export default function TemplateLandingEditor() {
         .single();
 
       if (error) throw error;
-      return data as TemplateLandingPage;
+      return data as TemplateLandingPageAdmin;
     },
     enabled: !isNew,
   });
 
-  const { register, handleSubmit, watch, setValue, reset } = useForm<Partial<TemplateLandingPage>>({
+  const { register, handleSubmit, watch, setValue, reset } = useForm<Partial<TemplateLandingPageAdmin>>({
     defaultValues: {
       is_published: false,
       token_cost: 100,
@@ -71,7 +71,7 @@ export default function TemplateLandingEditor() {
     }
   }, [title, isNew, setValue]);
 
-  const onSubmit = async (data: Partial<TemplateLandingPage>) => {
+  const onSubmit = async (data: Partial<TemplateLandingPageAdmin>) => {
     if (isNew) {
       const result = await createTemplate.mutateAsync(data);
       navigate(`/admin/template-landing/${result.id}`);

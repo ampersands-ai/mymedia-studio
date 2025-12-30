@@ -56,7 +56,7 @@ export const MODEL_CONFIG = {
   costMultipliers: null,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/seedance.png",
+  logoUrl: "/logos/seedream.png",
   modelFamily: "Seedance",
   variantName: "Seedance V1.5 Pro",
   displayOrderInFamily: 2,

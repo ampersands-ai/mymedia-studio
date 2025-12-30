@@ -35,21 +35,21 @@ export default function VideoStudio() {
             <div className="text-2xl md:text-3xl mb-3">🤖</div>
             <h3 className="font-bold text-base md:text-lg mb-2">AI-Powered Scripts</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Claude generates engaging, professional scripts tailored to your topic and style
+              Our AI System generates engaging, professional scripts tailored to your topic and style
             </p>
           </div>
           <div className="rounded-lg border-2 p-4 md:p-6 bg-card">
             <div className="text-2xl md:text-3xl mb-3">🎙️</div>
             <h3 className="font-bold text-base md:text-lg mb-2">Natural Voiceover</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              ElevenLabs creates natural, human-like voiceovers in multiple languages
+              Natural, human-like voiceovers in multiple languages - Powered by ElevenLabs
             </p>
           </div>
           <div className="rounded-lg border-2 p-4 md:p-6 bg-card">
             <div className="text-2xl md:text-3xl mb-3">🎬</div>
             <h3 className="font-bold text-base md:text-lg mb-2">Professional Assembly</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Shotstack automatically assembles videos with subtitles and effects
+              Our systems automatically assemble the videos with subtitles and random effects
             </p>
           </div>
         </div>

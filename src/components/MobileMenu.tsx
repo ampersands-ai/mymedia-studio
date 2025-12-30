@@ -164,26 +164,75 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                   </div>
                 )}
 
-                {/* CREATE Section */}
-                <SectionHeader>STUDIO</SectionHeader>
+                {/* STUDIO - Image */}
+                <SectionHeader>IMAGE</SectionHeader>
                 <div className="space-y-1 px-4">
-                  {renderFeatureItem(
-                    "/dashboard/custom-creation",
-                    "Generate Content",
-                    <Sparkles className="h-4 w-4" />,
-                    "custom_creation"
-                  )}
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=text-to-image" 
+                    label="Text to Image" 
+                    icon={<Sparkles className="h-4 w-4" />} 
+                  />
+                </div>
+
+                {/* STUDIO - Video */}
+                <SectionHeader>VIDEO</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=text-to-video" 
+                    label="Text to Video" 
+                    icon={<Video className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=image-to-video" 
+                    label="Image to Video" 
+                    icon={<Video className="h-4 w-4" />} 
+                  />
+                </div>
+
+                {/* STUDIO - Audio */}
+                <SectionHeader>AUDIO</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=audio" 
+                    label="Audio Studio" 
+                    icon={<Sparkles className="h-4 w-4" />} 
+                  />
+                </div>
+
+                {/* STUDIO - Editing */}
+                <SectionHeader>EDITING</SectionHeader>
+                <div className="space-y-1 px-4">
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=image-to-image" 
+                    label="Image to Image" 
+                    icon={<Sparkles className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=video-to-video" 
+                    label="Video to Video" 
+                    icon={<Video className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/dashboard/custom-creation?type=custom-avatar" 
+                    label="Custom Avatar" 
+                    icon={<Sparkles className="h-4 w-4" />} 
+                  />
+                  <MenuItem 
+                    path="/video-editor" 
+                    label="Video Stitching" 
+                    icon={<Clapperboard className="h-4 w-4" />} 
+                  />
+                </div>
+
+                {/* STORYTELLING */}
+                <SectionHeader>STORYTELLING</SectionHeader>
+                <div className="space-y-1 px-4">
                   {renderFeatureItem(
                     "/dashboard/video-studio",
                     "Faceless Videos",
                     <Video className="h-4 w-4" />,
                     "faceless_videos"
                   )}
-                  <MenuItem 
-                    path="/video-editor" 
-                    label="Video Editor" 
-                    icon={<Clapperboard className="h-4 w-4" />} 
-                  />
                   {renderFeatureItem(
                     "/dashboard/storyboard",
                     "Storyboard",

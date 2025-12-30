@@ -3,6 +3,7 @@ import { Sparkles, ChevronDown, Video, Scissors, BookOpen, ImagePlus, Film, Musi
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useNavDropdown } from "./NavDropdownContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +17,10 @@ interface StudioDropdownProps {
 export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
   const { isFeatureEnabled } = useFeatureFlags();
   const { isAdmin } = useAdminRole();
+  const { openDropdown, setOpenDropdown } = useNavDropdown();
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={openDropdown === "studio"} onOpenChange={(open) => setOpenDropdown(open ? "studio" : null)}>
       <DropdownMenuTrigger asChild>
         <Button
           className="bg-gradient-to-r from-primary-yellow to-primary-orange text-neutral-900 font-bold text-base px-6 py-2.5 rounded-full shadow-lg shadow-primary-orange/30 hover:shadow-xl hover:shadow-primary-orange/40 hover:scale-105 transition-all duration-300 gap-2 border-2 border-primary-orange/50"

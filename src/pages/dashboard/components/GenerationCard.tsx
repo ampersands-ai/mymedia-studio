@@ -9,6 +9,7 @@ import { OptimizedVideoPreview } from "@/components/generation/OptimizedVideoPre
 import { AudioPlayer } from "./AudioPlayer";
 import type { Generation } from "../hooks/useGenerationHistory";
 import { RECORD_ID_REGISTRY } from "@/lib/models/locked/index";
+import { getDisplayableParametersString } from "@/lib/utils/parameterDisplayFilter";
 
 interface GenerationCardProps {
   generation: Generation;
@@ -79,29 +80,6 @@ const formatContentType = (contentType: string): string => {
   return formatMap[contentType] || contentType;
 };
 
-/**
- * Format settings/parameters for display (exclude internal fields)
- */
-const formatSettings = (settings: Record<string, unknown> | null | undefined): string | null => {
-  if (!settings || Object.keys(settings).length === 0) return null;
-  
-  // Filter out internal/webhook fields and prompt (already shown)
-  const excludeKeys = ['_webhook_token', 'prompt', 'imageUrls', 'image_url', 'model', 'userId'];
-  const displaySettings = Object.entries(settings)
-    .filter(([key]) => !excludeKeys.includes(key))
-    .map(([key, value]) => {
-      // Format key: snake_case -> Title Case
-      const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      // Format value
-      if (typeof value === 'boolean') return `${formattedKey}: ${value ? 'Yes' : 'No'}`;
-      if (typeof value === 'number') return `${formattedKey}: ${value}`;
-      if (typeof value === 'string' && value.length < 30) return `${formattedKey}: ${value}`;
-      return null;
-    })
-    .filter(Boolean);
-  
-  return displaySettings.length > 0 ? displaySettings.join(' • ') : null;
-};
 
 /**
  * Calculate and format generation time
@@ -229,7 +207,7 @@ const GenerationCardComponent = ({ generation, index, onView, onDownload }: Gene
         {(() => {
           const modelInfo = getModelInfo(generation);
           const genTime = formatGenerationTime(generation);
-          const params = formatSettings(generation.settings);
+          const params = getDisplayableParametersString(generation.settings, generation.model_record_id);
           if (!modelInfo && !genTime && !params) return null;
           return (
             <div className="space-y-0.5">

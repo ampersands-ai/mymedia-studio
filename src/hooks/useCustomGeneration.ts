@@ -288,6 +288,16 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
           description: 'Check your inbox for the verification email before generating content.',
           duration: 8000,
         });
+      } else if (appError.message.includes('Concurrent generation limit') || appError.message.includes('429')) {
+        toast.error('Concurrent generation limit reached', {
+          description: 'Please wait for your current generation to complete before starting another.',
+          duration: 5000,
+        });
+      } else if (appError.message.includes('Hourly generation limit')) {
+        toast.error('Hourly generation limit reached', {
+          description: 'Please wait before generating more content.',
+          duration: 5000,
+        });
       } else if (appError.message.includes('API key not configured') || appError.message.includes('not configured')) {
         toast.error('Model temporarily unavailable. Please contact support.');
       } else if (appError.message.includes('Unauthorized') || appError.message.includes('Session expired')) {

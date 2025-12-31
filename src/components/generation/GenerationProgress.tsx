@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2, Clock, ExternalLink, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
+// Maximum time to wait in "Setting up" phase before assuming API has started (12 seconds)
+const MAX_SETUP_TIME_MS = 12000;
 
 interface GenerationProgressProps {
   startTime: number;
@@ -28,8 +31,21 @@ export const GenerationProgress = ({
   const [setupTime, setSetupTime] = useState<number | null>(null);
   const [apiTime, setApiTime] = useState<number | null>(null);
 
-  // Determine if we're still in setup phase (before API call)
-  const isSettingUp = !apiStartTime && !isComplete;
+  // Calculate effective API start time with 12s fallback
+  const effectiveApiStartTime = useMemo(() => {
+    if (apiStartTime) return apiStartTime;
+    if (isComplete) return null;
+    
+    // If setup has taken more than 12 seconds, assume API started
+    const setupElapsed = Date.now() - startTime;
+    if (setupElapsed > MAX_SETUP_TIME_MS) {
+      return startTime + MAX_SETUP_TIME_MS;
+    }
+    return null;
+  }, [apiStartTime, isComplete, startTime]);
+
+  // Determine if we're still in setup phase (before API call or fallback kicks in)
+  const isSettingUp = !effectiveApiStartTime && !isComplete;
 
   useEffect(() => {
     if (isComplete) {
@@ -39,9 +55,9 @@ export const GenerationProgress = ({
         setElapsedTime(totalElapsed);
         
         // Calculate timing breakdown
-        if (apiStartTime) {
-          const setupDuration = (apiStartTime - startTime) / 1000;
-          const apiDuration = (completedAt - apiStartTime) / 1000;
+        if (effectiveApiStartTime) {
+          const setupDuration = (effectiveApiStartTime - startTime) / 1000;
+          const apiDuration = (completedAt - effectiveApiStartTime) / 1000;
           setSetupTime(setupDuration);
           setApiTime(apiDuration);
         }
@@ -54,15 +70,20 @@ export const GenerationProgress = ({
       const totalElapsed = now - startTime;
       const elapsedSeconds = totalElapsed / 1000;
       
-      if (isSettingUp) {
+      // Check if we should transition out of setup phase (12s fallback)
+      const setupElapsed = now - startTime;
+      const shouldFallback = setupElapsed > MAX_SETUP_TIME_MS && !effectiveApiStartTime;
+      
+      if (isSettingUp && !shouldFallback) {
         // During setup phase, don't show progress bar, just elapsed time
         setElapsedTime(elapsedSeconds);
         setProgress(0);
-      } else if (apiStartTime) {
-        // API call in progress - calculate progress from API start
-        const apiElapsed = now - apiStartTime;
+      } else {
+        // API call in progress (either from DB or 12s fallback)
+        const activeApiStartTime = effectiveApiStartTime || (startTime + MAX_SETUP_TIME_MS);
+        const apiElapsed = now - activeApiStartTime;
         const apiSeconds = apiElapsed / 1000;
-        const setupDuration = (apiStartTime - startTime) / 1000;
+        const setupDuration = (activeApiStartTime - startTime) / 1000;
         setSetupTime(setupDuration);
         
         // Calculate target time with minimum of 60 seconds
@@ -81,7 +102,7 @@ export const GenerationProgress = ({
     }, 100); // Update every 100ms for smooth animation
 
     return () => clearInterval(interval);
-  }, [startTime, apiStartTime, isComplete, completedAt, estimatedTimeSeconds, isSettingUp]);
+  }, [startTime, effectiveApiStartTime, isComplete, completedAt, estimatedTimeSeconds, isSettingUp]);
 
   return (
     <div className={cn("space-y-3", className)}>

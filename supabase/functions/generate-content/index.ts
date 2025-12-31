@@ -1302,18 +1302,28 @@ Deno.serve(async (req) => {
         const apiCallStartTime = Date.now();
         const apiCallStartedAt = new Date().toISOString();
         
-        // Update generation with api_call_started_at timestamp (fire-and-forget for performance)
-        supabase
+        // Update generation with api_call_started_at timestamp (synchronous with retry for reliability)
+        const { error: timestampError } = await supabase
           .from('generations')
           .update({ api_call_started_at: apiCallStartedAt })
-          .eq('id', createdGeneration.id)
-          .then(({ error }) => {
-            if (error) {
-              logger.warn('Failed to update api_call_started_at', { 
-                metadata: { generation_id: createdGeneration.id, error: error.message } 
-              });
-            }
+          .eq('id', createdGeneration.id);
+        
+        if (timestampError) {
+          logger.warn('Failed to update api_call_started_at, retrying...', { 
+            metadata: { generation_id: createdGeneration.id, error: timestampError.message } 
           });
+          // Single retry
+          const { error: retryError } = await supabase
+            .from('generations')
+            .update({ api_call_started_at: apiCallStartedAt })
+            .eq('id', createdGeneration.id);
+          
+          if (retryError) {
+            logger.error('Failed to update api_call_started_at after retry', retryError instanceof Error ? retryError : new Error(String(retryError)), { 
+              metadata: { generation_id: createdGeneration.id } 
+            });
+          }
+        }
         
         // Log provider API call if in test mode
         if (testLogger) {

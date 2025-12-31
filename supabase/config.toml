@@ -103,3 +103,6 @@ verify_jwt = true
 
 [functions.check-long-running-generations]
 verify_jwt = false
+
+[functions.manage-consent]
+verify_jwt = false

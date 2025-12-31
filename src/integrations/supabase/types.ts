@@ -4468,6 +4468,22 @@ export type Database = {
           plaintext_count: number
         }[]
       }
+      check_rate_limit_atomic: {
+        Args: {
+          p_block_duration_ms: number
+          p_key: string
+          p_max_requests: number
+          p_window_ms: number
+        }
+        Returns: {
+          allowed: boolean
+          blocked: boolean
+          current_count: number
+          remaining: number
+          reset_at: string
+          retry_after_ms: number
+        }[]
+      }
       cleanup_all_old_logs: {
         Args: never
         Returns: {
@@ -4628,6 +4644,8 @@ export type Database = {
         Args: { p_code: string; p_referred_user_id: string }
         Returns: boolean
       }
+      reset_rate_limit: { Args: { p_key: string }; Returns: boolean }
+      reset_user_rate_limits: { Args: { p_user_id: string }; Returns: number }
       resolve_error_event: {
         Args: { p_error_id: string; p_resolution_notes?: string }
         Returns: undefined

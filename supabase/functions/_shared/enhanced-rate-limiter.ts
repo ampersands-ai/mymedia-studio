@@ -1,6 +1,14 @@
 /**
- * Enhanced Rate Limiter with Sliding Window Algorithm
- * Provides more accurate rate limiting compared to fixed window approach
+ * Enhanced Rate Limiter with Atomic PostgreSQL Function
+ * 
+ * Production-grade rate limiting that eliminates race conditions
+ * by using pg_advisory_xact_lock in a single database transaction.
+ * 
+ * Features:
+ * - Atomic check-and-update via PostgreSQL function
+ * - Sliding window algorithm for accurate limiting
+ * - Advisory locks prevent TOCTOU race conditions
+ * - Fail-open design for reliability
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -26,18 +34,18 @@ export interface RateLimitTier {
   config: SlidingWindowConfig;
 }
 
-// Pre-configured rate limit tiers
+// Pre-configured rate limit tiers with production-safe limits
 export const RATE_LIMIT_TIERS: Record<string, SlidingWindowConfig> = {
-  // Strict tier for sensitive operations
+  // Strict tier for sensitive operations (increased from 10 to 30)
   strict: {
-    maxRequests: 10,
+    maxRequests: 30,
     windowMs: 60 * 1000,      // 1 minute
     blockDurationMs: 5 * 60 * 1000, // 5 minutes
     keyPrefix: 'strict',
   },
-  // Standard tier for normal API calls
+  // Standard tier for normal API calls (increased from 100 to 200)
   standard: {
-    maxRequests: 100,
+    maxRequests: 200,
     windowMs: 60 * 1000,      // 1 minute
     blockDurationMs: 60 * 1000, // 1 minute
     keyPrefix: 'standard',
@@ -56,16 +64,16 @@ export const RATE_LIMIT_TIERS: Record<string, SlidingWindowConfig> = {
     blockDurationMs: 30 * 1000, // 30 seconds
     keyPrefix: 'burst',
   },
-  // Generation tier for content generation
+  // Generation tier for content generation (increased from 20 to 50)
   generation: {
-    maxRequests: 20,
+    maxRequests: 50,
     windowMs: 60 * 1000,      // 1 minute
     blockDurationMs: 2 * 60 * 1000, // 2 minutes
     keyPrefix: 'gen',
   },
   // Authentication tier
   auth: {
-    maxRequests: 5,
+    maxRequests: 10,
     windowMs: 60 * 1000,      // 1 minute
     blockDurationMs: 15 * 60 * 1000, // 15 minutes
     keyPrefix: 'auth',
@@ -73,13 +81,12 @@ export const RATE_LIMIT_TIERS: Record<string, SlidingWindowConfig> = {
 };
 
 /**
- * Sliding Window Rate Limiter
- * Uses a hybrid sliding window algorithm for more accurate rate limiting
+ * Atomic Rate Limiter using PostgreSQL function
+ * Uses pg_advisory_xact_lock to prevent race conditions
  */
 export class SlidingWindowRateLimiter {
   private supabase: SupabaseClient;
   private config: SlidingWindowConfig;
-  private tableName = 'rate_limits_v2';
 
   constructor(supabase: SupabaseClient, config: SlidingWindowConfig) {
     this.supabase = supabase;
@@ -96,131 +103,82 @@ export class SlidingWindowRateLimiter {
 
   /**
    * Check if request is allowed under rate limit
+   * Uses atomic PostgreSQL function to eliminate race conditions
    */
   async checkLimit(identifier: string, action: string): Promise<RateLimitInfo> {
     const key = this.generateKey(identifier, action);
     const now = Date.now();
-    const windowStart = now - this.config.windowMs;
 
     try {
-      // Try to use the new v2 table, fall back to v1 if it doesn't exist
-      const { data: record, error } = await this.supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('key', key)
-        .maybeSingle();
+      // Call atomic PostgreSQL function
+      const { data, error } = await this.supabase.rpc('check_rate_limit_atomic', {
+        p_key: key,
+        p_max_requests: this.config.maxRequests,
+        p_window_ms: this.config.windowMs,
+        p_block_duration_ms: this.config.blockDurationMs,
+      });
 
       if (error) {
-        // Fall back to allowing the request if table doesn't exist
-        if (error.code === '42P01') {
-          console.warn('rate_limits_v2 table not found, allowing request');
-          return this.createAllowedResponse(now);
-        }
-        throw error;
+        // Log the error for debugging
+        console.error('[RateLimiter] Atomic function error:', {
+          error: error.message,
+          code: error.code,
+          key,
+          action,
+          identifier: identifier.substring(0, 20) + '...',
+        });
+
+        // Fail-open: allow the request if the function fails
+        return this.createAllowedResponse(now);
       }
 
-      // No existing record - first request
-      if (!record) {
-        await this.createRecord(key, now);
-        return this.createAllowedResponse(now, this.config.maxRequests - 1);
+      // Handle empty or null response
+      if (!data || data.length === 0) {
+        console.warn('[RateLimiter] Empty response from atomic function, allowing request');
+        return this.createAllowedResponse(now);
       }
 
-      // Check if currently blocked
-      if (record.blocked_until && new Date(record.blocked_until).getTime() > now) {
-        const blockedUntil = new Date(record.blocked_until);
+      const result = data[0];
+
+      // Log rate limit check for debugging (only when blocked or near limit)
+      if (!result.allowed || result.remaining <= 5) {
+        console.log('[RateLimiter] Check result:', {
+          key,
+          allowed: result.allowed,
+          remaining: result.remaining,
+          currentCount: result.current_count,
+          blocked: result.blocked,
+          maxRequests: this.config.maxRequests,
+        });
+      }
+
+      if (!result.allowed) {
         return {
           allowed: false,
           remaining: 0,
-          resetAt: blockedUntil,
-          retryAfterMs: blockedUntil.getTime() - now,
-          currentCount: record.request_count,
-          windowStart: new Date(record.window_start),
+          resetAt: new Date(result.reset_at),
+          retryAfterMs: Number(result.retry_after_ms),
+          currentCount: result.current_count,
+          windowStart: new Date(now - this.config.windowMs),
         };
       }
-
-      // Parse request timestamps from the sliding window
-      const timestamps: number[] = record.request_timestamps || [];
-      
-      // Filter to only include timestamps within the current window
-      const validTimestamps = timestamps.filter(ts => ts > windowStart);
-      
-      // Check if we're at the limit
-      if (validTimestamps.length >= this.config.maxRequests) {
-        // Block the user
-        await this.blockUser(key, now);
-        
-        return {
-          allowed: false,
-          remaining: 0,
-          resetAt: new Date(now + this.config.blockDurationMs),
-          retryAfterMs: this.config.blockDurationMs,
-          currentCount: validTimestamps.length,
-          windowStart: new Date(windowStart),
-        };
-      }
-
-      // Add current timestamp and update record
-      validTimestamps.push(now);
-      await this.updateRecord(key, validTimestamps, now);
-
-      const remaining = this.config.maxRequests - validTimestamps.length;
-      const oldestTimestamp = validTimestamps[0] || now;
-      const resetAt = new Date(oldestTimestamp + this.config.windowMs);
 
       return {
         allowed: true,
-        remaining,
-        resetAt,
-        currentCount: validTimestamps.length,
-        windowStart: new Date(windowStart),
+        remaining: result.remaining,
+        resetAt: new Date(result.reset_at),
+        currentCount: result.current_count,
+        windowStart: new Date(now - this.config.windowMs),
       };
     } catch (error) {
-      console.error('Rate limit check failed:', error);
-      // On error, allow the request but log the issue
+      // Fail-open: allow the request on any unexpected error
+      console.error('[RateLimiter] Unexpected error:', {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+        action,
+      });
       return this.createAllowedResponse(now);
     }
-  }
-
-  /**
-   * Create a new rate limit record
-   */
-  private async createRecord(key: string, timestamp: number): Promise<void> {
-    await this.supabase
-      .from(this.tableName)
-      .upsert({
-        key,
-        request_count: 1,
-        request_timestamps: [timestamp],
-        window_start: new Date(timestamp).toISOString(),
-        last_request_at: new Date(timestamp).toISOString(),
-        blocked_until: null,
-      });
-  }
-
-  /**
-   * Update existing rate limit record
-   */
-  private async updateRecord(key: string, timestamps: number[], now: number): Promise<void> {
-    await this.supabase
-      .from(this.tableName)
-      .update({
-        request_count: timestamps.length,
-        request_timestamps: timestamps,
-        last_request_at: new Date(now).toISOString(),
-      })
-      .eq('key', key);
-  }
-
-  /**
-   * Block a user after exceeding rate limit
-   */
-  private async blockUser(key: string, now: number): Promise<void> {
-    await this.supabase
-      .from(this.tableName)
-      .update({
-        blocked_until: new Date(now + this.config.blockDurationMs).toISOString(),
-      })
-      .eq('key', key);
   }
 
   /**
@@ -241,10 +199,18 @@ export class SlidingWindowRateLimiter {
    */
   async resetLimit(identifier: string, action: string): Promise<void> {
     const key = this.generateKey(identifier, action);
-    await this.supabase
-      .from(this.tableName)
-      .delete()
-      .eq('key', key);
+    
+    try {
+      const { error } = await this.supabase.rpc('reset_rate_limit', { p_key: key });
+      
+      if (error) {
+        console.error('[RateLimiter] Reset failed:', error.message);
+      } else {
+        console.log('[RateLimiter] Rate limit reset for key:', key);
+      }
+    } catch (error) {
+      console.error('[RateLimiter] Reset error:', error);
+    }
   }
 
   /**
@@ -255,26 +221,31 @@ export class SlidingWindowRateLimiter {
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
 
-    const { data: record, error } = await this.supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('key', key)
-      .maybeSingle();
+    try {
+      const { data: record, error } = await this.supabase
+        .from('rate_limits_v2')
+        .select('*')
+        .eq('key', key)
+        .maybeSingle();
 
-    if (error || !record) return null;
+      if (error || !record) return null;
 
-    const timestamps: number[] = record.request_timestamps || [];
-    const validTimestamps = timestamps.filter(ts => ts > windowStart);
+      const timestamps: number[] = record.request_timestamps || [];
+      const validTimestamps = timestamps.filter(ts => ts > windowStart);
 
-    return {
-      allowed: validTimestamps.length < this.config.maxRequests,
-      remaining: Math.max(0, this.config.maxRequests - validTimestamps.length),
-      resetAt: validTimestamps.length > 0 
-        ? new Date(validTimestamps[0] + this.config.windowMs)
-        : new Date(now + this.config.windowMs),
-      currentCount: validTimestamps.length,
-      windowStart: new Date(windowStart),
-    };
+      return {
+        allowed: validTimestamps.length < this.config.maxRequests,
+        remaining: Math.max(0, this.config.maxRequests - validTimestamps.length),
+        resetAt: validTimestamps.length > 0 
+          ? new Date(validTimestamps[0] + this.config.windowMs)
+          : new Date(now + this.config.windowMs),
+        currentCount: validTimestamps.length,
+        windowStart: new Date(windowStart),
+      };
+    } catch (error) {
+      console.error('[RateLimiter] getStatus error:', error);
+      return null;
+    }
   }
 }
 

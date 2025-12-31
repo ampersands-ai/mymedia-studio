@@ -241,9 +241,8 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       };
       const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
 
-      // Mark API call start time (setup phase complete)
-      const apiCallStartTime = Date.now();
-      updateState({ apiCallStartTime });
+      // NOTE: apiCallStartTime is now set by polling when edge function updates api_call_started_at
+      // This ensures accurate timing - the progress bar shows "Setting up..." until actual API call starts
 
       // Use shared generation pipeline
       const genId = await executeGeneration({

@@ -21,6 +21,7 @@ interface UseHybridGenerationPollingOptions {
   onComplete: (outputs: GenerationOutput[], parentId: string) => void;
   onError?: (error: string) => void;
   onTimeout?: () => void;
+  onApiCallStarted?: (timestamp: number) => void;
 }
 
 /**
@@ -71,6 +72,9 @@ export const useHybridGenerationPolling = (options: UseHybridGenerationPollingOp
       optionsRef.current.onError?.(error);
       setIsPolling(false);
       setPollingId(null);
+    },
+    onApiCallStarted: (timestamp) => {
+      optionsRef.current.onApiCallStarted?.(timestamp);
     },
   });
 

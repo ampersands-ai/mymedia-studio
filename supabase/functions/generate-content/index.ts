@@ -1298,8 +1298,24 @@ Deno.serve(async (req) => {
         // Get webhookToken from generation settings for provider
         const webhookToken = createdGeneration.settings?._webhook_token as string | undefined;
 
-        // Log provider API call if in test mode
+        // Record API call start time in database for frontend progress tracking
         const apiCallStartTime = Date.now();
+        const apiCallStartedAt = new Date().toISOString();
+        
+        // Update generation with api_call_started_at timestamp (fire-and-forget for performance)
+        supabase
+          .from('generations')
+          .update({ api_call_started_at: apiCallStartedAt })
+          .eq('id', createdGeneration.id)
+          .then(({ error }) => {
+            if (error) {
+              logger.warn('Failed to update api_call_started_at', { 
+                metadata: { generation_id: createdGeneration.id, error: error.message } 
+              });
+            }
+          });
+        
+        // Log provider API call if in test mode
         if (testLogger) {
           await testLogger.logProviderRouting(model.provider, model.api_endpoint);
           await testLogger.logProviderApiCall(model.provider, providerRequest, apiCallStartTime);

@@ -112,6 +112,7 @@ const INITIAL_STATE: CustomCreationState = {
   parentGenerationId: null,
   localGenerating: false,
   generationStartTime: null,
+  apiCallStartTime: null,
   generationCompleteTime: null,
   
   // UI state
@@ -294,6 +295,7 @@ export const useCustomCreationState = () => {
       selectedOutputIndex: 0,
       pollingGenerationId: null,
       generationStartTime: null,
+      apiCallStartTime: null,
       generationCompleteTime: null,
       localGenerating: false,
       captionData: null,

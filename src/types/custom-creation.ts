@@ -81,6 +81,7 @@ export interface CustomCreationState {
   parentGenerationId: string | null;
   localGenerating: boolean;
   generationStartTime: number | null;
+  apiCallStartTime: number | null; // When the actual API call started (after setup)
   generationCompleteTime: number | null;
   
   // UI state

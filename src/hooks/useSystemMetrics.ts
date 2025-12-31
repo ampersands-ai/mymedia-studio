@@ -66,13 +66,13 @@ export function useSystemMetrics() {
         premiumUsersResult,
         apiLogsResult,
       ] = await Promise.all([
-        supabase.from('generations').select('id', { count: 'exact', head: true }),
-        supabase.from('generations').select('id', { count: 'exact', head: true }).in('status', ['PENDING', 'GENERATING', 'PROCESSING']),
-        supabase.from('generations').select('id', { count: 'exact', head: true }).eq('status', 'FAILED').gte('created_at', yesterday.toISOString()),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_activity_at', yesterday.toISOString()),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', lastWeek.toISOString()),
-        supabase.from('user_subscriptions').select('id', { count: 'exact', head: true }).neq('plan', 'freemium'),
+        supabase.from('generations').select('id'),
+        supabase.from('generations').select('id').in('status', ['PENDING', 'GENERATING', 'PROCESSING']),
+        supabase.from('generations').select('id').eq('status', 'FAILED').gte('created_at', yesterday.toISOString()),
+        supabase.from('profiles').select('id'),
+        supabase.from('profiles').select('id').gte('last_activity_at', yesterday.toISOString()),
+        supabase.from('profiles').select('id').gte('created_at', lastWeek.toISOString()),
+        supabase.from('user_subscriptions').select('id').neq('plan', 'freemium'),
         supabase.from('api_call_logs').select('latency_ms, is_error').gte('created_at', yesterday.toISOString()).limit(1000),
       ]);
 
@@ -85,16 +85,16 @@ export function useSystemMetrics() {
 
       return {
         database: {
-          totalGenerations: generationsResult.count || 0,
-          activeGenerations: activeGenerationsResult.count || 0,
-          failedGenerations24h: failedGenerationsResult.count || 0,
+          totalGenerations: generationsResult.data?.length || 0,
+          activeGenerations: activeGenerationsResult.data?.length || 0,
+          failedGenerations24h: failedGenerationsResult.data?.length || 0,
           avgGenerationTime: 0,
         },
         users: {
-          totalUsers: usersResult.count || 0,
-          activeUsers24h: activeUsersResult.count || 0,
-          newUsers7d: newUsersResult.count || 0,
-          premiumUsers: premiumUsersResult.count || 0,
+          totalUsers: usersResult.data?.length || 0,
+          activeUsers24h: activeUsersResult.data?.length || 0,
+          newUsers7d: newUsersResult.data?.length || 0,
+          premiumUsers: premiumUsersResult.data?.length || 0,
         },
         storage: { totalSizeBytes: 0, objectCount: 0 },
         performance: {
@@ -117,7 +117,7 @@ export function useRateLimitMetrics() {
 
       const [blockedResult, currentlyBlockedResult] = await Promise.all([
         supabase.from('rate_limits').select('action, blocked_until').not('blocked_until', 'is', null).gte('last_attempt_at', yesterday.toISOString()),
-        supabase.from('rate_limits').select('id', { count: 'exact', head: true }).gt('blocked_until', new Date().toISOString()),
+        supabase.from('rate_limits').select('id').gt('blocked_until', new Date().toISOString()),
       ]);
 
       const actionCounts: Record<string, number> = {};
@@ -133,7 +133,7 @@ export function useRateLimitMetrics() {
       return {
         totalBlocked24h: blockedResult.data?.length || 0,
         topBlockedActions,
-        currentlyBlocked: currentlyBlockedResult.count || 0,
+        currentlyBlocked: currentlyBlockedResult.data?.length || 0,
       };
     },
     refetchInterval: 60000,
@@ -148,8 +148,8 @@ export function useErrorMetrics() {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       const [totalResult, criticalResult, byCategoryResult, recentResult] = await Promise.all([
-        supabase.from('error_events').select('id', { count: 'exact', head: true }).gte('created_at', yesterday.toISOString()),
-        supabase.from('error_events').select('id', { count: 'exact', head: true }).eq('severity', 'critical').gte('created_at', yesterday.toISOString()),
+        supabase.from('error_events').select('id').gte('created_at', yesterday.toISOString()),
+        supabase.from('error_events').select('id').eq('severity', 'critical').gte('created_at', yesterday.toISOString()),
         supabase.from('error_events').select('category').gte('created_at', yesterday.toISOString()),
         supabase.from('error_events').select('id, message, severity, created_at, category').order('created_at', { ascending: false }).limit(10),
       ]);
@@ -164,8 +164,8 @@ export function useErrorMetrics() {
         .sort((a, b) => b.count - a.count);
 
       return {
-        totalErrors24h: totalResult.count || 0,
-        criticalErrors24h: criticalResult.count || 0,
+        totalErrors24h: totalResult.data?.length || 0,
+        criticalErrors24h: criticalResult.data?.length || 0,
         errorsByCategory,
         recentErrors: recentResult.data || [],
       };

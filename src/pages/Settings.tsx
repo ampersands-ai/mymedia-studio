@@ -80,12 +80,12 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="flex w-full items-center gap-1 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <TabsTrigger value="profile" className="flex-none">Profile</TabsTrigger>
-            <TabsTrigger value="billing" className="flex-none">Billing</TabsTrigger>
-            <TabsTrigger value="credits" className="flex-none">Credits</TabsTrigger>
-            <TabsTrigger value="notifications" className="flex-none">Notifications</TabsTrigger>
-            <TabsTrigger value="account" className="flex-none">Account</TabsTrigger>
+          <TabsList className="flex w-full gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <TabsTrigger value="profile" className="flex-shrink-0 min-w-fit px-4">Profile</TabsTrigger>
+            <TabsTrigger value="billing" className="flex-shrink-0 min-w-fit px-4">Billing</TabsTrigger>
+            <TabsTrigger value="credits" className="flex-shrink-0 min-w-fit px-4">Credits</TabsTrigger>
+            <TabsTrigger value="notifications" className="flex-shrink-0 min-w-fit px-4">Notifications</TabsTrigger>
+            <TabsTrigger value="account" className="flex-shrink-0 min-w-fit px-4">Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-4 mt-6">

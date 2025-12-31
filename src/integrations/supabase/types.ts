@@ -1487,6 +1487,7 @@ export type Database = {
           actual_token_cost: number | null
           ai_caption: string | null
           ai_hashtags: string[] | null
+          api_duration_ms: number | null
           caption_generated_at: string | null
           completed_at: string | null
           created_at: string
@@ -1506,6 +1507,7 @@ export type Database = {
           provider_response: Json | null
           provider_task_id: string | null
           settings: Json | null
+          setup_duration_ms: number | null
           status: string
           storage_path: string | null
           template_id: string | null
@@ -1520,6 +1522,7 @@ export type Database = {
           actual_token_cost?: number | null
           ai_caption?: string | null
           ai_hashtags?: string[] | null
+          api_duration_ms?: number | null
           caption_generated_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1539,6 +1542,7 @@ export type Database = {
           provider_response?: Json | null
           provider_task_id?: string | null
           settings?: Json | null
+          setup_duration_ms?: number | null
           status?: string
           storage_path?: string | null
           template_id?: string | null
@@ -1553,6 +1557,7 @@ export type Database = {
           actual_token_cost?: number | null
           ai_caption?: string | null
           ai_hashtags?: string[] | null
+          api_duration_ms?: number | null
           caption_generated_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1572,6 +1577,7 @@ export type Database = {
           provider_response?: Json | null
           provider_task_id?: string | null
           settings?: Json | null
+          setup_duration_ms?: number | null
           status?: string
           storage_path?: string | null
           template_id?: string | null

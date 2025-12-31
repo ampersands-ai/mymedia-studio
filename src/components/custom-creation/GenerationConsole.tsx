@@ -16,6 +16,7 @@ interface GenerationConsoleProps {
     selectedOutputIndex: number;
     showLightbox: boolean;
     generationStartTime: number | null;
+    apiCallStartTime: number | null;
     generationCompleteTime: number | null;
     generatedOutput: string | null;
   };
@@ -123,6 +124,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
           {showProgress && (
             <GenerationProgress
               startTime={generationState.generationStartTime || Date.now()}
+              apiStartTime={generationState.apiCallStartTime}
               isComplete={!!generationState.generatedOutput || generationState.generatedOutputs.length > 0}
               completedAt={generationState.generationCompleteTime || undefined}
               estimatedTimeSeconds={estimatedTimeSeconds}

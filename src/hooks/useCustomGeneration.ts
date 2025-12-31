@@ -205,6 +205,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     updateState({ 
       localGenerating: true, 
       generationStartTime: Date.now(),
+      apiCallStartTime: null, // Will be set when API call starts
       generatedOutput: null,
       generatedOutputs: [],
       selectedOutputIndex: 0,
@@ -223,7 +224,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
             description: `Your prompt contains content that violates our guidelines: ${flaggedCategories}. Please revise and try again.`,
             duration: 8000,
           });
-          updateState({ localGenerating: false, generationStartTime: null });
+          updateState({ localGenerating: false, generationStartTime: null, apiCallStartTime: null });
           return;
         }
       }
@@ -239,6 +240,10 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         max_images: currentModel.max_images ?? undefined,
       };
       const maxPromptLength = getMaxPromptLength(modelSchema as Parameters<typeof getMaxPromptLength>[0], state.modelParameters.customMode);
+
+      // Mark API call start time (setup phase complete)
+      const apiCallStartTime = Date.now();
+      updateState({ apiCallStartTime });
 
       // Use shared generation pipeline
       const genId = await executeGeneration({
@@ -300,7 +305,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
       
       customGenerationLogger.error('Custom generation failed', appError);
       
-      updateState({ generationStartTime: null });
+      updateState({ generationStartTime: null, apiCallStartTime: null });
     } finally {
       updateState({ localGenerating: false });
     }

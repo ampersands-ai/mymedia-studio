@@ -83,8 +83,17 @@ const formatContentType = (contentType: string): string => {
 
 /**
  * Calculate and format generation time
+ * Uses setup_duration_ms and api_duration_ms if available, otherwise falls back to timestamps
  */
 const formatGenerationTime = (generation: Generation): string | null => {
+  // Use stored timing data if available
+  if (generation.setup_duration_ms !== null && generation.api_duration_ms !== null) {
+    const totalSeconds = ((generation.setup_duration_ms || 0) + (generation.api_duration_ms || 0)) / 1000;
+    const setupSec = (generation.setup_duration_ms || 0) / 1000;
+    const apiSec = (generation.api_duration_ms || 0) / 1000;
+    return `${totalSeconds.toFixed(1)}s (setup: ${setupSec.toFixed(1)}s, API: ${apiSec.toFixed(1)}s)`;
+  }
+  
   // Prefer completed_at, fallback to caption_generated_at
   const completedTime = generation.completed_at || generation.caption_generated_at;
   if (!completedTime || generation.status !== 'completed') return null;

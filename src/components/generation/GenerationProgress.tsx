@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, ExternalLink, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface GenerationProgressProps {
   startTime: number;
+  apiStartTime?: number | null; // When the API call actually started
   isComplete: boolean;
   completedAt?: number;
   className?: string;
@@ -15,6 +16,7 @@ interface GenerationProgressProps {
 
 export const GenerationProgress = ({ 
   startTime, 
+  apiStartTime,
   isComplete, 
   completedAt,
   className,
@@ -23,36 +25,63 @@ export const GenerationProgress = ({
 }: GenerationProgressProps) => {
   const [progress, setProgress] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [setupTime, setSetupTime] = useState<number | null>(null);
+  const [apiTime, setApiTime] = useState<number | null>(null);
+
+  // Determine if we're still in setup phase (before API call)
+  const isSettingUp = !apiStartTime && !isComplete;
 
   useEffect(() => {
     if (isComplete) {
       setProgress(100);
       if (completedAt) {
-        setElapsedTime((completedAt - startTime) / 1000);
+        const totalElapsed = (completedAt - startTime) / 1000;
+        setElapsedTime(totalElapsed);
+        
+        // Calculate timing breakdown
+        if (apiStartTime) {
+          const setupDuration = (apiStartTime - startTime) / 1000;
+          const apiDuration = (completedAt - apiStartTime) / 1000;
+          setSetupTime(setupDuration);
+          setApiTime(apiDuration);
+        }
       }
       return;
     }
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const elapsedSeconds = elapsed / 1000;
+      const now = Date.now();
+      const totalElapsed = now - startTime;
+      const elapsedSeconds = totalElapsed / 1000;
       
-      // Calculate target time with minimum of 60 seconds
-      const targetTime = Math.max(estimatedTimeSeconds || 60, 60);
-      
-      // Linear progression from 0% to 90% over targetTime seconds
-      if (elapsedSeconds <= targetTime) {
-        setProgress(Math.floor((elapsedSeconds / targetTime) * 90));
-      } else {
-        // Stay at 90% after targetTime seconds
-        setProgress(90);
+      if (isSettingUp) {
+        // During setup phase, don't show progress bar, just elapsed time
+        setElapsedTime(elapsedSeconds);
+        setProgress(0);
+      } else if (apiStartTime) {
+        // API call in progress - calculate progress from API start
+        const apiElapsed = now - apiStartTime;
+        const apiSeconds = apiElapsed / 1000;
+        const setupDuration = (apiStartTime - startTime) / 1000;
+        setSetupTime(setupDuration);
+        
+        // Calculate target time with minimum of 60 seconds
+        const targetTime = Math.max(estimatedTimeSeconds || 60, 60);
+        
+        // Linear progression from 0% to 90% over targetTime seconds
+        if (apiSeconds <= targetTime) {
+          setProgress(Math.floor((apiSeconds / targetTime) * 90));
+        } else {
+          // Stay at 90% after targetTime seconds
+          setProgress(90);
+        }
+        
+        setElapsedTime(elapsedSeconds);
       }
-      
-      setElapsedTime(elapsedSeconds);
     }, 100); // Update every 100ms for smooth animation
 
     return () => clearInterval(interval);
-  }, [startTime, isComplete, completedAt, estimatedTimeSeconds]);
+  }, [startTime, apiStartTime, isComplete, completedAt, estimatedTimeSeconds, isSettingUp]);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -60,11 +89,17 @@ export const GenerationProgress = ({
         <div className="flex items-center gap-2">
           {isComplete ? (
             <CheckCircle2 className="h-5 w-5 text-green-500" />
+          ) : isSettingUp ? (
+            <Settings2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           )}
           <span className="text-sm font-medium">
-            {isComplete ? "Generation Complete" : "Generating..."}
+            {isComplete 
+              ? "Generation Complete" 
+              : isSettingUp 
+                ? "Setting up..." 
+                : "Generating..."}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -86,13 +121,32 @@ export const GenerationProgress = ({
         </div>
       </div>
       
-      <Progress value={progress} className="h-2" />
+      {/* Only show progress bar after setup phase */}
+      {!isSettingUp && (
+        <Progress value={progress} className="h-2" />
+      )}
+      
+      {/* Show setup indicator during setup phase */}
+      {isSettingUp && (
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r from-muted via-muted-foreground/20 to-muted animate-pulse" />
+        </div>
+      )}
       
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{progress}%</span>
+        {isSettingUp ? (
+          <span className="text-muted-foreground">Preparing your generation...</span>
+        ) : (
+          <span>{progress}%</span>
+        )}
         {isComplete && (
           <span className="text-green-600 dark:text-green-400 font-medium">
-            ✓ Generated in {elapsedTime.toFixed(1)} seconds
+            ✓ Generated in {elapsedTime.toFixed(1)}s
+            {setupTime !== null && apiTime !== null && (
+              <span className="text-muted-foreground font-normal ml-1">
+                (setup: {setupTime.toFixed(1)}s, API: {apiTime.toFixed(1)}s)
+              </span>
+            )}
           </span>
         )}
       </div>

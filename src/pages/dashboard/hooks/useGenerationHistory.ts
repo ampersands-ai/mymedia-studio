@@ -37,6 +37,9 @@ export interface Generation {
   video_editor_job_id?: string | null;
   model_id?: string | null;
   model_record_id?: string | null;
+  // Timing data
+  setup_duration_ms?: number | null;
+  api_duration_ms?: number | null;
 }
 
 interface UseGenerationHistoryOptions {

@@ -15,6 +15,7 @@ interface OutputPanelProps {
     selectedOutputIndex: number;
     showLightbox: boolean;
     generationStartTime: number | null;
+    apiCallStartTime: number | null;
     generationCompleteTime: number | null;
     generatedOutput: string | null;
   };

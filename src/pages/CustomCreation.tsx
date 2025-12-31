@@ -131,8 +131,35 @@ const CustomCreation = () => {
     startProcessing: startPolling, 
     stopProcessing: stopPolling 
   } = useOutputProcessor({
-    onComplete: (outputs, parentId) => {
+    onComplete: async (outputs, parentId) => {
       logger.info('OutputProcessor onComplete called', { outputCount: outputs.length, parentId });
+      
+      // Calculate timing data
+      const completeTime = Date.now();
+      const setupDurationMs = state.apiCallStartTime && state.generationStartTime 
+        ? state.apiCallStartTime - state.generationStartTime 
+        : null;
+      const apiDurationMs = state.apiCallStartTime 
+        ? completeTime - state.apiCallStartTime 
+        : null;
+      
+      // Save timing data to database
+      if (parentId && (setupDurationMs !== null || apiDurationMs !== null)) {
+        try {
+          const { supabase } = await import('@/integrations/supabase/client');
+          await supabase
+            .from('generations')
+            .update({
+              setup_duration_ms: setupDurationMs,
+              api_duration_ms: apiDurationMs,
+            })
+            .eq('id', parentId);
+          
+          logger.info('Timing data saved', { parentId, setupDurationMs, apiDurationMs });
+        } catch (err) {
+          logger.error('Failed to save timing data', err instanceof Error ? err : new Error(String(err)));
+        }
+      }
       
       // Reset cooldown since generation completed successfully
       resetCooldown();
@@ -141,7 +168,7 @@ const CustomCreation = () => {
         generatedOutputs: outputs,
         generatedOutput: outputs[0]?.storage_path || null,
         selectedOutputIndex: 0,
-        generationCompleteTime: Date.now(),
+        generationCompleteTime: completeTime,
         localGenerating: false,
         pollingGenerationId: null,
         parentGenerationId: parentId || null,
@@ -726,6 +753,7 @@ const CustomCreation = () => {
                 selectedOutputIndex: state.selectedOutputIndex,
                 showLightbox: state.showLightbox,
                 generationStartTime: state.generationStartTime,
+                apiCallStartTime: state.apiCallStartTime,
                 generationCompleteTime: state.generationCompleteTime,
                 generatedOutput: state.generatedOutput,
               }}

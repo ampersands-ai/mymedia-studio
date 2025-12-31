@@ -1539,6 +1539,32 @@ Deno.serve(async (req) => {
               .from('generated-content')
               .getPublicUrl(storagePath);
 
+            // Calculate timing durations for sync completions
+            const completedAtMs = Date.now();
+            const { data: genData } = await supabase
+              .from('generations')
+              .select('created_at, api_call_started_at')
+              .eq('id', generationId)
+              .single();
+            
+            let setupDurationMs: number | null = null;
+            let apiDurationMs: number | null = null;
+            
+            if (genData) {
+              const createdAtMs = new Date(genData.created_at).getTime();
+              const apiCallStartedAtMs = genData.api_call_started_at 
+                ? new Date(genData.api_call_started_at).getTime() 
+                : null;
+              
+              if (apiCallStartedAtMs) {
+                setupDurationMs = apiCallStartedAtMs - createdAtMs;
+                apiDurationMs = completedAtMs - apiCallStartedAtMs;
+              } else {
+                // If no api_call_started_at, use total time as api time
+                apiDurationMs = completedAtMs - createdAtMs;
+              }
+            }
+
             await supabase
               .from('generations')
               .update({
@@ -1546,10 +1572,18 @@ Deno.serve(async (req) => {
                 output_url: publicUrl,
                 storage_path: storagePath,
                 file_size_bytes: fileSize,
+                completed_at: new Date(completedAtMs).toISOString(),
+                setup_duration_ms: setupDurationMs,
+                api_duration_ms: apiDurationMs,
                 provider_request: providerRequest,
                 provider_response: providerResponse.metadata
               })
               .eq('id', generationId);
+            
+            logger.info('Timing data saved', {
+              userId: user.id,
+              metadata: { generationId, setupDurationMs, apiDurationMs }
+            });
 
             // Log database update if in test mode
             if (testLogger) {

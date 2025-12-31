@@ -192,8 +192,37 @@ Deno.serve(async (req) => {
         .from('generated-content')
         .createSignedUrl(storagePath, 3600 * 24);
 
-      // Update generation record
+      // Update generation record with timing data
       if (generation) {
+        // Fetch api_call_started_at to calculate timing
+        const { data: genData } = await supabase
+          .from('generations')
+          .select('created_at, api_call_started_at')
+          .eq('id', generation.id)
+          .single();
+        
+        const completedAt = new Date().toISOString();
+        const completedAtMs = Date.now();
+        
+        // Calculate timing durations
+        let setupDurationMs: number | null = null;
+        let apiDurationMs: number | null = null;
+        
+        if (genData) {
+          const createdAtMs = new Date(genData.created_at).getTime();
+          const apiCallStartedAtMs = genData.api_call_started_at 
+            ? new Date(genData.api_call_started_at).getTime() 
+            : null;
+          
+          if (apiCallStartedAtMs) {
+            setupDurationMs = apiCallStartedAtMs - createdAtMs;
+            apiDurationMs = completedAtMs - apiCallStartedAtMs;
+          } else {
+            // If no api_call_started_at, use total time as api time
+            apiDurationMs = completedAtMs - createdAtMs;
+          }
+        }
+        
         await supabase
           .from('generations')
           .update({
@@ -201,10 +230,16 @@ Deno.serve(async (req) => {
             storage_path: storagePath,
             output_url: signedData?.signedUrl,
             file_size_bytes: uint8Data.length,
-            completed_at: new Date().toISOString(),
+            completed_at: completedAt,
+            setup_duration_ms: setupDurationMs,
+            api_duration_ms: apiDurationMs,
             provider_response: taskResult
           })
           .eq('id', generation.id);
+        
+        logger.info('Timing data saved', {
+          metadata: { generationId: generation.id, setupDurationMs, apiDurationMs }
+        });
       }
 
       const duration = Date.now() - startTime;

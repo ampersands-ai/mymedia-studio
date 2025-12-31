@@ -2958,11 +2958,8 @@ export type Database = {
           consented: boolean
           consented_at: string | null
           created_at: string
-          device_id: string | null
           id: string
-          ip_address: string | null
           updated_at: string
-          user_agent: string | null
           user_id: string | null
           withdrawn_at: string | null
         }
@@ -2971,11 +2968,8 @@ export type Database = {
           consented?: boolean
           consented_at?: string | null
           created_at?: string
-          device_id?: string | null
           id?: string
-          ip_address?: string | null
           updated_at?: string
-          user_agent?: string | null
           user_id?: string | null
           withdrawn_at?: string | null
         }
@@ -2984,11 +2978,8 @@ export type Database = {
           consented?: boolean
           consented_at?: string | null
           created_at?: string
-          device_id?: string | null
           id?: string
-          ip_address?: string | null
           updated_at?: string
-          user_agent?: string | null
           user_id?: string | null
           withdrawn_at?: string | null
         }

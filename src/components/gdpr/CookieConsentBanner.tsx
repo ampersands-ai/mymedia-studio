@@ -5,7 +5,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Shield, Cookie, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { getArtifioDeviceId } from '@/lib/posthog';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -20,7 +19,6 @@ interface ConsentPreferences {
 }
 
 export function CookieConsentBanner() {
-  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [preferences, setPreferences] = useState<Omit<ConsentPreferences, 'timestamp'>>({
@@ -84,33 +82,27 @@ export function CookieConsentBanner() {
     const deviceId = getArtifioDeviceId();
     const consentTypes = ['analytics', 'marketing', 'functional'] as const;
     
-    for (const consentType of consentTypes) {
-      try {
-        const record = {
-          user_id: user?.id || null,
+    try {
+      // Use edge function for secure consent handling with hashing
+      const consents = consentTypes.map(type => ({
+        consent_type: type,
+        consented: consent[type],
+      }));
+
+      const { error } = await supabase.functions.invoke('manage-consent', {
+        body: {
+          action: 'save',
           device_id: deviceId,
-          consent_type: consentType,
-          consented: consent[consentType],
-          consented_at: consent[consentType] ? new Date().toISOString() : null,
-          withdrawn_at: !consent[consentType] ? new Date().toISOString() : null,
+          consents,
           user_agent: navigator.userAgent,
-        };
+        },
+      });
 
-        const { error } = await supabase
-          .from('user_consent_records')
-          .upsert(record, {
-            onConflict: user?.id ? 'user_id,consent_type' : 'device_id,consent_type',
-          });
-
-        if (error) {
-          logger.error('Failed to save consent record', new Error(error.message), {
-            consentType,
-            userId: user?.id,
-          });
-        }
-      } catch (e) {
-        logger.error('Error saving consent', e instanceof Error ? e : new Error(String(e)));
+      if (error) {
+        logger.error('Failed to save consent via edge function', new Error(error.message));
       }
+    } catch (e) {
+      logger.error('Error saving consent', e instanceof Error ? e : new Error(String(e)));
     }
   };
 

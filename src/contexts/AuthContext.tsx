@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { trackEvent, identifyUser, resetPostHog } from "@/lib/posthog";
+import { trackEvent, identifyUser, resetPostHog, getArtifioDeviceId } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
 import { getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
 
@@ -86,6 +86,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
               }
             }
+            
+            // Migrate anonymous consent records to this user
+            try {
+              const deviceId = getArtifioDeviceId();
+              const { data: migrationResult } = await supabase.functions.invoke('manage-consent', {
+                body: {
+                  action: 'migrate',
+                  device_id: deviceId,
+                },
+              });
+              if (migrationResult?.migrated_count > 0) {
+                authLogger.debug('Migrated anonymous consent records', { count: migrationResult.migrated_count } as any);
+              }
+            } catch (err) {
+              authLogger.error('Failed to migrate consent records', err as Error);
+            }
+            
             identifyUser(session.user.id, {
               email: session.user.email,
               signup_date: session.user.created_at,

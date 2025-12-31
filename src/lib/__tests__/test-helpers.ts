@@ -3,8 +3,7 @@
  * Provides mock factories, test data generators, and common testing utilities
  */
 
-import { vi } from 'vitest';
-
+import { vi, beforeEach, afterEach } from 'vitest';
 // ============================================
 // Mock Factories
 // ============================================
@@ -54,8 +53,8 @@ export function createMockLogger() {
     debug: vi.fn((msg: string, ctx?: Record<string, unknown>) => logs.push({ level: 'debug', message: msg, context: ctx })),
     info: vi.fn((msg: string, ctx?: Record<string, unknown>) => logs.push({ level: 'info', message: msg, context: ctx })),
     warn: vi.fn((msg: string, ctx?: Record<string, unknown>) => logs.push({ level: 'warn', message: msg, context: ctx })),
-    error: vi.fn((msg: string, error?: Error, ctx?: Record<string, unknown>) => logs.push({ level: 'error', message: msg, context: ctx })),
-    critical: vi.fn((msg: string, error?: Error, ctx?: Record<string, unknown>) => logs.push({ level: 'critical', message: msg, context: ctx })),
+    error: vi.fn((msg: string, _error?: Error, ctx?: Record<string, unknown>) => logs.push({ level: 'error', message: msg, context: ctx })),
+    critical: vi.fn((msg: string, _error?: Error, ctx?: Record<string, unknown>) => logs.push({ level: 'critical', message: msg, context: ctx })),
     child: vi.fn().mockReturnThis(),
     childWithUser: vi.fn().mockResolvedValue({ logs: [] }),
     startTimer: vi.fn().mockReturnValue({ end: vi.fn().mockReturnValue(100) }),
@@ -121,41 +120,84 @@ export function createMockProfile(overrides: Partial<{
 
 /**
  * Create a mock scene for storyboard tests
+ * Matches the Scene type from @/types/storyboard
  */
 export function createMockScene(overrides: Partial<{
   id: string;
+  order_number: number;
   voice_over_text: string;
   image_prompt: string;
-  scene_number: number;
-  duration: number;
+  image_preview_url?: string;
+  video_url?: string;
+  is_edited: boolean;
+  storyboard_id: string;
+  created_at: string;
+  updated_at: string;
 }> = {}) {
   return {
     id: `scene-${Date.now()}`,
+    order_number: 1,
     voice_over_text: 'This is the scene narration.',
     image_prompt: 'A cinematic shot of a mountain landscape',
-    scene_number: 1,
-    duration: 5,
+    is_edited: false,
+    storyboard_id: 'storyboard-123',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     ...overrides,
   };
 }
 
 /**
  * Create a mock storyboard
+ * Matches the Storyboard type from @/types/storyboard
  */
 export function createMockStoryboard(overrides: Partial<{
   id: string;
   user_id: string;
+  topic: string;
   duration: number;
-  estimated_render_cost: number;
+  style: string;
+  tone: string;
+  voice_id: string;
+  voice_name: string;
+  intro_image_prompt: string;
   intro_voiceover_text: string;
-  original_character_count: number;
+  intro_image_preview_url?: string;
+  status: 'draft' | 'rendering' | 'complete' | 'failed';
+  video_url?: string;
+  video_storage_path?: string;
+  render_job_id?: string;
+  tokens_cost: number;
+  estimated_render_cost: number;
+  video_quality?: string;
+  aspect_ratio?: string | null;
+  subtitle_settings?: Record<string, unknown>;
+  music_settings?: Record<string, unknown>;
+  image_animation_settings?: {
+    zoom?: number;
+    position?: string;
+  };
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  original_character_count?: number;
 }> = {}) {
   return {
     id: `storyboard-${Date.now()}`,
     user_id: 'user-456',
+    topic: 'Test Topic',
     duration: 30,
-    estimated_render_cost: 7.5,
+    style: 'cinematic',
+    tone: 'professional',
+    voice_id: 'voice-123',
+    voice_name: 'Test Voice',
+    intro_image_prompt: 'A cinematic opening shot',
     intro_voiceover_text: 'Welcome to this story.',
+    status: 'draft' as const,
+    tokens_cost: 0,
+    estimated_render_cost: 7.5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     original_character_count: 500,
     ...overrides,
   };

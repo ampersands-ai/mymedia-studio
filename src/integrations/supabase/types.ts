@@ -974,6 +974,36 @@ export type Database = {
         }
         Relationships: []
       }
+      circuit_breaker_events: {
+        Row: {
+          breaker_name: string
+          created_at: string
+          error_message: string | null
+          event_type: string
+          failure_count: number | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          breaker_name: string
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          failure_count?: number | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          breaker_name?: string
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          failure_count?: number | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       collection_items: {
         Row: {
           added_at: string | null
@@ -1885,6 +1915,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits_v2: {
+        Row: {
+          blocked_until: string | null
+          created_at: string
+          id: string
+          key: string
+          last_request_at: string
+          request_count: number
+          request_timestamps: number[] | null
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          last_request_at?: string
+          request_count?: number
+          request_timestamps?: number[] | null
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          last_request_at?: string
+          request_count?: number
+          request_timestamps?: number[] | null
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
@@ -2348,6 +2414,36 @@ export type Database = {
           voice_model?: string | null
           voice_name?: string
           voice_provider?: string | null
+        }
+        Relationships: []
+      }
+      system_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          recorded_at: string
+          tags: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          recorded_at?: string
+          tags?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          recorded_at?: string
+          tags?: Json | null
         }
         Relationships: []
       }
@@ -4380,6 +4476,7 @@ export type Database = {
         }[]
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_expired_rate_limits: { Args: never; Returns: number }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_tokens: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: {
@@ -4457,6 +4554,17 @@ export type Database = {
         }[]
       }
       get_auth_headers: { Args: never; Returns: Json }
+      get_metric_stats: {
+        Args: { p_hours?: number; p_name: string }
+        Returns: {
+          avg_value: number
+          count: number
+          last_recorded_at: string
+          last_value: number
+          max_value: number
+          min_value: number
+        }[]
+      }
       get_sanitized_error_logs: {
         Args: { p_limit?: number; p_user_id?: string }
         Returns: {
@@ -4506,6 +4614,15 @@ export type Database = {
       log_payment_id_decryption: {
         Args: { p_field_name: string; p_reason?: string; p_user_id: string }
         Returns: undefined
+      }
+      record_metric: {
+        Args: {
+          p_name: string
+          p_tags?: Json
+          p_unit?: string
+          p_value: number
+        }
+        Returns: string
       }
       redeem_referral_code: {
         Args: { p_code: string; p_referred_user_id: string }

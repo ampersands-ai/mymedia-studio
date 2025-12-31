@@ -80,13 +80,15 @@ const Settings = () => {
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="flex w-full gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <TabsTrigger value="profile" className="flex-shrink-0 min-w-fit px-4">Profile</TabsTrigger>
-            <TabsTrigger value="billing" className="flex-shrink-0 min-w-fit px-4">Billing</TabsTrigger>
-            <TabsTrigger value="credits" className="flex-shrink-0 min-w-fit px-4">Credits</TabsTrigger>
-            <TabsTrigger value="notifications" className="flex-shrink-0 min-w-fit px-4">Notifications</TabsTrigger>
-            <TabsTrigger value="account" className="flex-shrink-0 min-w-fit px-4">Account</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <TabsList className="flex w-max gap-2 pb-1">
+              <TabsTrigger value="profile" className="flex-shrink-0 px-4">Profile</TabsTrigger>
+              <TabsTrigger value="billing" className="flex-shrink-0 px-4">Billing</TabsTrigger>
+              <TabsTrigger value="credits" className="flex-shrink-0 px-4">Credits</TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-shrink-0 px-4">Notifications</TabsTrigger>
+              <TabsTrigger value="account" className="flex-shrink-0 px-4">Account</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="profile" className="space-y-4 mt-6">
             <ProfileSection profileData={profileData} setProfileData={setProfileData} />

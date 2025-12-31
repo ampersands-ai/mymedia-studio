@@ -1,5 +1,14 @@
 project_id = "gzlwkvmivbfcvczoqphq"
 
+[functions.cron-cleanup-rate-limits]
+verify_jwt = false
+
+[functions.cron-create-partitions]
+verify_jwt = false
+
+[functions.cron-archive-data]
+verify_jwt = false
+
 [functions.cancel-render]
 verify_jwt = true
 

@@ -87,21 +87,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
             }
             
-            // Migrate anonymous consent records to this user
-            try {
-              const deviceId = getArtifioDeviceId();
-              const { data: migrationResult } = await supabase.functions.invoke('manage-consent', {
-                body: {
-                  action: 'migrate',
-                  device_id: deviceId,
-                },
-              });
+            // Migrate anonymous consent records to this user (non-blocking to prevent auth flow stalling)
+            const deviceId = getArtifioDeviceId();
+            supabase.functions.invoke('manage-consent', {
+              body: {
+                action: 'migrate',
+                device_id: deviceId,
+              },
+            }).then(({ data: migrationResult }) => {
               if (migrationResult?.migrated_count > 0) {
                 authLogger.debug('Migrated anonymous consent records', { count: migrationResult.migrated_count } as any);
               }
-            } catch (err) {
+            }).catch((err) => {
               authLogger.error('Failed to migrate consent records', err as Error);
-            }
+            });
             
             identifyUser(session.user.id, {
               email: session.user.email,

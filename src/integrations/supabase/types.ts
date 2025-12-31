@@ -1102,6 +1102,75 @@ export type Database = {
           },
         ]
       }
+      consent_audit_log: {
+        Row: {
+          action: string
+          consent_type: string
+          created_at: string
+          device_id_hash: string | null
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          new_value: boolean
+          previous_value: boolean | null
+          user_agent_hash: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          consent_type: string
+          created_at?: string
+          device_id_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          new_value: boolean
+          previous_value?: boolean | null
+          user_agent_hash?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          consent_type?: string
+          created_at?: string
+          device_id_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          new_value?: boolean
+          previous_value?: boolean | null
+          user_agent_hash?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      consent_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_required: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id: string
+          is_required?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_required?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       data_export_requests: {
         Row: {
           completed_at: string | null
@@ -2958,8 +3027,11 @@ export type Database = {
           consented: boolean
           consented_at: string | null
           created_at: string
+          device_id_hash: string | null
           id: string
+          ip_hash: string | null
           updated_at: string
+          user_agent_hash: string | null
           user_id: string | null
           withdrawn_at: string | null
         }
@@ -2968,8 +3040,11 @@ export type Database = {
           consented?: boolean
           consented_at?: string | null
           created_at?: string
+          device_id_hash?: string | null
           id?: string
+          ip_hash?: string | null
           updated_at?: string
+          user_agent_hash?: string | null
           user_id?: string | null
           withdrawn_at?: string | null
         }
@@ -2978,8 +3053,11 @@ export type Database = {
           consented?: boolean
           consented_at?: string | null
           created_at?: string
+          device_id_hash?: string | null
           id?: string
+          ip_hash?: string | null
           updated_at?: string
+          user_agent_hash?: string | null
           user_id?: string | null
           withdrawn_at?: string | null
         }
@@ -4630,6 +4708,10 @@ export type Database = {
       log_payment_id_decryption: {
         Args: { p_field_name: string; p_reason?: string; p_user_id: string }
         Returns: undefined
+      }
+      migrate_anonymous_consent: {
+        Args: { p_device_id_hash: string; p_user_id: string }
+        Returns: number
       }
       record_metric: {
         Args: {

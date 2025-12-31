@@ -13,9 +13,9 @@ describe('validateScenesComplete', () => {
 
     it('should validate multiple complete scenes', () => {
       const scenes = [
-        createMockScene({ scene_number: 1 }),
-        createMockScene({ scene_number: 2 }),
-        createMockScene({ scene_number: 3 }),
+        createMockScene({ order_number: 1 }),
+        createMockScene({ order_number: 2 }),
+        createMockScene({ order_number: 3 }),
       ];
       const result = validateScenesComplete(scenes);
       expect(result.isValid).toBe(true);
@@ -39,13 +39,13 @@ describe('validateScenesComplete', () => {
 
     it('should find first incomplete scene in array', () => {
       const scenes = [
-        createMockScene({ scene_number: 1 }),
-        createMockScene({ scene_number: 2, voice_over_text: '' }),
-        createMockScene({ scene_number: 3 }),
+        createMockScene({ order_number: 1 }),
+        createMockScene({ order_number: 2, voice_over_text: '' }),
+        createMockScene({ order_number: 3 }),
       ];
       const result = validateScenesComplete(scenes);
       expect(result.isValid).toBe(false);
-      expect(result.incompleteScene?.scene_number).toBe(2);
+      expect(result.incompleteScene?.order_number).toBe(2);
     });
 
     it('should detect null voice_over_text', () => {
@@ -71,13 +71,13 @@ describe('validateScenesComplete', () => {
 
     it('should find scene with missing image_prompt', () => {
       const scenes = [
-        createMockScene({ scene_number: 1 }),
-        createMockScene({ scene_number: 2 }),
-        createMockScene({ scene_number: 3, image_prompt: '' }),
+        createMockScene({ order_number: 1 }),
+        createMockScene({ order_number: 2 }),
+        createMockScene({ order_number: 3, image_prompt: '' }),
       ];
       const result = validateScenesComplete(scenes);
       expect(result.isValid).toBe(false);
-      expect(result.incompleteScene?.scene_number).toBe(3);
+      expect(result.incompleteScene?.order_number).toBe(3);
     });
 
     it('should detect null image_prompt', () => {

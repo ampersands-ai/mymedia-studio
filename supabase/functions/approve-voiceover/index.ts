@@ -3,6 +3,8 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
+import { withCircuitBreaker } from "../_shared/circuit-breaker-enhanced.ts";
 
 // Type definitions
 interface SanitizedData {
@@ -125,6 +127,12 @@ Deno.serve(async (req) => {
 
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
+  }
+
+  // Apply rate limiting (strict tier: 10 req/min)
+  const rateLimitResponse = await applyRateLimit(req, 'strict', 'approve-voiceover');
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const requestId = crypto.randomUUID();

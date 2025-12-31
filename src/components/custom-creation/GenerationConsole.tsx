@@ -1,12 +1,24 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info, History } from "lucide-react";
+import { Info, History, Clock } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { GenerationProgress } from "@/components/generation/GenerationProgress";
 import { OutputGrid } from "@/components/generation/OutputGrid";
 import { OutputLightbox } from "@/components/generation/OutputLightbox";
 import { OptimizedGenerationPreview } from "@/components/generation/OptimizedGenerationPreview";
 import { CaptionDisplay } from "./CaptionDisplay";
+
+/**
+ * Format duration in seconds to a human-readable string
+ */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s`;
+  }
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+}
 
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
 
@@ -134,6 +146,14 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
 
           {generationState.generatedOutputs.length > 0 ? (
             <div className="space-y-3 pt-2">
+              {/* Show generation time if complete */}
+              {generationState.generationStartTime && generationState.generationCompleteTime && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Generated in {formatDuration((generationState.generationCompleteTime - generationState.generationStartTime) / 1000)}</span>
+                </div>
+              )}
+              
               <OutputGrid
                 outputs={generationState.generatedOutputs}
                 contentType={contentType}

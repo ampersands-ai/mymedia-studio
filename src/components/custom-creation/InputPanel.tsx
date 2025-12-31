@@ -514,16 +514,34 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
       {/* Sticky action buttons at bottom - ALWAYS VISIBLE */}
       <div className="sticky bottom-0 left-0 right-0 flex flex-col gap-3 p-4 md:px-8 pb-safe md:pb-6 border-t border-border bg-card backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40 shrink-0">
+        {/* Concurrent generation limit indicator */}
+        {activeGenerationsCount > 0 && activeGenerationsCount >= maxConcurrentGenerations && (
+          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+            <Timer className="h-4 w-4 flex-shrink-0" />
+            <span>
+              {activeGenerationsCount} generation{activeGenerationsCount > 1 ? 's' : ''} in progress. Please wait for completion.
+            </span>
+          </div>
+        )}
+        
         <Button
           onClick={onGenerate}
           disabled={!canGenerate || isDisabled}
           size="lg"
           className="w-full gap-2 font-bold overflow-hidden"
+          title={activeGenerationsCount >= maxConcurrentGenerations 
+            ? `Please wait for your current generation${activeGenerationsCount > 1 ? 's' : ''} to complete` 
+            : undefined}
         >
           {isOnCooldown ? (
             <>
               <Timer className="h-5 w-5 flex-shrink-0" />
               <span className="flex-shrink-0">Wait {cooldownRemaining}s</span>
+            </>
+          ) : activeGenerationsCount >= maxConcurrentGenerations ? (
+            <>
+              <Timer className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-shrink-0">Generation in Progress</span>
             </>
           ) : (
             <>

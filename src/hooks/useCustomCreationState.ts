@@ -318,8 +318,18 @@ export const useCustomCreationState = () => {
       // Only clear outputs if model is actually changing and not during active generation
       const isChanging = selectedModel !== prev.selectedModel;
       const isGenerating = prev.localGenerating || prev.pollingGenerationId;
+      const hasOutputs = prev.generatedOutputs.length > 0 || prev.generatedOutput;
       
-      if (!isChanging || isGenerating) {
+      // Protect recently completed generations (within last 2 seconds)
+      const isRecentlyComplete = prev.generationCompleteTime && 
+        (Date.now() - prev.generationCompleteTime) < 2000;
+      
+      // Don't clear outputs if:
+      // - Model isn't changing
+      // - Generation is in progress
+      // - We have existing outputs (just completed)
+      // - Generation just completed recently
+      if (!isChanging || isGenerating || hasOutputs || isRecentlyComplete) {
         return { ...prev, selectedModel };
       }
       
@@ -345,8 +355,18 @@ export const useCustomCreationState = () => {
       // Only clear outputs if group is actually changing and not during active generation
       const isChanging = selectedGroup !== prev.selectedGroup;
       const isGenerating = prev.localGenerating || prev.pollingGenerationId;
+      const hasOutputs = prev.generatedOutputs.length > 0 || prev.generatedOutput;
       
-      if (!isChanging || isGenerating) {
+      // Protect recently completed generations (within last 2 seconds)
+      const isRecentlyComplete = prev.generationCompleteTime && 
+        (Date.now() - prev.generationCompleteTime) < 2000;
+      
+      // Don't clear outputs if:
+      // - Group isn't changing
+      // - Generation is in progress
+      // - We have existing outputs (just completed)
+      // - Generation just completed recently
+      if (!isChanging || isGenerating || hasOutputs || isRecentlyComplete) {
         return { ...prev, selectedGroup };
       }
       

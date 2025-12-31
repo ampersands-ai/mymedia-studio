@@ -1,10 +1,12 @@
 /**
  * Rate Limit Middleware for Edge Functions
  * 
- * Provides easy-to-use rate limiting for edge functions with:
+ * Production-grade rate limiting middleware with:
+ * - Atomic PostgreSQL-based rate limiting (no race conditions)
  * - Pre-configured tiers for different use cases
  * - Automatic header generation
  * - User identification from JWT
+ * - Fail-open design for reliability
  */
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -112,8 +114,25 @@ export async function checkRateLimit(
     };
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  // Fail-open if environment variables are missing
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('[RateLimitMiddleware] Missing environment variables');
+    return {
+      allowed: true,
+      info: {
+        allowed: true,
+        remaining: 999,
+        resetAt: new Date(Date.now() + 60000),
+        currentCount: 0,
+        windowStart: new Date(),
+      },
+      headers: {},
+    };
+  }
+
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   const identifier = await getRateLimitIdentifier(req, supabase, options.identifier);
@@ -135,8 +154,8 @@ export async function checkRateLimit(
 
   const config = RATE_LIMIT_TIERS[options.tier];
   if (!config) {
-    console.error(`Unknown rate limit tier: ${options.tier}`);
-    // Default to allowing if tier is unknown
+    console.error(`[RateLimitMiddleware] Unknown tier: ${options.tier}`);
+    // Fail-open for unknown tier
     return {
       allowed: true,
       info: {
@@ -150,27 +169,58 @@ export async function checkRateLimit(
     };
   }
 
-  const limiter = new SlidingWindowRateLimiter(supabase, config);
-  const info = await limiter.checkLimit(identifier, options.action);
-  const headers = createRateLimitHeaders(info);
+  try {
+    const limiter = new SlidingWindowRateLimiter(supabase, config);
+    const info = await limiter.checkLimit(identifier, options.action);
+    const headers = createRateLimitHeaders(info);
 
-  if (!info.allowed) {
+    if (!info.allowed) {
+      // Log blocked request for monitoring
+      console.warn('[RateLimitMiddleware] Request blocked:', {
+        action: options.action,
+        tier: options.tier,
+        identifier: identifier.substring(0, 30) + '...',
+        currentCount: info.currentCount,
+        maxRequests: config.maxRequests,
+        retryAfterMs: info.retryAfterMs,
+      });
+
+      return {
+        allowed: false,
+        info,
+        headers,
+        errorResponse: createRateLimitErrorResponse(info, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        }),
+      };
+    }
+
     return {
-      allowed: false,
+      allowed: true,
       info,
       headers,
-      errorResponse: createRateLimitErrorResponse(info, {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      }),
+    };
+  } catch (error) {
+    // Fail-open on any error
+    console.error('[RateLimitMiddleware] Error:', {
+      error: error instanceof Error ? error.message : String(error),
+      action: options.action,
+      tier: options.tier,
+    });
+
+    return {
+      allowed: true,
+      info: {
+        allowed: true,
+        remaining: 999,
+        resetAt: new Date(Date.now() + 60000),
+        currentCount: 0,
+        windowStart: new Date(),
+      },
+      headers: {},
     };
   }
-
-  return {
-    allowed: true,
-    info,
-    headers,
-  };
 }
 
 /**

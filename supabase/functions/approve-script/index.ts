@@ -2,12 +2,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from '../_shared/edge-logger.ts';
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { checkEmailVerified, createEmailNotVerifiedResponse } from "../_shared/email-verification.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
+  }
+
+  // Apply rate limiting (standard tier: 100 req/min)
+  const rateLimitResponse = await applyRateLimit(req, 'standard', 'approve-script');
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const startTime = Date.now();

@@ -15,6 +15,8 @@ import {
 import { validateGenerationSettingsWithSchema } from "../_shared/jsonb-validation-schemas.ts";
 import { GENERATION_STATUS, SYSTEM_LIMITS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
+import { withCircuitBreaker } from "../_shared/circuit-breaker-enhanced.ts";
 
 /**
  * GENERATE CONTENT EDGE FUNCTION
@@ -134,6 +136,12 @@ Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
 
   try {
+    // Apply rate limiting (generation tier: 20 req/min)
+    const rateLimitResponse = await applyRateLimit(req, 'generation', 'generate-content');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Check request queue capacity
     if (activeRequests.size >= CONCURRENT_LIMIT) {
       return new Response(
@@ -1314,8 +1322,14 @@ Deno.serve(async (req) => {
           throw new Error('Invalid provider request structure');
         }
 
+        // Wrap provider call with circuit breaker for resilience
         const providerResponse = await Promise.race([
-          callProvider(model.provider, providerRequest, webhookToken),
+          withCircuitBreaker(
+            `provider_${model.provider}`,
+            'ai_provider',
+            () => callProvider(model.provider, providerRequest, webhookToken),
+            supabase
+          ),
           timeoutPromise
         ]) as ProviderResponse;
 

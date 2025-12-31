@@ -1487,6 +1487,7 @@ export type Database = {
           actual_token_cost: number | null
           ai_caption: string | null
           ai_hashtags: string[] | null
+          api_call_started_at: string | null
           api_duration_ms: number | null
           caption_generated_at: string | null
           completed_at: string | null
@@ -1522,6 +1523,7 @@ export type Database = {
           actual_token_cost?: number | null
           ai_caption?: string | null
           ai_hashtags?: string[] | null
+          api_call_started_at?: string | null
           api_duration_ms?: number | null
           caption_generated_at?: string | null
           completed_at?: string | null
@@ -1557,6 +1559,7 @@ export type Database = {
           actual_token_cost?: number | null
           ai_caption?: string | null
           ai_hashtags?: string[] | null
+          api_call_started_at?: string | null
           api_duration_ms?: number | null
           caption_generated_at?: string | null
           completed_at?: string | null

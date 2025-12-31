@@ -131,6 +131,12 @@ const CustomCreation = () => {
     startProcessing: startPolling, 
     stopProcessing: stopPolling 
   } = useOutputProcessor({
+    onApiCallStarted: (timestamp) => {
+      // Update state when API call actually starts (from database)
+      if (!state.apiCallStartTime) {
+        updateState({ apiCallStartTime: timestamp });
+      }
+    },
     onComplete: async (outputs, parentId) => {
       logger.info('OutputProcessor onComplete called', { outputCount: outputs.length, parentId });
       

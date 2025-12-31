@@ -21,6 +21,7 @@ import {
 interface UseOutputProcessorOptions {
   onComplete?: (outputs: GenerationOutput[], parentId: string) => void;
   onError?: (error: string) => void;
+  onApiCallStarted?: (timestamp: number) => void;
 }
 
 interface UseOutputProcessorReturn {
@@ -44,6 +45,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
   const generationIdRef = useRef<string | null>(null);
   const optionsRef = useRef(options);
   const hasCompletedRef = useRef(false);
+  const apiCallStartedNotifiedRef = useRef(false);
 
   // Keep options ref updated
   useEffect(() => {
@@ -64,17 +66,17 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     }
   }, []);
 
-  const fetchOutputs = useCallback(async (generationId: string): Promise<GenerationOutput[] | null> => {
+  const fetchOutputs = useCallback(async (generationId: string): Promise<{ outputs: GenerationOutput[] | null; apiCallStartedAt: string | null }> => {
     // Fetch parent generation
     const { data: parent, error: parentError } = await supabase
       .from('generations')
-      .select('id, status, storage_path, type, model_id, model_record_id, provider_response, is_batch_output')
+      .select('id, status, storage_path, type, model_id, model_record_id, provider_response, is_batch_output, api_call_started_at')
       .eq('id', generationId)
       .single();
 
     if (parentError || !parent) {
       logger.error('[useOutputProcessor] Failed to fetch parent', parentError);
-      return null;
+      return { outputs: null, apiCallStartedAt: null };
     }
 
     // Handle failed/error status
@@ -88,7 +90,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
 
     // Not completed yet
     if (parent.status !== 'completed') {
-      return null;
+      return { outputs: null, apiCallStartedAt: parent.api_call_started_at };
     }
 
     // Fetch children with storage_path (same query as History page)
@@ -149,7 +151,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
       });
     }
 
-    return outputList.length > 0 ? outputList : null;
+    return { outputs: outputList.length > 0 ? outputList : null, apiCallStartedAt: parent.api_call_started_at };
   }, []);
 
   const pollForOutputs = useCallback(async () => {
@@ -172,19 +174,25 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     try {
       const result = await fetchOutputs(generationId);
       
-      if (result && result.length > 0) {
+      // Notify when API call started (for progress tracking)
+      if (result.apiCallStartedAt && !apiCallStartedNotifiedRef.current && optionsRef.current.onApiCallStarted) {
+        apiCallStartedNotifiedRef.current = true;
+        optionsRef.current.onApiCallStarted(new Date(result.apiCallStartedAt).getTime());
+      }
+      
+      if (result.outputs && result.outputs.length > 0) {
         logger.info('[useOutputProcessor] Outputs found', { 
           generationId, 
-          count: result.length,
+          count: result.outputs.length,
           elapsedMs 
         } as any);
         
         hasCompletedRef.current = true;
         clearPolling();
-        setOutputs(result);
+        setOutputs(result.outputs);
         setStatus('completed');
         setIsProcessing(false);
-        optionsRef.current.onComplete?.(result, generationId);
+        optionsRef.current.onComplete?.(result.outputs, generationId);
       } else {
         // Schedule next poll with dynamic interval
         const nextInterval = getCurrentInterval(elapsedMs);
@@ -219,6 +227,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     generationIdRef.current = generationId;
     pollingStartTimeRef.current = Date.now();
     hasCompletedRef.current = false;
+    apiCallStartedNotifiedRef.current = false;
     setOutputs([]);
     setError(null);
     setIsProcessing(true);

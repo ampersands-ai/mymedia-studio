@@ -5,15 +5,17 @@ import { logger } from "@/lib/logger";
 interface UsePollingFallbackOptions {
   onComplete: (generationId: string, status: string) => Promise<void>;
   onError: (error: string) => void;
+  onApiCallStarted?: (timestamp: number) => void;
 }
 
 /**
  * Hook for polling generation status with exponential backoff
  * Tier 3: Fallback mechanism when realtime is unavailable
  */
-export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOptions) => {
+export const usePollingFallback = ({ onComplete, onError, onApiCallStarted }: UsePollingFallbackOptions) => {
   const [isPolling, setIsPolling] = useState(false);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const apiCallStartedNotifiedRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
@@ -23,6 +25,7 @@ export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOp
   const startPolling = useCallback((generationId: string) => {
     logger.info('Starting fallback polling', { generationId } as any);
     setIsPolling(true);
+    apiCallStartedNotifiedRef.current = false;
 
     // More responsive intervals: 2s → 3s → 5s → 8s (max)
     const intervals = [2000, 3000, 5000, 8000];
@@ -32,11 +35,17 @@ export const usePollingFallback = ({ onComplete, onError }: UsePollingFallbackOp
       try {
         const { data, error } = await supabase
           .from('generations')
-          .select('status, id, provider_response')
+          .select('status, id, provider_response, api_call_started_at')
           .eq('id', generationId)
           .single();
 
         if (error) throw error;
+        
+        // Notify when API call started (for progress tracking)
+        if (data?.api_call_started_at && !apiCallStartedNotifiedRef.current && onApiCallStarted) {
+          apiCallStartedNotifiedRef.current = true;
+          onApiCallStarted(new Date(data.api_call_started_at).getTime());
+        }
 
         if (data?.status === 'completed' || data?.status === 'failed' || data?.status === 'error') {
           await onComplete(generationId, data.status);

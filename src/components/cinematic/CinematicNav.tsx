@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, Home, Sparkles, Layout, History, Video, FileText, Info, BookOpen, HelpCircle, Users, Settings, LogOut, Shield, Clock, Coins } from "lucide-react";
+import { Menu, Home, Coins, Shield } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -12,6 +12,7 @@ import { useUserCredits } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
+import { SignedInHamburgerMenuContent } from "@/components/navigation/mobile/SignedInHamburgerMenuContent";
 
 const navItems = [
   { id: "features", label: "Features", href: "/features" },
@@ -30,8 +31,6 @@ export const CinematicNav = () => {
   const location = useLocation();
 
   const creditBalance = creditsLoading ? null : availableCredits;
-  const showBlogPage = isPageEnabled('blog');
-  const showCommunityPage = isPageEnabled('community');
 
   const visibleNavItems = navItems.filter((item) => {
     if (item.id === "pricing") return true;
@@ -66,58 +65,6 @@ export const CinematicNav = () => {
   };
 
   const isActive = (path: string) => location.pathname === path;
-
-  const renderFeatureButton = (
-    path: string,
-    label: string,
-    icon: React.ReactNode,
-    featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard'
-  ) => {
-    const enabled = isFeatureEnabled(featureId);
-    const comingSoon = isFeatureComingSoon(featureId);
-
-    if (!enabled && !isAdmin) return null;
-
-    if (comingSoon && !isAdmin) {
-      return (
-        <button
-          key={path}
-          disabled
-          className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left opacity-50 cursor-not-allowed text-muted-foreground text-sm font-bold"
-        >
-          <div className="flex items-center gap-3">
-            {icon}
-            <span>{label}</span>
-          </div>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            Soon
-          </span>
-        </button>
-      );
-    }
-
-    const showAdminIndicator = isAdmin && (!enabled || comingSoon);
-
-    return (
-      <button
-        key={path}
-        className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-          isActive(path) 
-            ? "bg-primary text-primary-foreground" 
-            : "hover:bg-muted"
-        )}
-        onClick={() => handleNavigation(path)}
-      >
-        {icon}
-        <span>{label}</span>
-        {showAdminIndicator && (
-          <Shield className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
-        )}
-      </button>
-    );
-  };
 
   return (
     <nav
@@ -239,171 +186,15 @@ export const CinematicNav = () => {
                 <ScrollArea className="flex-1">
                   <div className="flex flex-col pb-6">
                     {user ? (
-                      <>
-                        {/* Home link */}
-                        <div className="px-4 pt-4">
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/")}
-                          >
-                            <Home className="h-4 w-4" />
-                            <span>Home</span>
-                          </button>
-                        </div>
-
-                        {/* CREATE Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">CREATE</div>
-                        <div className="space-y-1 px-4">
-                          {renderFeatureButton(
-                            "/dashboard/custom-creation",
-                            "Custom Creation",
-                            <Sparkles className="h-4 w-4" />,
-                            "custom_creation"
-                          )}
-                          {renderFeatureButton(
-                            "/dashboard/storyboard",
-                            "Storyboard",
-                            <span className="text-base">🎬</span>,
-                            "storyboard"
-                          )}
-                          {renderFeatureButton(
-                            "/dashboard/video-studio",
-                            "Faceless Videos",
-                            <Video className="h-4 w-4" />,
-                            "faceless_videos"
-                          )}
-                          {renderFeatureButton(
-                            "/dashboard/templates",
-                            "Templates",
-                            <Layout className="h-4 w-4" />,
-                            "templates"
-                          )}
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/dashboard/history")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/dashboard/history")}
-                          >
-                            <History className="h-4 w-4" />
-                            <span>My Creations</span>
-                          </button>
-                        </div>
-
-                        {/* RESOURCES Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">RESOURCES</div>
-                        <div className="space-y-1 px-4">
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/dashboard/prompts")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/dashboard/prompts")}
-                          >
-                            <FileText className="h-4 w-4" />
-                            <span>Prompt Library</span>
-                          </button>
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/about")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/about")}
-                          >
-                            <Info className="h-4 w-4" />
-                            <span>About</span>
-                          </button>
-                          {showBlogPage && (
-                            <button
-                              className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                                isActive("/blog")
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted"
-                              )}
-                              onClick={() => handleNavigation("/blog")}
-                            >
-                              <BookOpen className="h-4 w-4" />
-                              <span>Blog</span>
-                            </button>
-                          )}
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/faq")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/faq")}
-                          >
-                            <HelpCircle className="h-4 w-4" />
-                            <span>FAQ</span>
-                          </button>
-                          {showCommunityPage && (
-                            <button
-                              className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                                isActive("/community")
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted"
-                              )}
-                              onClick={() => handleNavigation("/community")}
-                            >
-                              <Users className="h-4 w-4" />
-                              <span>Community</span>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* ACCOUNT Section */}
-                        <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">ACCOUNT</div>
-                        <div className="space-y-1 px-4">
-                          <button
-                            className={cn(
-                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                              isActive("/dashboard/settings")
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            )}
-                            onClick={() => handleNavigation("/dashboard/settings")}
-                          >
-                            <Settings className="h-4 w-4" />
-                            <span>Settings</span>
-                          </button>
-                          {isAdmin && (
-                            <button
-                              className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
-                                isActive("/admin/dashboard")
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted"
-                              )}
-                              onClick={() => handleNavigation("/admin/dashboard")}
-                            >
-                              <Shield className="h-4 w-4" />
-                              <span>Admin Panel</span>
-                            </button>
-                          )}
-                          <button
-                            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10 font-bold text-sm w-full"
-                            onClick={handleSignOut}
-                          >
-                            <LogOut className="h-4 w-4" />
-                            <span>Sign Out</span>
-                          </button>
-                        </div>
-                      </>
+                      <SignedInHamburgerMenuContent
+                        isActive={isActive}
+                        onNavigate={handleNavigation}
+                        onSignOut={handleSignOut}
+                        isAdmin={isAdmin}
+                        isFeatureEnabled={isFeatureEnabled}
+                        isFeatureComingSoon={isFeatureComingSoon}
+                        showHomeLink={true}
+                      />
                     ) : (
                       <>
                         {/* Marketing Menu for logged-out users */}

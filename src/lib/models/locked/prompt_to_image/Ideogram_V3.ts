@@ -19,7 +19,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
 // MODEL CONFIGURATION
 export const MODEL_CONFIG = {
   modelId: "ideogram/v3-text-to-image",
-  recordId: "94c0e508-226a-4e3d-8229-3820a61faa88", // TODO: Add record ID from database
+  recordId: "94c0e508-226a-4e3d-8229-3820a61faa88",
   modelName: "Ideogram V3",
   provider: "kie_ai",
   contentType: "prompt_to_image",

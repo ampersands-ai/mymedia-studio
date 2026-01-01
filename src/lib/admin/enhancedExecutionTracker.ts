@@ -321,11 +321,16 @@ export class EnhancedExecutionTracker {
 
   /**
    * Save step snapshot to database
-   * NOTE: test_execution_snapshots table does not exist in current schema
+   * 
+   * NOTE: This is a no-op placeholder. The test_execution_snapshots table
+   * does not exist in the current schema. This method signature is preserved
+   * to maintain API compatibility for future implementation.
+   * 
+   * @param _step - The execution step to save (unused)
    */
   private async saveStepSnapshot(_step: ExecutionStep): Promise<void> {
-    // TODO: Create test_execution_snapshots table or remove this functionality
-    // Disabled until table exists in schema
+    // No-op: Table does not exist in current schema
+    // Future: Implement when test_execution_snapshots table is added
     return;
   }
 
@@ -547,11 +552,16 @@ export class EnhancedExecutionTracker {
 
   /**
    * Save log to database
-   * NOTE: test_execution_logs table does not exist in current schema
+   * 
+   * NOTE: This is a no-op placeholder. The test_execution_logs table
+   * does not exist in the current schema. This method signature is preserved
+   * to maintain API compatibility for future implementation.
+   * 
+   * @param _log - The execution log to save (unused)
    */
   private async saveLog(_log: ExecutionLog): Promise<void> {
-    // TODO: Create test_execution_logs table or remove this functionality
-    // Disabled until table exists in schema
+    // No-op: Table does not exist in current schema
+    // Future: Implement when test_execution_logs table is added
     return;
   }
 

@@ -1,4 +1,4 @@
-/** Grok Imagine Text-to-Video (prompt_to_video) - Record: TODO */
+/** Grok Imagine Text-to-Video (prompt_to_video) - Record: 0643a43b-4995-4c5b-ac1d-76ea257a93a0 */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
@@ -14,7 +14,7 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  */
 export const MODEL_CONFIG = {
   modelId: "grok-imagine/text-to-video",
-  recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0", // TODO: Add record ID from database
+  recordId: "0643a43b-4995-4c5b-ac1d-76ea257a93a0",
   modelName: "Grok Imagine",
   provider: "kie_ai",
   contentType: "prompt_to_video",

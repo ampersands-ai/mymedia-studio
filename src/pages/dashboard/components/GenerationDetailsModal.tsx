@@ -9,6 +9,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionSelector } from "@/components/collections";
 import type { Generation } from "../hooks/useGenerationHistory";
+import { formatGenerationTime } from "../utils/formatGenerationTime";
 
 interface GenerationDetailsModalProps {
   generation: Generation | null;
@@ -76,6 +77,8 @@ export const GenerationDetailsModal = ({
   onReport,
 }: GenerationDetailsModalProps) => {
   if (!generation) return null;
+
+  const genTime = formatGenerationTime(generation);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -230,11 +233,14 @@ export const GenerationDetailsModal = ({
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>{format(new Date(generation.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
-            {generation.is_batch_output && generation.tokens_used === 0 ? (
-              <span className="text-primary font-medium">Part of batch generation</span>
-            ) : (
-              <span>{generation.tokens_used} credits used</span>
-            )}
+            <span className="flex items-center gap-2">
+              {generation.is_batch_output && generation.tokens_used === 0 ? (
+                <span className="text-primary font-medium">Part of batch generation</span>
+              ) : (
+                <span>{generation.tokens_used} credits used</span>
+              )}
+              {genTime ? <span>• {genTime}</span> : null}
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">

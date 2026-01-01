@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-import { GENERATION_STATUS } from "../_shared/constants.ts";
+import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 
-
+// Batch size limit to prevent overwhelming the database
+const MAX_BATCH_SIZE = 100;
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -20,6 +21,9 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
   const logger = new EdgeLogger('monitor-video-jobs', requestId, supabase, true);
+
+  // Error aggregation for observability
+  const errors: Array<{ jobId: string; step: string; error: string }> = [];
 
   try {
 
@@ -40,7 +44,8 @@ Deno.serve(async (req) => {
         'awaiting_script_approval', 
         'awaiting_voice_approval'
       ])
-      .lt('created_at', cutoffTime.toISOString());
+      .lt('created_at', cutoffTime.toISOString())
+      .limit(MAX_BATCH_SIZE);
 
     if (error) {
       logger.error('Error fetching stuck jobs', error instanceof Error ? error : undefined);
@@ -73,7 +78,7 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from('video_jobs')
         .update({
-          status: GENERATION_STATUS.FAILED,
+          status: VIDEO_JOB_STATUS.FAILED,
           error_message: 'Video generation exceeded 4 hours. Credits refunded automatically.',
           error_details: {
             timeout: true,
@@ -85,6 +90,7 @@ Deno.serve(async (req) => {
         .eq('id', job.id);
 
       if (updateError) {
+        errors.push({ jobId: job.id, step: 'update_status', error: updateError.message });
         logger.error('Failed to update job', updateError instanceof Error ? updateError : undefined, { 
           metadata: { jobId: job.id } 
         });
@@ -98,6 +104,7 @@ Deno.serve(async (req) => {
       });
 
       if (refundError) {
+        errors.push({ jobId: job.id, step: 'refund_credits', error: refundError.message });
         logger.error('Failed to refund credits', refundError instanceof Error ? refundError : undefined, { 
           metadata: { jobId: job.id } 
         });
@@ -121,6 +128,7 @@ Deno.serve(async (req) => {
         });
 
       if (auditError) {
+        errors.push({ jobId: job.id, step: 'audit_log', error: auditError.message });
         logger.error('Failed to create audit log', auditError instanceof Error ? auditError : undefined, { 
           metadata: { jobId: job.id } 
         });
@@ -140,7 +148,8 @@ Deno.serve(async (req) => {
     logger.logDuration('Video job monitoring complete', startTime, { 
       metadata: { 
         totalStuck: stuckJobs.length, 
-        refunded: refundedJobs.length 
+        refunded: refundedJobs.length,
+        errorCount: errors.length
       } 
     });
 
@@ -148,7 +157,9 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         monitored: stuckJobs.length,
         refunded_jobs: refundedJobs,
-        success_count: refundedJobs.length
+        success_count: refundedJobs.length,
+        error_count: errors.length,
+        errors: errors.slice(0, 10) // Limit error details in response
       }),
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );

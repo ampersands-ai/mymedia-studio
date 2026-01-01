@@ -106,3 +106,6 @@ verify_jwt = false
 
 [functions.manage-consent]
 verify_jwt = false
+
+[functions.monitor-video-jobs]
+verify_jwt = false

@@ -438,7 +438,7 @@ export const OutputLightbox = ({
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <ScrollArea className="flex-1 min-h-0 pr-1 pb-6">
+          <ScrollArea className="flex-1 min-h-0 pr-1 pb-24 sm:pb-6">
             {/* Pull to close indicator - Mobile only */}
             <div className="flex justify-center py-2 md:hidden">
               <div className="w-12 h-1 bg-muted-foreground/30 rounded-full" />
@@ -549,16 +549,6 @@ export const OutputLightbox = ({
             )}
 
             <div className="space-y-3 lg:space-y-4">
-              {/* Download - Full Width Primary CTA */}
-              <Button
-                onClick={handleDownload}
-                className="w-full h-11 lg:h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-sm lg:text-base shadow-lg hover:shadow-xl transition-all"
-                aria-label="Download image"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {hasAnyEdits ? "Download Edited" : "Download"}
-              </Button>
-              
               {/* Image Edit Tools - Only for images */}
               {contentType === "image" && (
                 <>
@@ -665,6 +655,30 @@ export const OutputLightbox = ({
             </p>
           </div>
           </ScrollArea>
+
+          {/* Sticky Download Button - Always visible on mobile */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t sm:hidden z-50">
+            <Button
+              onClick={handleDownload}
+              className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base shadow-lg"
+              aria-label="Download image"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {hasAnyEdits ? "Download Edited" : "Download"}
+            </Button>
+          </div>
+
+          {/* Download Button - Desktop only (inside normal flow) */}
+          <div className="hidden sm:block pt-4 border-t">
+            <Button
+              onClick={handleDownload}
+              className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-base shadow-lg hover:shadow-xl transition-all"
+              aria-label="Download image"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {hasAnyEdits ? "Download Edited" : "Download"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

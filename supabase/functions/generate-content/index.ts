@@ -1091,8 +1091,8 @@ Deno.serve(async (req) => {
         }
         
         if (missingParams.length > 0) {
-          const error = `Missing required parameters: ${missingParams.join(', ')}. Schema requires: ${JSON.stringify(model.input_schema.required)}`;
-          logger.error('Missing required parameters', new Error(error), {
+          // Log full details server-side only (security: don't leak schema to client)
+          logger.error('Missing required parameters', new Error('Validation failed'), {
             metadata: {
               missing: missingParams,
               provided: Object.keys(validatedParameters),
@@ -1101,7 +1101,8 @@ Deno.serve(async (req) => {
               hasFrameImages
             }
           });
-          throw new Error(error);
+          // Safe error message for client - no schema details
+          throw new Error(`Missing required parameters: ${missingParams.join(', ')}`);
         }
       }
 

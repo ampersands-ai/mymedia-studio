@@ -1,265 +1,139 @@
+/**
+ * GENERATE CONTENT EDGE FUNCTION
+ * ================================
+ * Modular architecture - see handlers/ and services/ for implementation details.
+ * 
+ * Structure:
+ * - handlers/validation.ts - Request validation, auth, rate limits
+ * - handlers/sync-handler.ts - Synchronous generation flow
+ * - handlers/async-handler.ts - Webhook-based async flow
+ * - services/credit-service.ts - Token operations
+ * - services/storage-service.ts - File uploads
+ * - services/audit-service.ts - Audit logging
+ * - services/prompt-enhancement.ts - AI prompt enhancement
+ */
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { TestExecutionLogger } from "../_shared/test-execution-logger.ts";
 import { callProvider } from "./providers/index.ts";
-import type { ProviderRequest, ProviderResponse } from "../_shared/provider-types.ts";
 import { isProviderRequest } from "../_shared/provider-types.ts";
 import { calculateTokenCost } from "./utils/token-calculator.ts";
-import { uploadToStorage } from "./utils/storage.ts";
-import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { convertImagesToUrls } from "./utils/image-processor.ts";
-import {
-  GenerateContentRequestSchema,
-  type GenerateContentRequest
-} from "../_shared/schemas.ts";
 import { validateGenerationSettingsWithSchema } from "../_shared/jsonb-validation-schemas.ts";
-import { GENERATION_STATUS, SYSTEM_LIMITS } from "../_shared/constants.ts";
+import { SYSTEM_LIMITS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 import { withCircuitBreaker } from "../_shared/circuit-breaker-enhanced.ts";
+import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 
-/**
- * GENERATE CONTENT EDGE FUNCTION
- * ================================
- *
- * .TS REGISTRY ARCHITECTURE (Source of Truth)
- * --------------------------------------------
- * This edge function uses model definitions EXCLUSIVELY from .ts files.
- * Model data comes ONLY from file-based registry.
- *
- * HOW IT WORKS:
- * 1. Client loads model from .ts registry using getModel(recordId)
- * 2. Client sends REQUIRED model_config + model_schema to edge function
- * 3. Edge function uses provided config (NO DATABASE LOOKUP)
- * 4. Provider implementations route to external APIs
- *
- * MODEL-SPECIFIC LOGIC:
- * All model-specific parameter transformations (prompt->text, prompt->positivePrompt, etc.)
- * are handled in individual model .ts files via preparePayload() functions.
- * Each model knows its own requirements - providers are dumb transport layers.
- *
- * ADDING NEW MODELS:
- * - Create model .ts file in src/lib/models/locked/
- * - Define MODEL_CONFIG, SCHEMA, preparePayload(), execute()
- * - Register in src/lib/models/locked/index.ts
- * - Model automatically available (no database sync needed)
- *
- * Reference: ADR 007 - Locked Model Registry System
- */
+// Import modular handlers and services
+import {
+  authenticateUser,
+  checkEmailVerification,
+  validateRequestBody,
+  checkRateLimits,
+  transformModelConfig,
+  validateAndFilterParameters,
+  coerceParametersBySchema,
+  normalizeParameterKeys,
+  detectBase64Images,
+  analyzePromptField,
+  normalizeContentType,
+  API_CONTROL_PARAMS,
+  type EdgeFunctionUser,
+  type Model
+} from "./handlers/validation.ts";
+import { deductTokens, refundTokens } from "./services/credit-service.ts";
+import { logTokenEvent, logGenerationEvent, markGenerationFailed } from "./services/audit-service.ts";
+import { isWebhookProvider, saveProviderTaskId, buildAsyncResponse } from "./handlers/async-handler.ts";
+import { processBackgroundUpload, buildSyncResponse } from "./handlers/sync-handler.ts";
+import { enhancePrompt } from "./services/prompt-enhancement.ts";
 
-// Type definitions
-interface EdgeFunctionUser {
-  id: string;
-  email?: string;
-}
-
-interface GenerationResult {
-  generationId: string;
-  outputUrl?: string;
-  status: string;
-}
-
-interface Model {
-  id: string;
-  record_id: string;
-  provider: string;
-  content_type: string;
-  base_token_cost: number;
-  cost_multipliers?: Record<string, number>;
-  input_schema?: {
-    properties?: Record<string, unknown>;
-    required?: string[];
-  };
-  api_endpoint?: string;
-  payload_structure?: string;
-}
-
-// Normalize content type to match database constraint
-function normalizeContentType(contentType: string): 'image' | 'video' | 'text' | 'audio' {
-  // Explicit mapping for known content types (matches frontend getGenerationType)
-  const typeMap: Record<string, 'image' | 'video' | 'text' | 'audio'> = {
-    'prompt_to_image': 'image',
-    'image_editing': 'image',
-    'image_to_video': 'video',
-    'prompt_to_video': 'video',
-    'lip_sync': 'video',
-    'video_to_video': 'video',
-    'prompt_to_audio': 'audio',
-  };
-  
-  const mapped = typeMap[contentType.toLowerCase()];
-  if (mapped) return mapped;
-  
-  // Fallback heuristics for unknown types - check video BEFORE image
-  // to handle compound types like "image_to_video" correctly
-  const normalized = contentType.toLowerCase();
-  if (normalized.includes('video') || normalized.includes('animation')) {
-    return 'video';
-  }
-  if (normalized.includes('audio') || normalized.includes('voice') || normalized.includes('music') || normalized.includes('sound')) {
-    return 'audio';
-  }
-  if (normalized.includes('image') || normalized.includes('photo') || normalized.includes('picture')) {
-    return 'image';
-  }
-  if (normalized.includes('text') || normalized.includes('caption') || normalized.includes('script')) {
-    return 'text';
-  }
-  
-  // Default to text for unknown types
-  return 'text';
-}
-
-// Phase 3: Request queuing and circuit breaker
-// Increased from 100 to 750 for better scalability under high load
-// Use centralized system limits configuration
-const CONCURRENT_LIMIT = SYSTEM_LIMITS.CONCURRENT_REQUESTS;
-const activeRequests = new Map<string, Promise<GenerationResult>>();
-
+// Circuit breaker state
 const CIRCUIT_BREAKER = {
   failures: 0,
   threshold: 10,
-  timeout: 60000, // 1 minute
+  timeout: 60000,
   lastFailure: 0
 };
 
+// Request queue tracking
+const CONCURRENT_LIMIT = SYSTEM_LIMITS.CONCURRENT_REQUESTS;
+const activeRequests = new Map<string, Promise<unknown>>();
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight with secure origin validation
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
 
-  // Get response headers (includes CORS + security headers)
   const responseHeaders = getResponseHeaders(req);
-
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
   try {
-    // Apply rate limiting (generation tier: 20 req/min)
+    // Rate limiting
     const rateLimitResponse = await applyRateLimit(req, 'generation', 'generate-content');
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
+    if (rateLimitResponse) return rateLimitResponse;
 
-    // Check request queue capacity
+    // Queue capacity check
     if (activeRequests.size >= CONCURRENT_LIMIT) {
       return new Response(
         JSON.stringify({ error: 'System at capacity. Please try again in a moment.' }),
         { status: 503, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
     const logger = new EdgeLogger('generate-content', requestId, supabase, true);
 
-    // Authenticate user (allow service role for testing)
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
+    // Authentication
+    const { user: initialUser, isServiceRole } = await authenticateUser(req, supabase, logger);
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Check if using service role key (for test-model edge function)
-    const isServiceRole = token === supabaseKey;
-    
-    let user: EdgeFunctionUser | null = null;
-    if (isServiceRole) {
-      logger.info('Service role authentication - test mode');
-      user = null; // Will be set from request body
-    } else {
-      const { data: userData, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !userData.user) {
-        logger.error('Authentication failed', authError || undefined);
-        throw new Error('Unauthorized: Invalid user token');
-      }
-      user = { id: userData.user.id, email: userData.user.email };
-    }
-
-    // Validate request body with Zod
+    // Validate request body
     const requestBody = await req.json();
-    let validatedRequest: GenerateContentRequest;
-    
-    try {
-      validatedRequest = GenerateContentRequestSchema.parse(requestBody);
-    } catch (zodError: unknown) {
-      const error = zodError instanceof Error ? zodError : new Error('Validation error');
-      logger.error('Request validation failed', error);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Invalid request parameters',
-          details: error.message
-        }),
-        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
+    const validationResult = validateRequestBody(requestBody, logger, responseHeaders);
+    if (!validationResult.success) return validationResult.response;
+
+    const validatedRequest = validationResult.data;
     const {
-      generationId: existingGenerationId, // Optional: Existing generation ID to update
-      model_config,  // REQUIRED: Full model config from .ts registry
-      model_schema,  // REQUIRED: Model schema from .ts registry
+      generationId: existingGenerationId,
+      model_config,
+      model_schema,
       custom_parameters = {},
       enhance_prompt = false,
       enhancement_provider = 'lovable_ai',
       workflow_execution_id,
       workflow_step_number,
-      user_id, // For service role calls (test mode)
-      test_mode = false, // Flag to skip billing for admin tests
-      test_run_id, // For linking test execution logs
+      user_id,
+      test_mode = false,
+      test_run_id,
     } = validatedRequest;
 
     let { prompt } = validatedRequest;
-    
-    // Schema-driven approach: NO hardcoded prompt extraction
-    // Prompt should be provided at top level or remain in custom_parameters
-    // The schema validation will handle whether prompts are required
-    
-    // If service role, require user_id in body
+
+    // Handle service role authentication
+    let user: EdgeFunctionUser | null = initialUser;
     if (isServiceRole) {
-      if (!user_id) {
-        throw new Error('user_id required when using service role authentication');
-      }
+      if (!user_id) throw new Error('user_id required when using service role authentication');
       user = { id: user_id };
       logger.info('Service role detected - using user_id from request', { metadata: { user_id } });
     }
 
-    // Type assertion for non-null user after authentication check
-    if (!user) {
-      throw new Error('User authentication required');
-    }
-    const authenticatedUser = user; // Now guaranteed non-null
+    if (!user) throw new Error('User authentication required');
+    const authenticatedUser = user;
 
-    // Check email verification status - block generation for unverified users
-    // (Skip check for service role/test mode)
+    // Email verification check (skip for service role)
     if (!isServiceRole) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('email_verified')
-        .eq('id', authenticatedUser.id)
-        .single();
-      
-      if (profileError) {
-        logger.warn('Failed to check email verification status', { userId: authenticatedUser.id, metadata: { error: profileError.message } });
-      } else if (!profile?.email_verified) {
-        logger.info('Generation blocked - email not verified', { userId: authenticatedUser.id });
-        return new Response(
-          JSON.stringify({ 
-            error: 'Email verification required',
-            message: 'Please verify your email address before generating content. Check your inbox for the verification email.',
-            code: 'EMAIL_NOT_VERIFIED'
-          }),
-          { status: 403, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      const emailCheckResponse = await checkEmailVerification(supabase, authenticatedUser.id, logger, responseHeaders);
+      if (emailCheckResponse) return emailCheckResponse;
     }
 
-    // Verify admin status for test_mode
+    // Test mode verification
     let isTestMode = false;
     let testLogger: TestExecutionLogger | null = null;
-
     if (test_mode && isServiceRole) {
       const { data: adminRole } = await supabase
         .from('user_roles')
@@ -271,1581 +145,197 @@ Deno.serve(async (req) => {
       if (adminRole) {
         isTestMode = true;
         logger.info('TEST_MODE: Non-billable test run for admin user', { userId: authenticatedUser.id });
-
-        // Initialize test execution logger for comprehensive tracking
-        testLogger = new TestExecutionLogger(
-          supabase,
-          test_run_id || null,
-          true // isTestMode
-        );
-      } else {
-        logger.warn('test_mode requested but user is not admin - ignoring flag', { userId: authenticatedUser.id });
+        testLogger = new TestExecutionLogger(supabase, test_run_id || null, true);
       }
     }
 
-    logger.info('Generation request received', {
-      userId: authenticatedUser.id,
-      metadata: {
-        model_id: model_config.modelId,
-        provider: model_config.provider,
-        enhance_prompt
-      }
-    });
-
-    // REQUIRE model_config from .ts registry - NO DATABASE LOOKUPS
+    // Validate model config requirement
     if (!model_config || !model_schema) {
-      throw new Error(
-        'model_config and model_schema are REQUIRED. ' +
-        'Client must send full model definition from .ts registry. ' +
-        'Database has been eliminated for model data.'
-      );
+      throw new Error('model_config and model_schema are REQUIRED.');
     }
 
+    const model = transformModelConfig(model_config, model_schema);
     logger.info('Using model config from .ts registry', {
       userId: authenticatedUser.id,
-      metadata: {
-        model_id: model_config.modelId,
-        record_id: model_config.recordId,
-        provider: model_config.provider
-      }
+      metadata: { model_id: model.id, record_id: model.record_id, provider: model.provider }
     });
 
-    // Transform model_config to Model type (for compatibility with existing code)
-    const model: Model = {
-      id: model_config.modelId,
-      record_id: model_config.recordId,
-      provider: model_config.provider,
-      content_type: model_config.contentType,
-      base_token_cost: model_config.baseCreditCost,
-      input_schema: model_schema,
-      cost_multipliers: model_config.costMultipliers ?? {},
-      api_endpoint: model_config.apiEndpoint || undefined,
-      payload_structure: model_config.payloadStructure || 'wrapper',
-    };
-
+    // Prepare parameters
     let parameters: Record<string, unknown> = custom_parameters;
-    const enhancementInstruction: string | null = null;
-
-    // Flatten nested input structure if present (from preparePayload in locked models)
-    // Some models send { model: "...", input: { image_size: "...", ... } }
-    // We need to extract the input object for parameter validation
     if (parameters.input && typeof parameters.input === 'object' && !Array.isArray(parameters.input)) {
       const inputParams = parameters.input as Record<string, unknown>;
-      // Merge input parameters to top level, preserving any top-level params that aren't 'model' or 'input'
       const { model: _model, input: _input, ...otherTopLevel } = parameters;
       parameters = { ...inputParams, ...otherTopLevel };
-      
-      logger.debug('Flattened nested input parameters', {
-        userId: authenticatedUser.id,
-        metadata: {
-          original_keys: Object.keys(custom_parameters),
-          flattened_keys: Object.keys(parameters)
-        }
-      });
     }
 
-    logger.debug('.ts registry model config applied', {
-      userId: authenticatedUser.id,
-      metadata: {
-        model_id: model.id,
-        record_id: model.record_id,
-        provider: model.provider,
-        has_schema: !!model.input_schema,
-        source: '.ts registry (database eliminated)'
-      }
-    });
+    parameters = normalizeParameterKeys(parameters);
 
-    // Log model schema information for debugging
-    logger.debug('Model schema loaded', {
-      userId: user?.id,
-      metadata: { 
-        model_id: model.id,
-        has_schema: !!model.input_schema,
-        schema_fields: model.input_schema?.properties ? Object.keys(model.input_schema.properties) : []
-      }
-    });
+    // Prompt field analysis
+    const { hasPromptField, promptFieldName, promptRequired } = analyzePromptField(model.input_schema);
 
-    // Schema-driven prompt field detection
-    const promptFieldNames = ['prompt', 'positivePrompt', 'positive_prompt'];
-    const promptFieldName = model.input_schema?.properties 
-      ? promptFieldNames.find(name => name in (model.input_schema?.properties || {}))
-      : null;
-    const hasPromptField = !!promptFieldName;
-    const promptRequired = hasPromptField && 
-      Array.isArray(model.input_schema?.required) && 
-      model.input_schema.required.includes(promptFieldName!);
+    // Extract prompt from parameters if needed
+    if (!prompt && hasPromptField && promptFieldName && parameters[promptFieldName]) {
+      prompt = String(parameters[promptFieldName]);
+      delete parameters[promptFieldName];
+    }
 
-    logger.debug('Prompt field analysis', {
-      userId: user?.id,
-      metadata: { 
-        has_prompt_field: hasPromptField,
-        prompt_field_name: promptFieldName,
-        prompt_required: promptRequired
-      }
-    });
-
-    // Phase 4: Check generation rate limits (skip for test mode)
+    // Rate limit checks (skip for test mode)
     if (!isTestMode) {
-      const { data: userSubscription } = await supabase
-        .from('user_subscriptions')
-        .select('plan')
-        .eq('user_id', user.id)
-        .single();
-
-      const userPlan = userSubscription?.plan || 'freemium';
-
-      // Check hourly generation limit
-      const hourAgo = new Date(Date.now() - 3600000);
-      const { count: hourlyCount } = await supabase
-        .from('generations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('created_at', hourAgo.toISOString());
-
-      const { data: tierLimits } = await supabase
-        .from('rate_limit_tiers')
-        .select('*')
-        .eq('tier', userPlan)
-        .single();
-
-      if (tierLimits && hourlyCount !== null && hourlyCount >= tierLimits.max_generations_per_hour) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Hourly generation limit reached',
-            limit: tierLimits.max_generations_per_hour,
-            current: hourlyCount,
-            reset_in_seconds: 3600 - Math.floor((Date.now() - new Date(hourAgo).getTime()) / 1000)
-          }),
-          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Check concurrent generation limit
-      // Build query to count pending/processing generations
-      let concurrentQuery = supabase
-        .from('generations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .in('status', [GENERATION_STATUS.PENDING, GENERATION_STATUS.PROCESSING]);
-
-      // Exclude the current generation ID to avoid self-blocking race condition
-      // The client creates the generation record before calling this edge function,
-      // so we need to exclude it from the concurrent count
-      if (existingGenerationId) {
-        concurrentQuery = concurrentQuery.neq('id', existingGenerationId);
-      }
-
-      const { count: concurrentCount } = await concurrentQuery;
-
-      if (tierLimits && concurrentCount !== null && concurrentCount >= tierLimits.max_concurrent_generations) {
-        logger.error('Concurrent generation limit exceeded', undefined, {
-          userId: user.id,
-          metadata: { 
-            current: concurrentCount,
-            limit: tierLimits.max_concurrent_generations,
-            excluded_generation_id: existingGenerationId
-          }
-        });
-        return new Response(
-          JSON.stringify({ 
-            error: 'Concurrent generation limit reached. Please wait for your current generation to complete.',
-            limit: tierLimits.max_concurrent_generations,
-            current: concurrentCount
-          }),
-          { status: 429, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      } else {
-        logger.info('TEST_MODE: Skipping rate limit checks', { userId: user.id });
-      }
-
-    // Validate required fields based on model's input schema
-    const inputSchema = model.input_schema || {};
-    const imageUrlsSchema = inputSchema.properties?.image_urls as any;
-    if (imageUrlsSchema && imageUrlsSchema.required) {
-      if (!parameters.image_urls || !Array.isArray(parameters.image_urls) || parameters.image_urls.length === 0) {
-        return new Response(
-          JSON.stringify({ error: 'image_urls is required for this model' }),
-          { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      const rateLimitResponse = await checkRateLimits(supabase, authenticatedUser.id, existingGenerationId, logger, responseHeaders);
+      if (rateLimitResponse) return rateLimitResponse;
     }
 
-    // Schema-driven prompt resolution
-    // Extract prompt from parameters if model schema defines a prompt field
-    if (!prompt && hasPromptField && promptFieldName) {
-      if (parameters[promptFieldName]) {
-        prompt = String(parameters[promptFieldName]);
-        delete parameters[promptFieldName]; // Remove to avoid duplication
-        logger.debug('Extracted prompt from schema field', { 
-          userId: user?.id, 
-          metadata: { field: promptFieldName } 
-        });
-      }
-    }
-
-    // Enhance prompt if requested and model has prompt field
+    // Prompt enhancement
     let finalPrompt = prompt || "";
     const originalPrompt = prompt || "";
     let usedEnhancementProvider = null;
 
-    if (hasPromptField && prompt && (enhance_prompt || enhancementInstruction)) {
-      logger.info('Enhancing prompt', { userId: user.id });
+    if (hasPromptField && prompt && enhance_prompt) {
       try {
         const enhancementResult = await enhancePrompt(
-          prompt,
-          enhancementInstruction,
-          enhancement_provider,
-          model.content_type,
-          model.provider,
+          prompt, null, enhancement_provider, model.content_type, model.provider,
           Boolean(parameters.customMode)
         );
         finalPrompt = enhancementResult.enhanced;
         usedEnhancementProvider = enhancementResult.provider;
-        logger.info('Prompt enhanced successfully', {
-          userId: user.id,
-          metadata: { provider: usedEnhancementProvider }
-        });
-      } catch (error) {
-        logger.error('Prompt enhancement failed', error instanceof Error ? error : undefined, {
-          userId: user.id
-        });
+        logger.info('Prompt enhanced successfully', { userId: authenticatedUser.id, metadata: { provider: usedEnhancementProvider } });
+      } catch {
         // Continue with original prompt
       }
     }
 
-    // API control parameters that models can pass but aren't user-facing schema fields
-    // NOTE: width/height are essential for Runware API but converted from aspectRatio in preparePayload
-    const API_CONTROL_PARAMS = [
-      'taskType', 'model', 'version', 'apiVersion',
-      'width', 'height',
-      // Runware/OpenAI image/video options that are not part of the user-facing schema
-      'outputType', 'outputFormat', 'outputQuality',
-      'includeCost', 'safety',
-      'providerSettings',
-      // Runware I2V uses nested frameImages instead of top-level inputImage
-      'frameImages',
-    ];
-
-    // Validate and filter parameters against schema
-    // IMPORTANT: Some models pass a fully-prepared provider payload (via preparePayload). In that case,
-    // we must NOT inject schema defaults for fields the user didn't send, otherwise we mutate the API payload.
-    function validateAndFilterParameters(
-      parameters: Record<string, unknown>,
-      schema: { properties?: Record<string, unknown> },
-      options: { applyDefaults?: boolean } = {}
-    ): Record<string, unknown> {
-      if (!schema?.properties) return parameters;
-
-      const applyDefaults = options.applyDefaults !== false;
-
-      const allowedKeys = Object.keys(schema.properties);
-      const filtered: Record<string, unknown> = {};
-      const appliedDefaults: string[] = [];
-
-      for (const key of allowedKeys) {
-        const schemaProperty = schema.properties[key] as {
-          enum?: unknown[];
-          default?: unknown;
-          type?: string;
-          [key: string]: unknown;
-        };
-        const candidateValue = parameters[key];
-
-        // Validate enum values
-        if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
-          // If candidate is empty, undefined, or null
-          if (candidateValue === "" || candidateValue === undefined || candidateValue === null) {
-            // Only inject defaults when enabled
-            if (applyDefaults && schemaProperty.default !== undefined) {
-              filtered[key] = schemaProperty.default;
-              appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (was empty)`);
-            }
-            // Else: omit the parameter entirely
-          }
-          // If value provided but not in enum
-          else if (!schemaProperty.enum.includes(candidateValue)) {
-            // Use default if available and defaults are enabled
-            if (applyDefaults && schemaProperty.default !== undefined) {
-              filtered[key] = schemaProperty.default;
-              appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)} (invalid: ${JSON.stringify(candidateValue)})`);
-            } else {
-              const error = `Invalid parameter '${key}'. Value '${candidateValue}' is not in allowed values: ${schemaProperty.enum.join(', ')}`;
-              logger.error('Invalid parameter value', undefined, { metadata: { key, value: candidateValue } });
-              throw new Error(error);
-            }
-          }
-          // Valid value - use as is
-          else {
-            filtered[key] = candidateValue;
-          }
-        }
-        // Non-enum fields
-        else if (candidateValue !== undefined && candidateValue !== null && candidateValue !== '') {
-          filtered[key] = candidateValue;
-        }
-        // Fall back to schema default if available
-        else if (applyDefaults && schemaProperty?.default !== undefined) {
-          filtered[key] = schemaProperty.default;
-          appliedDefaults.push(`${key}=${JSON.stringify(schemaProperty.default)}`);
-        }
-        // Otherwise, do not inject anything (keeps prepared payloads stable)
-      }
-
-      // Preserve API control parameters (e.g., taskType for routing)
-      for (const controlParam of API_CONTROL_PARAMS) {
-        if (controlParam in parameters && parameters[controlParam] !== undefined) {
-          filtered[controlParam] = parameters[controlParam];
-        }
-      }
-
-      logger.debug('Parameters filtered from schema', {
-        metadata: {
-          original_keys: Object.keys(parameters).length,
-          filtered_keys: Object.keys(filtered).length,
-          defaults_applied: appliedDefaults.length,
-          defaults_enabled: applyDefaults
-        }
-      });
-
-      return filtered;
-    }
-
-    // Normalize parameter keys by stripping "input." prefix if present
-    function normalizeParameterKeys(params: Record<string, unknown>): Record<string, unknown> {
-      const normalized: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(params || {})) {
-        const normalizedKey = key.startsWith('input.') ? key.substring(6) : key;
-        normalized[normalizedKey] = value;
-      }
-      return normalized;
-    }
-
-    // Store original keys for logging
-    const originalParamKeys = Object.keys(parameters || {});
-    parameters = normalizeParameterKeys(parameters);
-    logger.debug('Parameter keys normalized', {
-      metadata: {
-        original_count: originalParamKeys.length,
-        normalized_count: Object.keys(parameters || {}).length
-      }
-    });
-
-    // Provider-specific parameter mappings have been moved to provider preprocessing functions
-    // See preprocessKieAiParameters() and preprocessRunwareParameters() in providers/
-
-    // If a model already prepared a provider-ready payload (e.g., Runware preparePayload),
-    // do NOT inject schema defaults for missing fields like aspectRatio/quality/background.
-    const isPreparedRunwarePayload =
-      model.provider === 'runware' &&
-      typeof (parameters as Record<string, unknown>)?.taskType === 'string' &&
-      typeof (parameters as Record<string, unknown>)?.model === 'string' &&
-      (((parameters as Record<string, unknown>)?.width !== undefined) || ((parameters as Record<string, unknown>)?.height !== undefined)) &&
-      (
-        (parameters as Record<string, unknown>)?.providerSettings !== undefined ||
-        (parameters as Record<string, unknown>)?.outputType !== undefined ||
-        (parameters as Record<string, unknown>)?.outputFormat !== undefined
-      );
+    // Parameter validation
+    const isPreparedRunwarePayload = model.provider === 'runware' &&
+      typeof parameters?.taskType === 'string' && typeof parameters?.model === 'string' &&
+      (parameters?.width !== undefined || parameters?.height !== undefined);
 
     let validatedParameters = validateAndFilterParameters(
-      parameters,
-      model.input_schema || { properties: {}, required: [] },
-      { applyDefaults: !isPreparedRunwarePayload }
+      parameters, model.input_schema || { properties: {}, required: [] },
+      { applyDefaults: !isPreparedRunwarePayload }, logger
     );
-
-    // Coerce parameter types based on schema (e.g., "true" -> true for booleans)
-    function coerceParametersBySchema(params: Record<string, unknown>, schema: { properties?: Record<string, unknown> }) {
-      if (!schema?.properties) return params;
-      const coerced: Record<string, unknown> = {};
-      for (const [key, val] of Object.entries(params)) {
-        const prop = schema.properties[key] as { type?: string } | undefined;
-        if (!prop) { coerced[key] = val; continue; }
-        const t = prop.type;
-        if (t === 'boolean') {
-          coerced[key] = typeof val === 'boolean' ? val : String(val) === 'true';
-        } else if (t === 'integer') {
-          const n = typeof val === 'number' ? val : parseInt(String(val), 10);
-          coerced[key] = Number.isNaN(n) ? val : n;
-        } else if (t === 'number') {
-          const n = typeof val === 'number' ? val : parseFloat(String(val));
-          coerced[key] = Number.isNaN(n) ? val : n;
-        } else if (t === 'array') {
-          // Ensure arrays are properly formatted
-          coerced[key] = Array.isArray(val) ? val : [val];
-        } else {
-          coerced[key] = val;
-        }
-      }
-      return coerced;
-    }
-
     validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema || { properties: {} });
 
-    // NOTE: Parameter validation and defaults are handled by validateAndFilterParameters()
-    // which only passes parameters explicitly defined in the model's input_schema.
-    // Any format defaults should be defined in the model schema itself.
+    // Calculate token cost
+    const tokenCost = validatedRequest.preCalculatedCost || calculateTokenCost(
+      model.base_token_cost, model.cost_multipliers || {}, validatedParameters
+    );
 
-    // Calculate token cost - use pre-calculated cost from model if provided
-    // This handles dynamic pricing (audio duration, video length) calculated client-side
-    const tokenCost = validatedRequest.preCalculatedCost 
-      ? validatedRequest.preCalculatedCost
-      : calculateTokenCost(
-          model.base_token_cost,
-          model.cost_multipliers || {},
-          validatedParameters
-        );
-
-    logger.info('Token cost calculated', {
-      userId: user.id,
-      metadata: { 
-        token_cost: tokenCost,
-        source: validatedRequest.preCalculatedCost ? 'preCalculatedCost' : 'calculateTokenCost'
-      }
-    });
-
-    // SECURITY FIX: Transaction-like token deduction + generation creation
-    // This prevents race conditions where tokens are deducted but generation fails
+    // Transaction-like token deduction + generation creation
     let tokensDeducted = false;
     let generationCreated = false;
-    let generation: {
-      id: string;
-      user_id: string;
-      model_id: string;
-      status: string;
-      settings?: Record<string, unknown>;
-      [key: string]: unknown;
-    } | null = null;
-
-    // Non-null reference after generation is created
-    let createdGeneration: {
-      id: string;
-      user_id: string;
-      model_id: string;
-      status: string;
-      settings?: Record<string, unknown>;
-      [key: string]: unknown;
-    };
+    let generation: { id: string; user_id: string; model_id: string; status: string; settings?: Record<string, unknown>; [key: string]: unknown } | null = null;
 
     try {
-      // Step 1: Check and deduct tokens atomically (skip for test mode)
+      // Deduct tokens (skip for test mode)
       if (!isTestMode) {
-        const { data: subscription, error: subError } = await supabase
-          .from('user_subscriptions')
-          .select('tokens_remaining')
-          .eq('user_id', user.id)
-          .single();
-
-        if (subError || !subscription) {
-          throw new Error('Subscription not found');
-        }
-
-        if (subscription.tokens_remaining < tokenCost) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Insufficient credits',
-              type: 'INSUFFICIENT_TOKENS',
-              required: tokenCost,
-              available: subscription.tokens_remaining,
-              message: `You need ${tokenCost} credits but only have ${subscription.tokens_remaining} credits available.`
-            }),
-            { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Deduct tokens using atomic database function with row-level locking
-        const { data: deductResult, error: deductError } = await supabase
-          .rpc('deduct_user_tokens', {
-            p_user_id: user.id,
-            p_cost: tokenCost
-          });
-
-        if (deductError) {
-          logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), {
-            userId: user.id,
-            metadata: { cost: tokenCost }
-          });
-          throw new Error('Failed to deduct tokens - database error');
-        }
-
-        if (!deductResult || deductResult.length === 0) {
-          logger.error('Token deduction returned no result', undefined, {
-            userId: user.id,
-            metadata: { cost: tokenCost }
-          });
-          throw new Error('Failed to deduct tokens - no result returned');
-        }
-
-        const result = deductResult[0];
-        
-        if (!result.success) {
-          if (result.error_message === 'Insufficient tokens') {
-            return new Response(
-              JSON.stringify({ 
-                error: 'Insufficient credits',
-                type: 'INSUFFICIENT_TOKENS',
-                required: tokenCost,
-                available: result.tokens_remaining || 0,
-                message: `You need ${tokenCost} credits but only have ${result.tokens_remaining || 0} credits available.`
-              }),
-              { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-          
-          logger.error('Token deduction failed', undefined, {
-            userId: user.id,
-            metadata: { error: result.error_message, cost: tokenCost }
-          });
-          throw new Error(`Failed to deduct tokens: ${result.error_message}`);
-        }
-
+        const deductResult = await deductTokens(supabase, authenticatedUser.id, tokenCost, logger, responseHeaders);
+        if (!deductResult.success) return deductResult.response;
         tokensDeducted = true;
-        logger.info('Tokens deducted successfully', {
-          userId: user.id,
-          metadata: { 
-            tokens_deducted: tokenCost,
-            new_balance: result.tokens_remaining 
-          }
-        });
-
-        // Log to audit_logs
-        await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'tokens_deducted',
-          metadata: {
-            tokens_deducted: tokenCost,
-            tokens_remaining: result.tokens_remaining,
-          model_id: model.id,
-          model_name: model.id // Use model.id as name
-          }
-        });
-      } else {
-        logger.info('TEST_MODE: Skipping token deduction (non-billable)', { userId: user.id });
+        await logTokenEvent(supabase, authenticatedUser.id, 'tokens_deducted', tokenCost, deductResult.newBalance, model.id);
       }
 
-      // Generate unique webhook verification token for security
       const webhookToken = crypto.randomUUID();
-      logger.debug('Generated webhook verification token', { userId: user.id });
+      detectBase64Images(parameters, logger, authenticatedUser.id, model.id, model.provider);
 
-      // Step 2: Detect base64 images in parameters (prevent DoS via oversized JSONB)
-      // FAIL-SAFE: This is the final guard against base64 images reaching providers
-      const paramString = JSON.stringify(parameters);
-      if (paramString.includes('data:image/') || paramString.includes(';base64,')) {
-        // Find which fields contain base64 data for debugging
-        const affectedFields = Object.keys(parameters).filter(key => {
-          const value = parameters[key];
-          if (typeof value === 'string') {
-            return value.includes('data:image/') || value.includes(';base64,');
-          }
-          if (Array.isArray(value)) {
-            return value.some(item => 
-              typeof item === 'string' && (item.includes('data:image/') || item.includes(';base64,'))
-            );
-          }
-          return false;
-        });
+      // Validate settings
+      const settingsToValidate = { ...parameters, prompt: finalPrompt, _webhook_token: webhookToken };
+      const settingsValidation = validateGenerationSettingsWithSchema(settingsToValidate, model.input_schema);
+      if (!settingsValidation.success) throw new Error(`Invalid generation settings: ${settingsValidation.error}`);
 
-        logger.error('Base64 image detected in parameters - FAIL-SAFE TRIGGERED', undefined, {
-          userId: user.id,
-          metadata: { 
-            affectedFields,
-            fieldCount: affectedFields.length,
-            paramSize: paramString.length,
-            model_id: model.id,
-            provider: model.provider
-          }
-        });
-        
-        throw new Error(
-          `Base64-encoded images are not allowed in parameters. ` +
-          `Affected field(s): ${affectedFields.join(', ')}. ` +
-          `Please upload images to storage first and pass the URL instead.`
-        );
-      }
+      const generationSettings = settingsValidation.data as Record<string, unknown>;
 
-      // Step 3: Validate parameters before creating generation record
-      const settingsToValidate = {
-        ...parameters,
-        prompt: finalPrompt,
-        _webhook_token: webhookToken
-      };
-
-      // Use dynamic schema-based validation - validates enum values against model's schema
-      const validationResult = validateGenerationSettingsWithSchema(settingsToValidate, model.input_schema);
-      if (!validationResult.success) {
-        logger.error('JSONB validation failed', undefined, {
-          userId: user.id,
-          metadata: { error: validationResult.error }
-        });
-        throw new Error(`Invalid generation settings: ${validationResult.error}`);
-      }
-
-      // Step 4: Create or update generation record with validated settings
-      const generationSettings = validationResult.data as Record<string, any>;
-
-      let gen: any;
-      let genError: any;
-      let shouldCreateNew = true;
-
+      // Create or update generation record
+      let gen: unknown, genError: unknown;
       if (existingGenerationId) {
-        // UPDATE existing generation record
-        logger.info('Updating existing generation record', {
-          metadata: {
-            generationId: existingGenerationId,
-            user_id: user.id,
-            model_id: model.id
-          }
-        });
-
-        // First verify the generation exists and belongs to the user
-        const { data: existingGen, error: fetchError } = await supabase
-          .from('generations')
-          .select('*')
-          .eq('id', existingGenerationId)
-          .eq('user_id', user.id)
-          .single();
-
-        if (fetchError || !existingGen) {
-          logger.warn('Existing generation not found or access denied, creating new record', {
-            metadata: {
-              generationId: existingGenerationId,
-              user_id: user.id,
-              error: fetchError?.message
-            }
-          });
-          // Will fall through to create new record
-        } else {
-          // Update the existing record
-          // IMPORTANT: merge existing settings to preserve linkage metadata (e.g., video_job_id)
-          const mergedSettings: Record<string, unknown> = {
-            ...(typeof existingGen.settings === 'object' && existingGen.settings !== null ? existingGen.settings as Record<string, unknown> : {}),
-            ...(generationSettings as Record<string, unknown>),
-          };
-
-          const { data: updatedGen, error: updateError } = await supabase
-            .from('generations')
-            .update({
-              model_id: model.id,
-              model_record_id: model.record_id,
-              type: normalizeContentType(model.content_type),
-              prompt: finalPrompt,
-              original_prompt: originalPrompt,
-              enhanced_prompt: enhance_prompt ? finalPrompt : null,
-              enhancement_provider: usedEnhancementProvider,
-              settings: mergedSettings,
-              tokens_used: tokenCost,
-              actual_token_cost: tokenCost,
-              status: 'pending',
-              provider_task_id: null,
-              workflow_execution_id: workflow_execution_id || null,
-              workflow_step_number: workflow_step_number || null
-            })
-            .eq('id', existingGenerationId)
-            .select()
-            .single();
-
-          if (!updateError && updatedGen) {
-            gen = updatedGen;
-            genError = updateError;
-            shouldCreateNew = false;
-          }
-        }
+        const { data, error } = await supabase.from('generations')
+          .update({ model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: generationSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending' })
+          .eq('id', existingGenerationId).eq('user_id', authenticatedUser.id).select().single();
+        gen = data; genError = error;
+      }
+      if (!existingGenerationId || genError) {
+        const { data, error } = await supabase.from('generations')
+          .insert({ user_id: authenticatedUser.id, model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: generationSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending', workflow_execution_id: workflow_execution_id || null, workflow_step_number: workflow_step_number || null })
+          .select().single();
+        gen = data; genError = error;
       }
 
-      // If no existingGenerationId or update failed, create new record
-      if (shouldCreateNew) {
-        const { data: newGen, error: insertError } = await supabase
-          .from('generations')
-          .insert({
-            user_id: user.id,
-            model_id: model.id,
-            model_record_id: model.record_id,
-            type: normalizeContentType(model.content_type),
-            prompt: finalPrompt,
-            original_prompt: originalPrompt,
-            enhanced_prompt: enhance_prompt ? finalPrompt : null,
-            enhancement_provider: usedEnhancementProvider,
-            settings: generationSettings,
-            tokens_used: tokenCost,
-            actual_token_cost: tokenCost,
-            status: 'pending',
-            provider_task_id: null,
-            workflow_execution_id: workflow_execution_id || null,
-            workflow_step_number: workflow_step_number || null
-          })
-          .select()
-          .single();
-
-        gen = newGen;
-        genError = insertError;
-      }
-
-      if (genError || !gen) {
-        const errorDetails = genError ? {
-          message: genError.message,
-          details: genError.details,
-          hint: genError.hint,
-          code: genError.code
-        } : 'No data returned';
-        
-        logger.error('Generation creation/update failed', genError || undefined, {
-          metadata: {
-            model_id: model.id,
-            user_id: user.id,
-            content_type: model.content_type,
-            normalized_type: normalizeContentType(model.content_type),
-            error_details: errorDetails
-          }
-        });
-        
-        if (testLogger) {
-          await testLogger.logError(
-            genError || new Error('Failed to create generation record'),
-            'createGenerationRecord',
-            { model_id: model.id, user_id: user.id, error_details: errorDetails }
-          );
-        }
-        throw new Error(`Failed to create generation record: ${JSON.stringify(errorDetails)}`);
-      }
-
-      generation = gen;
+      if (genError || !gen) throw new Error(`Failed to create generation record`);
+      generation = gen as typeof generation;
       generationCreated = true;
 
-      // Log to test execution system if in test mode
-      if (testLogger && generation) {
-        await testLogger.logEdgeFunctionStart({
-          generationId: generation.id,
-          modelId: model.id,
-          provider: model.provider,
-          userId: user.id,
-        });
-
-        await testLogger.logDatabaseUpdate(
-          'generations',
-          'insert',
-          generation.id,
-          { status: 'pending', tokens_used: tokenCost }
-        );
-      }
-
-      // Ensure generation is non-null before proceeding
-      if (!generation) {
-        throw new Error('Failed to create generation record');
-      }
-
-      // Assign to non-null reference after confirming generation is created
-      createdGeneration = generation; // Now guaranteed non-null
-      
-      logger.info('Generation record created', {
-        userId: authenticatedUser.id,
-        metadata: { generation_id: createdGeneration.id }
-      });
-
-      // Validate prompt only if model has prompt field
-      if (hasPromptField) {
-        if (promptRequired && (!prompt || prompt.trim() === '')) {
-          throw new Error('Prompt is required for this model');
-        }
-        if (prompt && (prompt.length < 3 || prompt.length > 10000)) {
-          throw new Error('Prompt must be between 3 and 10000 characters');
-        }
-      }
-
-      // Log schema analysis for debugging
-      logger.debug('Schema analysis', {
-        userId: user?.id,
-        metadata: {
-          model_id: model.id,
-          model_record_id: model.record_id,
-          schema_properties: Object.keys(model.input_schema?.properties || {}),
-          required_fields: model.input_schema?.required || [],
-          declared_image_field: (model.input_schema as any)?.imageInputField || null,
-          has_image_field_in_properties: (model.input_schema as any)?.imageInputField 
-            ? !!(model.input_schema?.properties as any)?.[(model.input_schema as any).imageInputField]
-            : false
-        }
-      });
-
-      // Validate all required parameters from schema (skip all prompt aliases)
-      if (model.input_schema?.required) {
-        const promptAliases = ['prompt', 'positivePrompt', 'positive_prompt'];
-        const missingParams: string[] = [];
-        
-        // For Runware video models with frameImages, the inputImage is nested inside frameImages array
-        const hasFrameImages = Array.isArray(validatedParameters.frameImages) && 
-          validatedParameters.frameImages.length > 0 &&
-          (validatedParameters.frameImages as Array<Record<string, unknown>>).some(
-            (frame: Record<string, unknown>) => frame?.inputImage !== undefined
-          );
-        
-        for (const requiredParam of model.input_schema.required) {
-          if (promptAliases.includes(requiredParam)) continue; // already handled above
-          
-          // Skip inputImage validation if it's present in frameImages (I2V models)
-          if (requiredParam === 'inputImage' && hasFrameImages) {
-            continue;
-          }
-          
-          if (validatedParameters[requiredParam] === undefined) {
-            missingParams.push(requiredParam);
-          }
-        }
-        
-        if (missingParams.length > 0) {
-          // Log full details server-side only (security: don't leak schema to client)
-          logger.error('Missing required parameters', new Error('Validation failed'), {
-            metadata: {
-              missing: missingParams,
-              provided: Object.keys(validatedParameters),
-              schema_required: model.input_schema.required,
-              declared_image_field: (model.input_schema as any)?.imageInputField,
-              hasFrameImages
-            }
-          });
-          // Safe error message for client - no schema details
-          throw new Error(`Missing required parameters: ${missingParams.join(', ')}`);
-        }
-      }
+      // Prompt validation
+      if (hasPromptField && promptRequired && (!prompt || prompt.trim() === '')) throw new Error('Prompt is required for this model');
+      if (prompt && (prompt.length < 3 || prompt.length > 10000)) throw new Error('Prompt must be between 3 and 10000 characters');
 
     } catch (txError) {
-      logger.error('Transaction error', txError instanceof Error ? txError : new Error(String(txError)));
-      
-      // If generation was created but validation failed, update status to failed
       if (generationCreated && generation) {
-        await supabase
-          .from('generations')
-          .update({
-            status: 'failed',
-            provider_response: { 
-              error: txError instanceof Error ? txError.message : 'Validation failed',
-              full_error: txError instanceof Error ? txError.toString() : String(txError),
-              timestamp: new Date().toISOString()
-            }
-          })
-          .eq('id', generation.id);
-        
-        await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'generation_failed',
-          resource_type: 'generation',
-          resource_id: generation.id,
-          metadata: {
-            error: txError instanceof Error ? txError.message : 'Validation failed',
-            model_id: model.id,
-            tokens_refunded: tokenCost,
-            reason: 'validation_error'
-          }
-        });
+        await markGenerationFailed(supabase, generation.id, txError instanceof Error ? txError.message : 'Validation failed');
       }
-      
-      // AUTOMATIC ROLLBACK: Refund tokens if deducted (skip for test mode)
-      if (tokensDeducted && !isTestMode) {
-        logger.info('Rolling back token deduction', {
-          userId: user.id,
-          metadata: { tokens_refunded: tokenCost }
-        });
-        await supabase.rpc('increment_tokens', {
-          user_id_param: user.id,
-          amount: tokenCost
-        });
-      } else if (isTestMode) {
-        logger.info('TEST_MODE: No token rollback needed (non-billable)', { userId: user.id });
-      }
-      
-      // Return 400 with specific error message instead of throwing
-      const errorMessage = txError instanceof Error ? txError.message : 'Validation failed';
-      return new Response(
-        JSON.stringify({ error: errorMessage }),
-        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (tokensDeducted && !isTestMode) await refundTokens(supabase, authenticatedUser.id, tokenCost, logger, 'validation_error');
+      return new Response(JSON.stringify({ error: txError instanceof Error ? txError.message : 'Validation failed' }), { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Check circuit breaker
+    const createdGeneration = generation!;
+
+    // Circuit breaker check
     if (CIRCUIT_BREAKER.failures >= CIRCUIT_BREAKER.threshold) {
       const elapsed = Date.now() - CIRCUIT_BREAKER.lastFailure;
       if (elapsed < CIRCUIT_BREAKER.timeout) {
-        // Refund tokens using RPC for atomicity (skip for test mode)
-        if (!isTestMode) {
-          await supabase.rpc('increment_tokens', {
-            user_id_param: user.id,
-            amount: tokenCost
-          });
-        }
-
-        return new Response(
-          JSON.stringify({ 
-            error: 'Provider temporarily unavailable. Please try again in a moment.',
-            retry_after_seconds: Math.ceil((CIRCUIT_BREAKER.timeout - elapsed) / 1000)
-          }),
-          { status: 503, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (!isTestMode) await refundTokens(supabase, authenticatedUser.id, tokenCost, logger, 'circuit_breaker');
+        return new Response(JSON.stringify({ error: 'Provider temporarily unavailable.', retry_after_seconds: Math.ceil((CIRCUIT_BREAKER.timeout - elapsed) / 1000) }), { status: 503, headers: { ...responseHeaders, 'Content-Type': 'application/json' } });
       }
-      CIRCUIT_BREAKER.failures = 0; // Reset after cooldown
+      CIRCUIT_BREAKER.failures = 0;
     }
 
-    // Track request in queue
+    // Provider call
     const requestPromise = (async () => {
-      let providerRequest: Record<string, unknown> | null = null; // Declare outside try block for error handling access
-
+      let providerRequest: Record<string, unknown> | null = null;
       try {
-        // Call provider with timeout
-        const TIMEOUT_MS = 600000; // 600 seconds
-        let timeoutId: number | undefined;
-        
-        const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => {
-            reject(new Error('Request timed out after 600 seconds'));
-          }, TIMEOUT_MS) as unknown as number;
-        });
-
-        logger.debug('Sending parameters to provider', {
-          userId: user.id,
-          metadata: { parameter_keys: Object.keys(validatedParameters) }
-        });
-        
-        // ========================================
-        // STRICT SCHEMA ENFORCEMENT
-        // Only allow parameters explicitly defined in input_schema
-        // ========================================
-        const schemaProperties = model.input_schema?.properties || {};
-        const allowedPropertyNames = Object.keys(schemaProperties);
-        
-        // Include prompt ONLY in parameters if model has prompt field
         const parametersWithPrompt = { ...validatedParameters };
-        if (hasPromptField && finalPrompt && promptFieldName) {
-          parametersWithPrompt[promptFieldName] = finalPrompt;
-        }
-        
-        // API control parameters that models can pass but aren't user-facing schema fields
-        // These are used by providers for routing/configuration but shouldn't be exposed to users
-        // Also includes derived parameters (width/height from aspectRatio, outputType, includeCost, safety, etc.)
-        const API_CONTROL_PARAMS = [
-          'taskType', 'model', 'version', 'apiVersion',
-          'width', 'height',           // Derived from aspectRatio in preparePayload
-          'outputType', 'outputFormat', // API-specific output settings
-          'outputQuality',              // JPEG/WebP quality setting
-          'includeCost', 'safety',      // Runware-specific API fields
-          'providerSettings',           // Provider-specific settings (e.g., openai: { quality, background })
-          'frameImages',                // Runware I2V payload (nested inputImage)
-        ];
-        
-        // Filter to only allowed parameters (schema + API control params)
-        const allowedParams: Record<string, unknown> = {};
-        const unknownKeys: string[] = [];
-        
-        for (const [key, value] of Object.entries(parametersWithPrompt)) {
-          if (allowedPropertyNames.includes(key) || API_CONTROL_PARAMS.includes(key)) {
-            allowedParams[key] = value;
-          } else {
-            unknownKeys.push(key);
-          }
-        }
-        
-        // Reject request if truly unknown parameters are present (not API control params)
-        if (unknownKeys.length > 0) {
-          logger.error('Unknown parameters detected', undefined, {
-            metadata: {
-              unknownKeys,
-              allowedPropertyNames,
-              apiControlParams: API_CONTROL_PARAMS,
-              receivedKeys: Object.keys(parametersWithPrompt)
-            }
-          });
-          
-          throw new Error(
-            `Unknown parameters not defined in model schema: ${unknownKeys.join(', ')}. ` +
-            `Allowed parameters: ${allowedPropertyNames.join(', ')}`
-          );
-        }
+        if (hasPromptField && finalPrompt && promptFieldName) parametersWithPrompt[promptFieldName] = finalPrompt;
 
-        logger.info('Schema enforcement passed', {
-          metadata: {
-            allowedParams: Object.keys(allowedParams),
-            schemaProperties: allowedPropertyNames
-          }
-        });
+        const processedParams = await convertImagesToUrls(parametersWithPrompt, authenticatedUser.id, supabase, logger);
+        providerRequest = { model: model.id, model_record_id: model.record_id, parameters: processedParams, input_schema: model.input_schema, api_endpoint: model.api_endpoint, payload_structure: model.payload_structure || 'wrapper', userId: authenticatedUser.id, generationId: createdGeneration.id };
 
-        // Convert base64 images to signed URLs (required for provider and other APIs)
-        const processedParams = await convertImagesToUrls(
-          allowedParams,
-          user.id,
-          supabase,
-          logger
-        );
+        if (!isProviderRequest(providerRequest)) throw new Error('Invalid provider request structure');
 
-        // NOTE: Provider-specific parameter preprocessing (prompt->text, prompt->positivePrompt, etc.)
-        // is now handled in individual model .ts files via preparePayload() functions.
-        // Each model knows its own parameter requirements and handles transformations.
-
-      providerRequest = {
-        model: model.id,
-        model_record_id: model.record_id,
-        parameters: processedParams, // Parameters processed by model .ts files
-        input_schema: model.input_schema,
-        api_endpoint: model.api_endpoint,
-        payload_structure: model.payload_structure || 'wrapper',
-        userId: user.id,
-        generationId: createdGeneration.id
-      };
-
-        logger.debug('Provider request prepared', {
-          userId: user.id,
-          metadata: {
-            model_id: model.id,
-            generation_id: createdGeneration.id,
-            has_prompt_in_params: hasPromptField
-          }
-        });
-
-        // Get webhookToken from generation settings for provider
         const webhookToken = createdGeneration.settings?._webhook_token as string | undefined;
+        await supabase.from('generations').update({ api_call_started_at: new Date().toISOString() }).eq('id', createdGeneration.id);
 
-        // Record API call start time in database for frontend progress tracking
-        const apiCallStartTime = Date.now();
-        const apiCallStartedAt = new Date().toISOString();
-        
-        // Update generation with api_call_started_at timestamp (synchronous with retry for reliability)
-        const { error: timestampError } = await supabase
-          .from('generations')
-          .update({ api_call_started_at: apiCallStartedAt })
-          .eq('id', createdGeneration.id);
-        
-        if (timestampError) {
-          logger.warn('Failed to update api_call_started_at, retrying...', { 
-            metadata: { generation_id: createdGeneration.id, error: timestampError.message } 
-          });
-          // Single retry
-          const { error: retryError } = await supabase
-            .from('generations')
-            .update({ api_call_started_at: apiCallStartedAt })
-            .eq('id', createdGeneration.id);
-          
-          if (retryError) {
-            logger.error('Failed to update api_call_started_at after retry', retryError instanceof Error ? retryError : new Error(String(retryError)), { 
-              metadata: { generation_id: createdGeneration.id } 
-            });
-          }
-        }
-        
-        // Log provider API call if in test mode
-        if (testLogger) {
-          await testLogger.logProviderRouting(model.provider, model.api_endpoint);
-          await testLogger.logProviderApiCall(model.provider, providerRequest, apiCallStartTime);
+        const providerResponse = await withCircuitBreaker(`provider_${model.provider}`, 'ai_provider', () => callProvider(model.provider, providerRequest!, webhookToken), supabase) as Record<string, unknown>;
+
+        // Handle async webhook providers
+        if (isWebhookProvider(model.provider, providerResponse as { metadata?: { task_id?: string } })) {
+          const taskId = (providerResponse.metadata as { task_id?: string })?.task_id!;
+          const saveResult = await saveProviderTaskId(supabase, createdGeneration.id, taskId, providerRequest, providerResponse.metadata as Record<string, unknown>, authenticatedUser.id, tokenCost, isTestMode, logger, model);
+          if (!saveResult.success) throw new Error(saveResult.error);
+          return buildAsyncResponse(createdGeneration.id, tokenCost, model.content_type, !!(enhance_prompt), responseHeaders);
         }
 
-        interface ProviderResponse {
-          metadata?: {
-            task_id?: string;
-            [key: string]: unknown;
-          };
-          storage_path?: string;
-          output_data?: unknown;
-          file_extension?: string;
-          file_size?: number;
-          [key: string]: unknown;
-        }
-
-        // Validate provider request structure
-        if (!isProviderRequest(providerRequest)) {
-          throw new Error('Invalid provider request structure');
-        }
-
-        // Wrap provider call with circuit breaker for resilience
-        const providerResponse = await Promise.race([
-          withCircuitBreaker(
-            `provider_${model.provider}`,
-            'ai_provider',
-            () => callProvider(model.provider, providerRequest, webhookToken),
-            supabase
-          ),
-          timeoutPromise
-        ]) as ProviderResponse;
-
-        if (timeoutId) clearTimeout(timeoutId);
-
-        const apiCallDuration = Date.now() - apiCallStartTime;
-
-        // Log provider response if in test mode
-        if (testLogger) {
-          await testLogger.logProviderApiResponse(
-            model.provider,
-            providerResponse,
-            apiCallDuration,
-            true
-          );
-          await testLogger.logPerformance(
-            'providerApiCall',
-            apiCallDuration,
-            { provider: model.provider, model_id: model.id }
-          );
-        }
-
-        logger.info('Provider response received', {
-          userId: user.id,
-          metadata: { generation_id: createdGeneration.id }
+        // Sync flow - process in background
+        processBackgroundUpload({
+          supabase, logger, testLogger, userId: authenticatedUser.id, generationId: createdGeneration.id,
+          model, tokenCost, startTime, providerRequest,
+          providerResponse: providerResponse as { storage_path?: string; output_data?: Uint8Array; file_extension?: string; file_size?: number; metadata?: Record<string, unknown> }
         });
 
-        // Check if this is a webhook-based provider (KIE AI or Runware async models)
-        const isWebhookProvider = (model.provider === 'kie_ai' || model.provider === 'runware') && providerResponse.metadata?.task_id;
-
-        if (isWebhookProvider) {
-          // For webhook providers, update with task_id and mark as processing
-          const taskId = providerResponse.metadata?.task_id;
-          if (!taskId) {
-            throw new Error('Missing task_id from webhook provider');
-          }
-          logger.info('Webhook-based provider', {
-            userId: user.id,
-            metadata: { task_id: taskId, generation_id: createdGeneration.id }
-          });
-
-          // CRITICAL: Save provider_task_id - this is required for async polling to work
-          logger.info('CRITICAL: Saving provider_task_id for async generation', {
-            userId: user.id,
-            metadata: { 
-              taskId, 
-              generationId: createdGeneration.id,
-              model_id: model.id,
-              provider: model.provider
-            }
-          });
-
-          const { error: updateError, data: updateData } = await supabase
-            .from('generations')
-            .update({
-              provider_task_id: taskId,
-              status: 'processing',
-              provider_request: providerRequest,
-              provider_response: providerResponse.metadata
-            })
-            .eq('id', createdGeneration.id)
-            .select('id, provider_task_id');
-
-          if (updateError) {
-            // CRITICAL: This is a fatal error - without task_id, polling cannot work
-            logger.error('CRITICAL: Failed to save provider_task_id', updateError instanceof Error ? updateError : new Error(String(updateError) || 'Database error'), {
-              userId: user.id,
-              metadata: { 
-                taskId, 
-                generation_id: createdGeneration.id,
-                error_message: updateError?.message
-              }
-            });
-            
-            // Refund tokens since the generation cannot be tracked
-            if (!isTestMode) {
-              await supabase.rpc('increment_tokens', {
-                user_id_param: user.id,
-                amount: tokenCost
-              });
-            }
-            
-            // Update generation status to failed
-            await supabase
-              .from('generations')
-              .update({
-                status: 'failed',
-                provider_response: { 
-                  error: 'Failed to save task ID - generation cannot be tracked',
-                  original_task_id: taskId
-                }
-              })
-              .eq('id', createdGeneration.id);
-            
-            throw new Error('Failed to save task ID - generation cannot be tracked. Tokens have been refunded.');
-          }
-
-          // Verify the update succeeded
-          if (!updateData || updateData.length === 0) {
-            logger.error('CRITICAL: provider_task_id save returned no data', undefined, {
-              userId: user.id,
-              metadata: { taskId, generation_id: createdGeneration.id }
-            });
-          } else {
-            logger.info('provider_task_id saved successfully', {
-              userId: user.id,
-              metadata: { 
-                taskId, 
-                generation_id: createdGeneration.id,
-                verified_task_id: updateData[0].provider_task_id
-              }
-            });
-          }
-
-          // Return immediately - webhook will complete the generation
-          return new Response(
-            JSON.stringify({
-              id: createdGeneration.id,
-              generation_id: createdGeneration.id,
-              status: 'processing',
-              tokens_used: tokenCost,
-              content_type: model.content_type,
-              enhanced: !!(enhance_prompt || enhancementInstruction),
-              is_async: true,
-              message: 'Generation started. Check back soon for results.'
-            }),
-            { status: 202, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Phase 3: Process storage upload asynchronously (fire-and-forget with improved error handling)
-        const generationId = createdGeneration.id;
-
-        // Upload and update in background (don't await, but with proper error handling)
-        (async () => {
-          try {
-            const uploadStartTime = Date.now();
-            let storagePath: string;
-            let fileSize = providerResponse.file_size;
-
-            // Check if provider already uploaded to storage
-            if (providerResponse.storage_path) {
-              logger.info('Content already in storage', {
-                userId: user.id,
-                metadata: { storage_path: providerResponse.storage_path }
-              });
-              storagePath = providerResponse.storage_path;
-              
-              // Get actual file size if not provided
-              if (!fileSize) {
-                const folderPath = storagePath.substring(0, storagePath.lastIndexOf('/'));
-                const { data: fileData } = await supabase.storage
-                  .from('generated-content')
-                  .list(folderPath);
-                
-                if (fileData && fileData.length > 0) {
-                  const file = fileData.find(f => f.name === 'output.mp4');
-                  if (file) {
-                    fileSize = file.metadata?.size || 0;
-                  }
-                }
-              }
-            } else {
-              // Normal upload flow
-              if (!providerResponse.file_extension) {
-                throw new Error('Missing file extension from provider response');
-              }
-              storagePath = await uploadToStorage(
-                supabase,
-                user.id,
-                generationId,
-                providerResponse.output_data as Uint8Array,
-                providerResponse.file_extension,
-                model.content_type
-              );
-            }
-
-            const uploadDuration = Date.now() - uploadStartTime;
-
-            logger.info('Uploaded to storage', {
-              userId: user.id,
-              metadata: { storage_path: storagePath }
-            });
-
-            // Log storage upload if in test mode
-            if (testLogger) {
-              await testLogger.logStorageUpload(storagePath, fileSize, uploadDuration);
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('generated-content')
-              .getPublicUrl(storagePath);
-
-            // Calculate timing durations for sync completions
-            const completedAtMs = Date.now();
-            const { data: genData } = await supabase
-              .from('generations')
-              .select('created_at, api_call_started_at')
-              .eq('id', generationId)
-              .single();
-            
-            let setupDurationMs: number | null = null;
-            let apiDurationMs: number | null = null;
-            
-            if (genData) {
-              const createdAtMs = new Date(genData.created_at).getTime();
-              const apiCallStartedAtMs = genData.api_call_started_at 
-                ? new Date(genData.api_call_started_at).getTime() 
-                : null;
-              
-              if (apiCallStartedAtMs) {
-                setupDurationMs = apiCallStartedAtMs - createdAtMs;
-                apiDurationMs = completedAtMs - apiCallStartedAtMs;
-              } else {
-                // If no api_call_started_at, use total time as api time
-                apiDurationMs = completedAtMs - createdAtMs;
-              }
-            }
-
-            await supabase
-              .from('generations')
-              .update({
-                status: 'completed',
-                output_url: publicUrl,
-                storage_path: storagePath,
-                file_size_bytes: fileSize,
-                completed_at: new Date(completedAtMs).toISOString(),
-                setup_duration_ms: setupDurationMs,
-                api_duration_ms: apiDurationMs,
-                provider_request: providerRequest,
-                provider_response: providerResponse.metadata
-              })
-              .eq('id', generationId);
-            
-            logger.info('Timing data saved', {
-              userId: user.id,
-              metadata: { generationId, setupDurationMs, apiDurationMs }
-            });
-
-            // Log database update if in test mode
-            if (testLogger) {
-              await testLogger.logDatabaseUpdate(
-                'generations',
-                'update',
-                generationId,
-                { status: 'completed', output_url: publicUrl }
-              );
-            }
-
-            await supabase.from('audit_logs').insert({
-              user_id: user.id,
-              action: 'generation_completed',
-              resource_type: 'generation',
-              resource_id: generationId,
-              metadata: {
-                model_id: model.id,
-                tokens_used: tokenCost,
-                content_type: model.content_type,
-                duration_ms: Date.now() - startTime
-              }
-            });
-
-            // Trigger completion notification for long-running generations
-            try {
-              const generationDuration = Math.floor((Date.now() - startTime) / 1000);
-              if (generationDuration > 30) {
-                await supabase.functions.invoke('notify-generation-complete', {
-                  body: {
-                    generation_id: generationId,
-                    user_id: user.id,
-                    generation_duration_seconds: generationDuration,
-                    type: 'generation'
-                  }
-                });
-                logger.info('Completion notification triggered', {
-                  userId: user.id,
-                  metadata: { generation_id: generationId, duration: generationDuration }
-                });
-              }
-            } catch (notifyError) {
-              logger.warn('Failed to trigger completion notification', {
-                userId: user.id,
-                metadata: { 
-                  generation_id: generationId, 
-                  error: notifyError instanceof Error ? notifyError.message : 'Unknown' 
-                }
-              });
-            }
-
-            logger.info('Background processing completed', {
-              userId: user.id,
-              metadata: { generation_id: generationId }
-            });
-          } catch (bgError) {
-            logger.error('Background processing error', bgError instanceof Error ? bgError : undefined, {
-              userId: user.id,
-              metadata: { generation_id: generationId }
-            });
-            
-            // Update to failed status if background task fails
-            const errorMessage = bgError instanceof Error ? bgError.message : 'Background processing failed';
-            await supabase
-              .from('generations')
-              .update({ 
-                status: 'failed',
-                provider_request: providerRequest,
-                provider_response: { 
-                  error: errorMessage,
-                  full_error: bgError instanceof Error ? bgError.toString() : String(bgError),
-                  timestamp: new Date().toISOString()
-                } 
-              })
-              .eq('id', generationId);
-          }
-        })();
-
-        // Reset circuit breaker on success
         CIRCUIT_BREAKER.failures = 0;
-
-        logger.logDuration('Generation processing started', startTime, {
-          userId: user.id,
-          metadata: {
-            generation_id: createdGeneration.id,
-            model_id: model.id,
-            tokens_used: tokenCost,
-            content_type: model.content_type
-          }
-        });
-
-        return new Response(
-          JSON.stringify({
-            id: createdGeneration.id,
-            generation_id: createdGeneration.id,
-            status: 'processing',
-            tokens_used: tokenCost,
-            content_type: model.content_type,
-            enhanced: !!(enhance_prompt || enhancementInstruction),
-            is_async: true
-          }),
-          { status: 202, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
+        return buildSyncResponse(createdGeneration.id, tokenCost, model.content_type, !!(enhance_prompt), responseHeaders);
 
       } catch (providerError) {
-        logger.error('Provider error', providerError instanceof Error ? providerError : new Error(String(providerError)), {
-          userId: user.id,
-          metadata: { generation_id: createdGeneration.id }
-        });
-
-        // Increment circuit breaker on failure
         CIRCUIT_BREAKER.failures++;
         CIRCUIT_BREAKER.lastFailure = Date.now();
-
-        const errorMessage = providerError instanceof Error ? providerError.message : String(providerError);
-        const isTimeout = errorMessage.includes('timed out');
-
-        // Sanitize error for database storage (remove sensitive details)
-        const sanitizedError = errorMessage.substring(0, 200) || 'Generation failed';
-
-        await supabase
-          .from('generations')
-          .update({
-            status: 'failed',
-            tokens_used: 0,
-            provider_request: providerRequest,
-            provider_response: {
-              error: sanitizedError,
-              error_type: isTimeout ? 'timeout' : 'provider_error',
-              timestamp: new Date().toISOString()
-            }
-          })
-          .eq('id', createdGeneration.id);
-
-        // Refund tokens using RPC for atomicity (skip for test mode)
-        if (!isTestMode) {
-          await supabase.rpc('increment_tokens', {
-            user_id_param: user.id,
-            amount: tokenCost
-          });
-          logger.info('Credits refunded', {
-            userId: user.id,
-            metadata: { 
-              tokens_refunded: tokenCost,
-              reason: isTimeout ? 'timeout' : 'provider_failure'
-            }
-          });
-        } else {
-          logger.info('TEST_MODE: No token refund needed (non-billable)', { userId: user.id });
-        }
-
-        await supabase.from('audit_logs').insert({
-          user_id: user.id,
-          action: 'generation_failed',
-          resource_type: 'generation',
-          resource_id: createdGeneration.id,
-          metadata: {
-            error: errorMessage,
-            model_id: model.id,
-            tokens_refunded: tokenCost,
-            reason: isTimeout ? 'timeout' : 'provider_error',
-            duration_ms: Date.now() - startTime
-          }
-        });
-
-        logger.error('Generation failed', providerError instanceof Error ? providerError : new Error(String(providerError)), {
-          userId: user.id,
-          duration: Date.now() - startTime,
-          metadata: {
-            generation_id: createdGeneration.id,
-            model_id: model.id,
-            circuit_breaker_failures: CIRCUIT_BREAKER.failures
-          }
-        });
-
+        await supabase.from('generations').update({ status: 'failed', tokens_used: 0, provider_request: providerRequest, provider_response: { error: (providerError instanceof Error ? providerError.message : String(providerError)).substring(0, 200), timestamp: new Date().toISOString() } }).eq('id', createdGeneration.id);
+        if (!isTestMode) await refundTokens(supabase, authenticatedUser.id, tokenCost, logger, 'provider_error');
+        await logGenerationEvent(supabase, authenticatedUser.id, createdGeneration.id, 'generation_failed', { modelId: model.id, tokensRefunded: tokenCost, error: providerError instanceof Error ? providerError.message : 'Unknown', durationMs: Date.now() - startTime });
         throw providerError;
       }
     })();
 
-    // Cast to Promise<GenerationResult> for tracking (actual return type is Response)
-    activeRequests.set(requestId, requestPromise as unknown as Promise<GenerationResult>);
-
-    try {
-      return await requestPromise;
-    } finally {
-      activeRequests.delete(requestId);
-    }
+    activeRequests.set(requestId, requestPromise);
+    try { return await requestPromise as Response; } finally { activeRequests.delete(requestId); }
 
   } catch (error) {
     return createSafeErrorResponse(error, 'generate-content', responseHeaders);
   }
 });
-
-async function enhancePrompt(
-  prompt: string,
-  instruction: string | null,
-  provider: string,
-  contentType: string,
-  modelProvider: string,
-  customMode: boolean | undefined
-): Promise<{ enhanced: string; provider: string }> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-
-  if (!LOVABLE_API_KEY) {
-    throw new Error('LOVABLE_API_KEY not configured');
-  }
-
-  let systemPrompt = instruction;
-
-  if (!systemPrompt) {
-    // For provider audio non-custom mode, enforce strict 500 character limit
-    if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
-      systemPrompt = `You are a prompt enhancement AI for audio generation. Transform the user's prompt into an optimized prompt for better audio output.
-
-CRITICAL CONSTRAINT: Your response MUST be MAXIMUM 480 characters (leaving room for any trailing spaces).
-
-Keep the core intent, add key musical/audio details (genre, mood, instruments, tempo), but stay extremely concise. Use abbreviations where appropriate. Return ONLY the enhanced prompt under 480 characters, no explanations or quotation marks.`;
-    } else {
-      systemPrompt = `You are a prompt enhancement AI. Transform the user's prompt into a detailed, optimized prompt for ${contentType} generation. Keep the core intent but add professional details, style descriptions, and technical parameters that will improve the output quality. Return ONLY the enhanced prompt, no explanations.`;
-    }
-  }
-
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ]
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Enhancement failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  let enhanced = data.choices[0].message.content.trim();
-
-  // Safety net: Force truncate if enhancement still exceeds limit for provider non-custom mode
-  if (modelProvider === 'kie_ai' && contentType === 'audio' && customMode === false) {
-    if (enhanced.length > 500) {
-      // Truncate to stay within 500 character limit
-      enhanced = enhanced.slice(0, 497) + '...';
-    }
-  }
-
-  return { enhanced, provider: 'lovable_ai' };
-}

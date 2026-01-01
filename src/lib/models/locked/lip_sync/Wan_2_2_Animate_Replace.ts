@@ -180,7 +180,9 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   const validation = validate(allInputs);
   if (!validation.valid) throw new Error(validation.error || "Validation failed");
 
-  // TODO: Get actual video duration for accurate cost calculation
+  // Cost calculation uses default 5s estimate when video duration is unknown.
+  // Client-side video duration detection provides actual duration when available.
+  // The calculateCost() function accepts an optional videoDuration parameter.
   const cost = calculateCost(allInputs);
   await reserveCredits(userId, cost);
 

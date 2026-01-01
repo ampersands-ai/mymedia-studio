@@ -1,0 +1,521 @@
+openapi: 3.1.0
+info:
+  title: Artifio.ai API
+  description: |
+    AI Content Generation Platform API
+    
+    This API provides endpoints for generating AI content including images, videos, and audio.
+    All authenticated endpoints require a valid Supabase JWT token.
+  version: 1.0.0
+  contact:
+    name: Artifio Support
+    url: https://artifio.ai
+  license:
+    name: Proprietary
+    url: https://artifio.ai/terms
+
+servers:
+  - url: https://gzlwkvmivbfcvczoqphq.supabase.co/functions/v1
+    description: Production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Generation
+    description: AI content generation endpoints
+  - name: Status
+    description: Generation status and monitoring
+  - name: Voices
+    description: Text-to-speech voice management
+  - name: Prompts
+    description: Prompt enhancement and generation
+  - name: Webhooks
+    description: Async callback endpoints
+
+paths:
+  /generate-content:
+    post:
+      summary: Generate AI Content
+      description: |
+        Initiates AI content generation. Returns immediately with a generation ID.
+        Poll `/check-generation-status` for completion or use webhook callbacks.
+      operationId: generateContent
+      tags:
+        - Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateContentRequest'
+            examples:
+              imageGeneration:
+                summary: Generate an image
+                value:
+                  generationId: "550e8400-e29b-41d4-a716-446655440000"
+                  model_config:
+                    modelId: "flux/schnell"
+                    provider: "runware"
+                    baseCreditCost: 5
+                  model_schema:
+                    properties:
+                      prompt:
+                        type: string
+                    required:
+                      - prompt
+                  prompt: "A serene mountain landscape at sunset"
+                  custom_parameters:
+                    width: 1024
+                    height: 1024
+      responses:
+        '200':
+          description: Generation initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationInitiatedResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '402':
+          description: Insufficient credits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: System at capacity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generate-content-sync:
+    post:
+      summary: Generate AI Content (Synchronous)
+      description: |
+        Synchronous content generation. Waits for completion and returns output directly.
+        Best for fast models (< 30s generation time).
+      operationId: generateContentSync
+      tags:
+        - Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateContentRequest'
+      responses:
+        '200':
+          description: Generation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationCompletedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /check-generation-status:
+    post:
+      summary: Check Generation Status
+      description: Poll this endpoint to check the status of an ongoing generation.
+      operationId: checkGenerationStatus
+      tags:
+        - Status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - generationId
+              properties:
+                generationId:
+                  type: string
+                  format: uuid
+                  description: The ID of the generation to check
+      responses:
+        '200':
+          description: Status retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GenerationProcessingResponse'
+                  - $ref: '#/components/schemas/GenerationCompletedResponse'
+                  - $ref: '#/components/schemas/GenerationFailedResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Generation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /get-voices:
+    get:
+      summary: Get Available Voices
+      description: Retrieves list of available voices for text-to-speech generation.
+      operationId: getVoices
+      tags:
+        - Voices
+      security: []
+      parameters:
+        - name: language
+          in: query
+          schema:
+            type: string
+          description: Filter voices by language code (e.g., 'en', 'es')
+        - name: provider
+          in: query
+          schema:
+            type: string
+            enum: [azure, elevenlabs]
+          description: Filter by voice provider
+      responses:
+        '200':
+          description: Voices retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Voice'
+
+  /generate-random-prompt:
+    post:
+      summary: Generate Random Prompt
+      description: Generates a creative AI prompt based on content type.
+      operationId: generateRandomPrompt
+      tags:
+        - Prompts
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentType:
+                  type: string
+                  enum: [image, video, audio]
+                  description: Type of content for prompt generation
+      responses:
+        '200':
+          description: Prompt generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prompt:
+                    type: string
+                    description: Generated creative prompt
+
+  /enhance-prompt:
+    post:
+      summary: Enhance Prompt with AI
+      description: Uses AI to enhance and improve a user prompt for better generation results.
+      operationId: enhancePrompt
+      tags:
+        - Prompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  description: Original prompt to enhance
+                contentType:
+                  type: string
+                  enum: [image, video, audio]
+                  description: Type of content for optimization
+      responses:
+        '200':
+          description: Prompt enhanced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enhanced_prompt:
+                    type: string
+                    description: AI-enhanced prompt
+
+  /generation-webhook:
+    post:
+      summary: Generation Webhook Callback
+      description: |
+        Webhook endpoint for async generation providers to report completion.
+        Requires valid webhook token for authentication.
+      operationId: generationWebhook
+      tags:
+        - Webhooks
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - generationId
+                - status
+              properties:
+                generationId:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  enum: [completed, failed]
+                output_url:
+                  type: string
+                  format: uri
+                error:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Webhook processed successfully
+        '401':
+          description: Invalid webhook token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+
+  schemas:
+    GenerateContentRequest:
+      type: object
+      required:
+        - generationId
+        - model_config
+        - model_schema
+        - prompt
+      properties:
+        generationId:
+          type: string
+          format: uuid
+          description: Client-generated UUID for the generation
+        model_config:
+          type: object
+          required:
+            - modelId
+            - provider
+            - baseCreditCost
+          properties:
+            modelId:
+              type: string
+              description: Model identifier (e.g., 'flux/schnell')
+            provider:
+              type: string
+              enum: [runware, kie_ai, lovable_ai_sync]
+              description: AI provider to use
+            baseCreditCost:
+              type: number
+              minimum: 0
+              description: Base credit cost for generation
+            costMultipliers:
+              type: object
+              additionalProperties:
+                type: number
+              description: Cost multipliers for parameters
+        model_schema:
+          type: object
+          description: JSON Schema for model parameters
+          properties:
+            properties:
+              type: object
+            required:
+              type: array
+              items:
+                type: string
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Generation prompt
+        custom_parameters:
+          type: object
+          additionalProperties: true
+          description: Model-specific parameters
+        enhance_prompt:
+          type: boolean
+          default: false
+          description: Whether to enhance prompt with AI
+        test_execution_id:
+          type: string
+          format: uuid
+          description: ID for test execution tracking
+
+    GenerationInitiatedResponse:
+      type: object
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing]
+        message:
+          type: string
+
+    GenerationProcessingResponse:
+      type: object
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    GenerationCompletedResponse:
+      type: object
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed]
+        output_url:
+          type: string
+          format: uri
+          description: URL to generated content
+        tokens_used:
+          type: number
+          description: Credits consumed
+        metadata:
+          type: object
+
+    GenerationFailedResponse:
+      type: object
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [failed]
+        error:
+          type: string
+          description: Error message
+
+    Voice:
+      type: object
+      properties:
+        voice_id:
+          type: string
+        name:
+          type: string
+        language:
+          type: string
+        language_code:
+          type: string
+        country:
+          type: string
+        provider:
+          type: string
+        preview_url:
+          type: string
+          format: uri
+        tags:
+          type: array
+          items:
+            type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code for programmatic handling
+        details:
+          type: string
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized - Invalid or missing token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InsufficientCredits:
+      description: Insufficient credits for operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until rate limit resets
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Requests allowed per window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in window
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

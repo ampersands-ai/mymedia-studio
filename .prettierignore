@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Package manager files
+package-lock.json
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
+# Supabase generated files
+src/integrations/supabase/types.ts
+
+# Cache directories
+.cache/
+.turbo/
+.parcel-cache/
+
+# Coverage reports
+coverage/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# Generated documentation
+docs/api/openapi.yaml
+
+# Static assets that don't need formatting
+public/
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.webp
+*.mp4
+*.webm
+*.mp3
+*.wav
+*.ogg
+
+# Markdown files (optional - enable if you want to format)
+# *.md

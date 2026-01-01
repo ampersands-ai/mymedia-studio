@@ -8,6 +8,7 @@ import { OptimizedGenerationImage } from "@/components/generation/OptimizedGener
 import { OptimizedVideoPreview } from "@/components/generation/OptimizedVideoPreview";
 import { AudioPlayer } from "./AudioPlayer";
 import type { Generation } from "../hooks/useGenerationHistory";
+import { formatGenerationTime } from "../utils/formatGenerationTime";
 import { RECORD_ID_REGISTRY } from "@/lib/models/locked/index";
 import { getDisplayableParametersString } from "@/lib/utils/parameterDisplayFilter";
 
@@ -81,37 +82,6 @@ const formatContentType = (contentType: string): string => {
 };
 
 
-/**
- * Calculate and format generation time
- * Uses setup_duration_ms and api_duration_ms if available, otherwise falls back to timestamps
- */
-const formatGenerationTime = (generation: Generation): string | null => {
-  // Use stored timing data if available (check for non-null AND non-zero to avoid "0.0s" display)
-  if (generation.setup_duration_ms != null && generation.api_duration_ms != null) {
-    const setupMs = generation.setup_duration_ms || 0;
-    const apiMs = generation.api_duration_ms || 0;
-    
-    // Only show detailed timing if we have meaningful data
-    if (setupMs > 0 || apiMs > 0) {
-      const totalSeconds = (setupMs + apiMs) / 1000;
-      return `${totalSeconds.toFixed(1)}s`;
-    }
-  }
-  
-  // Fallback: Calculate from timestamps if timing columns are not set
-  const completedTime = generation.completed_at || generation.caption_generated_at;
-  if (!completedTime || generation.status !== 'completed') return null;
-  
-  const startTime = new Date(generation.created_at).getTime();
-  const endTime = new Date(completedTime).getTime();
-  const seconds = Math.round((endTime - startTime) / 1000);
-  
-  if (seconds < 0 || seconds > 3600) return null; // Sanity check
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-};
 
 const getStatusBadge = (status: string, createdAt?: string) => {
   switch (status) {

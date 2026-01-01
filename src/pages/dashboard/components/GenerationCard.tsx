@@ -94,9 +94,7 @@ const formatGenerationTime = (generation: Generation): string | null => {
     // Only show detailed timing if we have meaningful data
     if (setupMs > 0 || apiMs > 0) {
       const totalSeconds = (setupMs + apiMs) / 1000;
-      const setupSec = setupMs / 1000;
-      const apiSec = apiMs / 1000;
-      return `${totalSeconds.toFixed(1)}s (setup: ${setupSec.toFixed(1)}s, API: ${apiSec.toFixed(1)}s)`;
+      return `${totalSeconds.toFixed(1)}s`;
     }
   }
   

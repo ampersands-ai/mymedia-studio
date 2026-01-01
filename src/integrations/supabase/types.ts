@@ -4432,6 +4432,7 @@ export type Database = {
         Row: {
           ai_caption: string | null
           ai_hashtags: string[] | null
+          api_duration_ms: number | null
           caption_generated_at: string | null
           completed_at: string | null
           created_at: string | null
@@ -4446,6 +4447,7 @@ export type Database = {
           prompt: string | null
           provider_response: Json | null
           settings: Json | null
+          setup_duration_ms: number | null
           source_table: string | null
           status: string | null
           storage_path: string | null

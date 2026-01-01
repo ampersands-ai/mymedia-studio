@@ -1,6 +1,14 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Run Prettier check
+echo "🎨 Checking code formatting..."
+npm run format:check 2>/dev/null || {
+  echo ""
+  echo "⚠️  Code formatting issues detected. Run 'npm run format' to fix."
+  echo "   Continuing with other checks..."
+}
+
 # Run type check
 echo "🔍 Running TypeScript check..."
 npm run typecheck

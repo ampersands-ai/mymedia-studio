@@ -84,8 +84,6 @@ const createWrapper = () => {
     </QueryClientProvider>
   );
   return Wrapper;
-    );
-  };
 };
 
 describe('useActiveGenerations', () => {

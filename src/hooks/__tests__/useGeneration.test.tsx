@@ -129,7 +129,7 @@ describe('useGeneration', () => {
   describe('session handling', () => {
     it('should refresh session before generation', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
 
@@ -158,8 +158,8 @@ describe('useGeneration', () => {
 
     it('should sign out and throw error when session expired', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: null },
-        error: new Error('Session expired'),
+        data: { session: null, user: null },
+        error: { name: 'AuthError', message: 'Session expired', code: 'session_expired', status: 401, __isAuthError: true } as any,
       });
 
       const { result } = renderHook(() => useGeneration(), {
@@ -182,7 +182,7 @@ describe('useGeneration', () => {
   describe('generation flow', () => {
     it('should set isGenerating to true during generation', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
 
@@ -222,7 +222,7 @@ describe('useGeneration', () => {
 
     it('should validate prompt length', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
 
@@ -244,7 +244,7 @@ describe('useGeneration', () => {
 
     it('should return generation result on success', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
 
@@ -280,7 +280,7 @@ describe('useGeneration', () => {
   describe('error handling', () => {
     beforeEach(() => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
     });
@@ -379,7 +379,7 @@ describe('useGeneration', () => {
   describe('retry logic', () => {
     it('should retry on token concurrency error (409)', async () => {
       vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } as any },
+        data: { session: { user: { id: 'user-123' } } as any, user: { id: 'user-123' } as any },
         error: null,
       });
 

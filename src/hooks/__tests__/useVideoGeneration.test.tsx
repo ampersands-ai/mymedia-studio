@@ -56,11 +56,6 @@ const createWrapper = () => {
     </QueryClientProvider>
   );
   return Wrapper;
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
-  };
 };
 
 describe('useVideoGeneration', () => {
@@ -197,6 +192,7 @@ describe('useVideoGeneration', () => {
       vi.mocked(useGenerateSunoVideoModule.useGenerateSunoVideo).mockReturnValue({
         generateVideo: mockGenerateVideo,
         isGenerating: false,
+        error: null,
       });
 
       const { result } = renderHook(() => useVideoGeneration(null), {
@@ -218,6 +214,7 @@ describe('useVideoGeneration', () => {
       vi.mocked(useGenerateSunoVideoModule.useGenerateSunoVideo).mockReturnValue({
         generateVideo: mockGenerateVideo,
         isGenerating: false,
+        error: null,
       });
 
       const mockSelect = vi.fn().mockReturnThis();
@@ -254,6 +251,7 @@ describe('useVideoGeneration', () => {
       vi.mocked(useGenerateSunoVideoModule.useGenerateSunoVideo).mockReturnValue({
         generateVideo: mockGenerateVideo,
         isGenerating: false,
+        error: null,
       });
 
       const mockSelect = vi.fn().mockReturnThis();

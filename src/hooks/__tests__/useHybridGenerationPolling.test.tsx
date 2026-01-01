@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
@@ -73,11 +73,6 @@ const createWrapper = () => {
     </QueryClientProvider>
   );
   return Wrapper;
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
-  };
 };
 
 describe('useHybridGenerationPolling', () => {
@@ -331,6 +326,7 @@ describe('useHybridGenerationPolling', () => {
       const mockStopFallbackPolling = vi.fn();
       const fallbackModule = await import('../usePollingFallback');
       vi.mocked(fallbackModule.usePollingFallback).mockReturnValue({
+        isPolling: false,
         startPolling: vi.fn(),
         stopPolling: mockStopFallbackPolling,
       });

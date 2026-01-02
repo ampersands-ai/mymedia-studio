@@ -436,13 +436,13 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
             size: vertices.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(vertexBuffer, 0, vertices);
+          device.queue.writeBuffer(vertexBuffer, 0, vertices.buffer);
 
           const indexBuffer = device.createBuffer({
             size: indices.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(indexBuffer, 0, indices);
+          device.queue.writeBuffer(indexBuffer, 0, indices.buffer);
 
           // Create instance buffer
           const instanceData = generateInstanceData(params.instanceCount, params.arrangement);
@@ -450,7 +450,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
             size: instanceData.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(instanceBuffer, 0, instanceData);
+          device.queue.writeBuffer(instanceBuffer, 0, instanceData.buffer);
 
           contextRef.current = {
             device,
@@ -497,7 +497,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
         });
       }
       
-      device.queue.writeBuffer(contextRef.current.instanceBuffer, 0, instanceData);
+      device.queue.writeBuffer(contextRef.current.instanceBuffer, 0, instanceData.buffer);
       contextRef.current.instanceCount = params.instanceCount;
     }, [params.instanceCount, params.arrangement]);
 

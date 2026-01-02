@@ -39,17 +39,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const hasError = url.searchParams.get("error_description") || url.searchParams.get("error");
 
     // Set up auth state listener FIRST
+    // Safety timeout to prevent infinite loading
+    const loadingTimeoutId = setTimeout(() => {
+      authLogger.warn('Auth loading timeout reached, forcing complete');
+      setLoading(false);
+    }, 8000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         authLogger.debug('Auth event received', { event, hasSession: !!session } as any);
         
         // Handle token expired or refresh failed
         if (event === 'TOKEN_REFRESHED' && !session) {
           authLogger.warn('Token refresh failed, signing out');
-          await supabase.auth.signOut();
           setSession(null);
           setUser(null);
           setLoading(false);
+          // Defer signOut to prevent deadlock
+          setTimeout(() => {
+            supabase.auth.signOut();
+          }, 0);
           return;
         }
         
@@ -109,10 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         
-        // Avoid turning off loading on INITIAL_SESSION if we're about to exchange the code
-        if (event !== "INITIAL_SESSION" || !hasCode) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     );
 
@@ -148,7 +154,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       })();
     }
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeoutId);
+    };
   }, []);
 
   return (

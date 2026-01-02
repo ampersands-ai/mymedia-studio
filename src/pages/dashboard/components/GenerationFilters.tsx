@@ -103,28 +103,28 @@ export const GenerationFilters = ({
       {/* Content Type Filter */}
       <div>
         <Tabs value={contentTypeFilter} onValueChange={(v) => onContentTypeFilterChange(v as ContentTypeFilter)}>
-          <TabsList className="grid w-full max-w-3xl grid-cols-6">
-            <TabsTrigger value="all">
+          <TabsList className="flex w-full max-w-3xl overflow-x-auto scrollbar-hide gap-1 sm:grid sm:grid-cols-6 sm:overflow-visible">
+            <TabsTrigger value="all" className="shrink-0 whitespace-nowrap">
               <Sparkles className="h-4 w-4 mr-1" />
               All
             </TabsTrigger>
-            <TabsTrigger value="image">
+            <TabsTrigger value="image" className="shrink-0 whitespace-nowrap">
               <ImageIcon className="h-4 w-4 mr-1" />
               Images
             </TabsTrigger>
-            <TabsTrigger value="video">
+            <TabsTrigger value="video" className="shrink-0 whitespace-nowrap">
               <Video className="h-4 w-4 mr-1" />
               Videos
             </TabsTrigger>
-            <TabsTrigger value="video_editor">
+            <TabsTrigger value="video_editor" className="shrink-0 whitespace-nowrap">
               <Clapperboard className="h-4 w-4 mr-1" />
               Editor
             </TabsTrigger>
-            <TabsTrigger value="audio">
+            <TabsTrigger value="audio" className="shrink-0 whitespace-nowrap">
               <Music className="h-4 w-4 mr-1" />
               Audio
             </TabsTrigger>
-            <TabsTrigger value="storyboard">
+            <TabsTrigger value="storyboard" className="shrink-0 whitespace-nowrap">
               <FileText className="h-4 w-4 mr-1" />
               Storyboards
             </TabsTrigger>

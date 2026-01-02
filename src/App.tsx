@@ -90,9 +90,10 @@ const ModerationDashboard = lazy(() => import("./pages/admin/ModerationDashboard
 const AnimationPage = lazy(() => import("./pages/AnimationPage"));
 const VideoEditorPage = lazy(() => import("./pages/VideoEditorPage"));
 const AnimationEditorPage = lazy(() => import("./pages/AnimationEditorPage"));
+const BackgroundLibrary = lazy(() => import("./pages/BackgroundLibrary"));
+const BackgroundGenerator = lazy(() => import("./pages/BackgroundGenerator"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
-
 const AppContent = () => {
   // Initialize PostHog only if consent was given (handled by CookieConsentBanner)
   // PostHog initialization moved to CookieConsentBanner for GDPR compliance
@@ -231,6 +232,8 @@ const AppContent = () => {
             <Route path="/moderation-docs" element={<RouteErrorBoundary routeName="Moderation Docs"><ModerationDocs /></RouteErrorBoundary>} />
             <Route path="/animation-page" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Page"><AnimationPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/animation-editor" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Editor"><AnimationEditorPage /></RouteErrorBoundary></ProtectedRoute>} />
+            <Route path="/backgrounds" element={<ProtectedRoute><RouteErrorBoundary routeName="Background Library"><BackgroundLibrary /></RouteErrorBoundary></ProtectedRoute>} />
+            <Route path="/generator" element={<ProtectedRoute><RouteErrorBoundary routeName="Background Generator"><BackgroundGenerator /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />

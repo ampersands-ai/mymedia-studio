@@ -1,7 +1,7 @@
 export interface ShaderParams {
   shape: 'cube' | 'sphere' | 'pyramid';
   instanceCount: number; // 1000-8000
-  arrangement: 'radial' | 'spiral' | 'grid' | 'wave';
+  arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon';
   colorPrimary: string; // hex color
   colorSecondary: string; // hex color
   metallic: number; // 0-1

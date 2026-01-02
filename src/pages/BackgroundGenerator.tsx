@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
+import { convertToMp4, downloadBlob, generateFilename } from '@/utils/videoConverter';
 
 export default function BackgroundGenerator() {
   const navigate = useNavigate();
@@ -88,17 +89,11 @@ export default function BackgroundGenerator() {
     }
   }, [recordingState]);
 
-  const downloadWebM = useCallback(() => {
+  const downloadWebM = useCallback(async () => {
     if (!recordedBlob) return;
     
-    const url = URL.createObjectURL(recordedBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `procedural-background-${Date.now()}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const filename = generateFilename('procedural-background');
+    await downloadBlob(recordedBlob, `${filename}.webm`);
     toast.success('WebM downloaded!');
   }, [recordedBlob]);
 
@@ -108,27 +103,21 @@ export default function BackgroundGenerator() {
     setRecordingState('converting');
     toast.info('Converting to MP4... This may take a moment.');
     
-    // For now, just download WebM as MP4 conversion requires FFmpeg.wasm
-    // TODO: Implement FFmpeg.wasm conversion
     try {
-      // Simulating conversion delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const mp4Blob = await convertToMp4(recordedBlob, (progress) => {
+        console.log('Conversion progress:', progress);
+      });
       
-      const url = URL.createObjectURL(recordedBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `procedural-background-${Date.now()}.webm`; // Still WebM for now
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const filename = generateFilename('procedural-background');
+      await downloadBlob(mp4Blob, `${filename}.mp4`);
       
       setRecordingState('ready');
-      toast.info('Downloaded as WebM (MP4 conversion coming soon)');
+      toast.success('MP4 downloaded!');
     } catch (error) {
       console.error('Conversion failed:', error);
       setRecordingState('ready');
-      toast.error('Conversion failed');
+      toast.error('Conversion failed, downloading as WebM');
+      await downloadBlob(recordedBlob, `${generateFilename('procedural-background')}.webm`);
     }
   }, [recordedBlob]);
 

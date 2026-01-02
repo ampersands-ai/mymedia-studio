@@ -2,10 +2,14 @@
 import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from 'react';
 import { ShaderParams } from '@/types/procedural-background';
 import { Canvas2DFallback } from './Canvas2DFallback';
+import { checkWebGPUCapability } from '@/utils/deviceCapabilities';
 
 interface ProceduralCanvasProps {
   params: ShaderParams;
 }
+
+// Renderer state: null = checking, true = WebGPU works, false = use Canvas2D
+type RendererState = null | 'webgpu' | 'canvas2d';
 
 // Vertex shader for instanced cubes
 const vertexShaderCode = /* wgsl */`
@@ -294,9 +298,9 @@ function createViewProjectionMatrix(width: number, height: number, time: number,
 
 export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasProps>(
   ({ params }, ref) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isWebGPUSupported, setIsWebGPUSupported] = useState<boolean | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    // Separate canvas refs - CRITICAL: never share canvas between WebGPU and Canvas2D
+    const webgpuCanvasRef = useRef<HTMLCanvasElement>(null);
+    const [rendererState, setRendererState] = useState<RendererState>(null);
     const contextRef = useRef<{
       device: GPUDevice;
       context: GPUCanvasContext;
@@ -318,28 +322,50 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       paramsRef.current = params;
     }, [params]);
 
-    // Expose canvas ref to parent
-    useImperativeHandle(ref, () => canvasRef.current!);
+    // Expose canvas ref to parent - return whichever canvas is active
+    useImperativeHandle(ref, () => webgpuCanvasRef.current!);
 
-    // Initialize WebGPU
+    // Check WebGPU capability FIRST before any canvas interaction
     useEffect(() => {
-      const initWebGPU = async () => {
-        if (!navigator.gpu) {
-          setIsWebGPUSupported(false);
-          return;
+      const checkCapability = async () => {
+        const isSupported = await checkWebGPUCapability();
+        if (isSupported) {
+          setRendererState('webgpu');
+        } else {
+          console.log('WebGPU not supported, using Canvas2D fallback');
+          setRendererState('canvas2d');
         }
+      };
+      checkCapability();
+    }, []);
 
-        setIsWebGPUSupported(true);
+    // Initialize WebGPU only after we confirm it's supported
+    useEffect(() => {
+      if (rendererState !== 'webgpu') return;
 
+      const initWebGPU = async () => {
         try {
           const adapter = await navigator.gpu.requestAdapter();
           if (!adapter) {
-            throw new Error('No GPU adapter found');
+            console.error('WebGPU: No adapter found after capability check');
+            setRendererState('canvas2d');
+            return;
           }
 
           const device = await adapter.requestDevice();
-          const canvas = canvasRef.current!;
-          const context = canvas.getContext('webgpu')!;
+          const canvas = webgpuCanvasRef.current;
+          if (!canvas) {
+            console.error('WebGPU: Canvas not available');
+            setRendererState('canvas2d');
+            return;
+          }
+          
+          const context = canvas.getContext('webgpu');
+          if (!context) {
+            console.error('WebGPU: Could not get webgpu context');
+            setRendererState('canvas2d');
+            return;
+          }
 
           const format = navigator.gpu.getPreferredCanvasFormat();
           context.configure({
@@ -468,7 +494,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           startTimeRef.current = Date.now();
         } catch (e) {
           console.error('WebGPU initialization failed:', e);
-          setError((e as Error).message);
+          setRendererState('canvas2d');
         }
       };
 
@@ -479,11 +505,11 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           cancelAnimationFrame(animationFrameRef.current);
         }
       };
-    }, []);
+    }, [rendererState, params.instanceCount, params.arrangement]);
 
     // Update instance buffer when arrangement or count changes
     useEffect(() => {
-      if (!contextRef.current) return;
+      if (!contextRef.current || rendererState !== 'webgpu') return;
 
       const { device } = contextRef.current;
       const instanceData = generateInstanceData(params.instanceCount, params.arrangement);
@@ -499,17 +525,17 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       
       device.queue.writeBuffer(contextRef.current.instanceBuffer, 0, instanceData.buffer);
       contextRef.current.instanceCount = params.instanceCount;
-    }, [params.instanceCount, params.arrangement]);
+    }, [params.instanceCount, params.arrangement, rendererState]);
 
-    // Render loop
+    // Render loop for WebGPU
     useEffect(() => {
-      if (!contextRef.current || !canvasRef.current) return;
+      if (rendererState !== 'webgpu' || !contextRef.current || !webgpuCanvasRef.current) return;
 
       const render = () => {
-        if (!contextRef.current || !canvasRef.current) return;
+        if (!contextRef.current || !webgpuCanvasRef.current) return;
 
         const { device, context, pipeline, uniformBuffer, uniformBindGroup, vertexBuffer, indexBuffer, instanceBuffer, indexCount, instanceCount } = contextRef.current;
-        const canvas = canvasRef.current;
+        const canvas = webgpuCanvasRef.current;
         const currentParams = paramsRef.current;
 
         // Update canvas size
@@ -581,9 +607,10 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           cancelAnimationFrame(animationFrameRef.current);
         }
       };
-    }, [isWebGPUSupported]);
+    }, [rendererState]);
 
-    if (isWebGPUSupported === null) {
+    // Loading state - checking WebGPU capability
+    if (rendererState === null) {
       return (
         <div className="flex h-full items-center justify-center bg-background">
           <div className="animate-pulse text-muted-foreground">Initializing...</div>
@@ -591,16 +618,11 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       );
     }
 
-    if (!isWebGPUSupported || error) {
-      // Use Canvas2D fallback instead of just showing an error message
+    // Canvas2D fallback - uses its own canvas element
+    if (rendererState === 'canvas2d') {
       return (
         <div className="relative h-full w-full">
-          <canvas
-            ref={canvasRef}
-            className="h-full w-full"
-            style={{ backgroundColor: params.backgroundColor }}
-          />
-          <Canvas2DFallback params={params} canvasRef={canvasRef} />
+          <Canvas2DFallback params={params} />
           <div className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
             2D Mode (WebGPU unavailable)
           </div>
@@ -608,9 +630,10 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       );
     }
 
+    // WebGPU renderer - uses dedicated WebGPU canvas
     return (
       <canvas
-        ref={canvasRef}
+        ref={webgpuCanvasRef}
         className="h-full w-full"
         style={{ backgroundColor: params.backgroundColor }}
       />

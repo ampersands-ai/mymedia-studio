@@ -13,9 +13,61 @@ export interface DeviceCapabilities {
 }
 
 let cachedCapabilities: DeviceCapabilities | null = null;
+let webgpuCapabilityResult: boolean | null = null;
+
+/**
+ * Check if WebGPU is fully functional (adapter + device)
+ * This is an async check that actually tests if WebGPU works
+ */
+export async function checkWebGPUCapability(): Promise<boolean> {
+  // Return cached result if available
+  if (webgpuCapabilityResult !== null) {
+    return webgpuCapabilityResult;
+  }
+
+  // No WebGPU API at all
+  if (!navigator.gpu) {
+    webgpuCapabilityResult = false;
+    return false;
+  }
+
+  try {
+    // Try to get an adapter
+    const adapter = await navigator.gpu.requestAdapter({
+      powerPreference: 'high-performance',
+    });
+    
+    if (!adapter) {
+      console.warn('WebGPU: No adapter available');
+      webgpuCapabilityResult = false;
+      return false;
+    }
+
+    // Try to get a device - this is where mobile often fails
+    const device = await adapter.requestDevice();
+    
+    if (!device) {
+      console.warn('WebGPU: Could not create device');
+      webgpuCapabilityResult = false;
+      return false;
+    }
+
+    // Clean up test device
+    device.destroy();
+    
+    console.log('WebGPU: Fully supported');
+    webgpuCapabilityResult = true;
+    return true;
+  } catch (error) {
+    console.warn('WebGPU capability check failed:', error);
+    webgpuCapabilityResult = false;
+    return false;
+  }
+}
 
 /**
  * Check if WebGPU is available and can get an adapter
+ * @deprecated Use checkWebGPUCapability() for more reliable detection
  */
 export async function checkWebGPUSupport(): Promise<{ supported: boolean; adapter: GPUAdapter | null }> {
   if (!navigator.gpu) {
@@ -109,4 +161,11 @@ export function canRecord(): boolean {
 export function shouldAllowMp4Conversion(): boolean {
   const caps = getDeviceCapabilities();
   return !caps.isMobile;
+}
+
+/**
+ * Reset cached WebGPU capability result (useful for testing)
+ */
+export function resetWebGPUCapabilityCache(): void {
+  webgpuCapabilityResult = null;
 }

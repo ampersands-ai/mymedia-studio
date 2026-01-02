@@ -3,7 +3,7 @@ import { ShaderParams } from '@/types/procedural-background';
 
 interface Canvas2DFallbackProps {
   params: ShaderParams;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  className?: string;
 }
 
 interface Particle {
@@ -17,7 +17,9 @@ interface Particle {
   colorMix: number;
 }
 
-export function Canvas2DFallback({ params, canvasRef }: Canvas2DFallbackProps) {
+export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
+  // Create and manage our own canvas - never share with WebGPU
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
@@ -57,7 +59,10 @@ export function Canvas2DFallback({ params, canvasRef }: Canvas2DFallbackProps) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('Canvas2DFallback: Could not get 2D context');
+      return;
+    }
 
     const { width, height } = canvas;
     const centerX = width / 2;
@@ -134,8 +139,9 @@ export function Canvas2DFallback({ params, canvasRef }: Canvas2DFallbackProps) {
     });
 
     animationRef.current = requestAnimationFrame(render);
-  }, [canvasRef, params, hexToRgb]);
+  }, [params, hexToRgb]);
 
+  // Initialize canvas and start animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -158,11 +164,18 @@ export function Canvas2DFallback({ params, canvasRef }: Canvas2DFallbackProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [canvasRef, initParticles, render]);
+  }, [initParticles, render]);
 
+  // Re-init particles when count changes
   useEffect(() => {
     initParticles();
   }, [params.instanceCount, initParticles]);
 
-  return null;
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`h-full w-full ${className}`}
+      style={{ backgroundColor: params.backgroundColor }}
+    />
+  );
 }

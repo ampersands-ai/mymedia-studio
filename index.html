@@ -21,23 +21,22 @@
     <!-- Preconnect to Supabase for faster asset loading -->
     <link rel="preconnect" href="https://gzlwkvmivbfcvczoqphq.supabase.co">
     <link rel="dns-prefetch" href="https://gzlwkvmivbfcvczoqphq.supabase.co">
-    <!-- Fonts are loaded via CSS below, no preload needed to avoid 404s -->
-    <!-- Load critical weights (400, 700) immediately for mobile -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet"></noscript>
-    <!-- Load additional weights (500, 600) for desktop only -->
+    
+    <!-- Single consolidated font request with display=swap for non-blocking load -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@700&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Defer non-critical fonts until after page load -->
     <script>
-      if (window.innerWidth > 768) {
-        const link = document.createElement('link');
-        link.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&display=swap';
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
-      }
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var link = document.createElement('link');
+          link.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Montserrat:wght@700;900&family=Playfair+Display:wght@400;700&display=swap';
+          link.rel = 'stylesheet';
+          document.head.appendChild(link);
+        }, 100);
+      });
     </script>
-    <!-- Load Inter Bold for logo -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
-    <!-- Load fonts for video captions -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Critical inline CSS for fastest First Contentful Paint -->
     <style>

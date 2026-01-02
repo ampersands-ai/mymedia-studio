@@ -15,8 +15,14 @@ let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
  * This uses vite-plugin-pwa's auto-generated service worker
  */
 export function registerServiceWorker() {
-  // Only register in production
-  if (import.meta.env.PROD) {
+  // Skip service worker in iframe (Lovable preview) or dev mode
+  const isInIframe = window.self !== window.top;
+  const isLovablePreview = window.location.hostname.includes('lovable.app') || 
+                           window.location.hostname.includes('lovable.dev') ||
+                           window.location.hostname.includes('localhost');
+  
+  // Only register in production and not in preview iframe
+  if (import.meta.env.PROD && !isInIframe && !isLovablePreview) {
     updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {

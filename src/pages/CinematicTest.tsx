@@ -1,5 +1,5 @@
 import { CinematicNav } from "@/components/cinematic/CinematicNav";
-import { CinematicHero } from "@/components/cinematic/CinematicHero";
+import { CinematicHeroOptimized } from "@/components/cinematic/CinematicHeroOptimized";
 import { YouTubePortfolio } from "@/components/cinematic/YouTubePortfolio";
 import { AboutSection } from "@/components/cinematic/AboutSection";
 import { CarouselSection } from "@/components/cinematic/CarouselSection";
@@ -11,8 +11,8 @@ const CinematicTest = () => {
       {/* Navigation */}
       <CinematicNav />
 
-      {/* Hero Section */}
-      <CinematicHero />
+      {/* Hero Section - Optimized for faster loading */}
+      <CinematicHeroOptimized />
 
       {/* Partner Logos Carousel */}
       <CarouselSection />

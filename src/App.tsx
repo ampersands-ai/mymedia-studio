@@ -180,6 +180,8 @@ const AppContent = () => {
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
               <Route path="prompts" element={<RouteErrorBoundary routeName="Dashboard > Prompt Library"><PromptLibrary /></RouteErrorBoundary>} />
               <Route path="video-editor" element={<RouteErrorBoundary routeName="Dashboard > Video Editor"><VideoEditorPage /></RouteErrorBoundary>} />
+              <Route path="backgrounds" element={<RouteErrorBoundary routeName="Dashboard > Background Library"><BackgroundLibrary /></RouteErrorBoundary>} />
+              <Route path="generator" element={<RouteErrorBoundary routeName="Dashboard > Background Generator"><BackgroundGenerator /></RouteErrorBoundary>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route path="dashboard" element={<RouteErrorBoundary routeName="Admin > Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
@@ -232,8 +234,8 @@ const AppContent = () => {
             <Route path="/moderation-docs" element={<RouteErrorBoundary routeName="Moderation Docs"><ModerationDocs /></RouteErrorBoundary>} />
             <Route path="/animation-page" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Page"><AnimationPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/animation-editor" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Editor"><AnimationEditorPage /></RouteErrorBoundary></ProtectedRoute>} />
-            <Route path="/backgrounds" element={<ProtectedRoute><RouteErrorBoundary routeName="Background Library"><BackgroundLibrary /></RouteErrorBoundary></ProtectedRoute>} />
-            <Route path="/generator" element={<ProtectedRoute><RouteErrorBoundary routeName="Background Generator"><BackgroundGenerator /></RouteErrorBoundary></ProtectedRoute>} />
+            <Route path="/backgrounds" element={<Navigate to="/dashboard/backgrounds" replace />} />
+            <Route path="/generator" element={<Navigate to="/dashboard/generator" replace />} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />

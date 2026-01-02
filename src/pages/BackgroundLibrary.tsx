@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BACKGROUND_PRESETS, CATEGORY_FILTERS, CategoryFilter } from '@/data/backgroundPresets';
 import { BackgroundPreset } from '@/types/procedural-background';
 import { PresetCard } from '@/components/procedural/PresetCard';
+import { PresetPreviewModal } from '@/components/procedural/PresetPreviewModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,6 +13,8 @@ export default function BackgroundLibrary() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [selectedPreset, setSelectedPreset] = useState<BackgroundPreset | null>(null);
+  const [previewPreset, setPreviewPreset] = useState<BackgroundPreset | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const filteredPresets = useMemo(() => {
     if (activeCategory === 'All') return BACKGROUND_PRESETS;
@@ -20,12 +23,16 @@ export default function BackgroundLibrary() {
 
   const handleSelectPreset = (preset: BackgroundPreset) => {
     setSelectedPreset(preset);
-    // Navigate to generator with preset params
     navigate('/dashboard/generator', { state: { preset } });
   };
 
   const handlePreviewPreset = (preset: BackgroundPreset) => {
-    setSelectedPreset(preset);
+    setPreviewPreset(preset);
+    setIsPreviewOpen(true);
+  };
+
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
   };
 
   return (
@@ -106,6 +113,14 @@ export default function BackgroundLibrary() {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen preview modal */}
+      <PresetPreviewModal
+        preset={previewPreset}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        onSelect={handleSelectPreset}
+      />
     </>
   );
 }

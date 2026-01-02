@@ -159,7 +159,9 @@ export const GenerationProgress = ({
       
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         {isSettingUp ? (
-          <span className="text-muted-foreground">Preparing your generation...</span>
+          <span className="text-amber-600 dark:text-amber-400">
+            Please don't refresh or leave this page
+          </span>
         ) : (
           <span>{progress}%</span>
         )}

@@ -1,7 +1,7 @@
 /// <reference types="@webgpu/types" />
 import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from 'react';
 import { ShaderParams } from '@/types/procedural-background';
-import { WebGPUFallback } from './WebGPUFallback';
+import { Canvas2DFallback } from './Canvas2DFallback';
 
 interface ProceduralCanvasProps {
   params: ShaderParams;
@@ -586,13 +586,26 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
     if (isWebGPUSupported === null) {
       return (
         <div className="flex h-full items-center justify-center bg-background">
-          <div className="animate-pulse text-muted-foreground">Initializing WebGPU...</div>
+          <div className="animate-pulse text-muted-foreground">Initializing...</div>
         </div>
       );
     }
 
     if (!isWebGPUSupported || error) {
-      return <WebGPUFallback />;
+      // Use Canvas2D fallback instead of just showing an error message
+      return (
+        <div className="relative h-full w-full">
+          <canvas
+            ref={canvasRef}
+            className="h-full w-full"
+            style={{ backgroundColor: params.backgroundColor }}
+          />
+          <Canvas2DFallback params={params} canvasRef={canvasRef} />
+          <div className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
+            2D Mode (WebGPU unavailable)
+          </div>
+        </div>
+      );
     }
 
     return (

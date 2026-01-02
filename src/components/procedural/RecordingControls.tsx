@@ -2,6 +2,7 @@ import { RecordingState } from '@/types/procedural-background';
 import { Button } from '@/components/ui/button';
 import { Circle, Square, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { shouldAllowMp4Conversion } from '@/utils/deviceCapabilities';
 
 interface RecordingControlsProps {
   state: RecordingState;
@@ -12,6 +13,8 @@ interface RecordingControlsProps {
   onDownloadMp4: () => void;
   hasRecording: boolean;
 }
+
+const canConvertMp4 = shouldAllowMp4Conversion();
 
 export function RecordingControls({
   state,
@@ -86,14 +89,16 @@ export function RecordingControls({
           <Download className="h-4 w-4" />
           WebM
         </Button>
-        <Button
-          onClick={onDownloadMp4}
-          disabled={!hasRecording || state === 'recording' || state === 'converting'}
-          className="h-11 flex-1 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:h-10 sm:flex-none"
-        >
-          <Download className="h-4 w-4" />
-          MP4
-        </Button>
+        {canConvertMp4 && (
+          <Button
+            onClick={onDownloadMp4}
+            disabled={!hasRecording || state === 'recording' || state === 'converting'}
+            className="h-11 flex-1 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:h-10 sm:flex-none"
+          >
+            <Download className="h-4 w-4" />
+            MP4
+          </Button>
+        )}
       </div>
     </div>
   );

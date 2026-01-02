@@ -20,6 +20,62 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
   };
 
   const isCannon = preset.params.arrangement === 'cannon';
+  const isTunnel = preset.params.arrangement === 'tunnel';
+
+  // Generate shapes for tunnel arrangement (radial sunburst pattern)
+  const tunnelShapes = useMemo(() => {
+    if (!isTunnel) return null;
+
+    const shapes: JSX.Element[] = [];
+    const centerX = 50;
+    const centerY = 50;
+    const numRays = 24;
+    const layersPerRay = 8;
+
+    for (let ray = 0; ray < numRays; ray++) {
+      const rayAngle = (ray / numRays) * Math.PI * 2;
+
+      for (let layer = 0; layer < layersPerRay; layer++) {
+        const index = ray * layersPerRay + layer;
+        // Closer layers have smaller distance (perspective)
+        const depthFactor = layer / layersPerRay;
+        const distance = 5 + layer * 12;
+        const x = centerX + Math.cos(rayAngle) * distance;
+        const y = centerY + Math.sin(rayAngle) * distance;
+
+        // Size decreases with distance (perspective)
+        const size = 8 - layer * 0.7;
+        const opacity = 0.9 - depthFactor * 0.6;
+
+        const useSecondary = (ray + layer) % 3 === 0;
+        const baseColor = useSecondary ? preset.params.colorSecondary : preset.params.colorPrimary;
+        const highlightIntensity = preset.params.metallic > 0.5 ? 0.6 : 0.3;
+
+        shapes.push(
+          <div
+            key={`t-${index}`}
+            className="absolute animate-pulse-subtle"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: 'translate(-50%, -50%)',
+              background: preset.params.metallic > 0.3
+                ? `linear-gradient(135deg, ${baseColor} 0%, rgba(255,255,255,${highlightIntensity}) 50%, ${baseColor} 100%)`
+                : baseColor,
+              borderRadius: preset.params.shape === 'sphere' ? '50%' : '2px',
+              opacity,
+              animationDelay: `${(layer * 0.1)}s`,
+              animationDuration: '3s',
+              boxShadow: layer < 3 ? `0 0 ${4 - layer}px ${baseColor}50` : undefined,
+            }}
+          />
+        );
+      }
+    }
+    return shapes;
+  }, [isTunnel, preset.params]);
 
   // Generate 1000+ shapes for cannon arrangement
   const cannonShapes = useMemo(() => {
@@ -55,10 +111,13 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         const opacity = 0.25 + (ring / shapesPerSpoke) * 0.6;
         const highlightIntensity = preset.params.metallic > 0.5 ? 0.7 : 0.3;
 
+        // Add subtle animation to some shapes
+        const shouldAnimate = ring % 8 === 0;
+
         shapes.push(
           <div
             key={`c-${index}`}
-            className="absolute"
+            className={cn("absolute", shouldAnimate && "animate-shimmer-glow")}
             style={{
               width: `${size}px`,
               height: `${size}px`,
@@ -72,6 +131,7 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
               opacity,
               clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
               boxShadow: preset.params.metallic > 0.6 && ring > 15 ? `0 0 ${1 + ring * 0.05}px ${baseColor}30` : undefined,
+              animationDelay: shouldAnimate ? `${spoke * 0.05}s` : undefined,
             }}
           />
         );
@@ -82,7 +142,7 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
 
   // Generate shapes for standard arrangements (220 shapes)
   const standardShapes = useMemo(() => {
-    if (isCannon) return null;
+    if (isCannon || isTunnel) return null;
 
     const shapes: JSX.Element[] = [];
     const layers = [
@@ -103,10 +163,13 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         const size = layer.sizeBase + (i % 5) * (layer.sizeRange / 5);
         const rotation = i * 15 + layerIndex * 30;
 
+        // Use shimmer-glow instead of float to avoid transform conflicts
+        const shouldAnimate = layerIndex > 1;
+
         shapes.push(
           <div
             key={`s-${globalIndex}`}
-            className={layerIndex > 1 ? 'absolute animate-float' : 'absolute'}
+            className={cn("absolute", shouldAnimate && "animate-shimmer-glow")}
             style={{
               width: `${size}px`,
               height: `${size}px`,
@@ -126,7 +189,13 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
     });
 
     return shapes;
-  }, [isCannon, preset.params]);
+  }, [isCannon, isTunnel, preset.params]);
+
+  const renderShapes = () => {
+    if (isTunnel) return tunnelShapes;
+    if (isCannon) return cannonShapes;
+    return standardShapes;
+  };
 
   return (
     <div
@@ -142,7 +211,9 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         <div
           className="absolute inset-0"
           style={{
-            background: isCannon
+            background: isTunnel
+              ? `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}40 0%, transparent 35%), ${preset.params.backgroundColor}`
+              : isCannon
               ? `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}50 0%, transparent 40%), ${preset.params.backgroundColor}`
               : `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}25 0%, transparent 50%),
                  radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}25 0%, transparent 50%),
@@ -150,13 +221,13 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
           }}
         />
 
-        {/* Central light source glow for cannon */}
-        {isCannon && (
+        {/* Central light source glow for tunnel/cannon */}
+        {(isCannon || isTunnel) && (
           <div
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulse"
             style={{
-              width: '16px',
-              height: '16px',
+              width: isTunnel ? '10px' : '16px',
+              height: isTunnel ? '10px' : '16px',
               background: `radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${preset.params.colorPrimary}90 35%, transparent 70%)`,
               boxShadow: `0 0 25px ${preset.params.colorPrimary}90, 0 0 50px ${preset.params.colorPrimary}50, 0 0 80px ${preset.params.colorPrimary}30`,
             }}
@@ -165,7 +236,7 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
 
         {/* Render shapes */}
         <div className="absolute inset-0 overflow-hidden">
-          {isCannon ? cannonShapes : standardShapes}
+          {renderShapes()}
         </div>
 
         {/* Hover overlay */}

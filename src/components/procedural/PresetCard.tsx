@@ -2,6 +2,7 @@ import { BackgroundPreset } from '@/types/procedural-background';
 import { cn } from '@/lib/utils';
 import { Play, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 
 interface PresetCardProps {
   preset: BackgroundPreset;
@@ -18,6 +19,115 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
     Minimal: 'bg-muted text-muted-foreground border-border',
   };
 
+  const isCannon = preset.params.arrangement === 'cannon';
+
+  // Generate 1000+ shapes for cannon arrangement
+  const cannonShapes = useMemo(() => {
+    if (!isCannon) return null;
+
+    const shapes: JSX.Element[] = [];
+    const centerX = 50;
+    const centerY = 50;
+    const numSpokes = 32;
+    const shapesPerSpoke = 32; // 32 * 32 = 1024 shapes
+
+    for (let spoke = 0; spoke < numSpokes; spoke++) {
+      const spokeAngle = (spoke / numSpokes) * Math.PI * 2;
+
+      for (let ring = 0; ring < shapesPerSpoke; ring++) {
+        const index = spoke * shapesPerSpoke + ring;
+        const distance = 2 + ring * 3;
+        const jitter = Math.sin(index * 0.7) * 1.2;
+        const x = centerX + Math.cos(spokeAngle) * (distance + jitter);
+        const y = centerY + Math.sin(spokeAngle) * (distance + jitter);
+
+        // Size increases with distance
+        const baseSize = 1.5 + ring * 0.25;
+        const size = baseSize + Math.sin(index * 0.3) * 0.3;
+
+        // Cannon rotation - point toward center
+        const angleToCenter = Math.atan2(centerY - y, centerX - x);
+        const rotationDeg = (angleToCenter * 180) / Math.PI;
+
+        const useSecondary = (spoke + ring) % 3 === 0;
+        const baseColor = useSecondary ? preset.params.colorSecondary : preset.params.colorPrimary;
+        const gradientAngle = rotationDeg + 45;
+        const opacity = 0.25 + (ring / shapesPerSpoke) * 0.6;
+        const highlightIntensity = preset.params.metallic > 0.5 ? 0.7 : 0.3;
+
+        shapes.push(
+          <div
+            key={`c-${index}`}
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+              background: preset.params.metallic > 0.3
+                ? `linear-gradient(${gradientAngle}deg, ${baseColor} 0%, rgba(255,255,255,${highlightIntensity}) 45%, ${baseColor} 55%, rgba(0,0,0,0.3) 100%)`
+                : baseColor,
+              borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '1px',
+              opacity,
+              clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+              boxShadow: preset.params.metallic > 0.6 && ring > 15 ? `0 0 ${1 + ring * 0.05}px ${baseColor}30` : undefined,
+            }}
+          />
+        );
+      }
+    }
+    return shapes;
+  }, [isCannon, preset.params]);
+
+  // Generate shapes for standard arrangements (220 shapes)
+  const standardShapes = useMemo(() => {
+    if (isCannon) return null;
+
+    const shapes: JSX.Element[] = [];
+    const layers = [
+      { count: 40, opacity: 0.06, sizeBase: 30, sizeRange: 12 },
+      { count: 50, opacity: 0.12, sizeBase: 20, sizeRange: 6 },
+      { count: 60, opacity: 0.25, sizeBase: 10, sizeRange: 3 },
+      { count: 40, opacity: 0.55, sizeBase: 6, sizeRange: 2 },
+      { count: 30, opacity: 0.7, sizeBase: 3, sizeRange: 1.5 },
+    ];
+
+    let globalIndex = 0;
+    layers.forEach((layer, layerIndex) => {
+      for (let i = 0; i < layer.count; i++) {
+        const angle = (i / layer.count) * Math.PI * 6 + layerIndex;
+        const radius = 10 + i * (80 / layer.count);
+        const x = 50 + Math.cos(angle) * radius * 0.5;
+        const y = 50 + Math.sin(angle) * radius * 0.8;
+        const size = layer.sizeBase + (i % 5) * (layer.sizeRange / 5);
+        const rotation = i * 15 + layerIndex * 30;
+
+        shapes.push(
+          <div
+            key={`s-${globalIndex}`}
+            className={layerIndex > 1 ? 'absolute animate-float' : 'absolute'}
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+              background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
+              borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
+              opacity: layer.opacity,
+              clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+              animationDelay: `${(i % 10) * 0.1}s`,
+            }}
+          />
+        );
+        globalIndex++;
+      }
+    });
+
+    return shapes;
+  }, [isCannon, preset.params]);
+
   return (
     <div
       className={cn(
@@ -28,179 +138,34 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
     >
       {/* Thumbnail with gradient overlay */}
       <div className="relative aspect-[9/16] overflow-hidden">
-        {/* Dynamic gradient background based on preset colors */}
+        {/* Dynamic gradient background */}
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}25 0%, transparent 50%),
-                         radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}25 0%, transparent 50%),
-                         linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}15 100%)`,
+            background: isCannon
+              ? `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}50 0%, transparent 40%), ${preset.params.backgroundColor}`
+              : `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}25 0%, transparent 50%),
+                 radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}25 0%, transparent 50%),
+                 linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}15 100%)`,
           }}
         />
-        
-        {/* Layer 1: Far background - very large, very faint (40 shapes) */}
+
+        {/* Central light source glow for cannon */}
+        {isCannon && (
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulse"
+            style={{
+              width: '16px',
+              height: '16px',
+              background: `radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${preset.params.colorPrimary}90 35%, transparent 70%)`,
+              boxShadow: `0 0 25px ${preset.params.colorPrimary}90, 0 0 50px ${preset.params.colorPrimary}50, 0 0 80px ${preset.params.colorPrimary}30`,
+            }}
+          />
+        )}
+
+        {/* Render shapes */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(40)].map((_, i) => {
-            const gridX = (i % 8) * 12.5;
-            const gridY = Math.floor(i / 8) * 20;
-            const offsetX = Math.sin(i * 0.7) * 8;
-            const offsetY = Math.cos(i * 0.5) * 8;
-            const size = 30 + (i % 5) * 12;
-            const rotation = i * 9;
-            return (
-              <div
-                key={`l1-${i}`}
-                className="absolute"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  left: `${gridX + offsetX}%`,
-                  top: `${gridY + offsetY}%`,
-                  background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '6px',
-                  opacity: 0.06,
-                  transform: `rotate(${rotation}deg)`,
-                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Layer 2: Background - large shapes in spiral (50 shapes) */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(50)].map((_, i) => {
-            const angle = (i / 50) * Math.PI * 6;
-            const radius = 10 + i * 1.8;
-            const x = 50 + Math.cos(angle) * radius * 0.5;
-            const y = 50 + Math.sin(angle) * radius * 0.8;
-            const size = 20 + (i % 6) * 6;
-            const rotationType = i % 4;
-            const rotation = rotationType === 0 ? i * 15 : rotationType === 1 ? i * -12 : rotationType === 2 ? i * 7.2 : 45;
-            return (
-              <div
-                key={`l2-${i}`}
-                className="absolute animate-pulse"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  background: i % 3 === 0 ? preset.params.colorPrimary : i % 3 === 1 ? preset.params.colorSecondary : `${preset.params.colorPrimary}80`,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-                  opacity: 0.12,
-                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDuration: `${4 + (i % 3)}s`,
-                  animationDelay: `${(i % 10) * 0.1}s`,
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Layer 3: Mid-ground - medium shapes scattered (60 shapes) */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(60)].map((_, i) => {
-            const goldenAngle = 137.5 * (Math.PI / 180);
-            const angle = i * goldenAngle;
-            const radius = Math.sqrt(i) * 6;
-            const x = 50 + Math.cos(angle) * radius;
-            const y = 50 + Math.sin(angle) * radius;
-            const size = 10 + (i % 8) * 3;
-            const rotationStyles = [i * 6, -i * 8, i * 4.5, 30, -30, i * 12, 0, 60];
-            const rotation = rotationStyles[i % 8];
-            return (
-              <div
-                key={`l3-${i}`}
-                className="absolute animate-float"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  background: i % 2 === 0 ? preset.params.colorSecondary : preset.params.colorPrimary,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '3px',
-                  opacity: 0.25,
-                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDelay: `${(i % 12) * 0.08}s`,
-                  animationDuration: '3s',
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Layer 4: Foreground cluster - small bright shapes (40 shapes) */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-          {[...Array(40)].map((_, i) => {
-            const ring = Math.floor(i / 10);
-            const indexInRing = i % 10;
-            const angle = (indexInRing / 10) * Math.PI * 2 + ring * 0.3;
-            const radius = 8 + ring * 12;
-            const x = 50 + Math.cos(angle) * radius;
-            const y = 50 + Math.sin(angle) * radius;
-            const size = 6 + (i % 5) * 2;
-            const rotationPattern = [0, 45, 90, 135, 180, -45, -90, 30, 60, 15];
-            const rotation = rotationPattern[i % 10] + ring * 15;
-            return (
-              <div
-                key={`l4-${i}`}
-                className="absolute animate-float"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '2px',
-                  opacity: 0.55,
-                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDelay: `${(i % 8) * 0.1}s`,
-                  animationDuration: '2.5s',
-                  boxShadow: preset.params.metallic > 0.5 
-                    ? `0 0 ${4 + (i % 3) * 2}px ${i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary}50` 
-                    : undefined,
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Layer 5: Center focus - tiny bright particles (30 shapes) */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-          {[...Array(30)].map((_, i) => {
-            const spiralAngle = i * 0.5;
-            const spiralRadius = i * 0.8;
-            const x = 50 + Math.cos(spiralAngle) * spiralRadius;
-            const y = 50 + Math.sin(spiralAngle) * spiralRadius;
-            const size = 3 + (i % 4) * 1.5;
-            const rotation = i * 12;
-            return (
-              <div
-                key={`l5-${i}`}
-                className="absolute animate-pulse"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  background: preset.params.colorPrimary,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '1px',
-                  opacity: 0.7,
-                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDelay: `${(i % 6) * 0.15}s`,
-                  animationDuration: '2s',
-                  boxShadow: preset.params.metallic > 0.3 
-                    ? `0 0 ${6}px ${preset.params.colorPrimary}70` 
-                    : undefined,
-                }}
-              />
-            );
-          })}
+          {isCannon ? cannonShapes : standardShapes}
         </div>
 
         {/* Hover overlay */}

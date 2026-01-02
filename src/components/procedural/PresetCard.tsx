@@ -32,29 +32,98 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(135deg, ${preset.params.colorPrimary}40 0%, ${preset.params.colorSecondary}40 50%, ${preset.params.backgroundColor} 100%)`,
+            background: `linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}30 50%, ${preset.params.colorSecondary}40 100%)`,
           }}
         />
         
-        {/* Animated shapes preview */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative">
-            {[...Array(5)].map((_, i) => (
+        {/* Background layer - large, faint shapes */}
+        <div className="absolute inset-0">
+          {[...Array(6)].map((_, i) => {
+            const angle = (i / 6) * Math.PI * 2;
+            const radius = 60;
+            const x = 50 + Math.cos(angle) * radius * 0.6;
+            const y = 50 + Math.sin(angle) * radius * 0.8;
+            return (
               <div
-                key={i}
-                className="absolute animate-float"
+                key={`bg-${i}`}
+                className="absolute animate-pulse"
                 style={{
-                  width: `${20 + i * 8}px`,
-                  height: `${20 + i * 8}px`,
+                  width: `${35 + i * 5}px`,
+                  height: `${35 + i * 5}px`,
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
                   background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
                   borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-                  transform: `rotate(${i * 20}deg) translate(${i * 15}px, ${i * 10}px)`,
-                  animationDelay: `${i * 0.2}s`,
-                  opacity: 0.8 - i * 0.1,
+                  opacity: 0.15,
                   clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                  animationDuration: `${3 + i * 0.5}s`,
                 }}
               />
-            ))}
+            );
+          })}
+        </div>
+
+        {/* Mid layer - medium shapes */}
+        <div className="absolute inset-0">
+          {[...Array(8)].map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2 + 0.3;
+            const radius = 35;
+            const x = 50 + Math.cos(angle) * radius;
+            const y = 50 + Math.sin(angle) * radius;
+            return (
+              <div
+                key={`mid-${i}`}
+                className="absolute animate-float"
+                style={{
+                  width: `${18 + i * 3}px`,
+                  height: `${18 + i * 3}px`,
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  background: i % 2 === 0 ? preset.params.colorSecondary : preset.params.colorPrimary,
+                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
+                  opacity: 0.4,
+                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                  animationDelay: `${i * 0.15}s`,
+                  animationDuration: '2.5s',
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Foreground layer - small, bright shapes in center */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative w-24 h-24">
+            {[...Array(6)].map((_, i) => {
+              const angle = (i / 6) * Math.PI * 2;
+              const radius = 25 + (i % 2) * 10;
+              const x = 50 + Math.cos(angle) * radius;
+              const y = 50 + Math.sin(angle) * radius;
+              return (
+                <div
+                  key={`fg-${i}`}
+                  className="absolute animate-float"
+                  style={{
+                    width: `${10 + i * 2}px`,
+                    height: `${10 + i * 2}px`,
+                    left: `${x}%`,
+                    top: `${y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
+                    borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
+                    opacity: 0.8,
+                    clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                    animationDelay: `${i * 0.1}s`,
+                    animationDuration: '2s',
+                    boxShadow: preset.params.metallic > 0.5 
+                      ? `0 0 ${8 + i * 2}px ${preset.params.colorPrimary}60` 
+                      : undefined,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
 

@@ -32,99 +32,175 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}30 50%, ${preset.params.colorSecondary}40 100%)`,
+            background: `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}25 0%, transparent 50%),
+                         radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}25 0%, transparent 50%),
+                         linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}15 100%)`,
           }}
         />
         
-        {/* Background layer - large, faint shapes */}
-        <div className="absolute inset-0">
-          {[...Array(6)].map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2;
-            const radius = 60;
-            const x = 50 + Math.cos(angle) * radius * 0.6;
-            const y = 50 + Math.sin(angle) * radius * 0.8;
+        {/* Layer 1: Far background - very large, very faint (40 shapes) */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(40)].map((_, i) => {
+            const gridX = (i % 8) * 12.5;
+            const gridY = Math.floor(i / 8) * 20;
+            const offsetX = Math.sin(i * 0.7) * 8;
+            const offsetY = Math.cos(i * 0.5) * 8;
+            const size = 30 + (i % 5) * 12;
+            const rotation = i * 9;
             return (
               <div
-                key={`bg-${i}`}
+                key={`l1-${i}`}
+                className="absolute"
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  left: `${gridX + offsetX}%`,
+                  top: `${gridY + offsetY}%`,
+                  background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
+                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '6px',
+                  opacity: 0.06,
+                  transform: `rotate(${rotation}deg)`,
+                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Layer 2: Background - large shapes in spiral (50 shapes) */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(50)].map((_, i) => {
+            const angle = (i / 50) * Math.PI * 6;
+            const radius = 10 + i * 1.8;
+            const x = 50 + Math.cos(angle) * radius * 0.5;
+            const y = 50 + Math.sin(angle) * radius * 0.8;
+            const size = 20 + (i % 6) * 6;
+            const rotationType = i % 4;
+            const rotation = rotationType === 0 ? i * 15 : rotationType === 1 ? i * -12 : rotationType === 2 ? i * 7.2 : 45;
+            return (
+              <div
+                key={`l2-${i}`}
                 className="absolute animate-pulse"
                 style={{
-                  width: `${35 + i * 5}px`,
-                  height: `${35 + i * 5}px`,
+                  width: `${size}px`,
+                  height: `${size}px`,
                   left: `${x}%`,
                   top: `${y}%`,
-                  transform: 'translate(-50%, -50%)',
-                  background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                  background: i % 3 === 0 ? preset.params.colorPrimary : i % 3 === 1 ? preset.params.colorSecondary : `${preset.params.colorPrimary}80`,
                   borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-                  opacity: 0.15,
+                  opacity: 0.12,
                   clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDuration: `${3 + i * 0.5}s`,
+                  animationDuration: `${4 + (i % 3)}s`,
+                  animationDelay: `${(i % 10) * 0.1}s`,
                 }}
               />
             );
           })}
         </div>
 
-        {/* Mid layer - medium shapes */}
-        <div className="absolute inset-0">
-          {[...Array(8)].map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2 + 0.3;
-            const radius = 35;
+        {/* Layer 3: Mid-ground - medium shapes scattered (60 shapes) */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(60)].map((_, i) => {
+            const goldenAngle = 137.5 * (Math.PI / 180);
+            const angle = i * goldenAngle;
+            const radius = Math.sqrt(i) * 6;
             const x = 50 + Math.cos(angle) * radius;
             const y = 50 + Math.sin(angle) * radius;
+            const size = 10 + (i % 8) * 3;
+            const rotationStyles = [i * 6, -i * 8, i * 4.5, 30, -30, i * 12, 0, 60];
+            const rotation = rotationStyles[i % 8];
             return (
               <div
-                key={`mid-${i}`}
+                key={`l3-${i}`}
                 className="absolute animate-float"
                 style={{
-                  width: `${18 + i * 3}px`,
-                  height: `${18 + i * 3}px`,
+                  width: `${size}px`,
+                  height: `${size}px`,
                   left: `${x}%`,
                   top: `${y}%`,
-                  transform: 'translate(-50%, -50%)',
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
                   background: i % 2 === 0 ? preset.params.colorSecondary : preset.params.colorPrimary,
-                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-                  opacity: 0.4,
+                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '3px',
+                  opacity: 0.25,
                   clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: '2.5s',
+                  animationDelay: `${(i % 12) * 0.08}s`,
+                  animationDuration: '3s',
                 }}
               />
             );
           })}
         </div>
 
-        {/* Foreground layer - small, bright shapes in center */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-24 h-24">
-            {[...Array(6)].map((_, i) => {
-              const angle = (i / 6) * Math.PI * 2;
-              const radius = 25 + (i % 2) * 10;
-              const x = 50 + Math.cos(angle) * radius;
-              const y = 50 + Math.sin(angle) * radius;
-              return (
-                <div
-                  key={`fg-${i}`}
-                  className="absolute animate-float"
-                  style={{
-                    width: `${10 + i * 2}px`,
-                    height: `${10 + i * 2}px`,
-                    left: `${x}%`,
-                    top: `${y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
-                    borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-                    opacity: 0.8,
-                    clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-                    animationDelay: `${i * 0.1}s`,
-                    animationDuration: '2s',
-                    boxShadow: preset.params.metallic > 0.5 
-                      ? `0 0 ${8 + i * 2}px ${preset.params.colorPrimary}60` 
-                      : undefined,
-                  }}
-                />
-              );
-            })}
-          </div>
+        {/* Layer 4: Foreground cluster - small bright shapes (40 shapes) */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+          {[...Array(40)].map((_, i) => {
+            const ring = Math.floor(i / 10);
+            const indexInRing = i % 10;
+            const angle = (indexInRing / 10) * Math.PI * 2 + ring * 0.3;
+            const radius = 8 + ring * 12;
+            const x = 50 + Math.cos(angle) * radius;
+            const y = 50 + Math.sin(angle) * radius;
+            const size = 6 + (i % 5) * 2;
+            const rotationPattern = [0, 45, 90, 135, 180, -45, -90, 30, 60, 15];
+            const rotation = rotationPattern[i % 10] + ring * 15;
+            return (
+              <div
+                key={`l4-${i}`}
+                className="absolute animate-float"
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                  background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
+                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '2px',
+                  opacity: 0.55,
+                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                  animationDelay: `${(i % 8) * 0.1}s`,
+                  animationDuration: '2.5s',
+                  boxShadow: preset.params.metallic > 0.5 
+                    ? `0 0 ${4 + (i % 3) * 2}px ${i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary}50` 
+                    : undefined,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Layer 5: Center focus - tiny bright particles (30 shapes) */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+          {[...Array(30)].map((_, i) => {
+            const spiralAngle = i * 0.5;
+            const spiralRadius = i * 0.8;
+            const x = 50 + Math.cos(spiralAngle) * spiralRadius;
+            const y = 50 + Math.sin(spiralAngle) * spiralRadius;
+            const size = 3 + (i % 4) * 1.5;
+            const rotation = i * 12;
+            return (
+              <div
+                key={`l5-${i}`}
+                className="absolute animate-pulse"
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                  background: preset.params.colorPrimary,
+                  borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '1px',
+                  opacity: 0.7,
+                  clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
+                  animationDelay: `${(i % 6) * 0.15}s`,
+                  animationDuration: '2s',
+                  boxShadow: preset.params.metallic > 0.3 
+                    ? `0 0 ${6}px ${preset.params.colorPrimary}70` 
+                    : undefined,
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Hover overlay */}

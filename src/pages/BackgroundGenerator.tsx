@@ -6,10 +6,11 @@ import { ControlsPanel } from '@/components/procedural/ControlsPanel';
 import { PromptInput } from '@/components/procedural/PromptInput';
 import { RecordingControls } from '@/components/procedural/RecordingControls';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Settings2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { convertToMp4, downloadBlob, generateFilename } from '@/utils/videoConverter';
+import { cn } from '@/lib/utils';
 
 export default function BackgroundGenerator() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function BackgroundGenerator() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const durationIntervalRef = useRef<number | null>(null);
 
   const handleParamsChange = useCallback((newParams: Partial<ShaderParams>) => {
@@ -44,7 +46,7 @@ export default function BackgroundGenerator() {
       const stream = canvasRef.current.captureStream(60);
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 8000000, // 8 Mbps for quality
+        videoBitsPerSecond: 8000000,
       });
 
       chunksRef.current = [];
@@ -63,11 +65,10 @@ export default function BackgroundGenerator() {
       };
 
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(100); // Collect data every 100ms
+      mediaRecorder.start(100);
       setRecordingState('recording');
       setRecordingDuration(0);
 
-      // Start duration counter
       durationIntervalRef.current = window.setInterval(() => {
         setRecordingDuration((prev) => prev + 0.1);
       }, 100);
@@ -121,7 +122,6 @@ export default function BackgroundGenerator() {
     }
   }, [recordedBlob]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (durationIntervalRef.current) {
@@ -138,52 +138,79 @@ export default function BackgroundGenerator() {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6">
+          {/* Header - Mobile optimized */}
+          <div className="mb-4 flex items-center justify-between sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => navigate('/dashboard/backgrounds')}
-                className="gap-2"
+                className="h-9 w-9 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Library
+                <span className="hidden sm:inline">Library</span>
               </Button>
-              <h1 className="text-2xl font-bold text-foreground">
-                Background Generator
+              <h1 className="text-lg font-bold text-foreground sm:text-2xl">
+                Generator
               </h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="gap-2"
-            >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="h-4 w-4" />
-                  Exit Fullscreen
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="h-4 w-4" />
-                  Fullscreen
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Mobile controls toggle */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowControls(!showControls)}
+                className="h-9 w-9 lg:hidden"
+              >
+                <Settings2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="h-9 w-9 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Exit</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Fullscreen</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile controls drawer */}
+          <div
+            className={cn(
+              'mb-4 overflow-hidden transition-all duration-300 lg:hidden',
+              showControls ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+            )}
+          >
+            <div className="flex flex-col gap-3">
+              <PromptInput onApply={handleParamsChange} />
+              <ControlsPanel params={params} onChange={handleParamsChange} />
+            </div>
           </div>
 
           {/* Main content */}
-          <div className={`grid gap-6 ${isFullscreen ? '' : 'lg:grid-cols-[1fr,380px]'}`}>
+          <div className={cn(
+            'grid gap-4 sm:gap-6',
+            isFullscreen ? '' : 'lg:grid-cols-[1fr,380px]'
+          )}>
             {/* Canvas area */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
               <div
                 className="relative overflow-hidden rounded-xl border border-border shadow-2xl shadow-primary/10"
                 style={{
                   aspectRatio: isFullscreen ? 'auto' : '9/16',
-                  maxHeight: isFullscreen ? 'calc(100vh - 200px)' : '70vh',
+                  maxHeight: isFullscreen ? 'calc(100vh - 180px)' : 'min(70vh, 600px)',
                 }}
               >
                 <ProceduralCanvas ref={canvasRef} params={params} />
@@ -201,9 +228,9 @@ export default function BackgroundGenerator() {
               />
             </div>
 
-            {/* Controls panel */}
+            {/* Desktop controls panel */}
             {!isFullscreen && (
-              <div className="flex flex-col gap-4">
+              <div className="hidden flex-col gap-4 lg:flex">
                 <PromptInput onApply={handleParamsChange} />
                 <ControlsPanel params={params} onChange={handleParamsChange} />
               </div>

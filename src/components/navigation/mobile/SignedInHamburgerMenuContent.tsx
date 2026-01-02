@@ -31,7 +31,8 @@ export const SignedInHamburgerMenuContent = ({
   showHomeLink = true,
 }: SignedInHamburgerMenuContentProps) => {
   const [studioOpen, setStudioOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   // Reusable menu item component
   const MenuItem = ({ 
@@ -130,12 +131,6 @@ export const SignedInHamburgerMenuContent = ({
     </CollapsibleTrigger>
   );
 
-  // Section header component (non-collapsible)
-  const SectionHeader = ({ children }: { children: React.ReactNode }) => (
-    <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6 first:pt-4">
-      {children}
-    </div>
-  );
 
   return (
     <>
@@ -152,73 +147,83 @@ export const SignedInHamburgerMenuContent = ({
           <CollapsibleSectionHeader isOpen={studioOpen} icon={<Sparkles className="h-4 w-4 text-primary-orange" />}>
             Studio
           </CollapsibleSectionHeader>
-          <CollapsibleContent className="space-y-1 px-2 pt-2">
+          <CollapsibleContent className="space-y-2 px-2 pt-2">
             {/* Image */}
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-2">Image</p>
-            <MenuItem 
-              path="/dashboard/custom-creation?group=image_editing" 
-              label="Image to Image" 
-              icon={<Palette className="h-4 w-4" />} 
-            />
-            <MenuItem 
-              path="/dashboard/custom-creation?group=prompt_to_image" 
-              label="Text to Image" 
-              icon={<ImagePlus className="h-4 w-4" />} 
-            />
+            <div className="bg-muted/30 rounded-lg p-2 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Image</p>
+              <MenuItem 
+                path="/dashboard/custom-creation?group=image_editing" 
+                label="Image to Image" 
+                icon={<Palette className="h-4 w-4" />} 
+              />
+              <MenuItem 
+                path="/dashboard/custom-creation?group=prompt_to_image" 
+                label="Text to Image" 
+                icon={<ImagePlus className="h-4 w-4" />} 
+              />
+            </div>
 
             {/* Video */}
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Video</p>
-            <MenuItem 
-              path="/dashboard/custom-creation?group=prompt_to_video" 
-              label="Text to Video" 
-              icon={<Video className="h-4 w-4" />} 
-            />
-            <MenuItem 
-              path="/dashboard/custom-creation?group=image_to_video" 
-              label="Image to Video" 
-              icon={<Film className="h-4 w-4" />} 
-            />
-            <MenuItem 
-              path="/dashboard/custom-creation?group=video_to_video" 
-              label="Video to Video" 
-              icon={<Repeat className="h-4 w-4" />} 
-            />
-            <MenuItem 
-              path="/dashboard/custom-creation?group=lip_sync" 
-              label="Custom Avatar" 
-              icon={<CircleUser className="h-4 w-4" />} 
-            />
+            <div className="bg-muted/30 rounded-lg p-2 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Video</p>
+              <MenuItem 
+                path="/dashboard/custom-creation?group=prompt_to_video" 
+                label="Text to Video" 
+                icon={<Video className="h-4 w-4" />} 
+              />
+              <MenuItem 
+                path="/dashboard/custom-creation?group=image_to_video" 
+                label="Image to Video" 
+                icon={<Film className="h-4 w-4" />} 
+              />
+              <MenuItem 
+                path="/dashboard/custom-creation?group=video_to_video" 
+                label="Video to Video" 
+                icon={<Repeat className="h-4 w-4" />} 
+              />
+              <MenuItem 
+                path="/dashboard/custom-creation?group=lip_sync" 
+                label="Custom Avatar" 
+                icon={<CircleUser className="h-4 w-4" />} 
+              />
+            </div>
 
             {/* Audio */}
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Audio</p>
-            <MenuItem 
-              path="/dashboard/custom-creation?group=prompt_to_audio" 
-              label="Audio Studio" 
-              icon={<Music className="h-4 w-4" />} 
-            />
+            <div className="bg-muted/30 rounded-lg p-2 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Audio</p>
+              <MenuItem 
+                path="/dashboard/custom-creation?group=prompt_to_audio" 
+                label="Audio Studio" 
+                icon={<Music className="h-4 w-4" />} 
+              />
+            </div>
 
             {/* Editing */}
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Editing</p>
-            <MenuItem 
-              path="/dashboard/video-editor" 
-              label="Video Stitching" 
-              icon={<Clapperboard className="h-4 w-4" />} 
-            />
+            <div className="bg-muted/30 rounded-lg p-2 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Editing</p>
+              <MenuItem 
+                path="/dashboard/video-editor" 
+                label="Video Stitching" 
+                icon={<Clapperboard className="h-4 w-4" />} 
+              />
+            </div>
 
             {/* Storytelling */}
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-3">Storytelling</p>
-            {renderFeatureItem(
-              "/dashboard/video-studio",
-              "Faceless Videos",
-              <Video className="h-4 w-4" />,
-              "faceless_videos"
-            )}
-            {renderFeatureItem(
-              "/dashboard/storyboard",
-              "Storyboard",
-              <BookOpen className="h-4 w-4" />,
-              "storyboard"
-            )}
+            <div className="bg-muted/30 rounded-lg p-2 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Storytelling</p>
+              {renderFeatureItem(
+                "/dashboard/video-studio",
+                "Faceless Videos",
+                <Video className="h-4 w-4" />,
+                "faceless_videos"
+              )}
+              {renderFeatureItem(
+                "/dashboard/storyboard",
+                "Storyboard",
+                <BookOpen className="h-4 w-4" />,
+                "storyboard"
+              )}
+            </div>
           </CollapsibleContent>
         </Collapsible>
       </div>
@@ -250,30 +255,36 @@ export const SignedInHamburgerMenuContent = ({
         </Collapsible>
       </div>
 
-      {/* ACCOUNT Section */}
-      <SectionHeader>ACCOUNT</SectionHeader>
-      <div className="space-y-1 px-4">
-        <MenuItem 
-          path="/dashboard/settings" 
-          label="Settings" 
-          icon={<Settings className="h-4 w-4" />} 
-        />
-        <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
-        <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
-        {isAdmin && (
-          <MenuItem 
-            path="/admin/dashboard" 
-            label="Admin Panel" 
-            icon={<Shield className="h-4 w-4" />} 
-          />
-        )}
-        <button
-          className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10 font-bold text-sm w-full"
-          onClick={onSignOut}
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Sign Out</span>
-        </button>
+      {/* ACCOUNT Section - Collapsible */}
+      <div className="pt-2 px-2">
+        <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
+          <CollapsibleSectionHeader isOpen={accountOpen} icon={<Settings className="h-4 w-4 text-primary-orange" />}>
+            Account
+          </CollapsibleSectionHeader>
+          <CollapsibleContent className="space-y-1 px-2 pt-2">
+            <MenuItem 
+              path="/dashboard/settings" 
+              label="Settings" 
+              icon={<Settings className="h-4 w-4" />} 
+            />
+            <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
+            <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />
+            {isAdmin && (
+              <MenuItem 
+                path="/admin/dashboard" 
+                label="Admin Panel" 
+                icon={<Shield className="h-4 w-4" />} 
+              />
+            )}
+            <button
+              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-destructive hover:bg-destructive/10 font-bold text-sm w-full"
+              onClick={onSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </>
   );

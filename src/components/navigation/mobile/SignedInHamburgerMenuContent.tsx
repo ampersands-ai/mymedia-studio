@@ -30,7 +30,7 @@ export const SignedInHamburgerMenuContent = ({
   isFeatureComingSoon,
   showHomeLink = true,
 }: SignedInHamburgerMenuContentProps) => {
-  const [studioOpen, setStudioOpen] = useState(true);
+  const [studioOpen, setStudioOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
 
   // Reusable menu item component

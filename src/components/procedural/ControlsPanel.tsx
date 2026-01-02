@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical } from 'lucide-react';
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -94,6 +94,12 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4" />
                   Cannon
+                </div>
+              </SelectItem>
+              <SelectItem value="tunnel">
+                <div className="flex items-center gap-2">
+                  <MoveVertical className="h-4 w-4" />
+                  Tunnel
                 </div>
               </SelectItem>
             </SelectContent>

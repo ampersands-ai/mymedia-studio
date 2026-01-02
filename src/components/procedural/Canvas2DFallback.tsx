@@ -22,9 +22,19 @@ interface Particle {
   angleToCenter: number;
 }
 
+interface TunnelParticle {
+  rayAngle: number;
+  rayDistance: number;
+  z: number;
+  bobOffset: number;
+  bobSpeed: number;
+  colorMix: number;
+}
+
 export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const tunnelParticlesRef = useRef<TunnelParticle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
 
@@ -34,6 +44,34 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     const b = parseInt(hex.slice(5, 7), 16);
     return { r, g, b };
   }, []);
+
+  const initTunnelParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 6000);
+    const particles: TunnelParticle[] = [];
+    const numRays = 80; // Number of radial rays
+    const particlesPerRay = Math.floor(count / numRays);
+
+    for (let ray = 0; ray < numRays; ray++) {
+      const rayAngle = (ray / numRays) * Math.PI * 2;
+
+      for (let i = 0; i < particlesPerRay; i++) {
+        // Distribute particles along the ray with varying distances
+        const rayDistance = 20 + Math.random() * 280; // Distance from center on screen
+        const z = Math.random(); // 0 = at camera, 1 = far away
+
+        particles.push({
+          rayAngle,
+          rayDistance,
+          z,
+          bobOffset: Math.random() * Math.PI * 2,
+          bobSpeed: 0.5 + Math.random() * 1.5,
+          colorMix: (ray + i) % 3 === 0 ? 1 : 0,
+        });
+      }
+    }
+
+    tunnelParticlesRef.current = particles;
+  }, [params.instanceCount]);
 
   const initParticles = useCallback(() => {
     const count = params.instanceCount;
@@ -180,6 +218,64 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     ctx.restore();
   }, []);
 
+  // Two-tone metallic cube for tunnel effect
+  const drawTunnelCube = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    color1: { r: number; g: number; b: number },
+    color2: { r: number; g: number; b: number },
+    metallic: number,
+    alpha: number,
+    depthFactor: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+
+    const cubeSize = size;
+    const depth = size * 0.35;
+
+    // Cool light from upper-left (blue tones)
+    const coolBrightness = 0.7 + metallic * 0.5;
+    ctx.fillStyle = `rgba(${Math.min(255, color1.r * coolBrightness)}, ${Math.min(255, color1.g * coolBrightness)}, ${Math.min(255, color1.b * coolBrightness)}, ${alpha})`;
+    ctx.fillRect(-cubeSize / 2, -cubeSize / 2, cubeSize, cubeSize);
+
+    // Top face - brightest (cool light)
+    const topBrightness = 0.9 + metallic * 0.4;
+    ctx.fillStyle = `rgba(${Math.min(255, color1.r * topBrightness)}, ${Math.min(255, color1.g * topBrightness)}, ${Math.min(255, color1.b * topBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(-cubeSize / 2, -cubeSize / 2);
+    ctx.lineTo(-cubeSize / 2 + depth, -cubeSize / 2 - depth);
+    ctx.lineTo(cubeSize / 2 + depth, -cubeSize / 2 - depth);
+    ctx.lineTo(cubeSize / 2, -cubeSize / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right face - warm light (bronze tones)
+    const warmBrightness = 0.6 + metallic * 0.3;
+    ctx.fillStyle = `rgba(${Math.min(255, color2.r * warmBrightness)}, ${Math.min(255, color2.g * warmBrightness)}, ${Math.min(255, color2.b * warmBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(cubeSize / 2, -cubeSize / 2);
+    ctx.lineTo(cubeSize / 2 + depth, -cubeSize / 2 - depth);
+    ctx.lineTo(cubeSize / 2 + depth, cubeSize / 2 - depth);
+    ctx.lineTo(cubeSize / 2, cubeSize / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Metallic specular highlight
+    if (metallic > 0.5 && depthFactor > 0.3) {
+      const gradient = ctx.createLinearGradient(-cubeSize / 2, -cubeSize / 2, cubeSize / 2, cubeSize / 2);
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${metallic * 0.6 * alpha})`);
+      gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0)');
+      gradient.addColorStop(1, `rgba(0, 0, 0, ${metallic * 0.15 * alpha})`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(-cubeSize / 2, -cubeSize / 2, cubeSize, cubeSize);
+    }
+
+    ctx.restore();
+  }, []);
+
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -193,124 +289,187 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
 
     timeRef.current += 0.016 * params.cameraSpeed;
     const isCannon = params.arrangement === 'cannon';
+    const isTunnel = params.arrangement === 'tunnel';
 
     // Clear with background
     const bgColor = hexToRgb(params.backgroundColor);
     ctx.fillStyle = `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
     ctx.fillRect(0, 0, width, height);
 
-    // Central glow for cannon
-    if (isCannon) {
-      const primaryRgb = hexToRgb(params.colorPrimary);
-      const glowRadius = Math.min(width, height) * 0.18;
+    const color1 = hexToRgb(params.colorPrimary);
+    const color2 = hexToRgb(params.colorSecondary);
+
+    if (isTunnel) {
+      // Tunnel effect: forward camera movement through cube field
+      const fov = 400;
+      const forwardSpeed = params.cameraSpeed * 0.015;
+
+      // Update and render tunnel particles
+      const particles = tunnelParticlesRef.current;
+
+      // Sort by z (far to near)
+      const sortedParticles = [...particles].sort((a, b) => b.z - a.z);
+
+      sortedParticles.forEach((particle) => {
+        // Move particle toward camera
+        particle.z -= forwardSpeed;
+
+        // Respawn if passed camera
+        if (particle.z <= 0) {
+          particle.z = 1;
+          particle.rayDistance = 20 + Math.random() * 280;
+        }
+
+        // Perspective projection
+        const scale = fov / (fov + particle.z * 800);
+        const bobAmount = Math.sin(timeRef.current * particle.bobSpeed + particle.bobOffset) * 3;
+
+        const screenX = centerX + (Math.cos(particle.rayAngle) * particle.rayDistance * scale) + bobAmount * 0.3;
+        const screenY = centerY + (Math.sin(particle.rayAngle) * particle.rayDistance * scale) + bobAmount * 0.3;
+
+        // Size based on depth (larger when closer)
+        const baseSize = 4 + (1 - particle.z) * 12;
+        const size = baseSize * scale;
+
+        // Alpha based on depth (fade in distance)
+        const depthFactor = 1 - particle.z;
+        const alpha = 0.15 + depthFactor * 0.75;
+
+        // Skip if too small or outside canvas
+        if (size < 0.5 || screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) return;
+
+        // Draw two-tone metallic cube
+        const useSecondary = particle.colorMix > 0.5;
+        const primaryColor = useSecondary ? color2 : color1;
+        const secondaryColor = useSecondary ? color1 : color2;
+
+        drawTunnelCube(ctx, screenX, screenY, size, primaryColor, secondaryColor, params.metallic, alpha, depthFactor);
+      });
+
+      // Central vanishing point glow
+      const glowRadius = Math.min(width, height) * 0.08;
       const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      gradient.addColorStop(0.15, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.7)`);
-      gradient.addColorStop(0.4, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.25)`);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+      gradient.addColorStop(0.3, `rgba(${color1.r}, ${color1.g}, ${color1.b}, 0.3)`);
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
       ctx.fill();
-    }
 
-    const color1 = hexToRgb(params.colorPrimary);
-    const color2 = hexToRgb(params.colorSecondary);
-
-    // Sort by z
-    const sortedParticles = [...particlesRef.current].sort((a, b) => a.z - b.z);
-
-    const rotationAngle = timeRef.current;
-    const cosR = Math.cos(rotationAngle);
-    const sinR = Math.sin(rotationAngle);
-
-    sortedParticles.forEach((particle) => {
-      let screenX: number, screenY: number, screenSize: number, rotation: number;
-
+    } else {
+      // Central glow for cannon
       if (isCannon) {
-        // Cannon: subtle pulse animation
-        const pulseOffset = Math.sin(timeRef.current * 2 + particle.spoke * 0.3) * 0.008;
-        const currentX = particle.baseX + Math.cos(particle.angleToCenter + Math.PI) * pulseOffset;
-        const currentY = particle.baseY + Math.sin(particle.angleToCenter + Math.PI) * pulseOffset;
-
-        screenX = currentX * width;
-        screenY = currentY * height;
-        screenSize = particle.size * Math.min(width, height) * (0.4 + particle.z * 0.6);
-        rotation = particle.angleToCenter + Math.PI / 2; // Point toward center
-      } else {
-        // Standard: apply rotation
-        const px = (particle.x - 0.5) * 400;
-        const pz = (particle.z - 0.5) * 400;
-        const rotatedX = px * cosR - pz * sinR;
-        const rotatedZ = px * sinR + pz * cosR;
-
-        const perspective = 600;
-        const scale = perspective / (perspective + rotatedZ);
-
-        screenX = centerX + rotatedX * scale;
-        screenY = centerY + (particle.y - 0.5) * 400 * scale;
-        screenSize = particle.size * scale * (1 + params.metallic * 0.5);
-        rotation = rotationAngle + particle.z * 2;
-      }
-
-      // Skip if outside canvas
-      if (screenX < -50 || screenX > width + 50 || screenY < -50 || screenY > height + 50) return;
-
-      const color = particle.colorMix > 0.5 ? color2 : color1;
-      const depthFactor = particle.z;
-      const alpha = 0.3 + depthFactor * 0.7;
-      const lightAngle = Math.atan2(centerY - screenY, centerX - screenX);
-
-      if (params.shape === 'sphere') {
-        const gradient = ctx.createRadialGradient(
-          screenX - screenSize * 0.3,
-          screenY - screenSize * 0.3,
-          0,
-          screenX,
-          screenY,
-          screenSize
-        );
-        const highlightFactor = params.metallic * (0.5 + Math.cos(lightAngle) * 0.5);
-        gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightFactor * alpha})`);
-        gradient.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
-        gradient.addColorStop(1, `rgba(${Math.floor(color.r * 0.3)}, ${Math.floor(color.g * 0.3)}, ${Math.floor(color.b * 0.3)}, ${alpha})`);
-
+        const primaryRgb = hexToRgb(params.colorPrimary);
+        const glowRadius = Math.min(width, height) * 0.18;
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        gradient.addColorStop(0.15, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.7)`);
+        gradient.addColorStop(0.4, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.25)`);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(screenX, screenY, screenSize, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
         ctx.fill();
-
-        if (params.metallic > 0.5 && isCannon) {
-          ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.4)`;
-          ctx.shadowBlur = screenSize;
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, screenSize * 0.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-      } else if (params.shape === 'pyramid') {
-        ctx.save();
-        ctx.translate(screenX, screenY);
-        ctx.rotate(rotation);
-
-        const brightness = 0.7 + params.metallic * Math.cos(lightAngle) * 0.3;
-        ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(0, -screenSize);
-        ctx.lineTo(-screenSize, screenSize);
-        ctx.lineTo(screenSize, screenSize);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.restore();
-      } else {
-        // 3D metallic cube
-        draw3DCube(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha);
       }
-    });
+
+      // Sort by z
+      const sortedParticles = [...particlesRef.current].sort((a, b) => a.z - b.z);
+
+      const rotationAngle = timeRef.current;
+      const cosR = Math.cos(rotationAngle);
+      const sinR = Math.sin(rotationAngle);
+
+      sortedParticles.forEach((particle) => {
+        let screenX: number, screenY: number, screenSize: number, rotation: number;
+
+        if (isCannon) {
+          // Cannon: enhanced pulse animation
+          const pulseOffset = Math.sin(timeRef.current * 2 + particle.spoke * 0.3) * 0.025;
+          const rotationPulse = Math.sin(timeRef.current * 1.5 + particle.ring * 0.2) * 0.1;
+          const currentX = particle.baseX + Math.cos(particle.angleToCenter + Math.PI) * pulseOffset;
+          const currentY = particle.baseY + Math.sin(particle.angleToCenter + Math.PI) * pulseOffset;
+
+          screenX = currentX * width;
+          screenY = currentY * height;
+          const sizePulse = 1 + Math.sin(timeRef.current * 3 + particle.spoke * 0.5) * 0.15;
+          screenSize = particle.size * Math.min(width, height) * (0.4 + particle.z * 0.6) * sizePulse;
+          rotation = particle.angleToCenter + Math.PI / 2 + rotationPulse;
+        } else {
+          // Standard: apply rotation
+          const px = (particle.x - 0.5) * 400;
+          const pz = (particle.z - 0.5) * 400;
+          const rotatedX = px * cosR - pz * sinR;
+          const rotatedZ = px * sinR + pz * cosR;
+
+          const perspective = 600;
+          const scale = perspective / (perspective + rotatedZ);
+
+          screenX = centerX + rotatedX * scale;
+          screenY = centerY + (particle.y - 0.5) * 400 * scale;
+          screenSize = particle.size * scale * (1 + params.metallic * 0.5);
+          rotation = rotationAngle + particle.z * 2;
+        }
+
+        // Skip if outside canvas
+        if (screenX < -50 || screenX > width + 50 || screenY < -50 || screenY > height + 50) return;
+
+        const color = particle.colorMix > 0.5 ? color2 : color1;
+        const depthFactor = particle.z;
+        const alpha = 0.3 + depthFactor * 0.7;
+        const lightAngle = Math.atan2(centerY - screenY, centerX - screenX);
+
+        if (params.shape === 'sphere') {
+          const gradient = ctx.createRadialGradient(
+            screenX - screenSize * 0.3,
+            screenY - screenSize * 0.3,
+            0,
+            screenX,
+            screenY,
+            screenSize
+          );
+          const highlightFactor = params.metallic * (0.5 + Math.cos(lightAngle) * 0.5);
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightFactor * alpha})`);
+          gradient.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
+          gradient.addColorStop(1, `rgba(${Math.floor(color.r * 0.3)}, ${Math.floor(color.g * 0.3)}, ${Math.floor(color.b * 0.3)}, ${alpha})`);
+
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, screenSize, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (params.metallic > 0.5 && isCannon) {
+            ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.4)`;
+            ctx.shadowBlur = screenSize;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, screenSize * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        } else if (params.shape === 'pyramid') {
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.rotate(rotation);
+
+          const brightness = 0.7 + params.metallic * Math.cos(lightAngle) * 0.3;
+          ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(0, -screenSize);
+          ctx.lineTo(-screenSize, screenSize);
+          ctx.lineTo(screenSize, screenSize);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
+        } else {
+          // 3D metallic cube
+          draw3DCube(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha);
+        }
+      });
+    }
 
     animationRef.current = requestAnimationFrame(render);
-  }, [params, hexToRgb, draw3DCube]);
+  }, [params, hexToRgb, draw3DCube, drawTunnelCube]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -321,7 +480,11 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      initParticles();
+      if (params.arrangement === 'tunnel') {
+        initTunnelParticles();
+      } else {
+        initParticles();
+      }
     };
 
     updateSize();
@@ -334,11 +497,15 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [initParticles, render]);
+  }, [initParticles, initTunnelParticles, render, params.arrangement]);
 
   useEffect(() => {
-    initParticles();
-  }, [params.instanceCount, params.arrangement, initParticles]);
+    if (params.arrangement === 'tunnel') {
+      initTunnelParticles();
+    } else {
+      initParticles();
+    }
+  }, [params.instanceCount, params.arrangement, initParticles, initTunnelParticles]);
 
   return (
     <canvas

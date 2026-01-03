@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass } from 'lucide-react';
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -172,6 +172,54 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Ship className="h-4 w-4" />
                   Surfers
+                </div>
+              </SelectItem>
+              <SelectItem value="flags">
+                <div className="flex items-center gap-2">
+                  <Flag className="h-4 w-4" />
+                  Flags
+                </div>
+              </SelectItem>
+              <SelectItem value="sailboats">
+                <div className="flex items-center gap-2">
+                  <Sailboat className="h-4 w-4" />
+                  Sailboats
+                </div>
+              </SelectItem>
+              <SelectItem value="forest">
+                <div className="flex items-center gap-2">
+                  <TreePine className="h-4 w-4" />
+                  Forest
+                </div>
+              </SelectItem>
+              <SelectItem value="fishschool">
+                <div className="flex items-center gap-2">
+                  <Fish className="h-4 w-4" />
+                  Fish School
+                </div>
+              </SelectItem>
+              <SelectItem value="murmuration">
+                <div className="flex items-center gap-2">
+                  <Bird className="h-4 w-4" />
+                  Murmuration
+                </div>
+              </SelectItem>
+              <SelectItem value="pendulums">
+                <div className="flex items-center gap-2">
+                  <GitCommit className="h-4 w-4" />
+                  Pendulums
+                </div>
+              </SelectItem>
+              <SelectItem value="dominoes">
+                <div className="flex items-center gap-2">
+                  <RectangleVertical className="h-4 w-4" />
+                  Dominoes
+                </div>
+              </SelectItem>
+              <SelectItem value="compass">
+                <div className="flex items-center gap-2">
+                  <Compass className="h-4 w-4" />
+                  Compass
                 </div>
               </SelectItem>
             </SelectContent>

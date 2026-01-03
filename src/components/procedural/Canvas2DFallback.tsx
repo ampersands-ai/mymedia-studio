@@ -157,6 +157,93 @@ interface SurferParticle {
   stateTimer: number; // time in current state
 }
 
+// Flag particle for wind-responsive flags
+interface FlagParticle {
+  x: number;
+  z: number;
+  poleHeight: number;
+  flagWidth: number;
+  flagHeight: number;
+  wavePhase: number;
+  waveAmplitude: number;
+  colorIndex: number;
+}
+
+// Sailboat particle for ocean swells
+interface SailboatParticle {
+  x: number;
+  z: number;
+  size: number;
+  rotation: number;
+  sailBillow: number;
+  colorMix: number;
+}
+
+// Tree particle for forest wind
+interface TreeParticle {
+  x: number;
+  z: number;
+  height: number;
+  trunkWidth: number;
+  canopySize: number;
+  swayPhase: number;
+  swayAmount: number;
+  treeType: 'pine' | 'deciduous';
+}
+
+// Fish particle for schooling behavior
+interface FishParticle {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  size: number;
+  colorMix: number;
+}
+
+// Bird particle for murmuration
+interface BirdParticle {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  wingPhase: number;
+}
+
+// Pendulum particle for wave patterns
+interface PendulumParticle {
+  length: number;
+  angle: number;
+  angularVelocity: number;
+  x: number;
+  colorMix: number;
+}
+
+// Domino particle for chain reaction
+interface DominoParticle {
+  x: number;
+  y: number;
+  angle: number; // tilt angle (0 = standing, PI/2 = fallen)
+  targetAngle: number;
+  fallSpeed: number;
+  triggered: boolean;
+  colorMix: number;
+  pathIndex: number;
+}
+
+// Compass needle particle for magnetic field
+interface CompassParticle {
+  x: number;
+  y: number;
+  angle: number;
+  targetAngle: number;
+  springiness: number;
+}
+
 export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -172,6 +259,14 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const solarPanelParticlesRef = useRef<SolarPanelParticle[]>([]);
   const windmillParticlesRef = useRef<WindmillParticle[]>([]);
   const surferParticlesRef = useRef<SurferParticle[]>([]);
+  const flagParticlesRef = useRef<FlagParticle[]>([]);
+  const sailboatParticlesRef = useRef<SailboatParticle[]>([]);
+  const treeParticlesRef = useRef<TreeParticle[]>([]);
+  const fishParticlesRef = useRef<FishParticle[]>([]);
+  const birdParticlesRef = useRef<BirdParticle[]>([]);
+  const pendulumParticlesRef = useRef<PendulumParticle[]>([]);
+  const dominoParticlesRef = useRef<DominoParticle[]>([]);
+  const compassParticlesRef = useRef<CompassParticle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
@@ -180,6 +275,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const windAngleRef = useRef(0); // For wind direction
   const windGustRef = useRef(0); // For gust wave position
   const waveTimeRef = useRef(0); // For ocean waves
+  const magnetPositionRef = useRef({ x: 0.5, y: 0.5, angle: 0 }); // For compass magnet
+  const dominoTriggerRef = useRef(0); // For domino chain reaction
+  const pendulumTimeRef = useRef(0); // For pendulum phase
 
   const hexToRgb = useCallback((hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -435,6 +533,175 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     }
     surferParticlesRef.current = particles;
     waveTimeRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Flag particles (wind-responsive flags)
+  const initFlagParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 150);
+    const particles: FlagParticle[] = [];
+    const cols = Math.ceil(Math.sqrt(count * 1.5));
+    const rows = Math.ceil(count / cols);
+
+    for (let i = 0; i < count; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      particles.push({
+        x: (col / cols) * 0.8 + 0.1 + (Math.random() - 0.5) * 0.03,
+        z: (row / rows) * 0.5 + 0.25 + (Math.random() - 0.5) * 0.02,
+        poleHeight: 0.12 + Math.random() * 0.05,
+        flagWidth: 0.04 + Math.random() * 0.02,
+        flagHeight: 0.025 + Math.random() * 0.01,
+        wavePhase: Math.random() * Math.PI * 2,
+        waveAmplitude: 0.5 + Math.random() * 0.5,
+        colorIndex: i % 5,
+      });
+    }
+    flagParticlesRef.current = particles;
+  }, [params.instanceCount]);
+
+  // Initialize Sailboat particles (ocean swells)
+  const initSailboatParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 60);
+    const particles: SailboatParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * 0.8 + 0.1,
+        z: Math.random() * 0.6 + 0.2,
+        size: 0.6 + Math.random() * 0.6,
+        rotation: (Math.random() - 0.5) * 0.3,
+        sailBillow: 0.5 + Math.random() * 0.5,
+        colorMix: Math.random(),
+      });
+    }
+    sailboatParticlesRef.current = particles;
+  }, [params.instanceCount]);
+
+  // Initialize Tree particles (forest wind)
+  const initTreeParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 300);
+    const particles: TreeParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * 0.9 + 0.05,
+        z: Math.random() * 0.7 + 0.15,
+        height: 0.08 + Math.random() * 0.08,
+        trunkWidth: 0.005 + Math.random() * 0.003,
+        canopySize: 0.03 + Math.random() * 0.03,
+        swayPhase: Math.random() * Math.PI * 2,
+        swayAmount: 0.5 + Math.random() * 0.5,
+        treeType: Math.random() > 0.4 ? 'deciduous' : 'pine',
+      });
+    }
+    treeParticlesRef.current = particles;
+  }, [params.instanceCount]);
+
+  // Initialize Fish particles (schooling behavior)
+  const initFishParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 800);
+    const particles: FishParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: 0.3 + Math.random() * 0.4,
+        y: 0.3 + Math.random() * 0.4,
+        z: Math.random(),
+        vx: (Math.random() - 0.5) * 0.01,
+        vy: (Math.random() - 0.5) * 0.01,
+        vz: (Math.random() - 0.5) * 0.005,
+        size: 3 + Math.random() * 4,
+        colorMix: Math.random(),
+      });
+    }
+    fishParticlesRef.current = particles;
+  }, [params.instanceCount]);
+
+  // Initialize Bird particles (murmuration)
+  const initBirdParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 4000);
+    const particles: BirdParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: 0.3 + Math.random() * 0.4,
+        y: 0.2 + Math.random() * 0.4,
+        z: Math.random(),
+        vx: (Math.random() - 0.5) * 0.005,
+        vy: (Math.random() - 0.5) * 0.005,
+        vz: (Math.random() - 0.5) * 0.003,
+        wingPhase: Math.random() * Math.PI * 2,
+      });
+    }
+    birdParticlesRef.current = particles;
+  }, [params.instanceCount]);
+
+  // Initialize Pendulum particles (wave patterns)
+  const initPendulumParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 35);
+    const particles: PendulumParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const lengthRatio = (i + 1) / count;
+      particles.push({
+        length: 0.15 + lengthRatio * 0.25, // Increasing lengths
+        angle: Math.PI / 4, // Start at 45 degrees
+        angularVelocity: 0,
+        x: (i + 0.5) / count,
+        colorMix: i / count,
+      });
+    }
+    pendulumParticlesRef.current = particles;
+    pendulumTimeRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Domino particles (chain reaction)
+  const initDominoParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 2500);
+    const particles: DominoParticle[] = [];
+    
+    // Create spiral path
+    const spiralTurns = 4;
+    for (let i = 0; i < count; i++) {
+      const progress = i / count;
+      const angle = progress * Math.PI * 2 * spiralTurns;
+      const radius = 0.1 + progress * 0.35;
+      
+      particles.push({
+        x: 0.5 + Math.cos(angle) * radius,
+        y: 0.5 + Math.sin(angle) * radius,
+        angle: 0, // Standing
+        targetAngle: 0,
+        fallSpeed: 0,
+        triggered: false,
+        colorMix: progress,
+        pathIndex: i,
+      });
+    }
+    dominoParticlesRef.current = particles;
+    dominoTriggerRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Compass particles (magnetic field)
+  const initCompassParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 600);
+    const particles: CompassParticle[] = [];
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+
+    for (let i = 0; i < count; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      particles.push({
+        x: (col + 0.5) / cols,
+        y: (row + 0.5) / rows,
+        angle: Math.random() * Math.PI * 2,
+        targetAngle: 0,
+        springiness: 0.8 + Math.random() * 0.2,
+      });
+    }
+    compassParticlesRef.current = particles;
+    magnetPositionRef.current = { x: 0.5, y: 0.5, angle: 0 };
   }, [params.instanceCount]);
 
   const initKaleidoscopeParticles = useCallback(() => {
@@ -1917,8 +2184,890 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       ctx.fillRect(sunX - 150, height * 0.35, 300, height * 0.65);
     }
 
+    // ============ FLAGS IN WIND ============
+    else if (arrangement === 'flags') {
+      const particles = flagParticlesRef.current;
+      windAngleRef.current += 0.008 * params.cameraSpeed;
+      windGustRef.current += 0.03 * params.cameraSpeed;
+      const gustWave = windGustRef.current;
+
+      // Sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+      const bgColor = hexToRgb(params.backgroundColor);
+      skyGradient.addColorStop(0, `rgb(${bgColor.r * 0.7}, ${bgColor.g * 0.8}, ${bgColor.b})`);
+      skyGradient.addColorStop(1, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Ground
+      const groundY = height * 0.85;
+      ctx.fillStyle = '#4a5d23';
+      ctx.fillRect(0, groundY, width, height - groundY);
+
+      // Flag colors
+      const flagColors = [
+        color1,
+        color2,
+        { r: 255, g: 255, b: 255 },
+        { r: Math.floor((color1.r + color2.r) / 2), g: Math.floor((color1.g + color2.g) / 2), b: Math.floor((color1.b + color2.b) / 2) },
+        { r: 50, g: 50, b: 50 },
+      ];
+
+      const getWindIntensity = (x: number, z: number) => {
+        const gust = Math.sin((x * 4 - gustWave) + z * 2) * 0.5 + 0.5;
+        return 0.3 + gust * 0.7;
+      };
+
+      // Sort by depth
+      const sortedFlags = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedFlags.forEach((flag) => {
+        const localWind = getWindIntensity(flag.x, flag.z);
+        const windIntensity = localWind * flag.waveAmplitude;
+
+        // Screen position with perspective
+        const perspective = 400;
+        const pz = flag.z * 300;
+        const scale = perspective / (perspective + pz);
+        const screenX = (flag.x - 0.5) * width * 1.2 * scale + centerX;
+        const baseY = groundY - 10 * scale;
+        const poleHeight = flag.poleHeight * height * scale;
+        const topY = baseY - poleHeight;
+
+        // Draw pole shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(screenX + 5 * scale, baseY + 3, 4 * scale, 2 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw pole
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 3 * scale;
+        ctx.beginPath();
+        ctx.moveTo(screenX, baseY);
+        ctx.lineTo(screenX, topY);
+        ctx.stroke();
+
+        // Draw flag with wave effect
+        const flagWidth = flag.flagWidth * width * scale;
+        const flagHeight = flag.flagHeight * height * scale;
+        const segments = 8;
+        const flagColor = flagColors[flag.colorIndex % flagColors.length];
+
+        ctx.fillStyle = `rgba(${flagColor.r}, ${flagColor.g}, ${flagColor.b}, 0.95)`;
+        ctx.beginPath();
+        ctx.moveTo(screenX, topY);
+
+        // Top edge with wave
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const waveY = Math.sin(t * Math.PI * 3 + flag.wavePhase + gustWave * 2) * windIntensity * 8 * scale;
+          const stretch = 1 + windIntensity * 0.3;
+          ctx.lineTo(screenX + t * flagWidth * stretch, topY + waveY);
+        }
+
+        // Bottom edge with wave (reverse)
+        for (let i = segments; i >= 0; i--) {
+          const t = i / segments;
+          const waveY = Math.sin(t * Math.PI * 3 + flag.wavePhase + gustWave * 2 + 0.5) * windIntensity * 8 * scale;
+          const stretch = 1 + windIntensity * 0.3;
+          ctx.lineTo(screenX + t * flagWidth * stretch, topY + flagHeight + waveY);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+
+        // Flag highlight
+        ctx.fillStyle = `rgba(255, 255, 255, ${windIntensity * 0.2})`;
+        ctx.beginPath();
+        ctx.moveTo(screenX, topY);
+        for (let i = 0; i <= segments / 2; i++) {
+          const t = i / segments;
+          const waveY = Math.sin(t * Math.PI * 3 + flag.wavePhase + gustWave * 2) * windIntensity * 8 * scale;
+          const stretch = 1 + windIntensity * 0.3;
+          ctx.lineTo(screenX + t * flagWidth * stretch, topY + waveY);
+        }
+        for (let i = Math.floor(segments / 2); i >= 0; i--) {
+          const t = i / segments;
+          const waveY = Math.sin(t * Math.PI * 3 + flag.wavePhase + gustWave * 2 + 0.5) * windIntensity * 8 * scale;
+          const stretch = 1 + windIntensity * 0.3;
+          ctx.lineTo(screenX + t * flagWidth * stretch, topY + flagHeight * 0.5 + waveY);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        flag.wavePhase += 0.1 * params.cameraSpeed;
+      });
+    }
+
+    // ============ SAILBOATS ON SWELLS ============
+    else if (arrangement === 'sailboats') {
+      const particles = sailboatParticlesRef.current;
+      waveTimeRef.current += 0.02 * params.cameraSpeed;
+      const waveTime = waveTimeRef.current;
+
+      const getWaveHeight = (x: number, z: number, t: number) => {
+        return Math.sin(x * 6 + t) * 15 + Math.sin(z * 4 + t * 0.7) * 20 + Math.sin(x * 3 + z * 5 + t * 1.3) * 10;
+      };
+
+      const getWaveSlope = (x: number, z: number, t: number) => {
+        return Math.cos(x * 6 + t) * 6 * 0.02 + Math.cos(x * 3 + z * 5 + t * 1.3) * 3 * 0.02;
+      };
+
+      // Sky
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.4);
+      const bgColor = hexToRgb(params.backgroundColor);
+      skyGradient.addColorStop(0, `rgb(${bgColor.r * 0.6}, ${bgColor.g * 0.7}, ${bgColor.b * 0.9})`);
+      skyGradient.addColorStop(1, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height * 0.4);
+
+      // Ocean with wave lines
+      const oceanTop = height * 0.4;
+      for (let row = 0; row < 30; row++) {
+        const rowZ = row / 30;
+        const rowY = oceanTop + row * (height * 0.6 / 30);
+
+        const depthMix = row / 30;
+        const r = Math.floor(color1.r * (1 - depthMix) + color2.r * depthMix);
+        const g = Math.floor(color1.g * (1 - depthMix) + color2.g * depthMix);
+        const b = Math.floor(color1.b * (1 - depthMix) + color2.b * depthMix);
+
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.7)`;
+        ctx.lineWidth = 2 - depthMix;
+
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 15) {
+          const localHeight = getWaveHeight(x / width, rowZ, waveTime);
+          if (x === 0) ctx.moveTo(x, rowY + localHeight * 0.3);
+          else ctx.lineTo(x, rowY + localHeight * 0.3);
+        }
+        ctx.stroke();
+      }
+
+      // Draw boats
+      const sortedBoats = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedBoats.forEach((boat) => {
+        const waveHeight = getWaveHeight(boat.x, boat.z, waveTime);
+        const waveSlope = getWaveSlope(boat.x, boat.z, waveTime);
+
+        const perspective = 500;
+        const pz = boat.z * 400;
+        const scale = (perspective / (perspective + pz)) * boat.size;
+        const screenX = boat.x * width;
+        const screenY = oceanTop + boat.z * height * 0.5 + waveHeight * (1 - boat.z * 0.5) * 0.3;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(waveSlope + boat.rotation * 0.3);
+        ctx.scale(scale, scale);
+
+        // Hull
+        ctx.fillStyle = boat.colorMix > 0.5 ? `rgb(${color2.r}, ${color2.g}, ${color2.b})` : '#FFFFFF';
+        ctx.beginPath();
+        ctx.moveTo(-25, 0);
+        ctx.quadraticCurveTo(-30, 10, -20, 15);
+        ctx.lineTo(20, 15);
+        ctx.quadraticCurveTo(30, 10, 25, 0);
+        ctx.lineTo(30, 0);
+        ctx.quadraticCurveTo(35, -5, 25, -5);
+        ctx.lineTo(-25, -5);
+        ctx.quadraticCurveTo(-35, -5, -30, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Mast
+        ctx.strokeStyle = '#4a3728';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -5);
+        ctx.lineTo(0, -60);
+        ctx.stroke();
+
+        // Sail
+        const billowAmount = boat.sailBillow * (0.8 + Math.sin(waveTime + boat.x * 5) * 0.2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.moveTo(0, -55);
+        ctx.quadraticCurveTo(20 * billowAmount, -35, 0, -10);
+        ctx.lineTo(0, -55);
+        ctx.fill();
+
+        // Sail shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(0, -55);
+        ctx.quadraticCurveTo(15 * billowAmount, -35, 0, -15);
+        ctx.lineTo(0, -55);
+        ctx.fill();
+
+        ctx.restore();
+      });
+    }
+
+    // ============ FOREST IN WIND ============
+    else if (arrangement === 'forest') {
+      const particles = treeParticlesRef.current;
+      windGustRef.current += 0.015 * params.cameraSpeed;
+      const gustWave = windGustRef.current;
+
+      const getWindSway = (x: number, z: number) => {
+        const gust = Math.sin(x * 8 - gustWave * 2 + z * 3) * 0.5 + 0.5;
+        return gust;
+      };
+
+      // Sky
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.5);
+      const bgColor = hexToRgb(params.backgroundColor);
+      skyGradient.addColorStop(0, `rgb(${bgColor.r * 0.8}, ${bgColor.g * 0.9}, ${bgColor.b})`);
+      skyGradient.addColorStop(1, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Forest floor
+      const groundY = height * 0.9;
+      const groundGradient = ctx.createLinearGradient(0, groundY - 100, 0, height);
+      groundGradient.addColorStop(0, '#3d5c1f');
+      groundGradient.addColorStop(1, '#2a4515');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, groundY - 100, width, height - groundY + 100);
+
+      // Sort trees by depth
+      const sortedTrees = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedTrees.forEach((tree) => {
+        const windSway = getWindSway(tree.x, tree.z) * tree.swayAmount;
+        tree.swayPhase += 0.03 * params.cameraSpeed;
+        const sway = Math.sin(tree.swayPhase + windSway * 5) * windSway * 0.1;
+
+        const perspective = 400;
+        const pz = tree.z * 300;
+        const scale = perspective / (perspective + pz);
+        const screenX = (tree.x - 0.5) * width * 1.3 * scale + centerX;
+        const baseY = groundY - pz * 0.15;
+        const treeHeight = tree.height * height * scale;
+
+        // Trunk
+        const trunkWidth = tree.trunkWidth * width * scale;
+        ctx.fillStyle = `rgb(${color2.r}, ${color2.g}, ${color2.b})`;
+        ctx.beginPath();
+        ctx.moveTo(screenX - trunkWidth, baseY);
+        ctx.lineTo(screenX + trunkWidth, baseY);
+        ctx.quadraticCurveTo(screenX + trunkWidth * 0.5 + sway * 30, baseY - treeHeight * 0.5, screenX + sway * 50, baseY - treeHeight);
+        ctx.quadraticCurveTo(screenX - trunkWidth * 0.5 + sway * 30, baseY - treeHeight * 0.5, screenX - trunkWidth, baseY);
+        ctx.fill();
+
+        // Canopy
+        const canopySize = tree.canopySize * width * scale;
+        const canopyY = baseY - treeHeight;
+
+        if (tree.treeType === 'pine') {
+          // Pine tree - triangular
+          for (let layer = 0; layer < 3; layer++) {
+            const layerY = canopyY + layer * canopySize * 0.4;
+            const layerWidth = canopySize * (1 - layer * 0.2);
+            const layerSway = sway * (3 - layer) * 15;
+
+            ctx.fillStyle = `rgb(${Math.floor(color1.r * (0.8 + layer * 0.1))}, ${Math.floor(color1.g * (0.8 + layer * 0.1))}, ${Math.floor(color1.b * (0.6 + layer * 0.15))})`;
+            ctx.beginPath();
+            ctx.moveTo(screenX + layerSway, layerY - canopySize * (0.8 - layer * 0.2));
+            ctx.lineTo(screenX - layerWidth + layerSway * 0.7, layerY + canopySize * 0.3);
+            ctx.lineTo(screenX + layerWidth + layerSway * 0.7, layerY + canopySize * 0.3);
+            ctx.closePath();
+            ctx.fill();
+          }
+        } else {
+          // Deciduous - round canopy
+          const canopySway = sway * 40;
+          ctx.fillStyle = `rgb(${color1.r}, ${color1.g}, ${color1.b})`;
+          ctx.beginPath();
+          ctx.ellipse(screenX + canopySway, canopyY, canopySize, canopySize * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Highlight
+          ctx.fillStyle = `rgba(${Math.min(255, color1.r + 40)}, ${Math.min(255, color1.g + 40)}, ${color1.b}, 0.5)`;
+          ctx.beginPath();
+          ctx.ellipse(screenX + canopySway - canopySize * 0.2, canopyY - canopySize * 0.2, canopySize * 0.5, canopySize * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    // ============ FISH SCHOOL ============
+    else if (arrangement === 'fishschool') {
+      const particles = fishParticlesRef.current;
+      timeRef.current += 0.02 * params.cameraSpeed;
+      const time = timeRef.current;
+
+      // Current flow direction
+      const currentX = Math.cos(time * 0.3) * 0.003;
+      const currentY = Math.sin(time * 0.4) * 0.002;
+
+      // Underwater background
+      const waterGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 0.7);
+      const bgColor = hexToRgb(params.backgroundColor);
+      waterGradient.addColorStop(0, `rgba(${bgColor.r + 30}, ${bgColor.g + 50}, ${bgColor.b + 70}, 1)`);
+      waterGradient.addColorStop(1, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      ctx.fillStyle = waterGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Light rays from above
+      ctx.save();
+      for (let i = 0; i < 5; i++) {
+        const rayX = width * (0.2 + i * 0.15) + Math.sin(time + i) * 20;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.beginPath();
+        ctx.moveTo(rayX - 30, 0);
+        ctx.lineTo(rayX + 30, 0);
+        ctx.lineTo(rayX + 100, height);
+        ctx.lineTo(rayX - 100, height);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Boids algorithm
+      particles.forEach((fish) => {
+        let avgX = 0, avgY = 0, avgVx = 0, avgVy = 0, separateX = 0, separateY = 0;
+        let neighbors = 0;
+
+        particles.forEach((other) => {
+          if (fish === other) return;
+          const dx = other.x - fish.x;
+          const dy = other.y - fish.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 0.15) {
+            avgX += other.x;
+            avgY += other.y;
+            avgVx += other.vx;
+            avgVy += other.vy;
+            neighbors++;
+
+            if (dist < 0.04) {
+              separateX -= dx / dist * 0.001;
+              separateY -= dy / dist * 0.001;
+            }
+          }
+        });
+
+        if (neighbors > 0) {
+          // Cohesion
+          avgX /= neighbors;
+          avgY /= neighbors;
+          fish.vx += (avgX - fish.x) * 0.01;
+          fish.vy += (avgY - fish.y) * 0.01;
+
+          // Alignment
+          avgVx /= neighbors;
+          avgVy /= neighbors;
+          fish.vx += (avgVx - fish.vx) * 0.05;
+          fish.vy += (avgVy - fish.vy) * 0.05;
+
+          // Separation
+          fish.vx += separateX;
+          fish.vy += separateY;
+        }
+
+        // Follow current
+        fish.vx += currentX;
+        fish.vy += currentY;
+
+        // Speed limit
+        const speed = Math.sqrt(fish.vx * fish.vx + fish.vy * fish.vy);
+        if (speed > 0.015) {
+          fish.vx = (fish.vx / speed) * 0.015;
+          fish.vy = (fish.vy / speed) * 0.015;
+        }
+
+        // Update position
+        fish.x += fish.vx;
+        fish.y += fish.vy;
+
+        // Wrap around
+        if (fish.x < 0) fish.x = 1;
+        if (fish.x > 1) fish.x = 0;
+        if (fish.y < 0) fish.y = 1;
+        if (fish.y > 1) fish.y = 0;
+      });
+
+      // Draw fish
+      const sortedFish = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedFish.forEach((fish) => {
+        const screenX = fish.x * width;
+        const screenY = fish.y * height;
+        const angle = Math.atan2(fish.vy, fish.vx);
+        const size = fish.size * (0.5 + fish.z * 0.5);
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(angle);
+
+        // Fish body
+        const fishColor = fish.colorMix > 0.5 ? color2 : color1;
+        const alpha = 0.6 + fish.z * 0.4;
+        ctx.fillStyle = `rgba(${fishColor.r}, ${fishColor.g}, ${fishColor.b}, ${alpha})`;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 2, size, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tail
+        ctx.beginPath();
+        ctx.moveTo(-size * 2, 0);
+        ctx.lineTo(-size * 3.5, -size);
+        ctx.lineTo(-size * 3.5, size);
+        ctx.closePath();
+        ctx.fill();
+
+        // Eye
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.beginPath();
+        ctx.arc(size, 0, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Metallic shine
+        if (params.metallic > 0.5) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.3 * alpha})`;
+          ctx.beginPath();
+          ctx.ellipse(size * 0.5, -size * 0.3, size * 0.8, size * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      });
+    }
+
+    // ============ BIRD MURMURATION ============
+    else if (arrangement === 'murmuration') {
+      const particles = birdParticlesRef.current;
+      timeRef.current += 0.02 * params.cameraSpeed;
+      const time = timeRef.current;
+
+      // Predator/attractor point that moves through the flock
+      const predatorX = 0.5 + Math.cos(time * 0.5) * 0.3;
+      const predatorY = 0.4 + Math.sin(time * 0.7) * 0.25;
+
+      // Dusk sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+      const bgColor = hexToRgb(params.backgroundColor);
+      skyGradient.addColorStop(0, `rgb(${Math.floor(bgColor.r * 0.4)}, ${Math.floor(bgColor.g * 0.3)}, ${Math.floor(bgColor.b * 0.6)})`);
+      skyGradient.addColorStop(0.4, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      skyGradient.addColorStop(1, `rgb(${Math.floor(bgColor.r * 0.3)}, ${Math.floor(bgColor.g * 0.2)}, ${Math.floor(bgColor.b * 0.3)})`);
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Silhouette treeline
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.moveTo(0, height);
+      for (let x = 0; x <= width; x += 20) {
+        const treeHeight = 50 + Math.sin(x * 0.02) * 30 + Math.sin(x * 0.05) * 20;
+        ctx.lineTo(x, height - treeHeight);
+      }
+      ctx.lineTo(width, height);
+      ctx.closePath();
+      ctx.fill();
+
+      // Boids algorithm for birds
+      particles.forEach((bird) => {
+        let avgX = 0, avgY = 0, avgVx = 0, avgVy = 0, separateX = 0, separateY = 0;
+        let neighbors = 0;
+
+        // Sample only some birds for performance
+        for (let i = 0; i < Math.min(50, particles.length); i++) {
+          const other = particles[Math.floor(Math.random() * particles.length)];
+          if (bird === other) continue;
+
+          const dx = other.x - bird.x;
+          const dy = other.y - bird.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 0.12) {
+            avgX += other.x;
+            avgY += other.y;
+            avgVx += other.vx;
+            avgVy += other.vy;
+            neighbors++;
+
+            if (dist < 0.025) {
+              separateX -= dx / dist * 0.0008;
+              separateY -= dy / dist * 0.0008;
+            }
+          }
+        }
+
+        if (neighbors > 0) {
+          avgX /= neighbors;
+          avgY /= neighbors;
+          avgVx /= neighbors;
+          avgVy /= neighbors;
+
+          bird.vx += (avgX - bird.x) * 0.008;
+          bird.vy += (avgY - bird.y) * 0.008;
+          bird.vx += (avgVx - bird.vx) * 0.04;
+          bird.vy += (avgVy - bird.vy) * 0.04;
+          bird.vx += separateX;
+          bird.vy += separateY;
+        }
+
+        // Avoid predator
+        const predDx = bird.x - predatorX;
+        const predDy = bird.y - predatorY;
+        const predDist = Math.sqrt(predDx * predDx + predDy * predDy);
+        if (predDist < 0.2) {
+          bird.vx += (predDx / predDist) * 0.003 * (0.2 - predDist) * 5;
+          bird.vy += (predDy / predDist) * 0.003 * (0.2 - predDist) * 5;
+        }
+
+        // Contain to screen
+        if (bird.x < 0.1) bird.vx += 0.001;
+        if (bird.x > 0.9) bird.vx -= 0.001;
+        if (bird.y < 0.1) bird.vy += 0.001;
+        if (bird.y > 0.7) bird.vy -= 0.001;
+
+        // Speed limit
+        const speed = Math.sqrt(bird.vx * bird.vx + bird.vy * bird.vy);
+        if (speed > 0.01) {
+          bird.vx = (bird.vx / speed) * 0.01;
+          bird.vy = (bird.vy / speed) * 0.01;
+        }
+
+        bird.x += bird.vx;
+        bird.y += bird.vy;
+        bird.wingPhase += 0.3;
+      });
+
+      // Draw birds
+      const sortedBirds = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedBirds.forEach((bird) => {
+        const screenX = bird.x * width;
+        const screenY = bird.y * height;
+        const angle = Math.atan2(bird.vy, bird.vx);
+        const size = 2 + bird.z * 2;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(angle);
+
+        // Simple bird silhouette
+        const wingOffset = Math.sin(bird.wingPhase) * 2;
+        ctx.fillStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, ${0.6 + bird.z * 0.4})`;
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size, size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wings
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.5, 0);
+        ctx.lineTo(-size, -size + wingOffset);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(-size, size - wingOffset);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      });
+    }
+
+    // ============ PENDULUM WAVE ============
+    else if (arrangement === 'pendulums') {
+      const particles = pendulumParticlesRef.current;
+      pendulumTimeRef.current += 0.03 * params.cameraSpeed;
+      const time = pendulumTimeRef.current;
+
+      // Dark background with spotlight
+      const spotlightGradient = ctx.createRadialGradient(centerX, height * 0.1, 0, centerX, height * 0.5, height * 0.8);
+      spotlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+      spotlightGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = spotlightGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Support bar
+      const barY = height * 0.1;
+      ctx.strokeStyle = '#666666';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(width * 0.05, barY);
+      ctx.lineTo(width * 0.95, barY);
+      ctx.stroke();
+
+      // Pendulum physics
+      const g = 9.8;
+      particles.forEach((pendulum) => {
+        // Period = 2π√(L/g), angular frequency ω = √(g/L)
+        const omega = Math.sqrt(g / (pendulum.length * 10));
+        // Simple harmonic motion: θ(t) = θ₀ cos(ωt)
+        const amplitude = Math.PI / 4;
+        pendulum.angle = amplitude * Math.cos(omega * time);
+      });
+
+      // Draw pendulums
+      particles.forEach((pendulum) => {
+        const pivotX = pendulum.x * width * 0.9 + width * 0.05;
+        const pivotY = barY;
+        const length = pendulum.length * height * 2;
+        const bobX = pivotX + Math.sin(pendulum.angle) * length;
+        const bobY = pivotY + Math.cos(pendulum.angle) * length;
+        const bobSize = 15;
+
+        // String shadow
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pivotX + 3, pivotY + 3);
+        ctx.lineTo(bobX + 3, bobY + 3);
+        ctx.stroke();
+
+        // String
+        ctx.strokeStyle = '#888888';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.lineTo(bobX, bobY);
+        ctx.stroke();
+
+        // Bob shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(bobX + 5, bobY + height * 0.7, bobSize * 0.8, bobSize * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bob with gradient
+        const bobColor = pendulum.colorMix > 0.5 ? color2 : color1;
+        const bobGradient = ctx.createRadialGradient(bobX - bobSize * 0.3, bobY - bobSize * 0.3, 0, bobX, bobY, bobSize);
+        bobGradient.addColorStop(0, `rgba(255, 255, 255, ${params.metallic})`);
+        bobGradient.addColorStop(0.3, `rgb(${bobColor.r}, ${bobColor.g}, ${bobColor.b})`);
+        bobGradient.addColorStop(1, `rgb(${Math.floor(bobColor.r * 0.5)}, ${Math.floor(bobColor.g * 0.5)}, ${Math.floor(bobColor.b * 0.5)})`);
+
+        ctx.fillStyle = bobGradient;
+        ctx.beginPath();
+        ctx.arc(bobX, bobY, bobSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Specular highlight
+        if (params.metallic > 0.5) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.6})`;
+          ctx.beginPath();
+          ctx.arc(bobX - bobSize * 0.3, bobY - bobSize * 0.3, bobSize * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    // ============ DOMINO CHAIN REACTION ============
+    else if (arrangement === 'dominoes') {
+      const particles = dominoParticlesRef.current;
+      dominoTriggerRef.current += 0.02 * params.cameraSpeed;
+      const trigger = dominoTriggerRef.current;
+
+      // Background
+      const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 0.7);
+      bgGradient.addColorStop(0, 'rgba(40, 40, 40, 1)');
+      bgGradient.addColorStop(1, 'rgba(10, 10, 10, 1)');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Chain reaction logic
+      const triggerIndex = Math.floor(trigger * particles.length * 0.5) % particles.length;
+      
+      particles.forEach((domino, index) => {
+        // Trigger domino if it's time
+        if (index <= triggerIndex && !domino.triggered) {
+          domino.triggered = true;
+          domino.fallSpeed = 0.1 + Math.random() * 0.05;
+        }
+
+        // Fall animation
+        if (domino.triggered && domino.angle < Math.PI / 2 - 0.1) {
+          domino.angle += domino.fallSpeed * params.cameraSpeed;
+          domino.fallSpeed += 0.005; // Accelerate
+        }
+
+        // Reset when all have fallen
+        if (trigger > particles.length * 0.02 + 3) {
+          domino.angle = 0;
+          domino.triggered = false;
+          domino.fallSpeed = 0;
+        }
+      });
+
+      // Draw dominoes
+      particles.forEach((domino) => {
+        const screenX = domino.x * width;
+        const screenY = domino.y * height;
+        const dominoHeight = 25;
+        const dominoWidth = 8;
+        const dominoDepth = 4;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+
+        // Calculate fall direction based on spiral position
+        const fallDirection = Math.atan2(domino.y - 0.5, domino.x - 0.5) + Math.PI / 2;
+        ctx.rotate(fallDirection);
+
+        // Domino is tilting
+        const tiltOffset = Math.sin(domino.angle) * dominoHeight;
+        const tiltHeight = Math.cos(domino.angle) * dominoHeight;
+
+        // Shadow
+        if (domino.angle > 0) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(tiltOffset * 0.5, 5, dominoWidth + tiltOffset * 0.3, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Domino face
+        const dominoColor = domino.colorMix > 0.5 ? color2 : color1;
+        ctx.fillStyle = `rgb(${dominoColor.r}, ${dominoColor.g}, ${dominoColor.b})`;
+        
+        // Front face (always visible)
+        ctx.beginPath();
+        ctx.rect(-dominoWidth / 2, -tiltHeight, dominoWidth, tiltHeight);
+        ctx.fill();
+
+        // Top face (visible when standing)
+        if (domino.angle < Math.PI / 4) {
+          ctx.fillStyle = `rgb(${Math.min(255, dominoColor.r + 30)}, ${Math.min(255, dominoColor.g + 30)}, ${Math.min(255, dominoColor.b + 30)})`;
+          ctx.beginPath();
+          ctx.moveTo(-dominoWidth / 2, -tiltHeight);
+          ctx.lineTo(-dominoWidth / 2 + dominoDepth, -tiltHeight - dominoDepth);
+          ctx.lineTo(dominoWidth / 2 + dominoDepth, -tiltHeight - dominoDepth);
+          ctx.lineTo(dominoWidth / 2, -tiltHeight);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // Dots (pips)
+        ctx.fillStyle = '#FFFFFF';
+        const pipPositions = [[0, -tiltHeight / 2]];
+        pipPositions.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.restore();
+      });
+
+      // Reset trigger for loop
+      if (dominoTriggerRef.current > particles.length * 0.02 + 4) {
+        dominoTriggerRef.current = 0;
+      }
+    }
+
+    // ============ COMPASS NEEDLES TO MAGNET ============
+    else if (arrangement === 'compass') {
+      const particles = compassParticlesRef.current;
+      timeRef.current += 0.02 * params.cameraSpeed;
+      const time = timeRef.current;
+
+      // Moving magnet position (figure-8 path)
+      const magnetX = 0.5 + Math.sin(time * 0.5) * 0.35;
+      const magnetY = 0.5 + Math.sin(time) * Math.cos(time * 0.5) * 0.25;
+      magnetPositionRef.current = { x: magnetX, y: magnetY, angle: time };
+
+      // Background
+      const bgColor = hexToRgb(params.backgroundColor);
+      ctx.fillStyle = `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
+      ctx.fillRect(0, 0, width, height);
+
+      // Grid lines (subtle)
+      ctx.strokeStyle = 'rgba(128, 128, 128, 0.1)';
+      ctx.lineWidth = 1;
+      const gridSize = 50;
+      for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Update compass needles to point toward magnet
+      particles.forEach((compass) => {
+        const dx = magnetX - compass.x;
+        const dy = magnetY - compass.y;
+        compass.targetAngle = Math.atan2(dy, dx);
+
+        // Springy rotation toward target
+        let angleDiff = compass.targetAngle - compass.angle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+        compass.angle += angleDiff * 0.1 * compass.springiness;
+      });
+
+      // Draw compass needles
+      const needleLength = 15;
+      particles.forEach((compass) => {
+        const screenX = compass.x * width;
+        const screenY = compass.y * height;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(compass.angle);
+
+        // Needle base circle
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 0, needleLength * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // North (red) half
+        ctx.fillStyle = `rgb(${color1.r}, ${color1.g}, ${color1.b})`;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(needleLength, -2);
+        ctx.lineTo(needleLength, 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // South (white/silver) half
+        ctx.fillStyle = `rgb(${color2.r}, ${color2.g}, ${color2.b})`;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-needleLength * 0.7, -2);
+        ctx.lineTo(-needleLength * 0.7, 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Center pivot
+        ctx.fillStyle = '#333333';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      });
+
+      // Draw magnet position (optional visible indicator)
+      const magnetScreenX = magnetX * width;
+      const magnetScreenY = magnetY * height;
+      ctx.fillStyle = 'rgba(255, 100, 100, 0.3)';
+      ctx.beginPath();
+      ctx.arc(magnetScreenX, magnetScreenY, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255, 50, 50, 0.6)';
+      ctx.beginPath();
+      ctx.arc(magnetScreenX, magnetScreenY, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
-    else {
+    else if (arrangement === 'cannon' || arrangement === 'radial' || arrangement === 'spiral' || arrangement === 'grid' || arrangement === 'wave') {
       const isCannon = arrangement === 'cannon';
 
       if (isCannon) {
@@ -2071,6 +3220,30 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       case 'surfers':
         initSurferParticles();
         break;
+      case 'flags':
+        initFlagParticles();
+        break;
+      case 'sailboats':
+        initSailboatParticles();
+        break;
+      case 'forest':
+        initTreeParticles();
+        break;
+      case 'fishschool':
+        initFishParticles();
+        break;
+      case 'murmuration':
+        initBirdParticles();
+        break;
+      case 'pendulums':
+        initPendulumParticles();
+        break;
+      case 'dominoes':
+        initDominoParticles();
+        break;
+      case 'compass':
+        initCompassParticles();
+        break;
       default:
         initParticles();
     }
@@ -2089,6 +3262,14 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     initSolarPanelParticles,
     initWindmillParticles,
     initSurferParticles,
+    initFlagParticles,
+    initSailboatParticles,
+    initTreeParticles,
+    initFishParticles,
+    initBirdParticles,
+    initPendulumParticles,
+    initDominoParticles,
+    initCompassParticles,
     initParticles,
   ]);
 

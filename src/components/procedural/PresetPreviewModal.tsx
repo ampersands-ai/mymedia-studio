@@ -123,6 +123,24 @@ export function PresetPreviewModal({ preset, isOpen, onClose, onSelect }: Preset
                 className="w-full"
               />
             </div>
+
+            {/* Panel Size - only for solarpanel arrangement */}
+            {preset.params.arrangement === 'solarpanel' && (
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label className="text-sm text-muted-foreground">Panel Size</Label>
+                  <span className="text-sm text-foreground">{(customParams.panelSize ?? 1).toFixed(1)}x</span>
+                </div>
+                <Slider
+                  value={[(customParams.panelSize ?? 1) * 100]}
+                  onValueChange={([v]) => handleParamChange('panelSize', v / 100)}
+                  min={50}
+                  max={300}
+                  step={10}
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
         </div>
 

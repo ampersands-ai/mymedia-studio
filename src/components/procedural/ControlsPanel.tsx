@@ -321,6 +321,24 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
             className="cursor-pointer"
           />
         </div>
+
+        {/* Panel Size - Only for Solar Panel arrangement */}
+        {params.arrangement === 'solarpanel' && (
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground sm:text-sm">Panel Size</Label>
+              <span className="text-xs font-medium text-foreground sm:text-sm">{(params.panelSize ?? 1).toFixed(1)}x</span>
+            </div>
+            <Slider
+              value={[(params.panelSize ?? 1) * 100]}
+              onValueChange={([value]) => onChange({ panelSize: value / 100 })}
+              min={50}
+              max={300}
+              step={10}
+              className="cursor-pointer"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

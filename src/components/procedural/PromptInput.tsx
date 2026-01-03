@@ -48,6 +48,7 @@ export function PromptInput({ onApply }: PromptInputProps) {
     cameraSpeed: 'Speed',
     instanceCount: 'Density',
     backgroundColor: 'Background',
+    panelSize: 'Panel Size',
   };
 
   return (

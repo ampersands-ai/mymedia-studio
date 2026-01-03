@@ -760,7 +760,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'dna-cyan-magenta',
     name: 'DNA Strand',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -776,7 +776,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'bio-helix',
     name: 'Bio Helix',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -792,7 +792,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'golden-helix',
     name: 'Golden DNA',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -809,7 +809,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'matrix-classic',
     name: 'Matrix Classic',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -825,7 +825,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'matrix-blue',
     name: 'Blue Code',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -841,7 +841,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'matrix-blood',
     name: 'Red Rain',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -858,7 +858,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'atomic-blue',
     name: 'Atomic Blue',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -874,7 +874,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'atomic-gold',
     name: 'Golden Atom',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -890,7 +890,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'neon-atom',
     name: 'Neon Atom',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -907,7 +907,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'fire-vortex',
     name: 'Fire Vortex',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -923,7 +923,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'ice-vortex',
     name: 'Ice Vortex',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -939,7 +939,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'void-vortex',
     name: 'Void Spiral',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -956,7 +956,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'starfield',
     name: 'Starfield',
-    category: 'Minimal',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -972,7 +972,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'cosmic-web',
     name: 'Cosmic Web',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -988,7 +988,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'neural-network',
     name: 'Neural Network',
-    category: 'Tech',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -1005,7 +1005,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'rainbow-kaleidoscope',
     name: 'Rainbow Kaleidoscope',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -1021,7 +1021,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'crystal-kaleidoscope',
     name: 'Crystal Vision',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'pyramid',
@@ -1037,7 +1037,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'psychedelic',
     name: 'Psychedelic',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -1054,7 +1054,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'cosmic-river',
     name: 'Cosmic River',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -1070,7 +1070,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'lava-flow',
     name: 'Lava Flow',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -1086,7 +1086,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'aurora-stream',
     name: 'Aurora Stream',
-    category: 'Minimal',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -1103,7 +1103,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'big-bang',
     name: 'Big Bang',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -1119,7 +1119,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'supernova-burst',
     name: 'Supernova Burst',
-    category: 'Energetic',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'sphere',
@@ -1135,7 +1135,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   {
     id: 'ice-burst',
     name: 'Ice Burst',
-    category: 'Abstract',
+    category: 'Mesmerizing',
     thumbnail: '/placeholder.svg',
     params: {
       shape: 'cube',
@@ -1150,5 +1150,5 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   },
 ];
 
-export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal'] as const;
+export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing'] as const;
 export type CategoryFilter = typeof CATEGORY_FILTERS[number];

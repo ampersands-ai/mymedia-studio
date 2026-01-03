@@ -12,7 +12,7 @@ export interface ShaderParams {
 export interface BackgroundPreset {
   id: string;
   name: string;
-  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal';
+  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing';
   thumbnail: string;
   params: ShaderParams;
 }

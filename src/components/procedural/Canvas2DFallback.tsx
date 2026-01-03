@@ -1689,23 +1689,23 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     else if (arrangement === 'solarpanel') {
       const particles = solarPanelParticlesRef.current;
       
-      // Update sun position - continuous organic wandering using multiple sine waves
+      // Update sun position - continuous organic wandering across entire screen
       lightAngleRef.current += params.cameraSpeed * 0.015;
       const t = lightAngleRef.current;
       
-      // Combine multiple frequencies for organic, non-linear movement
+      // Combine multiple frequencies for organic, non-linear movement across full screen
       const sunX = 0.5 + 
-        Math.sin(t * 0.7) * 0.25 + 
-        Math.sin(t * 1.3 + 1.5) * 0.12 + 
-        Math.cos(t * 0.4 + 0.8) * 0.08;
-      const sunY = 0.3 + 
-        Math.cos(t * 0.5) * 0.15 + 
-        Math.sin(t * 0.9 + 2.1) * 0.08 + 
-        Math.cos(t * 1.1 + 0.5) * 0.05;
+        Math.sin(t * 0.7) * 0.4 + 
+        Math.sin(t * 1.3 + 1.5) * 0.15 + 
+        Math.cos(t * 0.4 + 0.8) * 0.1;
+      const sunY = 0.5 + 
+        Math.cos(t * 0.5) * 0.4 + 
+        Math.sin(t * 0.9 + 2.1) * 0.15 + 
+        Math.cos(t * 1.1 + 0.5) * 0.1;
       
-      // Convert normalized position to screen coordinates
-      const lightX = Math.max(0.1, Math.min(0.9, sunX)) * width;
-      const lightY = Math.max(0.08, Math.min(0.5, sunY)) * height;
+      // Convert normalized position to screen coordinates - full screen coverage
+      const lightX = Math.max(0.05, Math.min(0.95, sunX)) * width;
+      const lightY = Math.max(0.05, Math.min(0.95, sunY)) * height;
       
       // Draw central glowing light source
       const primaryRgb = hexToRgb(params.colorPrimary);

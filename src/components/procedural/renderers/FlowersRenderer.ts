@@ -4,7 +4,6 @@ import { TrackingParticle, RenderContext, AttractorState } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
-  distanceToTarget,
   getGridDimensions
 } from './trackingUtils';
 

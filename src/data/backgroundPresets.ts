@@ -1148,7 +1148,56 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       backgroundColor: '#000510',
     },
   },
+  // ============ SUNFLOWERS PRESETS ============
+  {
+    id: 'sunflower-field',
+    name: 'Sunflower Field',
+    category: 'Sunflowers',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'sunflowers',
+      colorPrimary: '#FFD700',
+      colorSecondary: '#8B4513',
+      metallic: 0.3,
+      instanceCount: 300,
+      cameraSpeed: 0.3,
+      backgroundColor: '#87CEEB',
+    },
+  },
+  {
+    id: 'golden-hour-field',
+    name: 'Golden Hour Field',
+    category: 'Sunflowers',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'sunflowers',
+      colorPrimary: '#FFA500',
+      colorSecondary: '#654321',
+      metallic: 0.4,
+      instanceCount: 400,
+      cameraSpeed: 0.25,
+      backgroundColor: '#FF8C00',
+    },
+  },
+  {
+    id: 'sunset-meadow',
+    name: 'Sunset Meadow',
+    category: 'Sunflowers',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'sunflowers',
+      colorPrimary: '#FFDB58',
+      colorSecondary: '#5D4E37',
+      metallic: 0.35,
+      instanceCount: 250,
+      cameraSpeed: 0.2,
+      backgroundColor: '#FF6B35',
+    },
+  },
 ];
 
-export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing'] as const;
+export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing', 'Sunflowers'] as const;
 export type CategoryFilter = typeof CATEGORY_FILTERS[number];

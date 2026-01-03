@@ -105,6 +105,22 @@ interface ExplosionParticle {
   colorMix: number;
 }
 
+// Sunflower particle for heliotropism effect
+interface SunflowerParticle {
+  x: number; // position on field
+  z: number; // depth position
+  stemHeight: number;
+  stemCurve: number; // slight random bend
+  headRotationY: number; // current horizontal rotation
+  headRotationX: number; // current vertical tilt
+  targetRotationY: number;
+  targetRotationX: number;
+  petalCount: number;
+  swayOffset: number; // for wind sway
+  swaySpeed: number;
+  scale: number;
+}
+
 export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -116,9 +132,11 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const constellationParticlesRef = useRef<ConstellationParticle[]>([]);
   const streamParticlesRef = useRef<StreamParticle[]>([]);
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
+  const sunflowerParticlesRef = useRef<SunflowerParticle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
+  const sunAngleRef = useRef(0); // For sun arc position
 
   const hexToRgb = useCallback((hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -264,6 +282,39 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     }
     explosionParticlesRef.current = particles;
     explosionPhaseRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Sunflower particles (heliotropism)
+  const initSunflowerParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 500);
+    const particles: SunflowerParticle[] = [];
+    const rows = Math.ceil(Math.sqrt(count));
+    const cols = Math.ceil(count / rows);
+
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      // Scatter positions with some randomness
+      const baseX = (col / cols) * 0.8 + 0.1 + (Math.random() - 0.5) * 0.08;
+      const baseZ = (row / rows) * 0.6 + 0.2 + (Math.random() - 0.5) * 0.05;
+      
+      particles.push({
+        x: baseX,
+        z: baseZ,
+        stemHeight: 0.15 + Math.random() * 0.1,
+        stemCurve: (Math.random() - 0.5) * 0.1,
+        headRotationY: 0,
+        headRotationX: 0,
+        targetRotationY: 0,
+        targetRotationX: 0,
+        petalCount: 20 + Math.floor(Math.random() * 8),
+        swayOffset: Math.random() * Math.PI * 2,
+        swaySpeed: 0.5 + Math.random() * 0.5,
+        scale: 0.8 + Math.random() * 0.4,
+      });
+    }
+    sunflowerParticlesRef.current = particles;
+    sunAngleRef.current = 0;
   }, [params.instanceCount]);
 
   // Initialize Kaleidoscope particles
@@ -1092,6 +1143,152 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       ctx.fill();
     }
 
+    // ============ SUNFLOWERS (Heliotropism) ============
+    else if (arrangement === 'sunflowers') {
+      const particles = sunflowerParticlesRef.current;
+      
+      // Update sun position (arc across sky)
+      sunAngleRef.current += params.cameraSpeed * 0.008;
+      if (sunAngleRef.current > Math.PI) {
+        sunAngleRef.current = 0;
+      }
+      const sunAngle = sunAngleRef.current;
+      
+      // Sun position in screen space (arcs from left to right)
+      const sunX = centerX + Math.cos(sunAngle) * width * 0.4;
+      const sunY = height * 0.15 - Math.sin(sunAngle) * height * 0.35;
+      
+      // Sky gradient based on sun position
+      const sunProgress = sunAngle / Math.PI; // 0 to 1
+      const isNearHorizon = sunProgress < 0.15 || sunProgress > 0.85;
+      
+      // Draw sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.7);
+      if (isNearHorizon) {
+        skyGradient.addColorStop(0, '#1E3A5F');
+        skyGradient.addColorStop(0.5, '#FF8C00');
+        skyGradient.addColorStop(1, '#FF6B35');
+      } else {
+        skyGradient.addColorStop(0, '#1E3A5F');
+        skyGradient.addColorStop(0.5, '#4A90B8');
+        skyGradient.addColorStop(1, '#87CEEB');
+      }
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height * 0.7);
+      
+      // Draw ground
+      const groundGradient = ctx.createLinearGradient(0, height * 0.65, 0, height);
+      groundGradient.addColorStop(0, '#3D5A1F');
+      groundGradient.addColorStop(1, '#2A4015');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, height * 0.65, width, height * 0.35);
+      
+      // Draw sun with glow
+      const sunRadius = 40;
+      const sunColor = isNearHorizon ? '#FF6B35' : '#FFD700';
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius * 3);
+      sunGlow.addColorStop(0, sunColor);
+      sunGlow.addColorStop(0.3, `${sunColor}88`);
+      sunGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, sunRadius * 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = sunColor;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Sort sunflowers by z for proper depth rendering
+      const sortedFlowers = [...particles].sort((a, b) => a.z - b.z);
+      
+      // Draw each sunflower
+      sortedFlowers.forEach((flower) => {
+        // Calculate screen position with perspective
+        const perspective = 0.3 + flower.z * 0.7;
+        const screenX = flower.x * width;
+        const screenY = height * 0.65 + flower.z * height * 0.3;
+        const scale = flower.scale * perspective;
+        
+        // Calculate direction from flower to sun
+        const dx = sunX - screenX;
+        const dy = sunY - screenY;
+        const targetRotY = Math.atan2(dx, 100);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const targetRotX = Math.atan2(-dy, dist) * 0.5;
+        
+        // Smooth lerp toward target rotation
+        const lerpSpeed = 0.03;
+        flower.headRotationY += (targetRotY - flower.headRotationY) * lerpSpeed;
+        flower.headRotationX += (targetRotX - flower.headRotationX) * lerpSpeed;
+        
+        // Add wind sway
+        const sway = Math.sin(timeRef.current * flower.swaySpeed + flower.swayOffset) * 0.03;
+        
+        const stemHeight = flower.stemHeight * height * scale;
+        const stemBottom = screenY;
+        const stemTop = screenY - stemHeight;
+        const headSize = 20 * scale;
+        
+        // Draw stem with curve
+        ctx.strokeStyle = '#228B22';
+        ctx.lineWidth = 4 * scale;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(screenX, stemBottom);
+        const curveX = screenX + flower.stemCurve * 50 * scale + sway * 30;
+        ctx.quadraticCurveTo(curveX, stemBottom - stemHeight * 0.5, screenX + flower.headRotationY * 15 * scale, stemTop);
+        ctx.stroke();
+        
+        // Draw leaves
+        const leafPositions = [0.3, 0.5, 0.7];
+        ctx.fillStyle = '#32CD32';
+        leafPositions.forEach((pos, idx) => {
+          const leafY = stemBottom - stemHeight * pos;
+          const leafX = screenX + (idx % 2 === 0 ? -1 : 1) * 15 * scale;
+          ctx.beginPath();
+          ctx.ellipse(leafX, leafY, 12 * scale, 6 * scale, (idx % 2 === 0 ? -0.5 : 0.5), 0, Math.PI * 2);
+          ctx.fill();
+        });
+        
+        // Draw flower head (tilted based on sun tracking)
+        const headX = screenX + flower.headRotationY * 15 * scale;
+        const headY = stemTop + flower.headRotationX * 10 * scale;
+        
+        // Petals
+        const petalColor = hexToRgb(params.colorPrimary);
+        for (let p = 0; p < flower.petalCount; p++) {
+          const petalAngle = (p / flower.petalCount) * Math.PI * 2;
+          const petalX = headX + Math.cos(petalAngle) * headSize * 1.3;
+          const petalY = headY + Math.sin(petalAngle) * headSize * 0.8 * (1 - Math.abs(flower.headRotationX) * 0.3);
+          
+          ctx.fillStyle = `rgb(${petalColor.r}, ${petalColor.g}, ${petalColor.b})`;
+          ctx.beginPath();
+          ctx.ellipse(petalX, petalY, headSize * 0.5, headSize * 0.2, petalAngle, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Center disc
+        const centerColor = hexToRgb(params.colorSecondary);
+        ctx.fillStyle = `rgb(${centerColor.r}, ${centerColor.g}, ${centerColor.b})`;
+        ctx.beginPath();
+        ctx.arc(headX, headY, headSize * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Texture on center
+        ctx.fillStyle = `rgba(0, 0, 0, 0.2)`;
+        for (let t = 0; t < 8; t++) {
+          const texAngle = (t / 8) * Math.PI * 2;
+          const texX = headX + Math.cos(texAngle) * headSize * 0.35;
+          const texY = headY + Math.sin(texAngle) * headSize * 0.35;
+          ctx.beginPath();
+          ctx.arc(texX, texY, 2 * scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
     // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
     else {
       const isCannon = arrangement === 'cannon';
@@ -1233,6 +1430,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       case 'kaleidoscope':
         initKaleidoscopeParticles();
         break;
+      case 'sunflowers':
+        initSunflowerParticles();
+        break;
       default:
         initParticles();
     }
@@ -1247,6 +1447,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     initStreamParticles,
     initExplosionParticles,
     initKaleidoscopeParticles,
+    initSunflowerParticles,
     initParticles,
   ]);
 

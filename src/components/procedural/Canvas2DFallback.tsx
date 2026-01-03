@@ -1147,16 +1147,16 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     else if (arrangement === 'sunflowers') {
       const particles = sunflowerParticlesRef.current;
       
-      // Update sun position (arc across sky)
+      // Update sun position (moves horizontally across sky)
       sunAngleRef.current += params.cameraSpeed * 0.008;
-      if (sunAngleRef.current > Math.PI) {
+      if (sunAngleRef.current > Math.PI * 2) {
         sunAngleRef.current = 0;
       }
       const sunAngle = sunAngleRef.current;
       
-      // Sun position in screen space (arcs from left to right)
-      const sunX = centerX + Math.cos(sunAngle) * width * 0.4;
-      const sunY = height * 0.15 - Math.sin(sunAngle) * height * 0.35;
+      // Sun position in screen space (moves horizontally left to right)
+      const sunX = width * 0.1 + (sunAngle / (Math.PI * 2)) * width * 0.8;
+      const sunY = height * 0.2; // Fixed height
       
       // Sky gradient based on sun position
       const sunProgress = sunAngle / Math.PI; // 0 to 1

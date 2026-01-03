@@ -135,8 +135,8 @@ export function PresetPreviewModal({ preset, isOpen, onClose, onSelect }: Preset
                   value={[(customParams.panelSize ?? 1) * 100]}
                   onValueChange={([v]) => handleParamChange('panelSize', v / 100)}
                   min={50}
-                  max={300}
-                  step={10}
+                  max={1000}
+                  step={25}
                   className="w-full"
                 />
               </div>

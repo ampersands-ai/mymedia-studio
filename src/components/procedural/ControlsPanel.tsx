@@ -333,8 +333,8 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
               value={[(params.panelSize ?? 1) * 100]}
               onValueChange={([value]) => onChange({ panelSize: value / 100 })}
               min={50}
-              max={300}
-              step={10}
+              max={1000}
+              step={25}
               className="cursor-pointer"
             />
           </div>

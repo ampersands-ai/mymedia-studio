@@ -272,6 +272,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
   const sunAngleRef = useRef(0); // For sun arc position
   const lightAngleRef = useRef(0); // For solar panel light orbit
+  const sunTargetRef = useRef({ x: 0.5, y: 0.3 }); // Random sun target position (normalized 0-1)
+  const sunCurrentRef = useRef({ x: 0.5, y: 0.3 }); // Current sun position (normalized 0-1)
+  const sunChangeTimeRef = useRef(0); // Time until next direction change
   const windAngleRef = useRef(0); // For wind direction
   const windGustRef = useRef(0); // For gust wave position
   const waveTimeRef = useRef(0); // For ocean waves
@@ -1689,17 +1692,26 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     else if (arrangement === 'solarpanel') {
       const particles = solarPanelParticlesRef.current;
       
-      // Update light source position (orbits around the center)
-      lightAngleRef.current += params.cameraSpeed * 0.03;
-      if (lightAngleRef.current > Math.PI * 2) {
-        lightAngleRef.current = 0;
+      // Update sun position - random wandering movement
+      sunChangeTimeRef.current -= params.cameraSpeed * 0.016;
+      if (sunChangeTimeRef.current <= 0) {
+        // Pick a new random target position
+        sunTargetRef.current = {
+          x: 0.15 + Math.random() * 0.7, // Keep within 15%-85% of screen width
+          y: 0.1 + Math.random() * 0.4,  // Keep in upper portion (10%-50%)
+        };
+        // Random time until next change (2-6 seconds at normal speed)
+        sunChangeTimeRef.current = 2 + Math.random() * 4;
       }
-      const lightAngle = lightAngleRef.current;
       
-      // Light position relative to center (orbits horizontally)
-      const lightOrbitRadius = Math.min(width, height) * 0.4;
-      const lightX = centerX + Math.cos(lightAngle) * lightOrbitRadius;
-      const lightY = centerY * 0.3; // Keep light source elevated
+      // Smoothly interpolate current position toward target
+      const sunLerpSpeed = params.cameraSpeed * 0.02;
+      sunCurrentRef.current.x += (sunTargetRef.current.x - sunCurrentRef.current.x) * sunLerpSpeed;
+      sunCurrentRef.current.y += (sunTargetRef.current.y - sunCurrentRef.current.y) * sunLerpSpeed;
+      
+      // Convert normalized position to screen coordinates
+      const lightX = sunCurrentRef.current.x * width;
+      const lightY = sunCurrentRef.current.y * height;
       
       // Draw central glowing light source
       const primaryRgb = hexToRgb(params.colorPrimary);

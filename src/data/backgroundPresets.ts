@@ -1197,7 +1197,56 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       backgroundColor: '#FF6B35',
     },
   },
+  // ============ SOLARPANEL PRESETS ============
+  {
+    id: 'solar-array',
+    name: 'Solar Array',
+    category: 'Solarpanel',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'cube',
+      arrangement: 'solarpanel',
+      colorPrimary: '#6B8DD6',
+      colorSecondary: '#C9956B',
+      metallic: 0.95,
+      instanceCount: 4000,
+      cameraSpeed: 0.4,
+      backgroundColor: '#050505',
+    },
+  },
+  {
+    id: 'chrome-panels',
+    name: 'Chrome Panels',
+    category: 'Solarpanel',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'cube',
+      arrangement: 'solarpanel',
+      colorPrimary: '#C0C0C0',
+      colorSecondary: '#808080',
+      metallic: 1.0,
+      instanceCount: 5000,
+      cameraSpeed: 0.35,
+      backgroundColor: '#020202',
+    },
+  },
+  {
+    id: 'golden-trackers',
+    name: 'Golden Trackers',
+    category: 'Solarpanel',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'cube',
+      arrangement: 'solarpanel',
+      colorPrimary: '#D4A574',
+      colorSecondary: '#8B7355',
+      metallic: 0.98,
+      instanceCount: 3500,
+      cameraSpeed: 0.45,
+      backgroundColor: '#0a0500',
+    },
+  },
 ];
 
-export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing', 'Sunflowers'] as const;
+export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing', 'Sunflowers', 'Solarpanel'] as const;
 export type CategoryFilter = typeof CATEGORY_FILTERS[number];

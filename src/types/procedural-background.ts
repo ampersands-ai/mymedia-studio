@@ -1,7 +1,7 @@
 export interface ShaderParams {
   shape: 'cube' | 'sphere' | 'pyramid';
   instanceCount: number; // 1000-8000
-  arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers';
+  arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers' | 'solarpanel';
   colorPrimary: string; // hex color
   colorSecondary: string; // hex color
   metallic: number; // 0-1
@@ -12,7 +12,7 @@ export interface ShaderParams {
 export interface BackgroundPreset {
   id: string;
   name: string;
-  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing' | 'Sunflowers';
+  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing' | 'Sunflowers' | 'Solarpanel';
   thumbnail: string;
   params: ShaderParams;
 }

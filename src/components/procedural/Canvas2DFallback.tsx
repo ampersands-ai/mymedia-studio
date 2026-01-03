@@ -121,6 +121,17 @@ interface SunflowerParticle {
   scale: number;
 }
 
+// Solar panel particle for sun-tracking array
+interface SolarPanelParticle {
+  angle: number; // radial angle from center
+  distance: number; // distance from center
+  tiltX: number; // current tilt rotation
+  tiltY: number; // current horizontal rotation  
+  scale: number;
+  colorMix: number;
+  depth: number; // z depth for perspective
+}
+
 export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -133,10 +144,12 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const streamParticlesRef = useRef<StreamParticle[]>([]);
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
   const sunflowerParticlesRef = useRef<SunflowerParticle[]>([]);
+  const solarPanelParticlesRef = useRef<SolarPanelParticle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
   const sunAngleRef = useRef(0); // For sun arc position
+  const lightAngleRef = useRef(0); // For solar panel light orbit
 
   const hexToRgb = useCallback((hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -315,6 +328,31 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     }
     sunflowerParticlesRef.current = particles;
     sunAngleRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Solar Panel particles (radial sun-tracking array)
+  const initSolarPanelParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 5000);
+    const particles: SolarPanelParticle[] = [];
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees for organic distribution
+
+    for (let i = 0; i < count; i++) {
+      const angle = i * goldenAngle;
+      const distance = Math.sqrt(i / count) * 0.45; // Sqrt for even radial distribution
+      const depth = (i / count); // 0 to 1 (center to edge)
+
+      particles.push({
+        angle,
+        distance,
+        tiltX: 0,
+        tiltY: 0,
+        scale: 0.3 + depth * 0.7, // Larger panels further from center
+        colorMix: (i % 3 === 0) ? 1 : 0,
+        depth,
+      });
+    }
+    solarPanelParticlesRef.current = particles;
+    lightAngleRef.current = 0;
   }, [params.instanceCount]);
 
   // Initialize Kaleidoscope particles
@@ -1289,6 +1327,156 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       });
     }
 
+    // ============ SOLAR PANEL (Radial sun-tracking array) ============
+    else if (arrangement === 'solarpanel') {
+      const particles = solarPanelParticlesRef.current;
+      
+      // Update light source position (orbits around the center)
+      lightAngleRef.current += params.cameraSpeed * 0.03;
+      if (lightAngleRef.current > Math.PI * 2) {
+        lightAngleRef.current = 0;
+      }
+      const lightAngle = lightAngleRef.current;
+      
+      // Light position relative to center (orbits horizontally)
+      const lightOrbitRadius = Math.min(width, height) * 0.4;
+      const lightX = centerX + Math.cos(lightAngle) * lightOrbitRadius;
+      const lightY = centerY * 0.3; // Keep light source elevated
+      
+      // Draw central glowing light source
+      const primaryRgb = hexToRgb(params.colorPrimary);
+      const lightRadius = 25;
+      const lightGlow = ctx.createRadialGradient(lightX, lightY, 0, lightX, lightY, lightRadius * 4);
+      lightGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      lightGlow.addColorStop(0.2, `rgba(255, 248, 231, 0.8)`);
+      lightGlow.addColorStop(0.5, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.3)`);
+      lightGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = lightGlow;
+      ctx.beginPath();
+      ctx.arc(lightX, lightY, lightRadius * 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#FFF8E7';
+      ctx.beginPath();
+      ctx.arc(lightX, lightY, lightRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Sort panels by depth for proper rendering (back to front)
+      const sortedPanels = [...particles].sort((a, b) => a.depth - b.depth);
+      
+      // Draw each solar panel
+      sortedPanels.forEach((panel) => {
+        // Calculate panel position from center
+        const screenRadius = Math.min(width, height) * 0.4 * panel.distance;
+        const panelX = centerX + Math.cos(panel.angle + timeRef.current * 0.1) * screenRadius;
+        const panelY = centerY + Math.sin(panel.angle + timeRef.current * 0.1) * screenRadius;
+        
+        // Calculate direction from panel to light for tilt tracking
+        const dx = lightX - panelX;
+        const dy = lightY - panelY;
+        const distToLight = Math.sqrt(dx * dx + dy * dy);
+        
+        // Target tilt to face the light source
+        const targetTiltY = Math.atan2(dx, distToLight) * 1.2; // Horizontal rotation
+        const targetTiltX = Math.atan2(-dy, distToLight) * 0.8; // Vertical tilt
+        
+        // Smooth lerp toward target - wave effect based on distance from center
+        const lerpSpeed = 0.06;
+        const waveDelay = panel.distance * 0.3; // Ripple effect
+        const delayedTargetY = targetTiltY * Math.cos(waveDelay * Math.PI);
+        const delayedTargetX = targetTiltX * Math.cos(waveDelay * Math.PI);
+        
+        panel.tiltX += (delayedTargetX - panel.tiltX) * lerpSpeed;
+        panel.tiltY += (delayedTargetY - panel.tiltY) * lerpSpeed;
+        
+        // Panel size based on perspective (closer to camera = larger)
+        const basePanelWidth = 20 * panel.scale;
+        const basePanelHeight = 14 * panel.scale;
+        const perspective = 0.6 + panel.depth * 0.4;
+        const panelWidth = basePanelWidth * perspective;
+        const panelHeight = basePanelHeight * perspective;
+        
+        // Calculate light angle for reflection
+        const lightReflectAngle = Math.atan2(dy, dx);
+        const facingLight = Math.cos(panel.tiltY - lightReflectAngle);
+        const reflectionIntensity = Math.max(0, facingLight) * params.metallic;
+        
+        // Choose color based on light angle (warm when facing, cool when angled away)
+        const warmColor = color2; // Bronze/copper tone
+        const coolColor = color1; // Steel blue tone
+        
+        // Blend colors based on reflection
+        const blendFactor = reflectionIntensity;
+        const panelColor = {
+          r: Math.round(coolColor.r + (warmColor.r - coolColor.r) * blendFactor),
+          g: Math.round(coolColor.g + (warmColor.g - coolColor.g) * blendFactor),
+          b: Math.round(coolColor.b + (warmColor.b - coolColor.b) * blendFactor),
+        };
+        
+        // Apply tilt to panel shape (foreshortening effect)
+        const tiltFactor = Math.cos(panel.tiltX);
+        const displayHeight = panelHeight * Math.max(0.2, Math.abs(tiltFactor));
+        
+        ctx.save();
+        ctx.translate(panelX, panelY);
+        ctx.rotate(panel.tiltY * 0.5);
+        
+        // Draw panel with 3D metallic effect
+        const brightness = 0.5 + reflectionIntensity * 0.5;
+        
+        // Panel main face
+        const topBrightness = brightness * 1.2;
+        ctx.fillStyle = `rgba(${Math.min(255, panelColor.r * topBrightness)}, ${Math.min(255, panelColor.g * topBrightness)}, ${Math.min(255, panelColor.b * topBrightness)}, ${0.7 + panel.depth * 0.3})`;
+        ctx.fillRect(-panelWidth / 2, -displayHeight / 2, panelWidth, displayHeight);
+        
+        // Specular highlight when facing light
+        if (reflectionIntensity > 0.5) {
+          const highlightGradient = ctx.createLinearGradient(-panelWidth / 2, -displayHeight / 2, panelWidth / 2, displayHeight / 2);
+          highlightGradient.addColorStop(0, `rgba(255, 255, 255, ${reflectionIntensity * 0.6})`);
+          highlightGradient.addColorStop(0.5, `rgba(255, 255, 255, ${reflectionIntensity * 0.2})`);
+          highlightGradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = highlightGradient;
+          ctx.fillRect(-panelWidth / 2, -displayHeight / 2, panelWidth, displayHeight);
+        }
+        
+        // Panel edge (3D depth)
+        const edgeThickness = 3 * panel.scale;
+        const edgeBrightness = brightness * 0.6;
+        ctx.fillStyle = `rgba(${panelColor.r * edgeBrightness}, ${panelColor.g * edgeBrightness}, ${panelColor.b * edgeBrightness}, ${0.8 + panel.depth * 0.2})`;
+        
+        // Right edge
+        ctx.beginPath();
+        ctx.moveTo(panelWidth / 2, -displayHeight / 2);
+        ctx.lineTo(panelWidth / 2 + edgeThickness, -displayHeight / 2 - edgeThickness);
+        ctx.lineTo(panelWidth / 2 + edgeThickness, displayHeight / 2 - edgeThickness);
+        ctx.lineTo(panelWidth / 2, displayHeight / 2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Top edge (brighter)
+        ctx.fillStyle = `rgba(${Math.min(255, panelColor.r * brightness * 1.3)}, ${Math.min(255, panelColor.g * brightness * 1.3)}, ${Math.min(255, panelColor.b * brightness * 1.3)}, ${0.8 + panel.depth * 0.2})`;
+        ctx.beginPath();
+        ctx.moveTo(-panelWidth / 2, -displayHeight / 2);
+        ctx.lineTo(-panelWidth / 2 + edgeThickness, -displayHeight / 2 - edgeThickness);
+        ctx.lineTo(panelWidth / 2 + edgeThickness, -displayHeight / 2 - edgeThickness);
+        ctx.lineTo(panelWidth / 2, -displayHeight / 2);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+      });
+      
+      // Draw central vanishing point glow
+      const coreGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 60);
+      coreGlow.addColorStop(0, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.4)`);
+      coreGlow.addColorStop(0.5, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.1)`);
+      coreGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = coreGlow;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
     else {
       const isCannon = arrangement === 'cannon';
@@ -1433,6 +1621,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       case 'sunflowers':
         initSunflowerParticles();
         break;
+      case 'solarpanel':
+        initSolarPanelParticles();
+        break;
       default:
         initParticles();
     }
@@ -1448,6 +1639,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     initExplosionParticles,
     initKaleidoscopeParticles,
     initSunflowerParticles,
+    initSolarPanelParticles,
     initParticles,
   ]);
 

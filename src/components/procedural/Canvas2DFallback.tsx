@@ -1148,7 +1148,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       const particles = sunflowerParticlesRef.current;
       
       // Update sun position (moves horizontally across sky)
-      sunAngleRef.current += params.cameraSpeed * 0.008;
+      sunAngleRef.current += params.cameraSpeed * 0.025;
       if (sunAngleRef.current > Math.PI * 2) {
         sunAngleRef.current = 0;
       }
@@ -1214,12 +1214,12 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         // Calculate direction from flower to sun
         const dx = sunX - screenX;
         const dy = sunY - screenY;
-        const targetRotY = Math.atan2(dx, 100);
+        const targetRotY = Math.atan2(dx, 50) * 1.5; // More pronounced rotation
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const targetRotX = Math.atan2(-dy, dist) * 0.5;
+        const targetRotX = Math.atan2(-dy, dist) * 0.3;
         
         // Smooth lerp toward target rotation
-        const lerpSpeed = 0.03;
+        const lerpSpeed = 0.08;
         flower.headRotationY += (targetRotY - flower.headRotationY) * lerpSpeed;
         flower.headRotationX += (targetRotX - flower.headRotationX) * lerpSpeed;
         
@@ -1238,7 +1238,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         ctx.beginPath();
         ctx.moveTo(screenX, stemBottom);
         const curveX = screenX + flower.stemCurve * 50 * scale + sway * 30;
-        ctx.quadraticCurveTo(curveX, stemBottom - stemHeight * 0.5, screenX + flower.headRotationY * 15 * scale, stemTop);
+        ctx.quadraticCurveTo(curveX, stemBottom - stemHeight * 0.5, screenX + flower.headRotationY * 30 * scale, stemTop);
         ctx.stroke();
         
         // Draw leaves
@@ -1253,7 +1253,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         });
         
         // Draw flower head (tilted based on sun tracking)
-        const headX = screenX + flower.headRotationY * 15 * scale;
+        const headX = screenX + flower.headRotationY * 35 * scale;
         const headY = stemTop + flower.headRotationX * 10 * scale;
         
         // Petals

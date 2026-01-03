@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame } from 'lucide-react';
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -100,6 +100,54 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <MoveVertical className="h-4 w-4" />
                   Tunnel
+                </div>
+              </SelectItem>
+              <SelectItem value="helix">
+                <div className="flex items-center gap-2">
+                  <Dna className="h-4 w-4" />
+                  DNA Helix
+                </div>
+              </SelectItem>
+              <SelectItem value="matrix">
+                <div className="flex items-center gap-2">
+                  <Binary className="h-4 w-4" />
+                  Matrix Rain
+                </div>
+              </SelectItem>
+              <SelectItem value="orbits">
+                <div className="flex items-center gap-2">
+                  <Atom className="h-4 w-4" />
+                  Atomic Orbits
+                </div>
+              </SelectItem>
+              <SelectItem value="vortex">
+                <div className="flex items-center gap-2">
+                  <Wind className="h-4 w-4" />
+                  Vortex
+                </div>
+              </SelectItem>
+              <SelectItem value="constellation">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Constellation
+                </div>
+              </SelectItem>
+              <SelectItem value="kaleidoscope">
+                <div className="flex items-center gap-2">
+                  <Hexagon className="h-4 w-4" />
+                  Kaleidoscope
+                </div>
+              </SelectItem>
+              <SelectItem value="stream">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Particle Stream
+                </div>
+              </SelectItem>
+              <SelectItem value="explosion">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-4 w-4" />
+                  Explosion
                 </div>
               </SelectItem>
             </SelectContent>

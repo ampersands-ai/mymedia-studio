@@ -111,6 +111,17 @@ const ARRANGEMENT_KEYWORDS: Record<string, ShaderParams['arrangement']> = {
   candles: 'flames',
   torches: 'flames',
   fire: 'flames',
+  // POV tunnel ride
+  tunnelride: 'tunnelride',
+  tunnel: 'tunnelride',
+  pov: 'tunnelride',
+  bikeride: 'tunnelride',
+  psychedelic: 'tunnelride',
+  trippy: 'tunnelride',
+  warp: 'tunnelride',
+  hyperdrive: 'tunnelride',
+  hyperspace: 'tunnelride',
+  lightspeed: 'tunnelride',
 };
 
 const SHAPE_KEYWORDS: Record<string, ShaderParams['shape']> = {

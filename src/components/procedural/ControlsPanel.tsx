@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship } from 'lucide-react';
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -160,6 +160,18 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <PanelTop className="h-4 w-4" />
                   Solar Panel
+                </div>
+              </SelectItem>
+              <SelectItem value="windmill">
+                <div className="flex items-center gap-2">
+                  <Fan className="h-4 w-4" />
+                  Windmill
+                </div>
+              </SelectItem>
+              <SelectItem value="surfers">
+                <div className="flex items-center gap-2">
+                  <Ship className="h-4 w-4" />
+                  Surfers
                 </div>
               </SelectItem>
             </SelectContent>

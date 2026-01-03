@@ -132,6 +132,31 @@ interface SolarPanelParticle {
   depth: number; // z depth for perspective
 }
 
+// Windmill particle for wind-responsive turbines
+interface WindmillParticle {
+  x: number; // grid position
+  z: number; // depth position
+  height: number; // tower height
+  bladeAngle: number; // current blade rotation
+  bladeSpeed: number; // current spin speed
+  yawAngle: number; // direction turbine faces
+  targetYaw: number; // target direction
+  colorMix: number;
+}
+
+// Surfer particle for wave riding
+interface SurferParticle {
+  x: number; // position along wave
+  z: number; // lateral position
+  state: 'paddling' | 'riding' | 'returning';
+  wavePhase: number; // timing on wave
+  armPhase: number; // paddle animation
+  boardTilt: number; // angle matching wave
+  bodyLean: number; // turning lean
+  speed: number;
+  stateTimer: number; // time in current state
+}
+
 export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -145,11 +170,16 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
   const sunflowerParticlesRef = useRef<SunflowerParticle[]>([]);
   const solarPanelParticlesRef = useRef<SolarPanelParticle[]>([]);
+  const windmillParticlesRef = useRef<WindmillParticle[]>([]);
+  const surferParticlesRef = useRef<SurferParticle[]>([]);
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
   const sunAngleRef = useRef(0); // For sun arc position
   const lightAngleRef = useRef(0); // For solar panel light orbit
+  const windAngleRef = useRef(0); // For wind direction
+  const windGustRef = useRef(0); // For gust wave position
+  const waveTimeRef = useRef(0); // For ocean waves
 
   const hexToRgb = useCallback((hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -355,7 +385,58 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     lightAngleRef.current = 0;
   }, [params.instanceCount]);
 
-  // Initialize Kaleidoscope particles
+  // Initialize Windmill particles (wind-responsive turbines)
+  const initWindmillParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 400);
+    const particles: WindmillParticle[] = [];
+    const cols = Math.ceil(Math.sqrt(count * 1.5));
+    const rows = Math.ceil(count / cols);
+
+    for (let i = 0; i < count; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      // Scatter positions with randomness
+      const baseX = (col / cols) * 0.85 + 0.075 + (Math.random() - 0.5) * 0.06;
+      const baseZ = (row / rows) * 0.6 + 0.2 + (Math.random() - 0.5) * 0.04;
+
+      particles.push({
+        x: baseX,
+        z: baseZ,
+        height: 0.08 + Math.random() * 0.05,
+        bladeAngle: Math.random() * Math.PI * 2,
+        bladeSpeed: 0,
+        yawAngle: Math.random() * Math.PI * 2,
+        targetYaw: 0,
+        colorMix: Math.random(),
+      });
+    }
+    windmillParticlesRef.current = particles;
+    windAngleRef.current = 0;
+    windGustRef.current = 0;
+  }, [params.instanceCount]);
+
+  // Initialize Surfer particles (wave riding)
+  const initSurferParticles = useCallback(() => {
+    const count = Math.min(params.instanceCount, 60);
+    const particles: SurferParticle[] = [];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * 0.8 + 0.1,
+        z: Math.random() * 0.6 + 0.2,
+        state: 'paddling',
+        wavePhase: Math.random() * Math.PI * 2,
+        armPhase: Math.random() * Math.PI * 2,
+        boardTilt: 0,
+        bodyLean: 0,
+        speed: 0.3 + Math.random() * 0.4,
+        stateTimer: Math.random() * 5,
+      });
+    }
+    surferParticlesRef.current = particles;
+    waveTimeRef.current = 0;
+  }, [params.instanceCount]);
+
   const initKaleidoscopeParticles = useCallback(() => {
     const count = Math.min(params.instanceCount, 3000);
     const particles: Particle[] = [];
@@ -1585,6 +1666,332 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       });
     }
 
+    // ============ WINDMILL (Wind Farm) ============
+    else if (arrangement === 'windmill') {
+      const particles = windmillParticlesRef.current;
+      
+      // Update wind direction slowly
+      windAngleRef.current += 0.002 * params.cameraSpeed;
+      windGustRef.current += 0.015 * params.cameraSpeed;
+      
+      const windDir = windAngleRef.current;
+      const gustPhase = windGustRef.current;
+
+      // Golden hour sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+      skyGradient.addColorStop(0, '#1a2a4a');
+      skyGradient.addColorStop(0.4, '#2a3a5a');
+      skyGradient.addColorStop(0.7, '#4a3a3a');
+      skyGradient.addColorStop(1, '#6a4a3a');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Ground plane
+      const groundY = height * 0.7;
+      const groundGradient = ctx.createLinearGradient(0, groundY, 0, height);
+      groundGradient.addColorStop(0, '#3a4a2a');
+      groundGradient.addColorStop(1, '#2a3a1a');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, groundY, width, height - groundY);
+
+      // Calculate wind intensity at each position (gust waves)
+      const getWindIntensity = (x: number, z: number) => {
+        const gustFreq = 3;
+        const gustSpeed = gustPhase;
+        const gust = Math.sin((x - gustSpeed) * gustFreq) * 0.5 + 0.5;
+        const variance = Math.sin(z * 5 + gustSpeed * 0.3) * 0.2;
+        return Math.max(0.15, Math.min(1, gust + variance));
+      };
+
+      // Sort by depth (further first)
+      const sortedParticles = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedParticles.forEach((windmill) => {
+        // Calculate local wind
+        const localWind = getWindIntensity(windmill.x, windmill.z);
+        
+        // Update blade speed based on wind
+        const targetSpeed = localWind * 0.15 * params.cameraSpeed;
+        windmill.bladeSpeed += (targetSpeed - windmill.bladeSpeed) * 0.05;
+        windmill.bladeAngle += windmill.bladeSpeed;
+
+        // Yaw to face wind
+        windmill.targetYaw = windDir + Math.PI;
+        windmill.yawAngle += (windmill.targetYaw - windmill.yawAngle) * 0.02;
+
+        // Screen position
+        const perspective = 400;
+        const pz = windmill.z * 300;
+        const scale = perspective / (perspective + pz);
+        const screenX = (windmill.x - 0.5) * width * 1.2 * scale + centerX;
+        const baseY = groundY - 20 * scale;
+        const towerHeight = windmill.height * height * scale;
+        const hubY = baseY - towerHeight;
+
+        // Draw tower shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(screenX + towerHeight * 0.3, baseY + 5, 8 * scale, 3 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw tower
+        const towerWidth = 6 * scale;
+        const towerTopWidth = 3 * scale;
+        ctx.fillStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, 0.9)`;
+        ctx.beginPath();
+        ctx.moveTo(screenX - towerWidth, baseY);
+        ctx.lineTo(screenX + towerWidth, baseY);
+        ctx.lineTo(screenX + towerTopWidth, hubY);
+        ctx.lineTo(screenX - towerTopWidth, hubY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tower highlight
+        ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.3})`;
+        ctx.beginPath();
+        ctx.moveTo(screenX - towerTopWidth * 0.5, hubY);
+        ctx.lineTo(screenX - towerWidth * 0.5, baseY);
+        ctx.lineTo(screenX - towerWidth * 0.3, baseY);
+        ctx.lineTo(screenX - towerTopWidth * 0.3, hubY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw hub
+        const hubSize = 8 * scale;
+        ctx.fillStyle = `rgba(${color2.r}, ${color2.g}, ${color2.b}, 1)`;
+        ctx.beginPath();
+        ctx.arc(screenX, hubY, hubSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw 3 blades
+        const bladeLength = 40 * scale;
+        const bladeWidth = 4 * scale;
+        
+        for (let i = 0; i < 3; i++) {
+          const bladeAngle = windmill.bladeAngle + (i * Math.PI * 2) / 3 + windmill.yawAngle * 0.3;
+          
+          ctx.save();
+          ctx.translate(screenX, hubY);
+          ctx.rotate(bladeAngle);
+          
+          // Blade body
+          const bladeFacing = Math.abs(Math.sin(bladeAngle));
+          const brightness = 0.6 + bladeFacing * 0.4 * params.metallic;
+          ctx.fillStyle = `rgba(${Math.min(255, color2.r * brightness)}, ${Math.min(255, color2.g * brightness)}, ${Math.min(255, color2.b * brightness)}, 0.95)`;
+          
+          ctx.beginPath();
+          ctx.moveTo(0, -hubSize * 0.5);
+          ctx.lineTo(bladeWidth, -bladeLength);
+          ctx.lineTo(-bladeWidth * 0.5, -bladeLength);
+          ctx.closePath();
+          ctx.fill();
+
+          // Blade highlight (glint)
+          if (localWind > 0.6 && bladeFacing > 0.7) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.5})`;
+            ctx.beginPath();
+            ctx.moveTo(0, -hubSize);
+            ctx.lineTo(bladeWidth * 0.3, -bladeLength * 0.8);
+            ctx.lineTo(-bladeWidth * 0.2, -bladeLength * 0.8);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      });
+    }
+
+    // ============ SURFERS (Ocean Wave Riding) ============
+    else if (arrangement === 'surfers') {
+      const particles = surferParticlesRef.current;
+      waveTimeRef.current += 0.025 * params.cameraSpeed;
+      const waveTime = waveTimeRef.current;
+
+      // Wave calculation functions
+      const getWaveHeight = (x: number, t: number) => {
+        const wave1 = Math.sin(x * 8 + t * 1.5) * 25;
+        const wave2 = Math.sin(x * 4 + t * 0.8) * 40;
+        const wave3 = Math.sin(x * 12 + t * 2.2) * 12;
+        return wave1 + wave2 + wave3;
+      };
+
+      const getWaveSlope = (x: number, t: number) => {
+        const slope1 = Math.cos(x * 8 + t * 1.5) * 8 * 25;
+        const slope2 = Math.cos(x * 4 + t * 0.8) * 4 * 40;
+        const slope3 = Math.cos(x * 12 + t * 2.2) * 12 * 12;
+        return (slope1 + slope2 + slope3) * 0.01;
+      };
+
+      // Sky gradient (sunset)
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.5);
+      const bgColor = hexToRgb(params.backgroundColor);
+      skyGradient.addColorStop(0, `rgb(${bgColor.r * 0.6}, ${bgColor.g * 0.5}, ${bgColor.b * 0.8})`);
+      skyGradient.addColorStop(0.5, `rgb(${bgColor.r}, ${bgColor.g * 0.7}, ${bgColor.b * 0.5})`);
+      skyGradient.addColorStop(1, `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`);
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height * 0.5);
+
+      // Draw ocean waves
+      const oceanTop = height * 0.35;
+      for (let row = 0; row < 40; row++) {
+        const rowZ = row / 40;
+        const rowY = oceanTop + row * (height * 0.65 / 40);
+        const waveOffset = getWaveHeight(rowZ, waveTime);
+        
+        // Wave color gradient (deep to light)
+        const depthMix = row / 40;
+        const r = Math.floor(color1.r * (1 - depthMix) + color2.r * depthMix);
+        const g = Math.floor(color1.g * (1 - depthMix) + color2.g * depthMix);
+        const b = Math.floor(color1.b * (1 - depthMix) + color2.b * depthMix);
+        
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        ctx.lineWidth = 3 - depthMix * 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, rowY + waveOffset * (1 - depthMix * 0.5));
+        
+        for (let x = 0; x <= width; x += 10) {
+          const localHeight = getWaveHeight(x / width + rowZ * 0.5, waveTime);
+          ctx.lineTo(x, rowY + localHeight * (1 - depthMix * 0.5) * 0.5);
+        }
+        ctx.stroke();
+
+        // Foam on wave peaks
+        if (row < 15) {
+          for (let x = 0; x < width; x += 30) {
+            const localHeight = getWaveHeight(x / width + rowZ * 0.5, waveTime);
+            if (localHeight > 30) {
+              ctx.fillStyle = `rgba(255, 255, 255, ${0.6 - depthMix})`;
+              ctx.beginPath();
+              ctx.ellipse(x + Math.random() * 20, rowY + localHeight * 0.3, 8 - depthMix * 6, 3, 0, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      // Update and draw surfers
+      const sortedSurfers = [...particles].sort((a, b) => a.z - b.z);
+
+      sortedSurfers.forEach((surfer) => {
+        // Update state timer
+        surfer.stateTimer += 0.016 * params.cameraSpeed;
+        surfer.armPhase += 0.1 * params.cameraSpeed;
+
+        // State machine
+        const localWaveHeight = getWaveHeight(surfer.x, waveTime);
+        const localSlope = getWaveSlope(surfer.x, waveTime);
+
+        if (surfer.state === 'paddling') {
+          // Move slowly, wait for wave
+          surfer.x += 0.001 * params.cameraSpeed;
+          if (localWaveHeight > 35 && surfer.stateTimer > 2) {
+            surfer.state = 'riding';
+            surfer.stateTimer = 0;
+          }
+        } else if (surfer.state === 'riding') {
+          // Ride the wave
+          surfer.x -= 0.003 * params.cameraSpeed * (1 + Math.abs(localSlope));
+          surfer.boardTilt = localSlope * 0.8;
+          surfer.bodyLean = Math.sin(waveTime * 2) * 0.2;
+          
+          if (localWaveHeight < 10 || surfer.stateTimer > 8 || surfer.x < 0.05) {
+            surfer.state = 'returning';
+            surfer.stateTimer = 0;
+          }
+        } else {
+          // Paddle back out
+          surfer.x += 0.004 * params.cameraSpeed;
+          surfer.boardTilt *= 0.9;
+          if (surfer.x > 0.85) {
+            surfer.x = 0.85;
+            surfer.state = 'paddling';
+            surfer.stateTimer = 0;
+          }
+        }
+
+        // Screen position
+        const perspective = 300;
+        const pz = surfer.z * 200;
+        const scale = perspective / (perspective + pz);
+        const screenX = (surfer.x - 0.5) * width * 1.5 * scale + centerX;
+        const baseY = oceanTop + surfer.z * height * 0.55 + localWaveHeight * (1 - surfer.z * 0.5) * 0.4;
+        const surferSize = 20 * scale;
+
+        // Draw surfboard
+        ctx.save();
+        ctx.translate(screenX, baseY);
+        ctx.rotate(surfer.boardTilt);
+        
+        ctx.fillStyle = `rgba(${color2.r}, ${color2.g}, ${color2.b}, 0.9)`;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, surferSize * 1.5, surferSize * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Board highlight
+        ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.4})`;
+        ctx.beginPath();
+        ctx.ellipse(-surferSize * 0.3, -surferSize * 0.1, surferSize * 0.6, surferSize * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw surfer body
+        if (surfer.state === 'riding') {
+          // Standing pose
+          ctx.fillStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 1)`;
+          
+          // Body
+          ctx.beginPath();
+          ctx.ellipse(surfer.bodyLean * surferSize * 0.5, -surferSize * 0.8, surferSize * 0.25, surferSize * 0.5, surfer.bodyLean, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Head
+          ctx.beginPath();
+          ctx.arc(surfer.bodyLean * surferSize * 0.3, -surferSize * 1.4, surferSize * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Arms out for balance
+          ctx.strokeStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 1)`;
+          ctx.lineWidth = surferSize * 0.12;
+          ctx.beginPath();
+          ctx.moveTo(-surferSize * 0.2, -surferSize * 0.9);
+          ctx.lineTo(-surferSize * 0.8 + surfer.bodyLean * surferSize * 0.3, -surferSize * 0.6);
+          ctx.moveTo(surferSize * 0.2, -surferSize * 0.9);
+          ctx.lineTo(surferSize * 0.8 + surfer.bodyLean * surferSize * 0.3, -surferSize * 0.6);
+          ctx.stroke();
+        } else {
+          // Paddling pose (prone)
+          ctx.fillStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 0.9)`;
+          ctx.beginPath();
+          ctx.ellipse(0, -surferSize * 0.15, surferSize * 0.6, surferSize * 0.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Animated paddle arms
+          const armAngle = Math.sin(surfer.armPhase) * 0.5;
+          ctx.strokeStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 0.9)`;
+          ctx.lineWidth = surferSize * 0.1;
+          ctx.beginPath();
+          ctx.moveTo(-surferSize * 0.4, -surferSize * 0.1);
+          ctx.lineTo(-surferSize * 0.8, surferSize * 0.3 * Math.sin(surfer.armPhase));
+          ctx.moveTo(surferSize * 0.4, -surferSize * 0.1);
+          ctx.lineTo(surferSize * 0.8, surferSize * 0.3 * Math.sin(surfer.armPhase + Math.PI));
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      });
+
+      // Sun reflection on water
+      const sunX = width * 0.7;
+      const sunY = height * 0.15;
+      const reflectionGradient = ctx.createRadialGradient(sunX, sunY + height * 0.4, 0, sunX, sunY + height * 0.4, 150);
+      reflectionGradient.addColorStop(0, 'rgba(255, 200, 100, 0.3)');
+      reflectionGradient.addColorStop(0.5, 'rgba(255, 150, 50, 0.1)');
+      reflectionGradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+      ctx.fillStyle = reflectionGradient;
+      ctx.fillRect(sunX - 150, height * 0.35, 300, height * 0.65);
+    }
+
     animationRef.current = requestAnimationFrame(render);
   }, [params, hexToRgb, draw3DCube, drawTunnelCube, drawGlowingSphere, getBezierPoint]);
 
@@ -1624,6 +2031,12 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       case 'solarpanel':
         initSolarPanelParticles();
         break;
+      case 'windmill':
+        initWindmillParticles();
+        break;
+      case 'surfers':
+        initSurferParticles();
+        break;
       default:
         initParticles();
     }
@@ -1640,6 +2053,8 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     initKaleidoscopeParticles,
     initSunflowerParticles,
     initSolarPanelParticles,
+    initWindmillParticles,
+    initSurferParticles,
     initParticles,
   ]);
 

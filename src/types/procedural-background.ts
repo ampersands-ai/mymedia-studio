@@ -1,7 +1,7 @@
 export interface ShaderParams {
   shape: 'cube' | 'sphere' | 'pyramid';
   instanceCount: number; // 1000-8000
-  arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers' | 'solarpanel' | 'windmill' | 'surfers';
+  arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers' | 'solarpanel' | 'windmill' | 'surfers' | 'flags' | 'sailboats' | 'forest' | 'fishschool' | 'murmuration' | 'pendulums' | 'dominoes' | 'compass';
   colorPrimary: string; // hex color
   colorSecondary: string; // hex color
   metallic: number; // 0-1
@@ -12,7 +12,7 @@ export interface ShaderParams {
 export interface BackgroundPreset {
   id: string;
   name: string;
-  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing' | 'Sunflowers' | 'Solarpanel' | 'Windfield' | 'Ocean';
+  category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing' | 'Sunflowers' | 'Solarpanel' | 'Windfield' | 'Ocean' | 'Flags' | 'Nautical' | 'Nature' | 'Wildlife' | 'Physics' | 'Magnetic';
   thumbnail: string;
   params: ShaderParams;
 }

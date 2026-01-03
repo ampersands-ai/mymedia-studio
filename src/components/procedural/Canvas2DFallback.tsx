@@ -1558,114 +1558,6 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       ctx.fill();
     }
 
-    // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
-    else {
-      const isCannon = arrangement === 'cannon';
-
-      if (isCannon) {
-        const primaryRgb = hexToRgb(params.colorPrimary);
-        const glowRadius = Math.min(width, height) * 0.18;
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-        gradient.addColorStop(0.15, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.7)`);
-        gradient.addColorStop(0.4, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.25)`);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      const sortedParticles = [...particlesRef.current].sort((a, b) => a.z - b.z);
-
-      const rotationAngle = timeRef.current;
-      const cosR = Math.cos(rotationAngle);
-      const sinR = Math.sin(rotationAngle);
-
-      sortedParticles.forEach((particle) => {
-        let screenX: number, screenY: number, screenSize: number, rotation: number;
-
-        if (isCannon) {
-          const pulseOffset = Math.sin(timeRef.current * 2 + particle.spoke * 0.3) * 0.025;
-          const rotationPulse = Math.sin(timeRef.current * 1.5 + particle.ring * 0.2) * 0.1;
-          const currentX = particle.baseX + Math.cos(particle.angleToCenter + Math.PI) * pulseOffset;
-          const currentY = particle.baseY + Math.sin(particle.angleToCenter + Math.PI) * pulseOffset;
-
-          screenX = currentX * width;
-          screenY = currentY * height;
-          const sizePulse = 1 + Math.sin(timeRef.current * 3 + particle.spoke * 0.5) * 0.15;
-          screenSize = particle.size * Math.min(width, height) * (0.4 + particle.z * 0.6) * sizePulse;
-          rotation = particle.angleToCenter + Math.PI / 2 + rotationPulse;
-        } else {
-          const px = (particle.x - 0.5) * 400;
-          const pz = (particle.z - 0.5) * 400;
-          const rotatedX = px * cosR - pz * sinR;
-          const rotatedZ = px * sinR + pz * cosR;
-
-          const perspective = 600;
-          const scale = perspective / (perspective + rotatedZ);
-
-          screenX = centerX + rotatedX * scale;
-          screenY = centerY + (particle.y - 0.5) * 400 * scale;
-          screenSize = particle.size * scale * (1 + params.metallic * 0.5);
-          rotation = rotationAngle + particle.z * 2;
-        }
-
-        if (screenX < -50 || screenX > width + 50 || screenY < -50 || screenY > height + 50) return;
-
-        const color = particle.colorMix > 0.5 ? color2 : color1;
-        const depthFactor = particle.z;
-        const alpha = 0.3 + depthFactor * 0.7;
-        const lightAngle = Math.atan2(centerY - screenY, centerX - screenX);
-
-        if (params.shape === 'sphere') {
-          const gradient = ctx.createRadialGradient(
-            screenX - screenSize * 0.3,
-            screenY - screenSize * 0.3,
-            0,
-            screenX,
-            screenY,
-            screenSize
-          );
-          const highlightFactor = params.metallic * (0.5 + Math.cos(lightAngle) * 0.5);
-          gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightFactor * alpha})`);
-          gradient.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
-          gradient.addColorStop(1, `rgba(${Math.floor(color.r * 0.3)}, ${Math.floor(color.g * 0.3)}, ${Math.floor(color.b * 0.3)}, ${alpha})`);
-
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, screenSize, 0, Math.PI * 2);
-          ctx.fill();
-
-          if (params.metallic > 0.5 && isCannon) {
-            ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.4)`;
-            ctx.shadowBlur = screenSize;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, screenSize * 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-          }
-        } else if (params.shape === 'pyramid') {
-          ctx.save();
-          ctx.translate(screenX, screenY);
-          ctx.rotate(rotation);
-
-          const brightness = 0.7 + params.metallic * Math.cos(lightAngle) * 0.3;
-          ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
-          ctx.beginPath();
-          ctx.moveTo(0, -screenSize);
-          ctx.lineTo(-screenSize, screenSize);
-          ctx.lineTo(screenSize, screenSize);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.restore();
-        } else {
-          draw3DCube(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha);
-        }
-      });
-    }
-
     // ============ WINDMILL (Wind Farm) ============
     else if (arrangement === 'windmill') {
       const particles = windmillParticlesRef.current;
@@ -1704,9 +1596,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       };
 
       // Sort by depth (further first)
-      const sortedParticles = [...particles].sort((a, b) => a.z - b.z);
+      const sortedWindmills = [...particles].sort((a, b) => a.z - b.z);
 
-      sortedParticles.forEach((windmill) => {
+      sortedWindmills.forEach((windmill) => {
         // Calculate local wind
         const localWind = getWindIntensity(windmill.x, windmill.z);
         
@@ -1900,81 +1792,114 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
             surfer.state = 'returning';
             surfer.stateTimer = 0;
           }
-        } else {
+        } else if (surfer.state === 'returning') {
           // Paddle back out
-          surfer.x += 0.004 * params.cameraSpeed;
-          surfer.boardTilt *= 0.9;
-          if (surfer.x > 0.85) {
-            surfer.x = 0.85;
+          surfer.x += 0.002 * params.cameraSpeed;
+          surfer.boardTilt *= 0.95;
+          surfer.bodyLean *= 0.95;
+          
+          if (surfer.x > 0.9 || surfer.stateTimer > 6) {
             surfer.state = 'paddling';
             surfer.stateTimer = 0;
+            surfer.x = 0.3 + Math.random() * 0.4;
           }
         }
 
-        // Screen position
-        const perspective = 300;
-        const pz = surfer.z * 200;
+        // Keep in bounds
+        surfer.x = Math.max(0.05, Math.min(0.95, surfer.x));
+
+        // Calculate screen position
+        const perspective = 500;
+        const pz = surfer.z * 400;
         const scale = perspective / (perspective + pz);
-        const screenX = (surfer.x - 0.5) * width * 1.5 * scale + centerX;
-        const baseY = oceanTop + surfer.z * height * 0.55 + localWaveHeight * (1 - surfer.z * 0.5) * 0.4;
-        const surferSize = 20 * scale;
+        const screenX = surfer.x * width;
+        const baseWaveY = oceanTop + surfer.z * (height * 0.5);
+        const screenY = baseWaveY + localWaveHeight * (1 - surfer.z * 0.5) * 0.4;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(surfer.boardTilt);
+        ctx.scale(scale, scale);
 
         // Draw surfboard
-        ctx.save();
-        ctx.translate(screenX, baseY);
-        ctx.rotate(surfer.boardTilt);
-        
+        const boardLength = 35;
+        const boardWidth = 8;
         ctx.fillStyle = `rgba(${color2.r}, ${color2.g}, ${color2.b}, 0.9)`;
         ctx.beginPath();
-        ctx.ellipse(0, 0, surferSize * 1.5, surferSize * 0.3, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, boardLength, boardWidth, 0, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // Board highlight
         ctx.fillStyle = `rgba(255, 255, 255, ${params.metallic * 0.4})`;
         ctx.beginPath();
-        ctx.ellipse(-surferSize * 0.3, -surferSize * 0.1, surferSize * 0.6, surferSize * 0.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(-5, -2, boardLength * 0.6, boardWidth * 0.4, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw surfer body
+        // Draw surfer based on state
         if (surfer.state === 'riding') {
           // Standing pose
-          ctx.fillStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 1)`;
+          ctx.save();
+          ctx.rotate(surfer.bodyLean);
           
           // Body
+          ctx.fillStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, 1)`;
           ctx.beginPath();
-          ctx.ellipse(surfer.bodyLean * surferSize * 0.5, -surferSize * 0.8, surferSize * 0.25, surferSize * 0.5, surfer.bodyLean, 0, Math.PI * 2);
+          ctx.ellipse(0, -25, 8, 15, 0, 0, Math.PI * 2);
           ctx.fill();
           
           // Head
           ctx.beginPath();
-          ctx.arc(surfer.bodyLean * surferSize * 0.3, -surferSize * 1.4, surferSize * 0.2, 0, Math.PI * 2);
+          ctx.arc(0, -45, 8, 0, Math.PI * 2);
           ctx.fill();
-
+          
           // Arms out for balance
-          ctx.strokeStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 1)`;
-          ctx.lineWidth = surferSize * 0.12;
+          ctx.strokeStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, 1)`;
+          ctx.lineWidth = 4;
           ctx.beginPath();
-          ctx.moveTo(-surferSize * 0.2, -surferSize * 0.9);
-          ctx.lineTo(-surferSize * 0.8 + surfer.bodyLean * surferSize * 0.3, -surferSize * 0.6);
-          ctx.moveTo(surferSize * 0.2, -surferSize * 0.9);
-          ctx.lineTo(surferSize * 0.8 + surfer.bodyLean * surferSize * 0.3, -surferSize * 0.6);
+          ctx.moveTo(-8, -30);
+          ctx.lineTo(-25, -20 + Math.sin(waveTime * 3) * 5);
           ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(8, -30);
+          ctx.lineTo(25, -25 + Math.sin(waveTime * 3 + 1) * 5);
+          ctx.stroke();
+          
+          // Legs
+          ctx.beginPath();
+          ctx.moveTo(-3, -12);
+          ctx.lineTo(-8, 0);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(3, -12);
+          ctx.lineTo(8, 0);
+          ctx.stroke();
+          
+          ctx.restore();
         } else {
-          // Paddling pose (prone)
-          ctx.fillStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 0.9)`;
+          // Paddling/prone pose
+          ctx.fillStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, 1)`;
+          
+          // Body lying down
           ctx.beginPath();
-          ctx.ellipse(0, -surferSize * 0.15, surferSize * 0.6, surferSize * 0.2, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, -8, 18, 6, 0, 0, Math.PI * 2);
           ctx.fill();
-
-          // Animated paddle arms
-          const armAngle = Math.sin(surfer.armPhase) * 0.5;
-          ctx.strokeStyle = `rgba(${color2.r * 1.2}, ${color2.g * 1.2}, ${color2.b * 1.2}, 0.9)`;
-          ctx.lineWidth = surferSize * 0.1;
+          
+          // Head
           ctx.beginPath();
-          ctx.moveTo(-surferSize * 0.4, -surferSize * 0.1);
-          ctx.lineTo(-surferSize * 0.8, surferSize * 0.3 * Math.sin(surfer.armPhase));
-          ctx.moveTo(surferSize * 0.4, -surferSize * 0.1);
-          ctx.lineTo(surferSize * 0.8, surferSize * 0.3 * Math.sin(surfer.armPhase + Math.PI));
+          ctx.arc(20, -10, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Paddling arms
+          const armOffset = Math.sin(surfer.armPhase) * 10;
+          ctx.strokeStyle = `rgba(${color1.r}, ${color1.g}, ${color1.b}, 1)`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(5, -8);
+          ctx.lineTo(5 + armOffset, -8 + Math.abs(armOffset) * 0.5);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-5, -8);
+          ctx.lineTo(-5 - armOffset, -8 + Math.abs(armOffset) * 0.5);
           ctx.stroke();
         }
 
@@ -1991,6 +1916,115 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       ctx.fillStyle = reflectionGradient;
       ctx.fillRect(sunX - 150, height * 0.35, 300, height * 0.65);
     }
+
+    // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
+    else {
+      const isCannon = arrangement === 'cannon';
+
+      if (isCannon) {
+        const primaryRgb = hexToRgb(params.colorPrimary);
+        const glowRadius = Math.min(width, height) * 0.18;
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        gradient.addColorStop(0.15, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.7)`);
+        gradient.addColorStop(0.4, `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.25)`);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const sortedParticles = [...particlesRef.current].sort((a, b) => a.z - b.z);
+
+      const rotationAngle = timeRef.current;
+      const cosR = Math.cos(rotationAngle);
+      const sinR = Math.sin(rotationAngle);
+
+      sortedParticles.forEach((particle) => {
+        let screenX: number, screenY: number, screenSize: number, rotation: number;
+
+        if (isCannon) {
+          const pulseOffset = Math.sin(timeRef.current * 2 + particle.spoke * 0.3) * 0.025;
+          const rotationPulse = Math.sin(timeRef.current * 1.5 + particle.ring * 0.2) * 0.1;
+          const currentX = particle.baseX + Math.cos(particle.angleToCenter + Math.PI) * pulseOffset;
+          const currentY = particle.baseY + Math.sin(particle.angleToCenter + Math.PI) * pulseOffset;
+
+          screenX = currentX * width;
+          screenY = currentY * height;
+          const sizePulse = 1 + Math.sin(timeRef.current * 3 + particle.spoke * 0.5) * 0.15;
+          screenSize = particle.size * Math.min(width, height) * (0.4 + particle.z * 0.6) * sizePulse;
+          rotation = particle.angleToCenter + Math.PI / 2 + rotationPulse;
+        } else {
+          const px = (particle.x - 0.5) * 400;
+          const pz = (particle.z - 0.5) * 400;
+          const rotatedX = px * cosR - pz * sinR;
+          const rotatedZ = px * sinR + pz * cosR;
+
+          const perspective = 600;
+          const scale = perspective / (perspective + rotatedZ);
+
+          screenX = centerX + rotatedX * scale;
+          screenY = centerY + (particle.y - 0.5) * 400 * scale;
+          screenSize = particle.size * scale * (1 + params.metallic * 0.5);
+          rotation = rotationAngle + particle.z * 2;
+        }
+
+        if (screenX < -50 || screenX > width + 50 || screenY < -50 || screenY > height + 50) return;
+
+        const color = particle.colorMix > 0.5 ? color2 : color1;
+        const depthFactor = particle.z;
+        const alpha = 0.3 + depthFactor * 0.7;
+        const lightAngle = Math.atan2(centerY - screenY, centerX - screenX);
+
+        if (params.shape === 'sphere') {
+          const gradient = ctx.createRadialGradient(
+            screenX - screenSize * 0.3,
+            screenY - screenSize * 0.3,
+            0,
+            screenX,
+            screenY,
+            screenSize
+          );
+          const highlightFactor = params.metallic * (0.5 + Math.cos(lightAngle) * 0.5);
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightFactor * alpha})`);
+          gradient.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
+          gradient.addColorStop(1, `rgba(${Math.floor(color.r * 0.3)}, ${Math.floor(color.g * 0.3)}, ${Math.floor(color.b * 0.3)}, ${alpha})`);
+
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, screenSize, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (params.metallic > 0.5 && isCannon) {
+            ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.4)`;
+            ctx.shadowBlur = screenSize;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, screenSize * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        } else if (params.shape === 'pyramid') {
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.rotate(rotation);
+
+          const brightness = 0.7 + params.metallic * Math.cos(lightAngle) * 0.3;
+          ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(0, -screenSize);
+          ctx.lineTo(-screenSize, screenSize);
+          ctx.lineTo(screenSize, screenSize);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
+        } else {
+          draw3DCube(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha);
+        }
+      });
+    }
+
 
     animationRef.current = requestAnimationFrame(render);
   }, [params, hexToRgb, draw3DCube, drawTunnelCube, drawGlowingSphere, getBezierPoint]);

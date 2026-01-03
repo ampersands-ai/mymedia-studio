@@ -2077,7 +2077,76 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       backgroundColor: '#0a0505',
     },
   },
+  // ======== PSYCHEDELIC CATEGORY ========
+  // POV Magical Tunnel Ride
+  {
+    id: 'tunnelride-magical',
+    name: 'Magical Tunnel Ride',
+    category: 'Psychedelic',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'tunnelride',
+      colorPrimary: '#FF9500',
+      colorSecondary: '#00FFFF',
+      metallic: 0.8,
+      instanceCount: 400,
+      cameraSpeed: 0.5,
+      backgroundColor: '#050510',
+    },
+  },
+  // Neon Warp
+  {
+    id: 'tunnelride-neonwarp',
+    name: 'Neon Warp Drive',
+    category: 'Psychedelic',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'tunnelride',
+      colorPrimary: '#FF00FF',
+      colorSecondary: '#00FF00',
+      metallic: 0.9,
+      instanceCount: 500,
+      cameraSpeed: 0.7,
+      backgroundColor: '#020208',
+    },
+  },
+  // Firefly Forest
+  {
+    id: 'tunnelride-firefly',
+    name: 'Firefly Forest',
+    category: 'Psychedelic',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'tunnelride',
+      colorPrimary: '#FFDD00',
+      colorSecondary: '#88FF00',
+      metallic: 0.5,
+      instanceCount: 350,
+      cameraSpeed: 0.3,
+      backgroundColor: '#0a1005',
+    },
+  },
+  // Hyperspace
+  {
+    id: 'tunnelride-hyperspace',
+    name: 'Hyperspace Jump',
+    category: 'Psychedelic',
+    thumbnail: '/placeholder.svg',
+    params: {
+      shape: 'sphere',
+      arrangement: 'tunnelride',
+      colorPrimary: '#4488FF',
+      colorSecondary: '#FFFFFF',
+      metallic: 0.95,
+      instanceCount: 600,
+      cameraSpeed: 0.9,
+      backgroundColor: '#000510',
+    },
+  },
 ];
 
-export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing', 'Sunflowers', 'Solarpanel', 'Windfield', 'Ocean', 'Flags', 'Nautical', 'Nature', 'Wildlife', 'Physics', 'Magnetic', 'Surveillance', 'Theatrical', 'Industrial', 'Cosmic'] as const;
+export const CATEGORY_FILTERS = ['All', 'Abstract', 'Tech', 'Energetic', 'Minimal', 'Mesmerizing', 'Sunflowers', 'Solarpanel', 'Windfield', 'Ocean', 'Flags', 'Nautical', 'Nature', 'Wildlife', 'Physics', 'Magnetic', 'Surveillance', 'Theatrical', 'Industrial', 'Cosmic', 'Psychedelic'] as const;
 export type CategoryFilter = typeof CATEGORY_FILTERS[number];

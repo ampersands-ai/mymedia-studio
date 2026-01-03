@@ -3,7 +3,9 @@ export interface ShaderParams {
   instanceCount: number; // 1000-8000
   arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers' | 'solarpanel' | 'windmill' | 'surfers' | 'flags' | 'sailboats' | 'forest' | 'fishschool' | 'murmuration' | 'pendulums' | 'dominoes' | 'compass' | 
     // Tracking-based arrangements
-    'eyes' | 'spotlights' | 'cameras' | 'satellites' | 'arrows' | 'sunfloweremoji' | 'turrets' | 'mirrors' | 'periscopes' | 'radar' | 'clocks' | 'lasers' | 'flowers' | 'speakers' | 'watchtowers' | 'metronomes' | 'windvanes' | 'searchlights' | 'telescopes' | 'flames';
+    'eyes' | 'spotlights' | 'cameras' | 'satellites' | 'arrows' | 'sunfloweremoji' | 'turrets' | 'mirrors' | 'periscopes' | 'radar' | 'clocks' | 'lasers' | 'flowers' | 'speakers' | 'watchtowers' | 'metronomes' | 'windvanes' | 'searchlights' | 'telescopes' | 'flames' |
+    // POV arrangements
+    'tunnelride';
   colorPrimary: string; // hex color
   colorSecondary: string; // hex color
   metallic: number; // 0-1
@@ -17,7 +19,9 @@ export interface BackgroundPreset {
   name: string;
   category: 'Abstract' | 'Tech' | 'Energetic' | 'Minimal' | 'Mesmerizing' | 'Sunflowers' | 'Solarpanel' | 'Windfield' | 'Ocean' | 'Flags' | 'Nautical' | 'Nature' | 'Wildlife' | 'Physics' | 'Magnetic' | 
     // New tracking categories
-    'Surveillance' | 'Theatrical' | 'Industrial' | 'Cosmic';
+    'Surveillance' | 'Theatrical' | 'Industrial' | 'Cosmic' |
+    // POV categories
+    'Psychedelic';
   thumbnail: string;
   params: ShaderParams;
 }

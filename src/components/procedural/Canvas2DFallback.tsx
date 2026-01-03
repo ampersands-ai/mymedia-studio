@@ -23,6 +23,7 @@ import { initWindvanesParticles, updateWindvanesAttractor, renderWindvanes } fro
 import { initSearchlightsParticles, updateSearchlightsAttractor, renderSearchlights } from './renderers/SearchlightsRenderer';
 import { initTelescopesParticles, updateTelescopesAttractor, renderTelescopes } from './renderers/TelescopesRenderer';
 import { initFlamesParticles, updateFlamesAttractor, renderFlames } from './renderers/FlamesRenderer';
+import { TunnelOrb, initTunnelRideOrbs, updateTunnelRideOrbs, renderTunnelRide } from './renderers/TunnelRideRenderer';
 
 interface Canvas2DFallbackProps {
   params: ShaderParams;
@@ -294,6 +295,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   // Tracking-based particle refs
   const trackingParticlesRef = useRef<TrackingParticle[]>([]);
   const attractorRef = useRef<AttractorState>({ x: 0.5, y: 0.5, time: 0, pattern: 'wandering' });
+  
+  // POV tunnel ride particle ref
+  const tunnelRideOrbsRef = useRef<TunnelOrb[]>([]);
   
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
@@ -3242,6 +3246,37 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
           renderFlames(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
       }
+    }
+
+    // ============ POV TUNNEL RIDE ============
+    else if (arrangement === 'tunnelride') {
+      const color1 = hexToRgb(params.colorPrimary);
+      const color2 = hexToRgb(params.colorSecondary);
+      const bgColor = hexToRgb(params.backgroundColor);
+      
+      // Initialize tunnel orbs if needed
+      if (tunnelRideOrbsRef.current.length === 0) {
+        tunnelRideOrbsRef.current = initTunnelRideOrbs(Math.min(params.instanceCount, 500));
+      }
+      
+      // Update orb positions
+      updateTunnelRideOrbs(tunnelRideOrbsRef.current, params.cameraSpeed, timeRef.current);
+      
+      const renderContext: RenderContext = {
+        ctx,
+        width,
+        height,
+        centerX,
+        centerY,
+        primaryColor: color1,
+        secondaryColor: color2,
+        backgroundColor: bgColor,
+        metallic: params.metallic,
+        cameraSpeed: params.cameraSpeed,
+        time: timeRef.current,
+      };
+      
+      renderTunnelRide(renderContext, tunnelRideOrbsRef.current, timeRef.current);
     }
 
     // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============

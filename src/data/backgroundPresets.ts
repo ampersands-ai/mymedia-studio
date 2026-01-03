@@ -1209,7 +1209,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#6B8DD6',
       colorSecondary: '#C9956B',
       metallic: 0.95,
-      instanceCount: 4000,
+      instanceCount: 5000, // Increased for full-screen
       cameraSpeed: 0.4,
       backgroundColor: '#050505',
     },
@@ -1225,7 +1225,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#C0C0C0',
       colorSecondary: '#808080',
       metallic: 1.0,
-      instanceCount: 5000,
+      instanceCount: 5000, // Max for immersive tunnel
       cameraSpeed: 0.35,
       backgroundColor: '#020202',
     },
@@ -1241,7 +1241,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#D4A574',
       colorSecondary: '#8B7355',
       metallic: 0.98,
-      instanceCount: 3500,
+      instanceCount: 4500, // Increased for immersive
       cameraSpeed: 0.45,
       backgroundColor: '#0a0500',
     },
@@ -1344,7 +1344,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       backgroundColor: '#FFA07A',
     },
   },
-  // FLAGS PRESETS
+  // FLAGS PRESETS - Increased counts for full-screen
   {
     id: 'flags-parade',
     name: 'Flag Parade',
@@ -1356,7 +1356,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#DC143C',
       colorSecondary: '#1E3A8A',
       metallic: 0.3,
-      instanceCount: 100,
+      instanceCount: 200, // Increased for full-screen
       cameraSpeed: 0.4,
       backgroundColor: '#87CEEB',
     },
@@ -1372,7 +1372,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#2C3E50',
       colorSecondary: '#34495E',
       metallic: 0.4,
-      instanceCount: 80,
+      instanceCount: 180, // Increased
       cameraSpeed: 0.7,
       backgroundColor: '#1a1a2e',
     },
@@ -1388,12 +1388,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FF6B6B',
       colorSecondary: '#4ECDC4',
       metallic: 0.2,
-      instanceCount: 120,
+      instanceCount: 250, // Increased for dense festival look
       cameraSpeed: 0.35,
       backgroundColor: '#F7DC6F',
     },
   },
-  // SAILBOATS PRESETS
+  // SAILBOATS PRESETS - Increased counts
   {
     id: 'sailboats-regatta',
     name: 'Regatta',
@@ -1405,7 +1405,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FFFFFF',
       colorSecondary: '#1E4D6B',
       metallic: 0.5,
-      instanceCount: 50,
+      instanceCount: 80, // Increased for fuller ocean
       cameraSpeed: 0.25,
       backgroundColor: '#40E0D0',
     },
@@ -1421,7 +1421,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#F5DEB3',
       colorSecondary: '#8B4513',
       metallic: 0.6,
-      instanceCount: 40,
+      instanceCount: 70, // Increased
       cameraSpeed: 0.2,
       backgroundColor: '#FF7F50',
     },
@@ -1437,12 +1437,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#E0E0E0',
       colorSecondary: '#4169E1',
       metallic: 0.7,
-      instanceCount: 35,
+      instanceCount: 60, // Increased
       cameraSpeed: 0.15,
       backgroundColor: '#191970',
     },
   },
-  // FOREST PRESETS
+  // FOREST PRESETS - Increased for full screen
   {
     id: 'forest-breeze',
     name: 'Forest Breeze',
@@ -1454,7 +1454,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#228B22',
       colorSecondary: '#8B4513',
       metallic: 0.2,
-      instanceCount: 200,
+      instanceCount: 400, // Increased for dense forest
       cameraSpeed: 0.3,
       backgroundColor: '#90EE90',
     },
@@ -1470,7 +1470,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FF8C00',
       colorSecondary: '#8B4513',
       metallic: 0.25,
-      instanceCount: 180,
+      instanceCount: 350, // Increased
       cameraSpeed: 0.35,
       backgroundColor: '#DEB887',
     },
@@ -1486,12 +1486,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#006400',
       colorSecondary: '#2F4F4F',
       metallic: 0.3,
-      instanceCount: 250,
+      instanceCount: 500, // Increased for dense mystical look
       cameraSpeed: 0.2,
       backgroundColor: '#1a3a1a',
     },
   },
-  // FISH SCHOOL PRESETS
+  // FISH SCHOOL PRESETS - Increased for full screen
   {
     id: 'fish-tropical',
     name: 'Tropical School',
@@ -1503,7 +1503,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FFD700',
       colorSecondary: '#00CED1',
       metallic: 0.8,
-      instanceCount: 500,
+      instanceCount: 1000, // Increased for fuller school
       cameraSpeed: 0.4,
       backgroundColor: '#006994',
     },
@@ -1519,7 +1519,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#C0C0C0',
       colorSecondary: '#4682B4',
       metallic: 0.95,
-      instanceCount: 600,
+      instanceCount: 1200, // Increased
       cameraSpeed: 0.35,
       backgroundColor: '#1E3A5F',
     },
@@ -1535,12 +1535,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FF00FF',
       colorSecondary: '#00FF00',
       metallic: 0.6,
-      instanceCount: 400,
+      instanceCount: 800, // Increased
       cameraSpeed: 0.45,
       backgroundColor: '#0a0020',
     },
   },
-  // MURMURATION PRESETS
+  // MURMURATION PRESETS - Increased for full sky
   {
     id: 'murmuration-dusk',
     name: 'Dusk Murmuration',
@@ -1552,7 +1552,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#2C2C2C',
       colorSecondary: '#1a1a1a',
       metallic: 0.1,
-      instanceCount: 3000,
+      instanceCount: 4000, // Increased for full-sky effect
       cameraSpeed: 0.35,
       backgroundColor: '#FF7F50',
     },
@@ -1568,7 +1568,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#1a1a1a',
       colorSecondary: '#333333',
       metallic: 0.15,
-      instanceCount: 2500,
+      instanceCount: 3500, // Increased
       cameraSpeed: 0.4,
       backgroundColor: '#4B0082',
     },
@@ -1584,12 +1584,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#2C2C2C',
       colorSecondary: '#1a1a1a',
       metallic: 0.1,
-      instanceCount: 2000,
+      instanceCount: 3000, // Increased
       cameraSpeed: 0.3,
       backgroundColor: '#FFB6C1',
     },
   },
-  // PENDULUM PRESETS
+  // PENDULUM PRESETS - Increased for full width
   {
     id: 'pendulum-chrome',
     name: 'Chrome Pendulums',
@@ -1601,7 +1601,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#C0C0C0',
       colorSecondary: '#FFD700',
       metallic: 1.0,
-      instanceCount: 25,
+      instanceCount: 40, // Increased for denser wave
       cameraSpeed: 0.3,
       backgroundColor: '#0a0a0a',
     },
@@ -1617,7 +1617,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#00FFFF',
       colorSecondary: '#FF00FF',
       metallic: 0.8,
-      instanceCount: 30,
+      instanceCount: 45, // Increased
       cameraSpeed: 0.35,
       backgroundColor: '#050510',
     },
@@ -1633,12 +1633,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FFD700',
       colorSecondary: '#B8860B',
       metallic: 0.95,
-      instanceCount: 20,
+      instanceCount: 35, // Increased
       cameraSpeed: 0.25,
       backgroundColor: '#1a1000',
     },
   },
-  // DOMINO PRESETS
+  // DOMINO PRESETS - Increased for larger spiral
   {
     id: 'dominoes-rainbow',
     name: 'Rainbow Dominoes',
@@ -1650,7 +1650,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FF6B6B',
       colorSecondary: '#4ECDC4',
       metallic: 0.6,
-      instanceCount: 2000,
+      instanceCount: 3500, // Increased for larger spiral
       cameraSpeed: 0.4,
       backgroundColor: '#1a1a1a',
     },
@@ -1666,7 +1666,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#C0C0C0',
       colorSecondary: '#808080',
       metallic: 0.95,
-      instanceCount: 1500,
+      instanceCount: 3000, // Increased
       cameraSpeed: 0.35,
       backgroundColor: '#0a0a0a',
     },
@@ -1682,12 +1682,12 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#FF4500',
       colorSecondary: '#FFD700',
       metallic: 0.5,
-      instanceCount: 1800,
+      instanceCount: 3200, // Increased
       cameraSpeed: 0.45,
       backgroundColor: '#1a0500',
     },
   },
-  // COMPASS PRESETS
+  // COMPASS PRESETS - Increased for full screen
   {
     id: 'compass-classic',
     name: 'Classic Compass',
@@ -1699,7 +1699,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#DC143C',
       colorSecondary: '#E8E8E8',
       metallic: 0.7,
-      instanceCount: 400,
+      instanceCount: 600, // Increased for denser grid
       cameraSpeed: 0.3,
       backgroundColor: '#F5F5DC',
     },
@@ -1715,7 +1715,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#00CED1',
       colorSecondary: '#E0E0E0',
       metallic: 0.8,
-      instanceCount: 500,
+      instanceCount: 700, // Increased
       cameraSpeed: 0.35,
       backgroundColor: '#0a0a0a',
     },
@@ -1731,7 +1731,7 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
       colorPrimary: '#8B4513',
       colorSecondary: '#DEB887',
       metallic: 0.5,
-      instanceCount: 300,
+      instanceCount: 500, // Increased
       cameraSpeed: 0.25,
       backgroundColor: '#D2B48C',
     },

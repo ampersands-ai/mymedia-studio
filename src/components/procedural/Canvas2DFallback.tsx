@@ -458,7 +458,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     sunAngleRef.current = 0;
   }, [params.instanceCount]);
 
-  // Initialize Solar Panel particles (radial sun-tracking array)
+  // Initialize Solar Panel particles (radial sun-tracking array) - FULL SCREEN IMMERSIVE
   const initSolarPanelParticles = useCallback(() => {
     const count = Math.min(params.instanceCount, 5000);
     const particles: SolarPanelParticle[] = [];
@@ -466,15 +466,18 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
 
     for (let i = 0; i < count; i++) {
       const angle = i * goldenAngle;
-      const distance = Math.sqrt(i / count) * 0.45; // Sqrt for even radial distribution
-      const depth = (i / count); // 0 to 1 (center to edge)
+      // FULL SCREEN: extend to 1.2 (past edges) for immersive tunnel effect
+      const normalizedRadius = Math.sqrt(i / count);
+      const distance = normalizedRadius * 1.2; // Extend past screen edges (was 0.45)
+      const depth = normalizedRadius; // 0 at center, 1 at edges (for perspective)
 
       particles.push({
         angle,
         distance,
         tiltX: 0,
         tiltY: 0,
-        scale: 0.3 + depth * 0.7, // Larger panels further from center
+        // PERSPECTIVE: larger at edges (close to camera), smaller at center (far away)
+        scale: 0.15 + normalizedRadius * 0.85,
         colorMix: (i % 3 === 0) ? 1 : 0,
         depth,
       });
@@ -535,9 +538,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     waveTimeRef.current = 0;
   }, [params.instanceCount]);
 
-  // Initialize Flag particles (wind-responsive flags)
+  // Initialize Flag particles (wind-responsive flags) - FULL SCREEN
   const initFlagParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 150);
+    const count = Math.min(params.instanceCount, 300); // Increased cap
     const particles: FlagParticle[] = [];
     const cols = Math.ceil(Math.sqrt(count * 1.5));
     const rows = Math.ceil(count / cols);
@@ -546,30 +549,32 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       const col = i % cols;
       const row = Math.floor(i / cols);
       particles.push({
-        x: (col / cols) * 0.8 + 0.1 + (Math.random() - 0.5) * 0.03,
-        z: (row / rows) * 0.5 + 0.25 + (Math.random() - 0.5) * 0.02,
-        poleHeight: 0.12 + Math.random() * 0.05,
-        flagWidth: 0.04 + Math.random() * 0.02,
-        flagHeight: 0.025 + Math.random() * 0.01,
+        // Full width coverage with slight overflow
+        x: (col / cols) * 1.1 - 0.05 + (Math.random() - 0.5) * 0.04,
+        z: (row / rows) * 0.7 + 0.15 + (Math.random() - 0.5) * 0.03,
+        poleHeight: 0.12 + Math.random() * 0.06,
+        flagWidth: 0.05 + Math.random() * 0.03,
+        flagHeight: 0.03 + Math.random() * 0.015,
         wavePhase: Math.random() * Math.PI * 2,
-        waveAmplitude: 0.5 + Math.random() * 0.5,
+        waveAmplitude: 0.6 + Math.random() * 0.6,
         colorIndex: i % 5,
       });
     }
     flagParticlesRef.current = particles;
   }, [params.instanceCount]);
 
-  // Initialize Sailboat particles (ocean swells)
+  // Initialize Sailboat particles (ocean swells) - FULL SCREEN
   const initSailboatParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 60);
+    const count = Math.min(params.instanceCount, 120); // Increased cap
     const particles: SailboatParticle[] = [];
 
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: Math.random() * 0.8 + 0.1,
-        z: Math.random() * 0.6 + 0.2,
-        size: 0.6 + Math.random() * 0.6,
-        rotation: (Math.random() - 0.5) * 0.3,
+        // Full ocean coverage with overflow
+        x: Math.random() * 1.2 - 0.1,
+        z: Math.random() * 0.8 + 0.1,
+        size: 0.5 + Math.random() * 0.7,
+        rotation: (Math.random() - 0.5) * 0.4,
         sailBillow: 0.5 + Math.random() * 0.5,
         colorMix: Math.random(),
       });
@@ -577,76 +582,80 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     sailboatParticlesRef.current = particles;
   }, [params.instanceCount]);
 
-  // Initialize Tree particles (forest wind)
+  // Initialize Tree particles (forest wind) - FULL SCREEN
   const initTreeParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 300);
+    const count = Math.min(params.instanceCount, 600); // Increased cap
     const particles: TreeParticle[] = [];
 
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: Math.random() * 0.9 + 0.05,
-        z: Math.random() * 0.7 + 0.15,
-        height: 0.08 + Math.random() * 0.08,
-        trunkWidth: 0.005 + Math.random() * 0.003,
-        canopySize: 0.03 + Math.random() * 0.03,
+        // Full width coverage with overflow
+        x: Math.random() * 1.2 - 0.1,
+        z: Math.random() * 0.75 + 0.1,
+        height: 0.06 + Math.random() * 0.1,
+        trunkWidth: 0.004 + Math.random() * 0.004,
+        canopySize: 0.025 + Math.random() * 0.04,
         swayPhase: Math.random() * Math.PI * 2,
-        swayAmount: 0.5 + Math.random() * 0.5,
+        swayAmount: 0.4 + Math.random() * 0.6,
         treeType: Math.random() > 0.4 ? 'deciduous' : 'pine',
       });
     }
     treeParticlesRef.current = particles;
   }, [params.instanceCount]);
 
-  // Initialize Fish particles (schooling behavior)
+  // Initialize Fish particles (schooling behavior) - EXPANDED COVERAGE
   const initFishParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 800);
+    const count = Math.min(params.instanceCount, 1500); // Increased cap
     const particles: FishParticle[] = [];
 
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: 0.3 + Math.random() * 0.4,
-        y: 0.3 + Math.random() * 0.4,
+        // Wider initial spread for full-screen coverage
+        x: 0.1 + Math.random() * 0.8,
+        y: 0.1 + Math.random() * 0.8,
         z: Math.random(),
-        vx: (Math.random() - 0.5) * 0.01,
-        vy: (Math.random() - 0.5) * 0.01,
-        vz: (Math.random() - 0.5) * 0.005,
-        size: 3 + Math.random() * 4,
+        vx: (Math.random() - 0.5) * 0.012,
+        vy: (Math.random() - 0.5) * 0.012,
+        vz: (Math.random() - 0.5) * 0.006,
+        size: 3 + Math.random() * 5,
         colorMix: Math.random(),
       });
     }
     fishParticlesRef.current = particles;
   }, [params.instanceCount]);
 
-  // Initialize Bird particles (murmuration)
+  // Initialize Bird particles (murmuration) - EXPANDED COVERAGE
   const initBirdParticles = useCallback(() => {
     const count = Math.min(params.instanceCount, 4000);
     const particles: BirdParticle[] = [];
 
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: 0.3 + Math.random() * 0.4,
-        y: 0.2 + Math.random() * 0.4,
+        // Wider initial spread for full-screen sky coverage
+        x: 0.1 + Math.random() * 0.8,
+        y: 0.05 + Math.random() * 0.7,
         z: Math.random(),
-        vx: (Math.random() - 0.5) * 0.005,
-        vy: (Math.random() - 0.5) * 0.005,
-        vz: (Math.random() - 0.5) * 0.003,
+        vx: (Math.random() - 0.5) * 0.006,
+        vy: (Math.random() - 0.5) * 0.006,
+        vz: (Math.random() - 0.5) * 0.004,
         wingPhase: Math.random() * Math.PI * 2,
       });
     }
     birdParticlesRef.current = particles;
   }, [params.instanceCount]);
 
-  // Initialize Pendulum particles (wave patterns)
+  // Initialize Pendulum particles (wave patterns) - FULL WIDTH
   const initPendulumParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 35);
+    const count = Math.min(params.instanceCount, 50); // Increased cap for denser wave
     const particles: PendulumParticle[] = [];
 
     for (let i = 0; i < count; i++) {
       const lengthRatio = (i + 1) / count;
       particles.push({
-        length: 0.15 + lengthRatio * 0.25, // Increasing lengths
+        length: 0.12 + lengthRatio * 0.3, // Longer range of lengths
         angle: Math.PI / 4, // Start at 45 degrees
         angularVelocity: 0,
+        // Full width coverage
         x: (i + 0.5) / count,
         colorMix: i / count,
       });
@@ -655,17 +664,17 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     pendulumTimeRef.current = 0;
   }, [params.instanceCount]);
 
-  // Initialize Domino particles (chain reaction)
+  // Initialize Domino particles (chain reaction) - EXPANDED SPIRAL
   const initDominoParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 2500);
+    const count = Math.min(params.instanceCount, 4000); // Increased cap
     const particles: DominoParticle[] = [];
     
-    // Create spiral path
-    const spiralTurns = 4;
+    // Create larger spiral path for full-screen coverage
+    const spiralTurns = 6; // More turns for denser pattern
     for (let i = 0; i < count; i++) {
       const progress = i / count;
       const angle = progress * Math.PI * 2 * spiralTurns;
-      const radius = 0.1 + progress * 0.35;
+      const radius = 0.08 + progress * 0.5; // Larger spiral radius (was 0.35)
       
       particles.push({
         x: 0.5 + Math.cos(angle) * radius,
@@ -682,9 +691,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     dominoTriggerRef.current = 0;
   }, [params.instanceCount]);
 
-  // Initialize Compass particles (magnetic field)
+  // Initialize Compass particles (magnetic field) - FULL SCREEN GRID
   const initCompassParticles = useCallback(() => {
-    const count = Math.min(params.instanceCount, 600);
+    const count = Math.min(params.instanceCount, 900); // Increased cap
     const particles: CompassParticle[] = [];
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
@@ -693,11 +702,12 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       const col = i % cols;
       const row = Math.floor(i / cols);
       particles.push({
-        x: (col + 0.5) / cols,
-        y: (row + 0.5) / rows,
+        // Extend grid slightly past edges for full coverage
+        x: -0.02 + (col + 0.5) / cols * 1.04,
+        y: -0.02 + (row + 0.5) / rows * 1.04,
         angle: Math.random() * Math.PI * 2,
         targetAngle: 0,
-        springiness: 0.8 + Math.random() * 0.2,
+        springiness: 0.75 + Math.random() * 0.25,
       });
     }
     compassParticlesRef.current = particles;
@@ -1712,12 +1722,14 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       // Sort panels by depth for proper rendering (back to front)
       const sortedPanels = [...particles].sort((a, b) => a.depth - b.depth);
       
-      // Draw each solar panel
+      // Draw each solar panel - FULL SCREEN IMMERSIVE
       sortedPanels.forEach((panel) => {
-        // Calculate panel position from center
-        const screenRadius = Math.min(width, height) * 0.4 * panel.distance;
-        const panelX = centerX + Math.cos(panel.angle + timeRef.current * 0.1) * screenRadius;
-        const panelY = centerY + Math.sin(panel.angle + timeRef.current * 0.1) * screenRadius;
+        // FULL SCREEN: Use max dimension for true edge-to-edge coverage
+        const maxRadius = Math.max(width, height) * 0.7;
+        const screenRadius = maxRadius * panel.distance;
+        // Stationary panels - only light moves
+        const panelX = centerX + Math.cos(panel.angle) * screenRadius;
+        const panelY = centerY + Math.sin(panel.angle) * screenRadius;
         
         // Calculate direction from panel to light for tilt tracking
         const dx = lightX - panelX;
@@ -1737,10 +1749,10 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         panel.tiltX += (delayedTargetX - panel.tiltX) * lerpSpeed;
         panel.tiltY += (delayedTargetY - panel.tiltY) * lerpSpeed;
         
-        // Panel size based on perspective (closer to camera = larger)
-        const basePanelWidth = 20 * panel.scale;
-        const basePanelHeight = 14 * panel.scale;
-        const perspective = 0.6 + panel.depth * 0.4;
+        // Panel size - LARGER base for immersive effect with stronger perspective
+        const basePanelWidth = 32 * panel.scale;
+        const basePanelHeight = 20 * panel.scale;
+        const perspective = 0.3 + panel.depth * 0.7; // More dramatic perspective
         const panelWidth = basePanelWidth * perspective;
         const panelHeight = basePanelHeight * perspective;
         

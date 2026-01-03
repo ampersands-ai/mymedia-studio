@@ -272,9 +272,6 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
   const sunAngleRef = useRef(0); // For sun arc position
   const lightAngleRef = useRef(0); // For solar panel light orbit
-  const sunTargetRef = useRef({ x: 0.5, y: 0.3 }); // Random sun target position (normalized 0-1)
-  const sunCurrentRef = useRef({ x: 0.5, y: 0.3 }); // Current sun position (normalized 0-1)
-  const sunChangeTimeRef = useRef(0); // Time until next direction change
   const windAngleRef = useRef(0); // For wind direction
   const windGustRef = useRef(0); // For gust wave position
   const waveTimeRef = useRef(0); // For ocean waves
@@ -1692,26 +1689,23 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
     else if (arrangement === 'solarpanel') {
       const particles = solarPanelParticlesRef.current;
       
-      // Update sun position - random wandering movement
-      sunChangeTimeRef.current -= params.cameraSpeed * 0.016;
-      if (sunChangeTimeRef.current <= 0) {
-        // Pick a new random target position
-        sunTargetRef.current = {
-          x: 0.15 + Math.random() * 0.7, // Keep within 15%-85% of screen width
-          y: 0.1 + Math.random() * 0.4,  // Keep in upper portion (10%-50%)
-        };
-        // Random time until next change (2-6 seconds at normal speed)
-        sunChangeTimeRef.current = 2 + Math.random() * 4;
-      }
+      // Update sun position - continuous organic wandering using multiple sine waves
+      lightAngleRef.current += params.cameraSpeed * 0.015;
+      const t = lightAngleRef.current;
       
-      // Smoothly interpolate current position toward target
-      const sunLerpSpeed = params.cameraSpeed * 0.02;
-      sunCurrentRef.current.x += (sunTargetRef.current.x - sunCurrentRef.current.x) * sunLerpSpeed;
-      sunCurrentRef.current.y += (sunTargetRef.current.y - sunCurrentRef.current.y) * sunLerpSpeed;
+      // Combine multiple frequencies for organic, non-linear movement
+      const sunX = 0.5 + 
+        Math.sin(t * 0.7) * 0.25 + 
+        Math.sin(t * 1.3 + 1.5) * 0.12 + 
+        Math.cos(t * 0.4 + 0.8) * 0.08;
+      const sunY = 0.3 + 
+        Math.cos(t * 0.5) * 0.15 + 
+        Math.sin(t * 0.9 + 2.1) * 0.08 + 
+        Math.cos(t * 1.1 + 0.5) * 0.05;
       
       // Convert normalized position to screen coordinates
-      const lightX = sunCurrentRef.current.x * width;
-      const lightY = sunCurrentRef.current.y * height;
+      const lightX = Math.max(0.1, Math.min(0.9, sunX)) * width;
+      const lightY = Math.max(0.08, Math.min(0.5, sunY)) * height;
       
       // Draw central glowing light source
       const primaryRgb = hexToRgb(params.colorPrimary);

@@ -1750,8 +1750,9 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         panel.tiltY += (delayedTargetY - panel.tiltY) * lerpSpeed;
         
         // Panel size - LARGER base for immersive effect with stronger perspective
-        const basePanelWidth = 32 * panel.scale;
-        const basePanelHeight = 20 * panel.scale;
+        const sizeMultiplier = params.panelSize ?? 1.0;
+        const basePanelWidth = 32 * panel.scale * sizeMultiplier;
+        const basePanelHeight = 20 * panel.scale * sizeMultiplier;
         const perspective = 0.3 + panel.depth * 0.7; // More dramatic perspective
         const panelWidth = basePanelWidth * perspective;
         const panelHeight = basePanelHeight * perspective;
@@ -1800,7 +1801,7 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         }
         
         // Panel edge (3D depth)
-        const edgeThickness = 3 * panel.scale;
+        const edgeThickness = 3 * panel.scale * sizeMultiplier;
         const edgeBrightness = brightness * 0.6;
         ctx.fillStyle = `rgba(${panelColor.r * edgeBrightness}, ${panelColor.g * edgeBrightness}, ${panelColor.b * edgeBrightness}, ${0.8 + panel.depth * 0.2})`;
         

@@ -7,6 +7,7 @@ export interface ShaderParams {
   metallic: number; // 0-1
   cameraSpeed: number; // 0.1-1
   backgroundColor: string; // hex color
+  panelSize?: number; // 0.5-3 multiplier for solar panel size
 }
 
 export interface BackgroundPreset {
@@ -28,4 +29,5 @@ export const DEFAULT_SHADER_PARAMS: ShaderParams = {
   metallic: 0.8,
   cameraSpeed: 0.3,
   backgroundColor: '#0a0a0a',
+  panelSize: 1.0,
 };

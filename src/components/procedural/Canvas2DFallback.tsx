@@ -1,6 +1,29 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { ShaderParams } from '@/types/procedural-background';
 
+// Import tracking renderers
+import { TrackingParticle, AttractorState, RenderContext } from './renderers/types';
+import { initEyesParticles, updateEyesAttractor, renderEyes } from './renderers/EyesRenderer';
+import { initSpotlightsParticles, updateSpotlightsAttractor, renderSpotlights } from './renderers/SpotlightsRenderer';
+import { initCamerasParticles, updateCamerasAttractor, renderCameras } from './renderers/CamerasRenderer';
+import { initSatellitesParticles, updateSatellitesAttractor, renderSatellites } from './renderers/SatellitesRenderer';
+import { initArrowsParticles, updateArrowsAttractor, renderArrows } from './renderers/ArrowsRenderer';
+import { initSunflowerEmojiParticles, updateSunflowerEmojiAttractor, renderSunflowerEmoji } from './renderers/SunflowerEmojiRenderer';
+import { initTurretsParticles, updateTurretsAttractor, renderTurrets } from './renderers/TurretsRenderer';
+import { initMirrorsParticles, updateMirrorsAttractor, renderMirrors } from './renderers/MirrorsRenderer';
+import { initPeriscopesParticles, updatePeriscopesAttractor, renderPeriscopes } from './renderers/PeriscopesRenderer';
+import { initRadarParticles, updateRadarAttractor, renderRadar } from './renderers/RadarRenderer';
+import { initClocksParticles, updateClocksAttractor, renderClocks } from './renderers/ClocksRenderer';
+import { initLasersParticles, updateLasersAttractor, renderLasers } from './renderers/LasersRenderer';
+import { initFlowersParticles, updateFlowersAttractor, renderFlowers } from './renderers/FlowersRenderer';
+import { initSpeakersParticles, updateSpeakersAttractor, renderSpeakers } from './renderers/SpeakersRenderer';
+import { initWatchtowersParticles, updateWatchtowersAttractor, renderWatchtowers } from './renderers/WatchtowersRenderer';
+import { initMetronomesParticles, updateMetronomesAttractor, renderMetronomes } from './renderers/MetronomesRenderer';
+import { initWindvanesParticles, updateWindvanesAttractor, renderWindvanes } from './renderers/WindvanesRenderer';
+import { initSearchlightsParticles, updateSearchlightsAttractor, renderSearchlights } from './renderers/SearchlightsRenderer';
+import { initTelescopesParticles, updateTelescopesAttractor, renderTelescopes } from './renderers/TelescopesRenderer';
+import { initFlamesParticles, updateFlamesAttractor, renderFlames } from './renderers/FlamesRenderer';
+
 interface Canvas2DFallbackProps {
   params: ShaderParams;
   className?: string;
@@ -267,6 +290,11 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
   const pendulumParticlesRef = useRef<PendulumParticle[]>([]);
   const dominoParticlesRef = useRef<DominoParticle[]>([]);
   const compassParticlesRef = useRef<CompassParticle[]>([]);
+  
+  // Tracking-based particle refs
+  const trackingParticlesRef = useRef<TrackingParticle[]>([]);
+  const attractorRef = useRef<AttractorState>({ x: 0.5, y: 0.5, time: 0, pattern: 'wandering' });
+  
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const explosionPhaseRef = useRef(0); // 0 = expanding, 1 = contracting
@@ -3085,6 +3113,137 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       ctx.fill();
     }
 
+    // ============ TRACKING-BASED ARRANGEMENTS ============
+    else if (['eyes', 'spotlights', 'cameras', 'satellites', 'arrows', 'sunfloweremoji', 'turrets', 'mirrors', 'periscopes', 'radar', 'clocks', 'lasers', 'flowers', 'speakers', 'watchtowers', 'metronomes', 'windvanes', 'searchlights', 'telescopes', 'flames'].includes(arrangement)) {
+      const color1 = hexToRgb(params.colorPrimary);
+      const color2 = hexToRgb(params.colorSecondary);
+      const bgColor = hexToRgb(params.backgroundColor);
+      
+      const renderContext: RenderContext = {
+        ctx,
+        width,
+        height,
+        centerX,
+        centerY,
+        primaryColor: color1,
+        secondaryColor: color2,
+        backgroundColor: bgColor,
+        metallic: params.metallic,
+        cameraSpeed: params.cameraSpeed,
+        time: timeRef.current,
+      };
+
+      // Initialize particles if needed
+      if (trackingParticlesRef.current.length === 0) {
+        switch (arrangement) {
+          case 'eyes': trackingParticlesRef.current = initEyesParticles(params.instanceCount); break;
+          case 'spotlights': trackingParticlesRef.current = initSpotlightsParticles(params.instanceCount); break;
+          case 'cameras': trackingParticlesRef.current = initCamerasParticles(params.instanceCount); break;
+          case 'satellites': trackingParticlesRef.current = initSatellitesParticles(params.instanceCount); break;
+          case 'arrows': trackingParticlesRef.current = initArrowsParticles(params.instanceCount); break;
+          case 'sunfloweremoji': trackingParticlesRef.current = initSunflowerEmojiParticles(params.instanceCount); break;
+          case 'turrets': trackingParticlesRef.current = initTurretsParticles(params.instanceCount); break;
+          case 'mirrors': trackingParticlesRef.current = initMirrorsParticles(params.instanceCount); break;
+          case 'periscopes': trackingParticlesRef.current = initPeriscopesParticles(params.instanceCount); break;
+          case 'radar': trackingParticlesRef.current = initRadarParticles(params.instanceCount); break;
+          case 'clocks': trackingParticlesRef.current = initClocksParticles(params.instanceCount); break;
+          case 'lasers': trackingParticlesRef.current = initLasersParticles(params.instanceCount); break;
+          case 'flowers': trackingParticlesRef.current = initFlowersParticles(params.instanceCount); break;
+          case 'speakers': trackingParticlesRef.current = initSpeakersParticles(params.instanceCount); break;
+          case 'watchtowers': trackingParticlesRef.current = initWatchtowersParticles(params.instanceCount); break;
+          case 'metronomes': trackingParticlesRef.current = initMetronomesParticles(params.instanceCount); break;
+          case 'windvanes': trackingParticlesRef.current = initWindvanesParticles(params.instanceCount); break;
+          case 'searchlights': trackingParticlesRef.current = initSearchlightsParticles(params.instanceCount); break;
+          case 'telescopes': trackingParticlesRef.current = initTelescopesParticles(params.instanceCount); break;
+          case 'flames': trackingParticlesRef.current = initFlamesParticles(params.instanceCount); break;
+        }
+      }
+
+      // Update attractor and render based on arrangement type
+      switch (arrangement) {
+        case 'eyes':
+          attractorRef.current = updateEyesAttractor(attractorRef.current, params.cameraSpeed);
+          renderEyes(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'spotlights':
+          attractorRef.current = updateSpotlightsAttractor(attractorRef.current, params.cameraSpeed);
+          renderSpotlights(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'cameras':
+          attractorRef.current = updateCamerasAttractor(attractorRef.current, params.cameraSpeed);
+          renderCameras(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'satellites':
+          attractorRef.current = updateSatellitesAttractor(attractorRef.current, params.cameraSpeed);
+          renderSatellites(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'arrows':
+          attractorRef.current = updateArrowsAttractor(attractorRef.current, params.cameraSpeed);
+          renderArrows(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'sunfloweremoji':
+          attractorRef.current = updateSunflowerEmojiAttractor(attractorRef.current, params.cameraSpeed);
+          renderSunflowerEmoji(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'turrets':
+          attractorRef.current = updateTurretsAttractor(attractorRef.current, params.cameraSpeed);
+          renderTurrets(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'mirrors':
+          attractorRef.current = updateMirrorsAttractor(attractorRef.current, params.cameraSpeed);
+          renderMirrors(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'periscopes':
+          attractorRef.current = updatePeriscopesAttractor(attractorRef.current, params.cameraSpeed);
+          renderPeriscopes(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'radar':
+          attractorRef.current = updateRadarAttractor(attractorRef.current, params.cameraSpeed);
+          renderRadar(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'clocks':
+          attractorRef.current = updateClocksAttractor(attractorRef.current, params.cameraSpeed);
+          renderClocks(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'lasers':
+          attractorRef.current = updateLasersAttractor(attractorRef.current, params.cameraSpeed);
+          renderLasers(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'flowers':
+          attractorRef.current = updateFlowersAttractor(attractorRef.current, params.cameraSpeed);
+          renderFlowers(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'speakers':
+          attractorRef.current = updateSpeakersAttractor(attractorRef.current, params.cameraSpeed);
+          renderSpeakers(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'watchtowers':
+          attractorRef.current = updateWatchtowersAttractor(attractorRef.current, params.cameraSpeed);
+          renderWatchtowers(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'metronomes':
+          attractorRef.current = updateMetronomesAttractor(attractorRef.current, params.cameraSpeed);
+          renderMetronomes(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'windvanes':
+          attractorRef.current = updateWindvanesAttractor(attractorRef.current, params.cameraSpeed);
+          renderWindvanes(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'searchlights':
+          attractorRef.current = updateSearchlightsAttractor(attractorRef.current, params.cameraSpeed);
+          renderSearchlights(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'telescopes':
+          attractorRef.current = updateTelescopesAttractor(attractorRef.current, params.cameraSpeed);
+          renderTelescopes(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+        case 'flames':
+          attractorRef.current = updateFlamesAttractor(attractorRef.current, params.cameraSpeed);
+          renderFlames(renderContext, trackingParticlesRef.current, attractorRef.current);
+          break;
+      }
+    }
+
     // ============ CANNON & OTHER STANDARD ARRANGEMENTS ============
     else if (arrangement === 'cannon' || arrangement === 'radial' || arrangement === 'spiral' || arrangement === 'grid' || arrangement === 'wave') {
       const isCannon = arrangement === 'cannon';
@@ -3262,6 +3421,30 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
         break;
       case 'compass':
         initCompassParticles();
+        break;
+      // Tracking-based arrangements - reset particles so they get reinitialized
+      case 'eyes':
+      case 'spotlights':
+      case 'cameras':
+      case 'satellites':
+      case 'arrows':
+      case 'sunfloweremoji':
+      case 'turrets':
+      case 'mirrors':
+      case 'periscopes':
+      case 'radar':
+      case 'clocks':
+      case 'lasers':
+      case 'flowers':
+      case 'speakers':
+      case 'watchtowers':
+      case 'metronomes':
+      case 'windvanes':
+      case 'searchlights':
+      case 'telescopes':
+      case 'flames':
+        trackingParticlesRef.current = [];
+        attractorRef.current = { x: 0.5, y: 0.5, time: 0, pattern: 'wandering' };
         break;
       default:
         initParticles();

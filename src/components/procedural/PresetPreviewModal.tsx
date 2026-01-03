@@ -27,7 +27,7 @@ export function PresetPreviewModal({ preset, isOpen, onClose, onSelect }: Preset
 
   if (!preset || !customParams) return null;
 
-  const handleParamChange = (key: keyof ShaderParams, value: number) => {
+  const handleParamChange = (key: keyof ShaderParams, value: number | string) => {
     setCustomParams(prev => prev ? { ...prev, [key]: value } : null);
   };
 
@@ -141,6 +141,60 @@ export function PresetPreviewModal({ preset, isOpen, onClose, onSelect }: Preset
                 />
               </div>
             )}
+
+            {/* Primary Color */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-sm text-muted-foreground">Primary</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customParams.colorPrimary}
+                    onChange={(e) => handleParamChange('colorPrimary', e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border border-border bg-transparent"
+                  />
+                  <span className="text-xs text-muted-foreground font-mono w-16">
+                    {customParams.colorPrimary.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Secondary Color */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-sm text-muted-foreground">Secondary</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customParams.colorSecondary}
+                    onChange={(e) => handleParamChange('colorSecondary', e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border border-border bg-transparent"
+                  />
+                  <span className="text-xs text-muted-foreground font-mono w-16">
+                    {customParams.colorSecondary.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Background Color */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-sm text-muted-foreground">Background</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customParams.backgroundColor}
+                    onChange={(e) => handleParamChange('backgroundColor', e.target.value)}
+                    className="w-8 h-8 rounded cursor-pointer border border-border bg-transparent"
+                  />
+                  <span className="text-xs text-muted-foreground font-mono w-16">
+                    {customParams.backgroundColor.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

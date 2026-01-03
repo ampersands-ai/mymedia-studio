@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass, Eye, Flashlight, Video, Radio, ArrowRight, Flower2, Crosshair, Square, Navigation, Radar, Clock, Volume2, Building, Scale, Search, Telescope, Flower } from 'lucide-react';
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -220,6 +220,127 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Compass className="h-4 w-4" />
                   Compass
+                </div>
+              </SelectItem>
+              {/* NEW: Tracking-based arrangements */}
+              <SelectItem value="eyes">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Eyes
+                </div>
+              </SelectItem>
+              <SelectItem value="spotlights">
+                <div className="flex items-center gap-2">
+                  <Flashlight className="h-4 w-4" />
+                  Spotlights
+                </div>
+              </SelectItem>
+              <SelectItem value="cameras">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  Cameras
+                </div>
+              </SelectItem>
+              <SelectItem value="satellites">
+                <div className="flex items-center gap-2">
+                  <Radio className="h-4 w-4" />
+                  Satellites
+                </div>
+              </SelectItem>
+              <SelectItem value="arrows">
+                <div className="flex items-center gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  Arrows
+                </div>
+              </SelectItem>
+              <SelectItem value="sunfloweremoji">
+                <div className="flex items-center gap-2">
+                  <Flower2 className="h-4 w-4" />
+                  Sunflower Emoji
+                </div>
+              </SelectItem>
+              <SelectItem value="turrets">
+                <div className="flex items-center gap-2">
+                  <Crosshair className="h-4 w-4" />
+                  Turrets
+                </div>
+              </SelectItem>
+              <SelectItem value="mirrors">
+                <div className="flex items-center gap-2">
+                  <Square className="h-4 w-4" />
+                  Mirrors
+                </div>
+              </SelectItem>
+              <SelectItem value="periscopes">
+                <div className="flex items-center gap-2">
+                  <Navigation className="h-4 w-4" />
+                  Periscopes
+                </div>
+              </SelectItem>
+              <SelectItem value="radar">
+                <div className="flex items-center gap-2">
+                  <Radar className="h-4 w-4" />
+                  Radar
+                </div>
+              </SelectItem>
+              <SelectItem value="clocks">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Clocks
+                </div>
+              </SelectItem>
+              <SelectItem value="lasers">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Lasers
+                </div>
+              </SelectItem>
+              <SelectItem value="flowers">
+                <div className="flex items-center gap-2">
+                  <Flower className="h-4 w-4" />
+                  Flowers
+                </div>
+              </SelectItem>
+              <SelectItem value="speakers">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-4 w-4" />
+                  Speakers
+                </div>
+              </SelectItem>
+              <SelectItem value="watchtowers">
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Watchtowers
+                </div>
+              </SelectItem>
+              <SelectItem value="metronomes">
+                <div className="flex items-center gap-2">
+                  <Scale className="h-4 w-4" />
+                  Metronomes
+                </div>
+              </SelectItem>
+              <SelectItem value="windvanes">
+                <div className="flex items-center gap-2">
+                  <Wind className="h-4 w-4" />
+                  Wind Vanes
+                </div>
+              </SelectItem>
+              <SelectItem value="searchlights">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Searchlights
+                </div>
+              </SelectItem>
+              <SelectItem value="telescopes">
+                <div className="flex items-center gap-2">
+                  <Telescope className="h-4 w-4" />
+                  Telescopes
+                </div>
+              </SelectItem>
+              <SelectItem value="flames">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-4 w-4" />
+                  Flames
                 </div>
               </SelectItem>
             </SelectContent>

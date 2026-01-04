@@ -308,6 +308,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
   ({ params }, ref) => {
     // Separate canvas refs - CRITICAL: never share canvas between WebGPU and Canvas2D
     const webgpuCanvasRef = useRef<HTMLCanvasElement>(null);
+    const canvas2DRef = useRef<HTMLCanvasElement>(null);
     const [rendererState, setRendererState] = useState<RendererState>(null);
     const [isWebGPUReady, setIsWebGPUReady] = useState(false);
     const contextRef = useRef<{
@@ -332,7 +333,12 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
     }, [params]);
 
     // Expose canvas ref to parent - return whichever canvas is active
-    useImperativeHandle(ref, () => webgpuCanvasRef.current!);
+    useImperativeHandle(ref, () => {
+      if (rendererState === 'canvas2d' && canvas2DRef.current) {
+        return canvas2DRef.current;
+      }
+      return webgpuCanvasRef.current!;
+    }, [rendererState]);
 
     // Track if device supports WebGPU (separate from which renderer we use)
     const [webgpuSupported, setWebGPUSupported] = useState<boolean | null>(null);
@@ -673,7 +679,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       
       return (
         <div className="relative h-full w-full">
-          <Canvas2DFallback params={params} />
+          <Canvas2DFallback ref={canvas2DRef} params={params} />
           <div className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
             2D Mode ({modeReason})
           </div>

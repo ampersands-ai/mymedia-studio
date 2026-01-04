@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { ShaderParams } from '@/types/procedural-background';
 
 // Import tracking renderers
@@ -268,8 +268,12 @@ interface CompassParticle {
   springiness: number;
 }
 
-export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackProps) {
+export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackProps>(
+  ({ params, className = '' }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Expose canvas ref to parent
+  useImperativeHandle(ref, () => canvasRef.current!);
   const particlesRef = useRef<Particle[]>([]);
   const tunnelParticlesRef = useRef<TunnelParticle[]>([]);
   const helixParticlesRef = useRef<HelixParticle[]>([]);
@@ -3545,4 +3549,6 @@ export function Canvas2DFallback({ params, className = '' }: Canvas2DFallbackPro
       style={{ backgroundColor: params.backgroundColor }}
     />
   );
-}
+});
+
+Canvas2DFallback.displayName = 'Canvas2DFallback';

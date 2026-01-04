@@ -26,7 +26,7 @@ export function initWatchtowersParticles(instanceCount: number): TrackingParticl
 }
 
 export function updateWatchtowersAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'randomWalk' }, 0.016, speed * 0.4);
+  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.4);
 }
 
 export function renderWatchtowers(

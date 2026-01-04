@@ -154,6 +154,61 @@ export function updateAttractor(
       x = 0.5 + Math.sin(t * 0.5) * 0.4;
       y = 0.5 + Math.abs(Math.sin(t * 0.8)) * 0.35 - 0.175;
       break;
+
+    case 'trueRandom': {
+      // Initialize velocity and target if not set
+      let vx = current.vx ?? (Math.random() - 0.5) * 0.01;
+      let vy = current.vy ?? (Math.random() - 0.5) * 0.01;
+      let targetX = current.targetX ?? Math.random() * 0.7 + 0.15;
+      let targetY = current.targetY ?? Math.random() * 0.7 + 0.15;
+      let nextChangeTime = current.nextChangeTime ?? t + 1.5 + Math.random() * 2.5;
+
+      // Time to pick a new random target?
+      if (t >= nextChangeTime) {
+        targetX = Math.random() * 0.7 + 0.15;
+        targetY = Math.random() * 0.7 + 0.15;
+        nextChangeTime = t + 1.5 + Math.random() * 3;
+      }
+
+      // Smoothly steer toward target (seeking behavior)
+      const seekStrength = 0.0015 * speed;
+      const dx = targetX - current.x;
+      const dy = targetY - current.y;
+      vx += dx * seekStrength;
+      vy += dy * seekStrength;
+
+      // Add slight random jitter for organic feel
+      vx += (Math.random() - 0.5) * 0.0008;
+      vy += (Math.random() - 0.5) * 0.0008;
+
+      // Apply damping
+      const damping = 0.985;
+      vx *= damping;
+      vy *= damping;
+
+      // Limit max speed
+      const maxSpeed = 0.012 * speed;
+      const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+      if (currentSpeed > maxSpeed) {
+        vx = (vx / currentSpeed) * maxSpeed;
+        vy = (vy / currentSpeed) * maxSpeed;
+      }
+
+      // Update position
+      x = current.x + vx;
+      y = current.y + vy;
+
+      // Bounce off edges with damping
+      if (x < 0.1) { x = 0.1; vx = Math.abs(vx) * 0.7; }
+      if (x > 0.9) { x = 0.9; vx = -Math.abs(vx) * 0.7; }
+      if (y < 0.1) { y = 0.1; vy = Math.abs(vy) * 0.7; }
+      if (y > 0.9) { y = 0.9; vy = -Math.abs(vy) * 0.7; }
+
+      return { 
+        x, y, time: t, pattern: current.pattern,
+        vx, vy, targetX, targetY, nextChangeTime 
+      };
+    }
   }
 
   // Clamp to safe bounds

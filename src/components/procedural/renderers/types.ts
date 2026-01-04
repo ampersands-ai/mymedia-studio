@@ -35,6 +35,12 @@ export interface AttractorState {
   y: number;
   time: number;
   pattern: AttractorPattern;
+  // Properties for true random movement
+  vx?: number;
+  vy?: number;
+  targetX?: number;
+  targetY?: number;
+  nextChangeTime?: number;
 }
 
 export type AttractorPattern = 
@@ -44,7 +50,8 @@ export type AttractorPattern =
   | 'groundSweep'  // Horizontal sweep across bottom
   | 'orbital'      // Circular orbit around center
   | 'randomWalk'   // Gentle random direction changes
-  | 'bounce';      // Bouncing within bounds
+  | 'bounce'       // Bouncing within bounds
+  | 'trueRandom';  // Continuous random movement with velocity
 
 export interface RenderContext {
   ctx: CanvasRenderingContext2D;

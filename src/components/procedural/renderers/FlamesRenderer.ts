@@ -26,7 +26,7 @@ export function initFlamesParticles(instanceCount: number): TrackingParticle[] {
 }
 
 export function updateFlamesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'wandering' }, 0.016, speed * 0.6);
+  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.6);
 }
 
 export function renderFlames(

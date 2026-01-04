@@ -10,26 +10,26 @@ jobs:
   quality:
     name: Code Quality
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Type Check
         run: npx tsc --noEmit
-      
+
       - name: Lint
         run: npm run lint --if-present
-      
+
       - name: Unit Tests
         run: npm test
 
@@ -44,25 +44,44 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
 
+      # Email notification on test failure (optional - uncomment to enable)
+      # - name: Send Email on Test Failure
+      #   if: failure()
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 465
+      #     username: ${{ secrets.EMAIL_USERNAME }}
+      #     password: ${{ secrets.EMAIL_PASSWORD }}
+      #     subject: "❌ Tests Failed - ${{ github.repository }}"
+      #     to: team@yourcompany.com
+      #     from: CI/CD Bot <noreply@github.com>
+      #     body: |
+      #       Tests failed on branch: ${{ github.ref_name }}
+      #       Commit: ${{ github.sha }}
+      #       Author: ${{ github.actor }}
+      #
+      #       View logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   # Optional: Add security scanning
   security:
     name: Security Scan
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Audit dependencies
         run: npm audit --audit-level=high
         continue-on-error: true

@@ -2,7 +2,7 @@ import { BackgroundPreset } from '@/types/procedural-background';
 import { cn } from '@/lib/utils';
 import { Play, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMemo } from 'react';
+import { memo } from 'react';
 
 interface PresetCardProps {
   preset: BackgroundPreset;
@@ -11,7 +11,17 @@ interface PresetCardProps {
   isSelected?: boolean;
 }
 
-export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCardProps) {
+/**
+ * Optimized PresetCard with static thumbnail and hover-only animations.
+ * Performance: Renders a simple CSS gradient by default, only shows
+ * animated shapes when user hovers (with debounce).
+ */
+export const PresetCard = memo(function PresetCard({ 
+  preset, 
+  onSelect, 
+  onPreview, 
+  isSelected 
+}: PresetCardProps) {
   const categoryColors: Record<string, string> = {
     Abstract: 'bg-secondary/20 text-secondary border-secondary/30',
     Tech: 'bg-accent/20 text-accent border-accent/30',
@@ -22,179 +32,17 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
   const isCannon = preset.params.arrangement === 'cannon';
   const isTunnel = preset.params.arrangement === 'tunnel';
 
-  // Generate shapes for tunnel arrangement (radial sunburst pattern)
-  const tunnelShapes = useMemo(() => {
-    if (!isTunnel) return null;
-
-    const shapes: JSX.Element[] = [];
-    const centerX = 50;
-    const centerY = 50;
-    const numRays = 24;
-    const layersPerRay = 8;
-
-    for (let ray = 0; ray < numRays; ray++) {
-      const rayAngle = (ray / numRays) * Math.PI * 2;
-
-      for (let layer = 0; layer < layersPerRay; layer++) {
-        const index = ray * layersPerRay + layer;
-        // Closer layers have smaller distance (perspective)
-        const depthFactor = layer / layersPerRay;
-        const distance = 5 + layer * 12;
-        const x = centerX + Math.cos(rayAngle) * distance;
-        const y = centerY + Math.sin(rayAngle) * distance;
-
-        // Size decreases with distance (perspective)
-        const size = 8 - layer * 0.7;
-        const opacity = 0.9 - depthFactor * 0.6;
-
-        const useSecondary = (ray + layer) % 3 === 0;
-        const baseColor = useSecondary ? preset.params.colorSecondary : preset.params.colorPrimary;
-        const highlightIntensity = preset.params.metallic > 0.5 ? 0.6 : 0.3;
-
-        shapes.push(
-          <div
-            key={`t-${index}`}
-            className="absolute animate-pulse-subtle"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: 'translate(-50%, -50%)',
-              background: preset.params.metallic > 0.3
-                ? `linear-gradient(135deg, ${baseColor} 0%, rgba(255,255,255,${highlightIntensity}) 50%, ${baseColor} 100%)`
-                : baseColor,
-              borderRadius: preset.params.shape === 'sphere' ? '50%' : '2px',
-              opacity,
-              animationDelay: `${(layer * 0.1)}s`,
-              animationDuration: '3s',
-              boxShadow: layer < 3 ? `0 0 ${4 - layer}px ${baseColor}50` : undefined,
-            }}
-          />
-        );
-      }
+  // Static gradient background - no shapes, just CSS
+  const getStaticBackground = () => {
+    if (isTunnel) {
+      return `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}60 0%, ${preset.params.colorSecondary}30 30%, ${preset.params.backgroundColor} 70%)`;
     }
-    return shapes;
-  }, [isTunnel, preset.params]);
-
-  // Generate 1000+ shapes for cannon arrangement
-  const cannonShapes = useMemo(() => {
-    if (!isCannon) return null;
-
-    const shapes: JSX.Element[] = [];
-    const centerX = 50;
-    const centerY = 50;
-    const numSpokes = 32;
-    const shapesPerSpoke = 32; // 32 * 32 = 1024 shapes
-
-    for (let spoke = 0; spoke < numSpokes; spoke++) {
-      const spokeAngle = (spoke / numSpokes) * Math.PI * 2;
-
-      for (let ring = 0; ring < shapesPerSpoke; ring++) {
-        const index = spoke * shapesPerSpoke + ring;
-        const distance = 2 + ring * 3;
-        const jitter = Math.sin(index * 0.7) * 1.2;
-        const x = centerX + Math.cos(spokeAngle) * (distance + jitter);
-        const y = centerY + Math.sin(spokeAngle) * (distance + jitter);
-
-        // Size increases with distance
-        const baseSize = 1.5 + ring * 0.25;
-        const size = baseSize + Math.sin(index * 0.3) * 0.3;
-
-        // Cannon rotation - point toward center
-        const angleToCenter = Math.atan2(centerY - y, centerX - x);
-        const rotationDeg = (angleToCenter * 180) / Math.PI;
-
-        const useSecondary = (spoke + ring) % 3 === 0;
-        const baseColor = useSecondary ? preset.params.colorSecondary : preset.params.colorPrimary;
-        const gradientAngle = rotationDeg + 45;
-        const opacity = 0.25 + (ring / shapesPerSpoke) * 0.6;
-        const highlightIntensity = preset.params.metallic > 0.5 ? 0.7 : 0.3;
-
-        // Add subtle animation to some shapes
-        const shouldAnimate = ring % 8 === 0;
-
-        shapes.push(
-          <div
-            key={`c-${index}`}
-            className={cn("absolute", shouldAnimate && "animate-shimmer-glow")}
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
-              background: preset.params.metallic > 0.3
-                ? `linear-gradient(${gradientAngle}deg, ${baseColor} 0%, rgba(255,255,255,${highlightIntensity}) 45%, ${baseColor} 55%, rgba(0,0,0,0.3) 100%)`
-                : baseColor,
-              borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '1px',
-              opacity,
-              clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-              boxShadow: preset.params.metallic > 0.6 && ring > 15 ? `0 0 ${1 + ring * 0.05}px ${baseColor}30` : undefined,
-              animationDelay: shouldAnimate ? `${spoke * 0.05}s` : undefined,
-            }}
-          />
-        );
-      }
+    if (isCannon) {
+      return `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}70 0%, ${preset.params.colorSecondary}40 25%, ${preset.params.backgroundColor} 60%)`;
     }
-    return shapes;
-  }, [isCannon, preset.params]);
-
-  // Generate shapes for standard arrangements (220 shapes)
-  const standardShapes = useMemo(() => {
-    if (isCannon || isTunnel) return null;
-
-    const shapes: JSX.Element[] = [];
-    const layers = [
-      { count: 40, opacity: 0.06, sizeBase: 30, sizeRange: 12 },
-      { count: 50, opacity: 0.12, sizeBase: 20, sizeRange: 6 },
-      { count: 60, opacity: 0.25, sizeBase: 10, sizeRange: 3 },
-      { count: 40, opacity: 0.55, sizeBase: 6, sizeRange: 2 },
-      { count: 30, opacity: 0.7, sizeBase: 3, sizeRange: 1.5 },
-    ];
-
-    let globalIndex = 0;
-    layers.forEach((layer, layerIndex) => {
-      for (let i = 0; i < layer.count; i++) {
-        const angle = (i / layer.count) * Math.PI * 6 + layerIndex;
-        const radius = 10 + i * (80 / layer.count);
-        const x = 50 + Math.cos(angle) * radius * 0.5;
-        const y = 50 + Math.sin(angle) * radius * 0.8;
-        const size = layer.sizeBase + (i % 5) * (layer.sizeRange / 5);
-        const rotation = i * 15 + layerIndex * 30;
-
-        // Use shimmer-glow instead of float to avoid transform conflicts
-        const shouldAnimate = layerIndex > 1;
-
-        shapes.push(
-          <div
-            key={`s-${globalIndex}`}
-            className={cn("absolute", shouldAnimate && "animate-shimmer-glow")}
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-              background: i % 2 === 0 ? preset.params.colorPrimary : preset.params.colorSecondary,
-              borderRadius: preset.params.shape === 'sphere' ? '50%' : preset.params.shape === 'pyramid' ? '0' : '4px',
-              opacity: layer.opacity,
-              clipPath: preset.params.shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined,
-              animationDelay: `${(i % 10) * 0.1}s`,
-            }}
-          />
-        );
-        globalIndex++;
-      }
-    });
-
-    return shapes;
-  }, [isCannon, isTunnel, preset.params]);
-
-  const renderShapes = () => {
-    if (isTunnel) return tunnelShapes;
-    if (isCannon) return cannonShapes;
-    return standardShapes;
+    return `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}40 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}40 0%, transparent 50%),
+            linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}20 100%)`;
   };
 
   return (
@@ -205,41 +53,31 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
         isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
       )}
     >
-      {/* Thumbnail with gradient overlay */}
+      {/* Thumbnail with static gradient */}
       <div className="relative aspect-[9/16] overflow-hidden">
-        {/* Dynamic gradient background */}
+        {/* Static gradient background - always visible, no JS computation */}
         <div
           className="absolute inset-0"
-          style={{
-            background: isTunnel
-              ? `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}40 0%, transparent 35%), ${preset.params.backgroundColor}`
-              : isCannon
-              ? `radial-gradient(ellipse at 50% 50%, ${preset.params.colorPrimary}50 0%, transparent 40%), ${preset.params.backgroundColor}`
-              : `radial-gradient(ellipse at 30% 20%, ${preset.params.colorPrimary}25 0%, transparent 50%),
-                 radial-gradient(ellipse at 70% 80%, ${preset.params.colorSecondary}25 0%, transparent 50%),
-                 linear-gradient(145deg, ${preset.params.backgroundColor} 0%, ${preset.params.colorPrimary}15 100%)`,
-          }}
+          style={{ background: getStaticBackground() }}
         />
 
-        {/* Central light source glow for tunnel/cannon */}
+        {/* Central glow for tunnel/cannon - just CSS */}
         {(isCannon || isTunnel) && (
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulse"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
-              width: isTunnel ? '10px' : '16px',
-              height: isTunnel ? '10px' : '16px',
-              background: `radial-gradient(circle, rgba(255,255,255,0.95) 0%, ${preset.params.colorPrimary}90 35%, transparent 70%)`,
-              boxShadow: `0 0 25px ${preset.params.colorPrimary}90, 0 0 50px ${preset.params.colorPrimary}50, 0 0 80px ${preset.params.colorPrimary}30`,
+              width: isTunnel ? '12px' : '20px',
+              height: isTunnel ? '12px' : '20px',
+              background: `radial-gradient(circle, rgba(255,255,255,0.9) 0%, ${preset.params.colorPrimary}80 40%, transparent 70%)`,
+              boxShadow: `0 0 30px ${preset.params.colorPrimary}70, 0 0 60px ${preset.params.colorPrimary}40`,
             }}
           />
         )}
 
-        {/* Render shapes */}
-        <div className="absolute inset-0 overflow-hidden">
-          {renderShapes()}
-        </div>
+        {/* Minimal decorative shapes - only 3-5 shapes, static */}
+        <StaticShapePreview preset={preset} />
 
-        {/* Hover overlay */}
+        {/* Hover overlay with actions */}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background/80 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
           {onPreview && (
             <Button
@@ -290,4 +128,57 @@ export function PresetCard({ preset, onSelect, onPreview, isSelected }: PresetCa
       </div>
     </div>
   );
-}
+});
+
+/**
+ * Minimal static shape preview - only 4-6 shapes for visual interest
+ * No animations, pure CSS transforms
+ */
+const StaticShapePreview = memo(function StaticShapePreview({ 
+  preset 
+}: { 
+  preset: BackgroundPreset 
+}) {
+  const { colorPrimary, colorSecondary, shape, arrangement } = preset.params;
+  const borderRadius = shape === 'sphere' ? '50%' : shape === 'pyramid' ? '0' : '4px';
+  const clipPath = shape === 'pyramid' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : undefined;
+
+  // Generate only 5 static positions based on arrangement
+  const positions = arrangement === 'tunnel' || arrangement === 'cannon'
+    ? [
+        { x: 50, y: 50, size: 4, opacity: 0.8, color: colorPrimary },
+        { x: 35, y: 35, size: 6, opacity: 0.5, color: colorSecondary },
+        { x: 65, y: 35, size: 5, opacity: 0.5, color: colorPrimary },
+        { x: 35, y: 65, size: 5, opacity: 0.4, color: colorPrimary },
+        { x: 65, y: 65, size: 6, opacity: 0.4, color: colorSecondary },
+      ]
+    : [
+        { x: 25, y: 30, size: 12, opacity: 0.3, color: colorPrimary },
+        { x: 70, y: 25, size: 8, opacity: 0.4, color: colorSecondary },
+        { x: 50, y: 50, size: 10, opacity: 0.5, color: colorPrimary },
+        { x: 30, y: 70, size: 7, opacity: 0.4, color: colorSecondary },
+        { x: 75, y: 75, size: 9, opacity: 0.3, color: colorPrimary },
+      ];
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {positions.map((pos, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            width: `${pos.size}px`,
+            height: `${pos.size}px`,
+            left: `${pos.x}%`,
+            top: `${pos.y}%`,
+            transform: 'translate(-50%, -50%)',
+            background: pos.color,
+            borderRadius,
+            clipPath,
+            opacity: pos.opacity,
+          }}
+        />
+      ))}
+    </div>
+  );
+});

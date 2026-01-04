@@ -26,7 +26,7 @@ export function initCamerasParticles(instanceCount: number): TrackingParticle[] 
 }
 
 export function updateCamerasAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'wandering' }, 0.016, speed * 0.4);
+  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.4);
 }
 
 export function renderCameras(

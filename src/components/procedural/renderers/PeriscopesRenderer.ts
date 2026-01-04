@@ -27,7 +27,7 @@ export function initPeriscopesParticles(instanceCount: number): TrackingParticle
 }
 
 export function updatePeriscopesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'wandering' }, 0.016, speed * 0.5);
+  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.5);
 }
 
 export function renderPeriscopes(

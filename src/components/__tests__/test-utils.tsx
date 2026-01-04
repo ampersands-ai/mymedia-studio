@@ -18,14 +18,12 @@ interface MockAuthContext {
   user: { id: string; email: string } | null;
   session: { access_token: string } | null;
   loading: boolean;
-  isAdmin: boolean;
 }
 
 const defaultMockAuth: MockAuthContext = {
   user: null,
   session: null,
   loading: false,
-  isAdmin: false,
 };
 
 /**

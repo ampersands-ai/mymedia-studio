@@ -8,6 +8,7 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/components/__tests__/test-utils';
 import { ProtectedRoute } from '../ProtectedRoute';
 import * as AuthContext from '@/contexts/AuthContext';
+import type { User, Session } from '@supabase/supabase-js';
 
 // Mock the navigation
 const mockNavigate = vi.fn();
@@ -18,6 +19,30 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   };
 });
+
+// Factory for mock User
+function createMockUser(overrides: Partial<User> = {}): User {
+  return {
+    id: 'user-123',
+    email: 'test@example.com',
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    ...overrides,
+  } as User;
+}
+
+// Factory for mock Session
+function createMockSession(user: User): Session {
+  return {
+    access_token: 'valid-token',
+    refresh_token: 'refresh-token',
+    expires_in: 3600,
+    token_type: 'bearer',
+    user,
+  } as Session;
+}
 
 describe('ProtectedRoute', () => {
   beforeEach(() => {
@@ -35,8 +60,6 @@ describe('ProtectedRoute', () => {
       user: null,
       loading: false,
       session: null,
-      isAdmin: false,
-      signOut: vi.fn(),
     });
 
     renderWithProviders(
@@ -54,8 +77,6 @@ describe('ProtectedRoute', () => {
       user: null,
       loading: true,
       session: null,
-      isAdmin: false,
-      signOut: vi.fn(),
     });
 
     renderWithProviders(
@@ -73,14 +94,13 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children for authenticated users', () => {
-    const mockUser = { id: 'user-123', email: 'test@example.com' };
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
 
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
       loading: false,
-      session: { access_token: 'valid-token' },
-      isAdmin: false,
-      signOut: vi.fn(),
+      session: mockSession,
     });
 
     renderWithProviders(
@@ -97,14 +117,13 @@ describe('ProtectedRoute', () => {
   });
 
   it('does not redirect when user is authenticated', () => {
-    const mockUser = { id: 'user-123', email: 'test@example.com' };
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
 
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
       loading: false,
-      session: { access_token: 'valid-token' },
-      isAdmin: false,
-      signOut: vi.fn(),
+      session: mockSession,
     });
 
     renderWithProviders(
@@ -122,8 +141,6 @@ describe('ProtectedRoute', () => {
       user: null,
       loading: true,
       session: null,
-      isAdmin: false,
-      signOut: vi.fn(),
     });
 
     const { rerender } = renderWithProviders(
@@ -136,12 +153,13 @@ describe('ProtectedRoute', () => {
     expect(screen.getByAltText('artifio.ai logo')).toBeInTheDocument();
 
     // Auth completes with user
+    const mockUser = createMockUser();
+    const mockSession = createMockSession(mockUser);
+    
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
-      user: { id: 'user-123', email: 'test@example.com' },
+      user: mockUser,
       loading: false,
-      session: { access_token: 'valid-token' },
-      isAdmin: false,
-      signOut: vi.fn(),
+      session: mockSession,
     });
 
     rerender(

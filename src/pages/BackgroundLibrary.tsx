@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { BACKGROUND_PRESETS, CATEGORY_FILTERS, CategoryFilter } from '@/data/backgroundPresets';
 import { BackgroundPreset } from '@/types/procedural-background';
 import { PresetCard } from '@/components/procedural/PresetCard';
@@ -8,6 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Plus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Calculate columns based on container width
+function useResponsiveColumns(containerWidth: number): number {
+  if (containerWidth >= 1280) return 5; // xl
+  if (containerWidth >= 1024) return 4; // lg
+  if (containerWidth >= 768) return 3;  // md
+  if (containerWidth >= 640) return 2;  // sm
+  return 2;
+}
 
 export default function BackgroundLibrary() {
   const navigate = useNavigate();
@@ -15,25 +26,79 @@ export default function BackgroundLibrary() {
   const [selectedPreset, setSelectedPreset] = useState<BackgroundPreset | null>(null);
   const [previewPreset, setPreviewPreset] = useState<BackgroundPreset | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(1200);
+  
+  const parentRef = useRef<HTMLDivElement>(null);
+  const columnCount = useResponsiveColumns(containerWidth);
 
   const filteredPresets = useMemo(() => {
     if (activeCategory === 'All') return BACKGROUND_PRESETS;
     return BACKGROUND_PRESETS.filter((preset) => preset.category === activeCategory);
   }, [activeCategory]);
 
-  const handleSelectPreset = (preset: BackgroundPreset) => {
+  // Add 1 for the "Create Custom" card
+  const totalItems = filteredPresets.length + 1;
+  const rowCount = Math.ceil(totalItems / columnCount);
+  
+  // Estimate row height: card aspect ratio 9/16 + padding + info section
+  const estimatedRowHeight = 320;
+
+  const rowVirtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => estimatedRowHeight,
+    overscan: 2,
+  });
+
+  // Handle container resize - set initial width on mount
+  const updateContainerWidth = useCallback(() => {
+    if (parentRef.current) {
+      setContainerWidth(parentRef.current.offsetWidth);
+    }
+  }, []);
+
+  // Set up resize observer with useEffect instead of useMemo
+  useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateContainerWidth);
+      if (parentRef.current) {
+        resizeObserver.observe(parentRef.current);
+      }
+      return () => resizeObserver.disconnect();
+    }
+    return undefined;
+  }, [updateContainerWidth]);
+
+  const handleSelectPreset = useCallback((preset: BackgroundPreset) => {
     setSelectedPreset(preset);
     navigate('/dashboard/generator', { state: { preset } });
-  };
+  }, [navigate]);
 
-  const handlePreviewPreset = (preset: BackgroundPreset) => {
+  const handlePreviewPreset = useCallback((preset: BackgroundPreset) => {
     setPreviewPreset(preset);
     setIsPreviewOpen(true);
-  };
+  }, []);
 
-  const handleClosePreview = () => {
+  const handleClosePreview = useCallback(() => {
     setIsPreviewOpen(false);
-  };
+  }, []);
+
+  // Get items for a specific row
+  const getRowItems = useCallback((rowIndex: number) => {
+    const startIndex = rowIndex * columnCount;
+    const items: (BackgroundPreset | 'create-custom')[] = [];
+    
+    for (let col = 0; col < columnCount; col++) {
+      const itemIndex = startIndex + col;
+      if (itemIndex === 0) {
+        items.push('create-custom');
+      } else if (itemIndex - 1 < filteredPresets.length) {
+        items.push(filteredPresets[itemIndex - 1]);
+      }
+    }
+    
+    return items;
+  }, [columnCount, filteredPresets]);
 
   return (
     <>
@@ -81,35 +146,77 @@ export default function BackgroundLibrary() {
             ))}
           </div>
 
-          {/* Presets grid */}
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {/* Create Custom card */}
-            <button
-              onClick={() => navigate('/dashboard/generator')}
-              className={cn(
-                'group relative flex aspect-[9/16] flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border-2 border-dashed transition-all',
-                'border-muted-foreground/30 bg-card hover:border-primary hover:bg-primary/5'
-              )}
+          {/* Virtualized Presets Grid */}
+          <div
+            ref={parentRef}
+            className="h-[calc(100vh-280px)] overflow-auto"
+            style={{ contain: 'strict' }}
+          >
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/20">
-                <Sparkles className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-foreground">Create Custom</p>
-                <p className="mt-1 text-sm text-muted-foreground">Design your own</p>
-              </div>
-            </button>
-
-            {/* Preset cards */}
-            {filteredPresets.map((preset) => (
-              <PresetCard
-                key={preset.id}
-                preset={preset}
-                onSelect={handleSelectPreset}
-                onPreview={handlePreviewPreset}
-                isSelected={selectedPreset?.id === preset.id}
-              />
-            ))}
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const rowItems = getRowItems(virtualRow.index);
+                
+                return (
+                  <div
+                    key={virtualRow.key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <div 
+                      className="grid gap-4 h-full"
+                      style={{ 
+                        gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` 
+                      }}
+                    >
+                      {rowItems.map((item) => {
+                        if (item === 'create-custom') {
+                          return (
+                            <button
+                              key="create-custom"
+                              onClick={() => navigate('/dashboard/generator')}
+                              className={cn(
+                                'group relative flex aspect-[9/16] flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border-2 border-dashed transition-all',
+                                'border-muted-foreground/30 bg-card hover:border-primary hover:bg-primary/5'
+                              )}
+                            >
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/20">
+                                <Sparkles className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
+                              </div>
+                              <div className="text-center">
+                                <p className="font-semibold text-foreground">Create Custom</p>
+                                <p className="mt-1 text-sm text-muted-foreground">Design your own</p>
+                              </div>
+                            </button>
+                          );
+                        }
+                        
+                        return (
+                          <PresetCard
+                            key={item.id}
+                            preset={item}
+                            onSelect={handleSelectPreset}
+                            onPreview={handlePreviewPreset}
+                            isSelected={selectedPreset?.id === item.id}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -122,5 +229,22 @@ export default function BackgroundLibrary() {
         onSelect={handleSelectPreset}
       />
     </>
+  );
+}
+
+// Loading skeleton for initial render
+export function BackgroundLibrarySkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {Array.from({ length: 15 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+          <Skeleton className="aspect-[9/16]" />
+          <div className="p-3">
+            <Skeleton className="h-5 w-24 mb-2" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

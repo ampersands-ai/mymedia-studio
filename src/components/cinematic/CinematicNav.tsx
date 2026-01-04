@@ -119,7 +119,7 @@ export const CinematicNav = () => {
             </Link>
           )}
 
-          {creditBalance !== null && (
+          {user && creditBalance !== null && (
             <button
               onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'usage' } })}
               className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"

@@ -44,24 +44,20 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
 
-      # Email notification on test failure (optional - uncomment to enable)
-      # - name: Send Email on Test Failure
+      # Email notification via Resend (optional - uncomment to enable)
+      # Requires RESEND_API_KEY in repository secrets
+      # - name: Send Email via Resend
       #   if: failure()
-      #   uses: dawidd6/action-send-mail@v3
-      #   with:
-      #     server_address: smtp.gmail.com
-      #     server_port: 465
-      #     username: ${{ secrets.EMAIL_USERNAME }}
-      #     password: ${{ secrets.EMAIL_PASSWORD }}
-      #     subject: "❌ Tests Failed - ${{ github.repository }}"
-      #     to: team@yourcompany.com
-      #     from: CI/CD Bot <noreply@github.com>
-      #     body: |
-      #       Tests failed on branch: ${{ github.ref_name }}
-      #       Commit: ${{ github.sha }}
-      #       Author: ${{ github.actor }}
-      #
-      #       View logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      #   run: |
+      #     curl -X POST 'https://api.resend.com/emails' \
+      #       -H 'Authorization: Bearer ${{ secrets.RESEND_API_KEY }}' \
+      #       -H 'Content-Type: application/json' \
+      #       -d '{
+      #         "from": "CI/CD <noreply@yourdomain.com>",
+      #         "to": ["team@yourdomain.com"],
+      #         "subject": "❌ Tests Failed - ${{ github.repository }}",
+      #         "html": "<h2>CI Pipeline Failed</h2><p><strong>Branch:</strong> ${{ github.ref_name }}</p><p><strong>Commit:</strong> ${{ github.sha }}</p><p><strong>Author:</strong> ${{ github.actor }}</p><p><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View Full Logs</a></p>"
+      #       }'
 
   # Optional: Add security scanning
   security:

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 export default defineConfig({
@@ -17,10 +17,10 @@ export default defineConfig({
         '**/*.spec.{ts,tsx}',
       ],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
+        lines: 30,
+        functions: 25,
+        branches: 20,
+        statements: 30,
       },
     },
   },

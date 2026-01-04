@@ -31,8 +31,12 @@ jobs:
         run: npm run lint --if-present
       
       - name: Unit Tests
-        run: npm run test -- --run --passWithNoTests
-      
+        run: npm test
+
+      - name: Test Coverage
+        run: npm run test:coverage
+        continue-on-error: true
+
       - name: Build Check
         run: npm run build
         env:

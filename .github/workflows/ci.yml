@@ -44,19 +44,22 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
 
-      # Email notification via Resend (optional - uncomment to enable)
-      # Requires RESEND_API_KEY in repository secrets
-      # - name: Send Email via Resend
+      # Email notification via Supabase edge function (optional - uncomment to enable)
+      # Uses existing Resend setup in Lovable/Supabase - no extra secrets needed!
+      # Just add SUPABASE_URL and SUPABASE_ANON_KEY to repository secrets
+      # - name: Send CI Notification Email
       #   if: failure()
       #   run: |
-      #     curl -X POST 'https://api.resend.com/emails' \
-      #       -H 'Authorization: Bearer ${{ secrets.RESEND_API_KEY }}' \
+      #     curl -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/send-ci-notification' \
+      #       -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
       #       -H 'Content-Type: application/json' \
       #       -d '{
-      #         "from": "CI/CD <noreply@yourdomain.com>",
-      #         "to": ["team@yourdomain.com"],
-      #         "subject": "❌ Tests Failed - ${{ github.repository }}",
-      #         "html": "<h2>CI Pipeline Failed</h2><p><strong>Branch:</strong> ${{ github.ref_name }}</p><p><strong>Commit:</strong> ${{ github.sha }}</p><p><strong>Author:</strong> ${{ github.actor }}</p><p><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View Full Logs</a></p>"
+      #         "repository": "${{ github.repository }}",
+      #         "branch": "${{ github.ref_name }}",
+      #         "commit": "${{ github.sha }}",
+      #         "author": "${{ github.actor }}",
+      #         "logsUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+      #         "status": "failed"
       #       }'
 
   # Optional: Add security scanning

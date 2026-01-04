@@ -194,6 +194,110 @@ function generateCubeVertices(): { vertices: Float32Array; indices: Uint16Array 
   return { vertices, indices };
 }
 
+// Generate sphere vertices
+function generateSphereVertices(segments: number = 16, rings: number = 12): { vertices: Float32Array; indices: Uint16Array } {
+  const radius = 0.5;
+  const vertexData: number[] = [];
+  const indexData: number[] = [];
+  
+  // Generate vertices with positions and normals
+  for (let ring = 0; ring <= rings; ring++) {
+    const phi = (ring / rings) * Math.PI;
+    for (let seg = 0; seg <= segments; seg++) {
+      const theta = (seg / segments) * Math.PI * 2;
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.cos(phi);
+      const z = radius * Math.sin(phi) * Math.sin(theta);
+      // Normal is same as position normalized (for unit sphere)
+      const nx = x / radius;
+      const ny = y / radius;
+      const nz = z / radius;
+      vertexData.push(x, y, z, nx, ny, nz);
+    }
+  }
+  
+  // Generate indices for triangles
+  for (let ring = 0; ring < rings; ring++) {
+    for (let seg = 0; seg < segments; seg++) {
+      const current = ring * (segments + 1) + seg;
+      const next = current + segments + 1;
+      indexData.push(current, next, current + 1);
+      indexData.push(current + 1, next, next + 1);
+    }
+  }
+  
+  return { 
+    vertices: new Float32Array(vertexData), 
+    indices: new Uint16Array(indexData) 
+  };
+}
+
+// Generate pyramid vertices
+function generatePyramidVertices(): { vertices: Float32Array; indices: Uint16Array } {
+  const h = 0.7; // height
+  const b = 0.5; // base half-size
+  
+  // Calculate normals for each face
+  const frontNormal = normalize([0, b, h]);
+  const backNormal = normalize([0, b, -h]);
+  const leftNormal = normalize([-h, b, 0]);
+  const rightNormal = normalize([h, b, 0]);
+  const bottomNormal = [0, -1, 0];
+  
+  function normalize(v: number[]): number[] {
+    const len = Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    return [v[0]/len, v[1]/len, v[2]/len];
+  }
+  
+  const vertices = new Float32Array([
+    // Front face (apex, front-left, front-right)
+    0, h, 0, ...frontNormal,
+    -b, 0, b, ...frontNormal,
+    b, 0, b, ...frontNormal,
+    // Right face (apex, front-right, back-right)
+    0, h, 0, ...rightNormal,
+    b, 0, b, ...rightNormal,
+    b, 0, -b, ...rightNormal,
+    // Back face (apex, back-right, back-left)
+    0, h, 0, ...backNormal,
+    b, 0, -b, ...backNormal,
+    -b, 0, -b, ...backNormal,
+    // Left face (apex, back-left, front-left)
+    0, h, 0, ...leftNormal,
+    -b, 0, -b, ...leftNormal,
+    -b, 0, b, ...leftNormal,
+    // Bottom face (two triangles)
+    -b, 0, b, ...bottomNormal,
+    -b, 0, -b, ...bottomNormal,
+    b, 0, -b, ...bottomNormal,
+    b, 0, b, ...bottomNormal,
+  ]);
+
+  const indices = new Uint16Array([
+    0, 1, 2,    // Front
+    3, 4, 5,    // Right
+    6, 7, 8,    // Back
+    9, 10, 11,  // Left
+    12, 13, 14, // Bottom tri 1
+    12, 14, 15, // Bottom tri 2
+  ]);
+
+  return { vertices, indices };
+}
+
+// Get geometry based on shape type
+function getGeometryForShape(shape: ShaderParams['shape']): { vertices: Float32Array; indices: Uint16Array } {
+  switch (shape) {
+    case 'sphere':
+      return generateSphereVertices();
+    case 'pyramid':
+      return generatePyramidVertices();
+    case 'cube':
+    default:
+      return generateCubeVertices();
+  }
+}
+
 // Generate instance data based on arrangement
 function generateInstanceData(
   count: number,
@@ -505,8 +609,8 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
             },
           });
 
-          // Create geometry buffers
-          const { vertices, indices } = generateCubeVertices();
+          // Create geometry buffers based on shape
+          const { vertices, indices } = getGeometryForShape(params.shape);
           
           const vertexBuffer = device.createBuffer({
             size: vertices.byteLength,
@@ -558,7 +662,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           cancelAnimationFrame(animationFrameRef.current);
         }
       };
-    }, [rendererState, params.instanceCount, params.arrangement]);
+    }, [rendererState, params.instanceCount, params.arrangement, params.shape]);
 
     // Update instance buffer when arrangement or count changes
     useEffect(() => {
@@ -579,6 +683,31 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       device.queue.writeBuffer(contextRef.current.instanceBuffer, 0, instanceData.buffer);
       contextRef.current.instanceCount = params.instanceCount;
     }, [params.instanceCount, params.arrangement, rendererState]);
+
+    // Update vertex/index buffers when shape changes
+    useEffect(() => {
+      if (!contextRef.current || rendererState !== 'webgpu') return;
+
+      const { device } = contextRef.current;
+      const { vertices, indices } = getGeometryForShape(params.shape);
+      
+      // Recreate vertex buffer
+      contextRef.current.vertexBuffer.destroy();
+      contextRef.current.vertexBuffer = device.createBuffer({
+        size: vertices.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer(contextRef.current.vertexBuffer, 0, vertices.buffer);
+      
+      // Recreate index buffer
+      contextRef.current.indexBuffer.destroy();
+      contextRef.current.indexBuffer = device.createBuffer({
+        size: indices.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer(contextRef.current.indexBuffer, 0, indices.buffer);
+      contextRef.current.indexCount = indices.length;
+    }, [params.shape, rendererState]);
 
     // Render loop for WebGPU
     useEffect(() => {

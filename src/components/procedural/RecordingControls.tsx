@@ -35,13 +35,13 @@ export function RecordingControls({
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:p-4">
       {/* Recording controls */}
       <div className="flex items-center justify-center gap-3 sm:justify-start">
-        {state === 'idle' && (
+        {(state === 'idle' || state === 'ready') && (
           <Button
             onClick={onStartRecording}
             className="h-11 min-w-[120px] gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:h-10"
           >
             <Circle className="h-4 w-4 fill-current" />
-            Record
+            {state === 'ready' ? 'Record Again' : 'Record'}
           </Button>
         )}
 

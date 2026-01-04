@@ -301,6 +301,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
     // Separate canvas refs - CRITICAL: never share canvas between WebGPU and Canvas2D
     const webgpuCanvasRef = useRef<HTMLCanvasElement>(null);
     const [rendererState, setRendererState] = useState<RendererState>(null);
+    const [isWebGPUReady, setIsWebGPUReady] = useState(false);
     const contextRef = useRef<{
       device: GPUDevice;
       context: GPUCanvasContext;
@@ -492,8 +493,10 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           };
 
           startTimeRef.current = Date.now();
+          setIsWebGPUReady(true);
         } catch (e) {
           console.error('WebGPU initialization failed:', e);
+          setIsWebGPUReady(false);
           setRendererState('canvas2d');
         }
       };
@@ -501,6 +504,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
       initWebGPU();
 
       return () => {
+        setIsWebGPUReady(false);
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
         }
@@ -529,7 +533,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
 
     // Render loop for WebGPU
     useEffect(() => {
-      if (rendererState !== 'webgpu' || !contextRef.current || !webgpuCanvasRef.current) return;
+      if (rendererState !== 'webgpu' || !isWebGPUReady || !contextRef.current || !webgpuCanvasRef.current) return;
 
       const render = () => {
         if (!contextRef.current || !webgpuCanvasRef.current) return;
@@ -607,7 +611,7 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
           cancelAnimationFrame(animationFrameRef.current);
         }
       };
-    }, [rendererState]);
+    }, [rendererState, isWebGPUReady]);
 
     // Loading state - checking WebGPU capability
     if (rendererState === null) {

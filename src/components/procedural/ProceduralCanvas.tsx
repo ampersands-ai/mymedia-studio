@@ -11,6 +11,14 @@ interface ProceduralCanvasProps {
 // Renderer state: null = checking, true = WebGPU works, false = use Canvas2D
 type RendererState = null | 'webgpu' | 'canvas2d';
 
+// WebGPU only supports these basic arrangements - all others use Canvas2D
+const WEBGPU_SUPPORTED_ARRANGEMENTS = ['radial', 'spiral', 'grid', 'wave'] as const;
+type WebGPUSupportedArrangement = typeof WEBGPU_SUPPORTED_ARRANGEMENTS[number];
+
+function isWebGPUSupportedArrangement(arrangement: string): arrangement is WebGPUSupportedArrangement {
+  return WEBGPU_SUPPORTED_ARRANGEMENTS.includes(arrangement as WebGPUSupportedArrangement);
+}
+
 // Vertex shader for instanced cubes
 const vertexShaderCode = /* wgsl */`
 struct Uniforms {
@@ -326,19 +334,54 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
     // Expose canvas ref to parent - return whichever canvas is active
     useImperativeHandle(ref, () => webgpuCanvasRef.current!);
 
+    // Track if device supports WebGPU (separate from which renderer we use)
+    const [webgpuSupported, setWebGPUSupported] = useState<boolean | null>(null);
+
     // Check WebGPU capability FIRST before any canvas interaction
     useEffect(() => {
       const checkCapability = async () => {
         const isSupported = await checkWebGPUCapability();
-        if (isSupported) {
+        setWebGPUSupported(isSupported);
+        
+        if (!isSupported) {
+          console.log('WebGPU not supported, using Canvas2D fallback');
+          setRendererState('canvas2d');
+        } else if (isWebGPUSupportedArrangement(params.arrangement)) {
           setRendererState('webgpu');
         } else {
-          console.log('WebGPU not supported, using Canvas2D fallback');
+          console.log(`Arrangement "${params.arrangement}" not supported by WebGPU, using Canvas2D`);
           setRendererState('canvas2d');
         }
       };
       checkCapability();
     }, []);
+
+    // Switch renderer when arrangement changes
+    useEffect(() => {
+      // Skip if we haven't checked WebGPU support yet
+      if (webgpuSupported === null) return;
+      
+      if (!webgpuSupported) {
+        // Device doesn't support WebGPU, always use Canvas2D
+        setRendererState('canvas2d');
+        return;
+      }
+
+      if (isWebGPUSupportedArrangement(params.arrangement)) {
+        // Arrangement supports WebGPU
+        if (rendererState !== 'webgpu') {
+          setIsWebGPUReady(false);
+          setRendererState('webgpu');
+        }
+      } else {
+        // Arrangement needs Canvas2D
+        if (rendererState !== 'canvas2d') {
+          setIsWebGPUReady(false);
+          contextRef.current = null;
+          setRendererState('canvas2d');
+        }
+      }
+    }, [params.arrangement, webgpuSupported]);
 
     // Initialize WebGPU only after we confirm it's supported
     useEffect(() => {
@@ -624,11 +667,15 @@ export const ProceduralCanvas = forwardRef<HTMLCanvasElement, ProceduralCanvasPr
 
     // Canvas2D fallback - uses its own canvas element
     if (rendererState === 'canvas2d') {
+      const modeReason = webgpuSupported === false 
+        ? 'WebGPU unavailable' 
+        : 'specialized arrangement';
+      
       return (
         <div className="relative h-full w-full">
           <Canvas2DFallback params={params} />
           <div className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
-            2D Mode (WebGPU unavailable)
+            2D Mode ({modeReason})
           </div>
         </div>
       );

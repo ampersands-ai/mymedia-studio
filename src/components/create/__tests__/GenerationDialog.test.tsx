@@ -4,10 +4,11 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { renderWithProviders, userEvent } from '@/components/__tests__/test-utils';
 import { GenerationDialog } from '../GenerationDialog';
 import type { GenerationState } from '@/hooks/useGenerationState';
+import type { TemplatePreview } from '@/types/templates';
 
 // Mock the child components
 vi.mock('../GenerationConsole', () => ({
@@ -26,18 +27,36 @@ vi.mock('@/components/onboarding/TokenCostPreview', () => ({
   ),
 }));
 
+// Factory for mock TemplatePreview
+function createMockTemplatePreview(overrides: Partial<TemplatePreview> = {}): TemplatePreview {
+  return {
+    id: 'test-template',
+    name: 'Test Template',
+    description: 'A test template for generation',
+    category: 'test-category',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    before_image_url: null,
+    after_image_url: null,
+    is_active: true,
+    display_order: 1,
+    estimated_time_seconds: 90,
+    user_input_fields: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    primary_model_record_id: 'model-record-123',
+    primary_model_id: 'test-model',
+    primaryContentType: 'image',
+    estimatedBaseCost: 5,
+    template_type: 'workflow',
+    ...overrides,
+  };
+}
+
 describe('GenerationDialog', () => {
   const defaultProps = {
     open: true,
     onOpenChange: vi.fn(),
-    selectedTemplate: {
-      id: 'test-template',
-      name: 'Test Template',
-      description: 'A test template for generation',
-      estimatedBaseCost: 5,
-      primaryContentType: 'image' as const,
-      estimated_time_seconds: 90,
-    },
+    selectedTemplate: createMockTemplatePreview(),
     prompt: '',
     onPromptChange: vi.fn(),
     onGenerate: vi.fn(),
@@ -71,10 +90,9 @@ describe('GenerationDialog', () => {
     it('does not display estimated time when null', () => {
       const props = {
         ...defaultProps,
-        selectedTemplate: {
-          ...defaultProps.selectedTemplate,
+        selectedTemplate: createMockTemplatePreview({
           estimated_time_seconds: null,
-        },
+        }),
       };
 
       renderWithProviders(<GenerationDialog {...props} />);
@@ -85,10 +103,9 @@ describe('GenerationDialog', () => {
     it('shows default description when template has none', () => {
       const props = {
         ...defaultProps,
-        selectedTemplate: {
-          ...defaultProps.selectedTemplate,
-          description: undefined,
-        },
+        selectedTemplate: createMockTemplatePreview({
+          description: null,
+        }),
       };
 
       renderWithProviders(<GenerationDialog {...props} />);
@@ -257,10 +274,9 @@ describe('GenerationDialog', () => {
     it('uses default cost of 2 when template has no cost', () => {
       const props = {
         ...defaultProps,
-        selectedTemplate: {
-          ...defaultProps.selectedTemplate,
-          estimatedBaseCost: undefined,
-        },
+        selectedTemplate: createMockTemplatePreview({
+          estimatedBaseCost: undefined as unknown as number,
+        }),
       };
 
       renderWithProviders(<GenerationDialog {...props} />);

@@ -54,7 +54,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
   const imageModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
-      return m.content_type === 'image' && groups.includes('prompt_to_image');
+      return groups.includes('prompt_to_image');
     })
     .sort((a, b) => {
       const costA = a.base_token_cost || 0;

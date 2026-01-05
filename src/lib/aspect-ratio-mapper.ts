@@ -35,6 +35,14 @@ const DIMENSIONS_MAP: Record<string, { width: number; height: number }> = {
   '4:5': { width: 1080, height: 1350 },
   '3:2': { width: 1536, height: 1024 },
   '2:3': { width: 1024, height: 1536 },
+  '3:4': { width: 768, height: 1024 },
+  '21:9': { width: 1920, height: 823 },
+};
+
+// Fallback mapping for unsupported aspect ratios
+const ASPECT_RATIO_FALLBACKS: Record<string, string> = {
+  '4:5': '3:4',   // Instagram Feed → closest portrait
+  '5:4': '4:3',   // → closest landscape
 };
 
 /**
@@ -78,15 +86,47 @@ export function mapAspectRatioToModelParameters(
 
   // Check for aspectRatio parameter (Midjourney, FLUX, etc.)
   if (properties.aspectRatio || properties.aspect_ratio) {
+    const aspectProp = (properties.aspectRatio || properties.aspect_ratio) as { enum?: string[] };
+    let finalRatio = actualRatio;
+    
+    // Check if model has enum restrictions
+    if (aspectProp.enum && Array.isArray(aspectProp.enum)) {
+      if (!aspectProp.enum.includes(actualRatio)) {
+        // Use fallback if available
+        const fallback = ASPECT_RATIO_FALLBACKS[actualRatio];
+        if (fallback && aspectProp.enum.includes(fallback)) {
+          logger.warn('Aspect ratio not supported, using fallback', {
+            utility: 'aspect-ratio-mapper',
+            requestedRatio: actualRatio,
+            fallbackRatio: fallback,
+            supportedRatios: aspectProp.enum,
+            operation: 'mapAspectRatioToModelParameters'
+          });
+          finalRatio = fallback;
+        } else {
+          // Default to 16:9 or first supported ratio
+          finalRatio = aspectProp.enum.includes('16:9') ? '16:9' : aspectProp.enum[0];
+          logger.warn('Aspect ratio not supported, defaulting', {
+            utility: 'aspect-ratio-mapper',
+            requestedRatio: actualRatio,
+            defaultRatio: finalRatio,
+            supportedRatios: aspectProp.enum,
+            operation: 'mapAspectRatioToModelParameters'
+          });
+        }
+      }
+    }
+    
     logger.debug('Using aspectRatio parameter', {
       utility: 'aspect-ratio-mapper',
       actualRatio,
+      finalRatio,
       parameterType: 'aspectRatio',
       operation: 'mapAspectRatioToModelParameters'
     });
     return { 
-      aspectRatio: actualRatio,
-      aspect_ratio: actualRatio // Some models use snake_case
+      aspectRatio: finalRatio,
+      aspect_ratio: finalRatio
     };
   }
 

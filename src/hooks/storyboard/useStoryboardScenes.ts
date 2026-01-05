@@ -378,6 +378,225 @@ export const useStoryboardScenes = (
     };
   }, [currentStoryboardId, user, storyboard, scenes, updateIntroSceneMutation, updateSceneImageMutation]);
 
+  // Generate all scene animations at once (image-to-video)
+  const generateAllSceneAnimations = useCallback(async (
+    modelRecordId: string,
+    signal: AbortSignal,
+    onProgress?: (current: number, total: number) => void
+  ) => {
+    if (!currentStoryboardId || !user) {
+      throw new Error('No storyboard or user');
+    }
+
+    // Get current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Not authenticated. Please log in again.');
+    }
+
+    // 1. Identify scenes with images but no video
+    const scenesToAnimate = [
+      // Intro scene with image but no video
+      ...(storyboard && storyboard.intro_image_preview_url && !storyboard.intro_video_url ? [{
+        id: storyboard.id,
+        imageUrl: storyboard.intro_image_preview_url,
+        imagePrompt: storyboard.intro_image_prompt,
+        sceneNumber: 1,
+        isIntro: true
+      }] : []),
+      // Regular scenes with images but no video
+      ...scenes
+        .filter(scene => scene.image_preview_url && !scene.video_url)
+        .map((scene) => ({
+          id: scene.id,
+          imageUrl: scene.image_preview_url!,
+          imagePrompt: scene.image_prompt,
+          sceneNumber: scenes.findIndex(s => s.id === scene.id) + 2,
+          isIntro: false
+        }))
+    ];
+
+    if (scenesToAnimate.length === 0) {
+      return { success: true, generated: 0, failed: 0, results: [] };
+    }
+
+    // 2. Get model config from registry
+    const { getAllModels } = await import('@/lib/models/registry');
+    const modules = getAllModels();
+    const modelModule = Object.values(modules).find(m => m.MODEL_CONFIG.recordId === modelRecordId);
+    
+    if (!modelModule) {
+      throw new Error(`Model not found in registry: ${modelRecordId}`);
+    }
+
+    const tokenCost = modelModule.MODEL_CONFIG.baseCreditCost || 1;
+    const totalCost = tokenCost * scenesToAnimate.length;
+    
+    // Check credits
+    const { data: tokenData } = await supabase
+      .from('user_subscriptions')
+      .select('tokens_remaining')
+      .eq('user_id', user.id)
+      .single();
+    
+    if ((tokenData?.tokens_remaining || 0) < totalCost) {
+      throw new Error(`Insufficient credits. Need ${totalCost} credits to animate ${scenesToAnimate.length} scenes.`);
+    }
+
+    // 3. Generate animations sequentially
+    const results: Array<{
+      sceneNumber: number;
+      success: boolean;
+      url?: string;
+      error?: string;
+    }> = [];
+    
+    for (let i = 0; i < scenesToAnimate.length; i++) {
+      if (signal.aborted) {
+        throw new Error('Cancelled by user');
+      }
+      
+      const scene = scenesToAnimate[i];
+      onProgress?.(i + 1, scenesToAnimate.length);
+      
+      try {
+        // Get storyboard defaults for this model
+        const { getModelStoryboardDefaults } = await import('@/lib/models/storyboard-defaults-registry');
+        const storyboardDefaults = getModelStoryboardDefaults(modelRecordId, {
+          prompt: scene.imagePrompt,
+          aspectRatio: storyboard?.aspect_ratio,
+          inputImage: scene.imageUrl,
+          duration: 4,
+        });
+
+        const customParams = storyboardDefaults 
+          ? { ...storyboardDefaults, __useStoryboardDefaults: true }
+          : { inputImage: scene.imageUrl };
+
+        const { data, error } = await supabase.functions.invoke('generate-content', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: {
+            model_id: modelModule.MODEL_CONFIG.modelId,
+            model_record_id: modelRecordId,
+            model_config: modelModule.MODEL_CONFIG,
+            model_schema: modelModule.SCHEMA,
+            prompt: scene.imagePrompt,
+            custom_parameters: customParams,
+          }
+        });
+        
+        if (error) {
+          const errorStatus = (error as { status?: number })?.status;
+          if (error.message?.includes('Unauthorized') || errorStatus === 401) {
+            throw new Error('Authentication failed. Please try logging out and back in.');
+          }
+          throw error;
+        }
+        
+        // Handle async generation (polling required)
+        let outputUrl = data.output_url;
+        
+        if (!outputUrl && data.id) {
+          // Poll for completion (video takes longer, use 120s timeout)
+          outputUrl = await pollForAnimationResult(data.id, signal);
+        }
+
+        // Update scene with video URL
+        if (scene.isIntro) {
+          await updateIntroSceneMutation.mutateAsync({ 
+            field: 'intro_image_preview_url', // The mutation detects video URLs and updates intro_video_url
+            value: outputUrl 
+          });
+        } else {
+          await updateSceneImageMutation.mutateAsync({ 
+            sceneId: scene.id, 
+            imageUrl: outputUrl // The mutation detects video URLs and updates video_url
+          });
+        }
+
+        results.push({
+          sceneNumber: scene.sceneNumber,
+          success: true,
+          url: outputUrl
+        });
+
+      } catch (error) {
+        logger.error('Scene animation failed', error as Error, {
+          component: 'useStoryboardScenes',
+          operation: 'generateAllSceneAnimations',
+          sceneNumber: scene.sceneNumber,
+          isIntro: scene.isIntro
+        });
+        results.push({
+          sceneNumber: scene.sceneNumber,
+          success: false,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    onProgress?.(scenesToAnimate.length, scenesToAnimate.length);
+
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    if (failCount > 0) {
+      logger.warn('Bulk animation completed with failures', {
+        component: 'useStoryboardScenes',
+        operation: 'generateAllSceneAnimations',
+        failed: failCount,
+        succeeded: successCount
+      });
+    }
+
+    toast.success(`Animated ${successCount} of ${scenesToAnimate.length} scenes`);
+
+    return { 
+      success: true, 
+      generated: successCount, 
+      failed: failCount,
+      results 
+    };
+  }, [currentStoryboardId, user, storyboard, scenes, updateIntroSceneMutation, updateSceneImageMutation]);
+
+  // Helper for polling animation results (longer timeout for video)
+  const pollForAnimationResult = async (
+    generationId: string, 
+    signal: AbortSignal
+  ): Promise<string> => {
+    const maxAttempts = 120; // 2 minutes max for video
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      if (signal.aborted) {
+        throw new Error('Polling cancelled');
+      }
+
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status, output_url')
+        .eq('id', generationId)
+        .single();
+
+      if (error) throw error;
+
+      if (data.status === 'completed' && data.output_url) {
+        return data.output_url;
+      }
+
+      if (data.status === 'failed') {
+        throw new Error('Animation generation failed');
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
+    throw new Error('Animation timed out after 2 minutes');
+  };
+
   return {
     updateScene,
     updateIntroScene,
@@ -385,5 +604,6 @@ export const useStoryboardScenes = (
     navigateScene,
     updateSceneImage: updateSceneImageMutation.mutate,
     generateAllScenePreviews,
+    generateAllSceneAnimations,
   };
 };

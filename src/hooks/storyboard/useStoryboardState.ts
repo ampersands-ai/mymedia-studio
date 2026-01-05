@@ -37,6 +37,7 @@ interface Storyboard {
   intro_image_prompt: string;
   intro_voiceover_text: string;
   intro_image_preview_url?: string;
+  intro_video_url?: string;
   status: 'draft' | 'rendering' | 'complete' | 'failed';
   template_id?: string;
   video_url?: string;

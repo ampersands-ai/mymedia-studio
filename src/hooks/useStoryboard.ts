@@ -31,6 +31,7 @@ export const useStoryboard = () => {
     navigateScene,
     updateSceneImage,
     generateAllScenePreviews,
+    generateAllSceneAnimations,
   } = useStoryboardScenes(
     currentStoryboardId,
     storyboard,
@@ -82,5 +83,6 @@ export const useStoryboard = () => {
     updateSceneImage,
     updateRenderSettings,
     generateAllScenePreviews,
+    generateAllSceneAnimations,
   };
 };

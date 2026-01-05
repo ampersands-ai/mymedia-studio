@@ -221,8 +221,12 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
 
   logger.info('Calling Runware API', { metadata: { model: cleanModel, taskUUID, provider: 'runware' } });
 
-  // Determine task type from parameters or infer from model/params
-  const taskType = request.parameters?.taskType || (request.parameters?.frameImages ? "videoInference" : "imageInference");
+  // Determine task type from parameters or infer from model/params/schema
+  // Check for explicit taskType, frameImages, or inputImage (common I2V field)
+  const hasVideoIndicator = request.parameters?.frameImages || 
+                            request.parameters?.inputImage ||
+                            request.input_schema?.properties?.inputImage;
+  const taskType = request.parameters?.taskType || (hasVideoIndicator ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
 
   logger.info('Task type determined', { metadata: { taskType, isVideo, provider: 'runware' } });

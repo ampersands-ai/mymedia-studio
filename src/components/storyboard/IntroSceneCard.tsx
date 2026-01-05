@@ -76,6 +76,7 @@ export const IntroSceneCard = ({
             id: storyboard.id,
             image_prompt: introImagePrompt,
             image_preview_url: storyboard.intro_image_preview_url,
+            video_url: (storyboard as any).intro_video_url,
           }}
           sceneNumber={1}
           onImageGenerated={onImageGenerated}

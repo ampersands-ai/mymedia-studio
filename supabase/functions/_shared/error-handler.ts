@@ -18,7 +18,8 @@ export function createSafeErrorResponse(
   let safeMessage = 'An error occurred processing your request';
   let status = 500;
 
-  const errorMsg = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  const originalErrorMsg = error instanceof Error ? error.message : String(error);
+  const errorMsg = originalErrorMsg.toLowerCase();
   
   if (errorMsg.includes('auth') || errorMsg.includes('unauthorized')) {
     safeMessage = 'Authentication failed';
@@ -48,6 +49,28 @@ export function createSafeErrorResponse(
   } else if (errorMsg.includes('timeout')) {
     safeMessage = 'Request timed out';
     status = 504;
+  } else if (
+    errorMsg.includes('file type not supported') ||
+    errorMsg.includes('unsupported file') ||
+    errorMsg.includes('unsupported format') ||
+    errorMsg.includes('unsupported image') ||
+    errorMsg.includes('unsupported media')
+  ) {
+    // Extract the useful part of the error for the user
+    const match = originalErrorMsg.match(/:\s*(.+)$/);
+    safeMessage = match ? match[1] : 'File type not supported';
+    status = 400;
+  } else if (
+    errorMsg.includes('task creation failed') ||
+    errorMsg.includes('generation failed') ||
+    errorMsg.includes('provider error')
+  ) {
+    // Pass through provider errors that are user-actionable
+    const match = originalErrorMsg.match(/:\s*(.+)$/);
+    if (match) {
+      safeMessage = match[1];
+    }
+    status = 400;
   }
   
   // Sanitize proprietary terms before sending to client

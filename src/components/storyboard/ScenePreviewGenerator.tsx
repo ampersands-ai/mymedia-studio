@@ -369,9 +369,9 @@ export const ScenePreviewGenerator = ({
       operation: 'handleGeneratePreview'
     });
 
-    // For animate mode, pass the image URL as reference
+    // For animate mode, pass the image URL as reference (inputImage is the I2V model field name)
     const customParams = generationMode === 'animate' && displayUrl
-      ? { image: displayUrl, ...aspectRatioParams }
+      ? { inputImage: displayUrl, ...aspectRatioParams }
       : aspectRatioParams;
 
     const generationResult = await generate({

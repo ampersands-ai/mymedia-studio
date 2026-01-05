@@ -189,8 +189,12 @@ export async function callRunware(
   // SECURITY: Do not log prompt content (potential PII)
   logger.info('Prompt received', { metadata: { promptLength: effectivePrompt.length } });
 
-  // Determine task type from parameters or infer from model/params
-  const taskType = params.taskType || (params.frameImages ? "videoInference" : "imageInference");
+  // Determine task type from parameters or infer from model/params/schema
+  // Check for explicit taskType, frameImages, or inputImage (common I2V field)
+  const hasVideoIndicator = params.frameImages || 
+                            params.inputImage ||
+                            request.input_schema?.properties?.inputImage;
+  const taskType = params.taskType || (hasVideoIndicator ? "videoInference" : "imageInference");
   const isVideo = taskType === "videoInference";
 
   logger.info('Task configuration', { metadata: { taskType, isVideo } });

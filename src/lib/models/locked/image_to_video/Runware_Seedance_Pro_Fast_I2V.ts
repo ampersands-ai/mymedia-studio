@@ -314,6 +314,35 @@ export function calculateCost(inputs: Record<string, unknown>): number {
 }
 
 // ============================================================================
+// STORYBOARD DEFAULTS - Exact parameters for storyboard generation
+// ============================================================================
+
+import type { StoryboardContext, StoryboardDefaults } from "@/lib/models/types/storyboard";
+
+/**
+ * Returns exact provider-ready parameters for storyboard I2V generation.
+ * Only includes parameters that Runware actually accepts for this model.
+ */
+export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefaults {
+  const aspectRatio = (ctx.aspectRatio || "9:16") as keyof typeof DIMENSION_PRESETS;
+  const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["9:16"];
+
+  return {
+    taskType: MODEL_CONFIG.taskType,
+    model: MODEL_CONFIG.modelId,
+    positivePrompt: ctx.prompt || "",
+    width: dimensions.width,
+    height: dimensions.height,
+    duration: ctx.duration || 4,
+    numberResults: 1,
+    outputFormat: MODEL_CONFIG.outputFormat,
+    outputQuality: MODEL_CONFIG.outputQuality,
+    includeCost: true,
+    frameImages: ctx.inputImage ? [{ inputImage: ctx.inputImage }] : [],
+  };
+}
+
+// ============================================================================
 // EXECUTION
 // ============================================================================
 

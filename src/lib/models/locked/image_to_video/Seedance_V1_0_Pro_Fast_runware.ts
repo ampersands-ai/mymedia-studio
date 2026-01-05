@@ -73,6 +73,42 @@ export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }
 
+// ============================================================================
+// STORYBOARD DEFAULTS - Exact parameters for storyboard generation
+// ============================================================================
+
+import type { StoryboardContext, StoryboardDefaults } from "@/lib/models/types/storyboard";
+
+const DIMENSION_PRESETS = {
+  "9:16": { width: 736, height: 1280 },
+  "16:9": { width: 1280, height: 736 },
+  "1:1": { width: 1024, height: 1024 },
+  "4:3": { width: 1024, height: 768 },
+  "3:4": { width: 768, height: 1024 },
+} as const;
+
+/**
+ * Returns exact provider-ready parameters for storyboard I2V generation.
+ * Only includes parameters that Runware actually accepts for this model.
+ */
+export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefaults {
+  const aspectRatio = (ctx.aspectRatio || "16:9") as keyof typeof DIMENSION_PRESETS;
+  const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["16:9"];
+
+  return {
+    taskType: "imageToVideo",
+    positivePrompt: ctx.prompt || "",
+    inputImage: ctx.inputImage || "",
+    width: dimensions.width,
+    height: dimensions.height,
+    duration: ctx.duration || 5,
+    fps: 24,
+    outputFormat: "MP4",
+    outputType: ["URL"],
+    includeCost: true,
+  };
+}
+
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   const { prompt, modelParameters, uploadedImages, userId, uploadImagesToStorage, startPolling } = params;
   const inputs: Record<string, any> = { ...modelParameters, positivePrompt: prompt };

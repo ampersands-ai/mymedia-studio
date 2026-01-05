@@ -162,6 +162,17 @@ Deno.serve(async (req) => {
 
     // Prepare parameters
     let parameters: Record<string, unknown> = custom_parameters;
+    
+    // Check if storyboard defaults are being used (skip schema default injection)
+    const useStoryboardDefaults = parameters.__useStoryboardDefaults === true;
+    if (useStoryboardDefaults) {
+      delete parameters.__useStoryboardDefaults;
+      logger.info('Using storyboard defaults - skipping schema default injection', {
+        userId: authenticatedUser.id,
+        metadata: { parameter_keys: Object.keys(parameters) }
+      });
+    }
+    
     if (parameters.input && typeof parameters.input === 'object' && !Array.isArray(parameters.input)) {
       const inputParams = parameters.input as Record<string, unknown>;
       const { model: _model, input: _input, ...otherTopLevel } = parameters;
@@ -204,14 +215,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Parameter validation
+    // Parameter validation - skip schema defaults for storyboard requests
     const isPreparedRunwarePayload = model.provider === 'runware' &&
       typeof parameters?.taskType === 'string' && typeof parameters?.model === 'string' &&
       (parameters?.width !== undefined || parameters?.height !== undefined);
 
+    // For storyboard defaults, skip schema default injection entirely
+    const skipSchemaDefaults = useStoryboardDefaults || isPreparedRunwarePayload;
+
     let validatedParameters = validateAndFilterParameters(
       parameters, model.input_schema || { properties: {}, required: [] },
-      { applyDefaults: !isPreparedRunwarePayload }, logger
+      { applyDefaults: !skipSchemaDefaults }, logger
     );
     validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema || { properties: {} });
 

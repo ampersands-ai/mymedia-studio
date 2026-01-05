@@ -425,7 +425,6 @@ export const ScenePreviewGenerator = ({
   };
 
   const hasExistingPreview = !!displayUrl;
-  const hasNextSceneComputed = (hasNextScene ?? false) || !!nextSceneImageUrl;
 
   return (
     <Card className={cn(
@@ -492,7 +491,7 @@ export const ScenePreviewGenerator = ({
       )}
 
       {/* Connect to Next Scene Toggle - Show in animate mode when there's a next scene */}
-      {generationMode === 'animate' && hasNextSceneComputed && hasExistingPreview && !isGenerating && !isAsyncGeneration && (
+      {generationMode === 'animate' && hasNextScene && hasExistingPreview && !isGenerating && !isAsyncGeneration && (
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border/30">
           <Switch
             id="connect-next-scene"

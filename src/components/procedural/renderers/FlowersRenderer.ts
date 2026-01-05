@@ -1,6 +1,6 @@
 // Flowers Renderer - Stylized flowers tilting toward sun
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -24,8 +24,8 @@ export function initFlowersParticles(instanceCount: number): TrackingParticle[] 
   return particles;
 }
 
-export function updateFlowersAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.3);
+export function updateFlowersAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.3);
 }
 
 export function renderFlowers(

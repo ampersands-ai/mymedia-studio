@@ -1,6 +1,6 @@
 // Sunflower Emoji Renderer - Kawaii sunflower faces
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -24,8 +24,8 @@ export function initSunflowerEmojiParticles(instanceCount: number): TrackingPart
   return particles;
 }
 
-export function updateSunflowerEmojiAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.4);
+export function updateSunflowerEmojiAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.4);
 }
 
 export function renderSunflowerEmoji(

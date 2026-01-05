@@ -1,6 +1,6 @@
 // Arrows Renderer - Directional arrow signs
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -19,8 +19,8 @@ export function initArrowsParticles(instanceCount: number): TrackingParticle[] {
   });
 }
 
-export function updateArrowsAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'orbital' }, 0.016, speed * 0.6);
+export function updateArrowsAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.6);
 }
 
 export function renderArrows(

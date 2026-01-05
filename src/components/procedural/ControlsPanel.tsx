@@ -8,7 +8,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass, Eye, Flashlight, Video, Radio, ArrowRight, Flower2, Crosshair, Square, Navigation, Radar, Clock, Volume2, Building, Scale, Search, Telescope, Flower } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass, Eye, Flashlight, Video, Radio, ArrowRight, Flower2, Crosshair, Square, Navigation, Radar, Clock, Volume2, Building, Scale, Search, Telescope, Flower, Shuffle, Infinity, ArrowLeftRight, ArrowDown } from 'lucide-react';
+
+// Tracking-based arrangements that support movement pattern selection
+const trackingArrangements = [
+  'eyes', 'spotlights', 'cameras', 'satellites', 'arrows', 
+  'sunfloweremoji', 'turrets', 'mirrors', 'periscopes', 'radar', 
+  'clocks', 'lasers', 'flowers', 'speakers', 'watchtowers', 
+  'metronomes', 'windvanes', 'searchlights', 'telescopes', 'flames', 'compass'
+];
+
+function isTrackingArrangement(arrangement: string): boolean {
+  return trackingArrangements.includes(arrangement);
+}
 
 interface ControlsPanelProps {
   params: ShaderParams;
@@ -346,6 +358,53 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Movement Pattern - Only show for tracking arrangements */}
+        {isTrackingArrangement(params.arrangement) && (
+          <div className="col-span-2 space-y-2 sm:col-span-1">
+            <Label className="text-xs text-muted-foreground sm:text-sm">Movement</Label>
+            <Select
+              value={params.movementPattern || 'random'}
+              onValueChange={(value) => onChange({ movementPattern: value as 'random' | 'figure8' | 'circular' | 'sweep' | 'bounce' })}
+            >
+              <SelectTrigger className="h-10 bg-background sm:h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="random">
+                  <div className="flex items-center gap-2">
+                    <Shuffle className="h-4 w-4" />
+                    Random
+                  </div>
+                </SelectItem>
+                <SelectItem value="figure8">
+                  <div className="flex items-center gap-2">
+                    <Infinity className="h-4 w-4" />
+                    Figure-8
+                  </div>
+                </SelectItem>
+                <SelectItem value="circular">
+                  <div className="flex items-center gap-2">
+                    <Circle className="h-4 w-4" />
+                    Circular
+                  </div>
+                </SelectItem>
+                <SelectItem value="sweep">
+                  <div className="flex items-center gap-2">
+                    <ArrowLeftRight className="h-4 w-4" />
+                    Sweep
+                  </div>
+                </SelectItem>
+                <SelectItem value="bounce">
+                  <div className="flex items-center gap-2">
+                    <ArrowDown className="h-4 w-4" />
+                    Bounce
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Colors - 3 in a row on mobile */}

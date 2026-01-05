@@ -53,6 +53,18 @@ export type AttractorPattern =
   | 'bounce'       // Bouncing within bounds
   | 'trueRandom';  // Continuous random movement with velocity
 
+// Map UI movement pattern names to internal AttractorPattern
+export function mapMovementPattern(uiPattern: string | undefined): AttractorPattern {
+  switch (uiPattern) {
+    case 'random': return 'trueRandom';
+    case 'figure8': return 'figure8';
+    case 'circular': return 'orbital';
+    case 'sweep': return 'wandering';
+    case 'bounce': return 'bounce';
+    default: return 'trueRandom';
+  }
+}
+
 export interface RenderContext {
   ctx: CanvasRenderingContext2D;
   width: number;

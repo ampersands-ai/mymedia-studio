@@ -1,6 +1,6 @@
 // Clocks Renderer - Clock faces with hands pointing to target
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -24,8 +24,8 @@ export function initClocksParticles(instanceCount: number): TrackingParticle[] {
   return particles;
 }
 
-export function updateClocksAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'orbital' }, 0.016, speed * 0.5);
+export function updateClocksAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.5);
 }
 
 export function renderClocks(

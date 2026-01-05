@@ -1,6 +1,6 @@
 // Speakers Renderer - Audio speakers with sound waves
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -19,8 +19,8 @@ export function initSpeakersParticles(instanceCount: number): TrackingParticle[]
   });
 }
 
-export function updateSpeakersAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'bounce' }, 0.016, speed * 0.7);
+export function updateSpeakersAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.7);
 }
 
 export function renderSpeakers(

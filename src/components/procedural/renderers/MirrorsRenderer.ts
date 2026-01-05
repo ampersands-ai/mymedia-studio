@@ -1,6 +1,6 @@
 // Mirrors Renderer - Solar concentrator mirror array
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initRadialGrid, 
   updateAttractor, 
@@ -20,8 +20,8 @@ export function initMirrorsParticles(instanceCount: number): TrackingParticle[] 
   });
 }
 
-export function updateMirrorsAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.2);
+export function updateMirrorsAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.2);
 }
 
 export function renderMirrors(

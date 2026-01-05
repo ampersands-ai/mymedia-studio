@@ -1,6 +1,6 @@
 // Satellites Renderer - VLA-style satellite dish array
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -24,8 +24,8 @@ export function initSatellitesParticles(instanceCount: number): TrackingParticle
   return particles;
 }
 
-export function updateSatellitesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.3);
+export function updateSatellitesAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.3);
 }
 
 export function renderSatellites(

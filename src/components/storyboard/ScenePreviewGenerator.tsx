@@ -264,13 +264,13 @@ export const ScenePreviewGenerator = ({
   const imageModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
-      return m.content_type === 'image' && groups.includes('prompt_to_image');
+      return groups.includes('prompt_to_image');
     });
 
   const videoModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
-      return m.content_type === 'video' && groups.includes('image_to_video');
+      return groups.includes('image_to_video');
     });
 
   // Use appropriate model list based on mode

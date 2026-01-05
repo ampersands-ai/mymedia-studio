@@ -374,25 +374,38 @@ export const ScenePreviewGenerator = ({
       ? { inputImage: displayUrl, ...aspectRatioParams }
       : aspectRatioParams;
 
-    const generationResult = await generate({
-      model_record_id: selectedModelId,
-      prompt: scene.image_prompt,
-      custom_parameters: {
-        ...customParams,
-        skip_token_deduction: isFreeRetry
-      },
-    });
+    try {
+      const generationResult = await generate({
+        model_record_id: selectedModelId,
+        prompt: scene.image_prompt,
+        custom_parameters: {
+          ...customParams,
+          skip_token_deduction: isFreeRetry
+        },
+      });
 
-    // Check if this is an async generation (no output_url yet)
-    if (!generationResult.output_url && generationResult.id) {
-      logger.debug('Async scene generation started', {
+      // Check if this is an async generation (no output_url yet)
+      if (!generationResult.output_url && generationResult.id) {
+        logger.debug('Async scene generation started', {
+          component: 'ScenePreviewGenerator',
+          sceneId: scene.id,
+          generationId: generationResult.id,
+          operation: 'handleGeneratePreview'
+        });
+        setPendingGenerationId(generationResult.id);
+        setIsAsyncGeneration(true);
+      }
+    } catch (err) {
+      // Error is already handled by useGeneration hook and logged in error effect
+      // Reset generation state to allow retry
+      setGenerationStartTime(null);
+      setElapsedSeconds(0);
+      logger.error('Scene generation failed', err as Error, {
         component: 'ScenePreviewGenerator',
         sceneId: scene.id,
-        generationId: generationResult.id,
+        selectedModelId,
         operation: 'handleGeneratePreview'
       });
-      setPendingGenerationId(generationResult.id);
-      setIsAsyncGeneration(true);
     }
   };
 

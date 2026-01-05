@@ -1043,6 +1043,316 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
     ctx.fill();
   }, []);
 
+  // Draw 3D Torus (donut shape)
+  const draw3DTorus = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const outerRadius = size;
+    const innerRadius = size * 0.5;
+    const lightFactor = Math.cos(rotation - lightAngle) * 0.5 + 0.5;
+    const brightness = 0.6 + metallic * lightFactor * 0.4;
+    
+    // Draw ring with gradient
+    const gradient = ctx.createRadialGradient(0, 0, innerRadius, 0, 0, outerRadius);
+    gradient.addColorStop(0, `rgba(${Math.min(255, color.r * brightness * 0.5)}, ${Math.min(255, color.g * brightness * 0.5)}, ${Math.min(255, color.b * brightness * 0.5)}, 0)`);
+    gradient.addColorStop(0.3, `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`);
+    gradient.addColorStop(0.7, `rgba(${Math.min(255, color.r * brightness * 1.2)}, ${Math.min(255, color.g * brightness * 1.2)}, ${Math.min(255, color.b * brightness * 1.2)}, ${alpha})`);
+    gradient.addColorStop(1, `rgba(${color.r * 0.4}, ${color.g * 0.4}, ${color.b * 0.4}, ${alpha * 0.5})`);
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
+    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2, true);
+    ctx.fill();
+    
+    // Specular highlight
+    if (metallic > 0.3) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${metallic * lightFactor * 0.3 * alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(-size * 0.2, -size * 0.2, size * 0.3, size * 0.15, rotation, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }, []);
+
+  // Draw 3D Octahedron (double pyramid)
+  const draw3DOctahedron = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const halfSize = size;
+    const lightFactor = Math.cos(rotation - lightAngle) * 0.5 + 0.5;
+    
+    // Top pyramid (4 faces visible from front)
+    const topBrightness = 0.8 + metallic * lightFactor * 0.4;
+    ctx.fillStyle = `rgba(${Math.min(255, color.r * topBrightness)}, ${Math.min(255, color.g * topBrightness)}, ${Math.min(255, color.b * topBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -halfSize); // Top point
+    ctx.lineTo(-halfSize, 0);
+    ctx.lineTo(0, halfSize * 0.3);
+    ctx.lineTo(halfSize, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Bottom pyramid (darker)
+    const bottomBrightness = 0.5 + metallic * lightFactor * 0.2;
+    ctx.fillStyle = `rgba(${color.r * bottomBrightness}, ${color.g * bottomBrightness}, ${color.b * bottomBrightness}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, halfSize); // Bottom point
+    ctx.lineTo(-halfSize, 0);
+    ctx.lineTo(0, halfSize * 0.3);
+    ctx.lineTo(halfSize, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Edge highlights
+    ctx.strokeStyle = `rgba(255, 255, 255, ${metallic * 0.3 * alpha})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -halfSize);
+    ctx.lineTo(halfSize, 0);
+    ctx.moveTo(0, -halfSize);
+    ctx.lineTo(-halfSize, 0);
+    ctx.stroke();
+    
+    ctx.restore();
+  }, []);
+
+  // Draw 3D Diamond (elongated gem shape)
+  const draw3DDiamond = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const width = size * 0.8;
+    const topHeight = size * 0.5;
+    const bottomHeight = size * 1.2;
+    const lightFactor = Math.cos(rotation - lightAngle) * 0.5 + 0.5;
+    
+    // Top facets (crown)
+    const crownBrightness = 0.9 + metallic * lightFactor * 0.5;
+    ctx.fillStyle = `rgba(${Math.min(255, color.r * crownBrightness)}, ${Math.min(255, color.g * crownBrightness)}, ${Math.min(255, color.b * crownBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -topHeight); // Top point
+    ctx.lineTo(-width, 0);
+    ctx.lineTo(0, topHeight * 0.3);
+    ctx.lineTo(width, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Bottom facets (pavilion) - darker, deeper
+    const pavilionBrightness = 0.4 + metallic * lightFactor * 0.3;
+    ctx.fillStyle = `rgba(${color.r * pavilionBrightness}, ${color.g * pavilionBrightness}, ${color.b * pavilionBrightness}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, bottomHeight); // Bottom point
+    ctx.lineTo(-width, 0);
+    ctx.lineTo(0, topHeight * 0.3);
+    ctx.lineTo(width, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Sparkle effect for gems
+    if (metallic > 0.5) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${metallic * lightFactor * 0.6 * alpha})`;
+      ctx.beginPath();
+      ctx.arc(width * 0.2, -topHeight * 0.3, size * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }, []);
+
+  // Draw 3D Cylinder
+  const draw3DCylinder = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const radius = size * 0.5;
+    const height = size * 1.2;
+    const lightFactor = Math.cos(rotation - lightAngle) * 0.5 + 0.5;
+    
+    // Body gradient (left to right for 3D effect)
+    const bodyGradient = ctx.createLinearGradient(-radius, 0, radius, 0);
+    const darkBrightness = 0.4 + metallic * 0.2;
+    const midBrightness = 0.7 + metallic * lightFactor * 0.3;
+    const lightBrightness = 0.9 + metallic * lightFactor * 0.4;
+    
+    bodyGradient.addColorStop(0, `rgba(${color.r * darkBrightness}, ${color.g * darkBrightness}, ${color.b * darkBrightness}, ${alpha})`);
+    bodyGradient.addColorStop(0.4, `rgba(${Math.min(255, color.r * lightBrightness)}, ${Math.min(255, color.g * lightBrightness)}, ${Math.min(255, color.b * lightBrightness)}, ${alpha})`);
+    bodyGradient.addColorStop(1, `rgba(${color.r * midBrightness}, ${color.g * midBrightness}, ${color.b * midBrightness}, ${alpha})`);
+    
+    // Body
+    ctx.fillStyle = bodyGradient;
+    ctx.fillRect(-radius, -height / 2, radius * 2, height);
+    
+    // Top ellipse
+    ctx.fillStyle = `rgba(${Math.min(255, color.r * lightBrightness)}, ${Math.min(255, color.g * lightBrightness)}, ${Math.min(255, color.b * lightBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(0, -height / 2, radius, radius * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Bottom ellipse (darker)
+    ctx.fillStyle = `rgba(${color.r * darkBrightness}, ${color.g * darkBrightness}, ${color.b * darkBrightness}, ${alpha * 0.5})`;
+    ctx.beginPath();
+    ctx.ellipse(0, height / 2, radius, radius * 0.3, 0, 0, Math.PI);
+    ctx.fill();
+    
+    ctx.restore();
+  }, []);
+
+  // Draw 3D Cone
+  const draw3DCone = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number
+  ) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const radius = size * 0.6;
+    const height = size * 1.4;
+    const lightFactor = Math.cos(rotation - lightAngle) * 0.5 + 0.5;
+    
+    // Cone body with gradient
+    const leftBrightness = 0.5 + metallic * 0.2;
+    const rightBrightness = 0.8 + metallic * lightFactor * 0.4;
+    
+    // Left side (darker)
+    ctx.fillStyle = `rgba(${color.r * leftBrightness}, ${color.g * leftBrightness}, ${color.b * leftBrightness}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -height / 2); // Tip
+    ctx.lineTo(-radius, height / 2);
+    ctx.lineTo(0, height / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Right side (brighter)
+    ctx.fillStyle = `rgba(${Math.min(255, color.r * rightBrightness)}, ${Math.min(255, color.g * rightBrightness)}, ${Math.min(255, color.b * rightBrightness)}, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -height / 2); // Tip
+    ctx.lineTo(0, height / 2);
+    ctx.lineTo(radius, height / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Base ellipse
+    ctx.fillStyle = `rgba(${color.r * 0.4}, ${color.g * 0.4}, ${color.b * 0.4}, ${alpha * 0.6})`;
+    ctx.beginPath();
+    ctx.ellipse(0, height / 2, radius, radius * 0.25, 0, 0, Math.PI);
+    ctx.fill();
+    
+    ctx.restore();
+  }, []);
+
+  // Unified shape drawing function
+  const drawShape = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    color: { r: number; g: number; b: number },
+    metallic: number,
+    lightAngle: number,
+    alpha: number,
+    shape: string,
+    sizeMultiplier: number = 1
+  ) => {
+    const adjustedSize = size * sizeMultiplier;
+    
+    switch (shape) {
+      case 'sphere':
+        drawGlowingSphere(ctx, x, y, adjustedSize, color, alpha, metallic);
+        break;
+      case 'torus':
+        draw3DTorus(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+      case 'octahedron':
+        draw3DOctahedron(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+      case 'diamond':
+        draw3DDiamond(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+      case 'cylinder':
+        draw3DCylinder(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+      case 'cone':
+        draw3DCone(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+      case 'pyramid':
+        // Inline pyramid drawing
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        const brightness = 0.7 + metallic * Math.cos(lightAngle) * 0.3;
+        ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(0, -adjustedSize);
+        ctx.lineTo(-adjustedSize, adjustedSize);
+        ctx.lineTo(adjustedSize, adjustedSize);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        break;
+      case 'cube':
+      default:
+        draw3DCube(ctx, x, y, adjustedSize, rotation, color, metallic, lightAngle, alpha);
+        break;
+    }
+  }, [draw3DCube, drawGlowingSphere, draw3DTorus, draw3DOctahedron, draw3DDiamond, draw3DCylinder, draw3DCone]);
+
   // Bezier curve calculation for stream
   const getBezierPoint = useCallback((t: number, width: number, height: number) => {
     // S-curve through space
@@ -1387,14 +1697,10 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
           b: Math.floor((b + m) * 255),
         };
 
-        const size = particle.size * breathe;
+        const size = particle.size * breathe * (params.shapeSize ?? 1);
         const alpha = 0.6 + particle.z * 0.4;
 
-        if (params.shape === 'sphere') {
-          drawGlowingSphere(ctx, x, y, size, rgb, alpha, params.metallic);
-        } else {
-          draw3DCube(ctx, x, y, size, localAngle, rgb, params.metallic, globalRotation, alpha);
-        }
+        drawShape(ctx, x, y, size, localAngle, rgb, params.metallic, globalRotation, alpha, params.shape, 1);
       });
     }
 
@@ -3356,57 +3662,14 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
         const alpha = 0.3 + depthFactor * 0.7;
         const lightAngle = Math.atan2(centerY - screenY, centerX - screenX);
 
-        if (params.shape === 'sphere') {
-          const gradient = ctx.createRadialGradient(
-            screenX - screenSize * 0.3,
-            screenY - screenSize * 0.3,
-            0,
-            screenX,
-            screenY,
-            screenSize
-          );
-          const highlightFactor = params.metallic * (0.5 + Math.cos(lightAngle) * 0.5);
-          gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightFactor * alpha})`);
-          gradient.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`);
-          gradient.addColorStop(1, `rgba(${Math.floor(color.r * 0.3)}, ${Math.floor(color.g * 0.3)}, ${Math.floor(color.b * 0.3)}, ${alpha})`);
-
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, screenSize, 0, Math.PI * 2);
-          ctx.fill();
-
-          if (params.metallic > 0.5 && isCannon) {
-            ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.4)`;
-            ctx.shadowBlur = screenSize;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, screenSize * 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-          }
-        } else if (params.shape === 'pyramid') {
-          ctx.save();
-          ctx.translate(screenX, screenY);
-          ctx.rotate(rotation);
-
-          const brightness = 0.7 + params.metallic * Math.cos(lightAngle) * 0.3;
-          ctx.fillStyle = `rgba(${Math.min(255, color.r * brightness)}, ${Math.min(255, color.g * brightness)}, ${Math.min(255, color.b * brightness)}, ${alpha})`;
-          ctx.beginPath();
-          ctx.moveTo(0, -screenSize);
-          ctx.lineTo(-screenSize, screenSize);
-          ctx.lineTo(screenSize, screenSize);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.restore();
-        } else {
-          draw3DCube(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha);
-        }
+        const sizeMultiplier = params.shapeSize ?? 1;
+        drawShape(ctx, screenX, screenY, screenSize * 1.5, rotation, color, params.metallic, lightAngle, alpha, params.shape, sizeMultiplier);
       });
     }
 
 
     animationRef.current = requestAnimationFrame(render);
-  }, [params, hexToRgb, draw3DCube, drawTunnelCube, drawGlowingSphere, getBezierPoint]);
+  }, [params, hexToRgb, draw3DCube, drawTunnelCube, drawGlowingSphere, getBezierPoint, drawShape]);
 
   // Initialize appropriate particles based on arrangement
   const initializeParticles = useCallback(() => {

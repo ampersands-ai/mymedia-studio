@@ -50,6 +50,7 @@ export function PromptInput({ onApply }: PromptInputProps) {
     backgroundColor: 'Background',
     panelSize: 'Panel Size',
     movementPattern: 'Movement',
+    shapeSize: 'Size',
   };
 
   return (

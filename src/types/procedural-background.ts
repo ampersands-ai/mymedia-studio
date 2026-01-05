@@ -1,7 +1,7 @@
 export type MovementPattern = 'random' | 'figure8' | 'circular' | 'sweep' | 'bounce';
 
 export interface ShaderParams {
-  shape: 'cube' | 'sphere' | 'pyramid';
+  shape: 'cube' | 'sphere' | 'pyramid' | 'torus' | 'octahedron' | 'diamond' | 'cylinder' | 'cone';
   instanceCount: number; // 1000-8000
   arrangement: 'radial' | 'spiral' | 'grid' | 'wave' | 'cannon' | 'tunnel' | 'helix' | 'matrix' | 'orbits' | 'vortex' | 'constellation' | 'kaleidoscope' | 'stream' | 'explosion' | 'sunflowers' | 'solarpanel' | 'windmill' | 'surfers' | 'flags' | 'sailboats' | 'forest' | 'fishschool' | 'murmuration' | 'pendulums' | 'dominoes' | 'compass' | 
     // Tracking-based arrangements
@@ -15,6 +15,7 @@ export interface ShaderParams {
   backgroundColor: string; // hex color
   panelSize?: number; // 0.5-3 multiplier for solar panel size
   movementPattern?: MovementPattern; // Movement pattern for tracking arrangements
+  shapeSize?: number; // 0.3-2.5 multiplier for shape size
 }
 
 export interface BackgroundPreset {
@@ -42,4 +43,5 @@ export const DEFAULT_SHADER_PARAMS: ShaderParams = {
   backgroundColor: '#0a0a0a',
   panelSize: 1.0,
   movementPattern: 'random',
+  shapeSize: 1.0,
 };

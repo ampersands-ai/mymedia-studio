@@ -33,7 +33,13 @@ export function createSafeErrorResponse(
   ) {
     safeMessage = 'Request rejected by safety system';
     status = 400;
-  } else if (errorMsg.includes('invalid') || errorMsg.includes('validation')) {
+  } else if (
+    errorMsg.includes('invalid') || 
+    errorMsg.includes('validation') ||
+    errorMsg.includes('unsupportedparameter') ||
+    errorMsg.includes('unsupported use') ||
+    errorMsg.includes('missing required parameter')
+  ) {
     safeMessage = 'Invalid request parameters';
     status = 400;
   } else if (errorMsg.includes('rate limit') || errorMsg.includes('too many')) {

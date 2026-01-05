@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { StoryboardInput } from '@/components/storyboard/StoryboardInput';
 import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Film, ChevronDown, RotateCcw } from 'lucide-react';
+import { Film, ChevronDown, RotateCcw, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -65,33 +65,35 @@ export default function StoryboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Film className="h-8 w-8 text-primary" />
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                AI STORYBOARD GENERATOR
-              </h1>
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Film className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black">
+              AI STORYBOARD
+              <span className="inline-flex items-center gap-1 text-sm md:text-base font-medium text-muted-foreground ml-2">
+                <Coins className="w-4 h-4" />
+                from 0.3/s
+              </span>
+            </h1>
             {storyboard && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="gap-2"
+                className="gap-2 ml-auto"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Reset
               </Button>
             )}
           </div>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-sm md:text-base lg:text-lg text-muted-foreground">
             Create professional faceless videos with full creative control
           </p>
         </div>

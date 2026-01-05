@@ -196,6 +196,8 @@ export const StoryboardEditor = () => {
           onIntroPromptChange={setIntroImagePrompt}
           disabled={isRendering}
           onImageGenerated={handleImageGenerated}
+          hasNextScene={scenes.length > 0}
+          nextSceneImageUrl={scenes[0]?.image_preview_url || null}
         />
         
         {scenes.map((scene, idx) => {

@@ -17,6 +17,8 @@ interface IntroSceneCardProps {
   onIntroPromptChange: (prompt: string) => void;
   disabled: boolean;
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
+  nextSceneImageUrl?: string | null;
+  hasNextScene?: boolean;
 }
 
 /**
@@ -31,6 +33,8 @@ export const IntroSceneCard = ({
   onIntroPromptChange,
   disabled,
   onImageGenerated,
+  nextSceneImageUrl,
+  hasNextScene,
 }: IntroSceneCardProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
@@ -76,6 +80,8 @@ export const IntroSceneCard = ({
           sceneNumber={1}
           onImageGenerated={onImageGenerated}
           aspectRatio={storyboard.aspect_ratio}
+          hasNextScene={hasNextScene}
+          nextSceneImageUrl={nextSceneImageUrl}
         />
       </div>
     </div>

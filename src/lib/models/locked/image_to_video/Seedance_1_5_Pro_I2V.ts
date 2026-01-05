@@ -285,6 +285,18 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
 import type { StoryboardContext, StoryboardDefaults } from '@/lib/models/types/storyboard';
 
+// Map storyboard aspect ratios to model-supported ratios
+const ASPECT_RATIO_MAP: Record<string, string> = {
+  'sd': '4:3',
+  'hd': '16:9',
+  'full-hd': '16:9',
+  'squared': '1:1',
+  'instagram-story': '9:16',
+  'instagram-feed': '3:4',  // 4:5 not supported, use closest portrait ratio
+};
+
+const SUPPORTED_RATIOS = ["1:1", "21:9", "4:3", "3:4", "16:9", "9:16"];
+
 /**
  * Storyboard-optimized defaults for Seedance 1.5 Pro I2V
  * Returns exact parameters accepted by kie_ai provider
@@ -296,10 +308,20 @@ export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefault
   if (ctx.inputImage) inputUrls.push(ctx.inputImage);
   if (ctx.connectToNextScene && ctx.nextSceneImage) inputUrls.push(ctx.nextSceneImage);
   
+  // Map storyboard aspect ratio to model-supported ratio
+  let aspectRatio = ctx.aspectRatio || "16:9";
+  if (aspectRatio && ASPECT_RATIO_MAP[aspectRatio]) {
+    aspectRatio = ASPECT_RATIO_MAP[aspectRatio];
+  }
+  // Ensure it's a valid ratio, fallback to 16:9
+  if (!SUPPORTED_RATIOS.includes(aspectRatio)) {
+    aspectRatio = "16:9";
+  }
+  
   return {
     prompt: ctx.prompt,
     input_urls: inputUrls,
-    aspect_ratio: ctx.aspectRatio || "16:9",
+    aspect_ratio: aspectRatio,
     duration: "4",           // Fastest generation
     resolution: "480p",      // Lower cost for storyboarding
     fixed_lens: false,       // Allow natural camera movement

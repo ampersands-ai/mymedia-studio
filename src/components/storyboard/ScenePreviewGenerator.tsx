@@ -23,6 +23,7 @@ interface Scene {
   id: string;
   image_prompt: string;
   image_preview_url?: string | null;
+  video_url?: string | null;
 }
 
 interface ScenePreviewGeneratorProps {
@@ -203,8 +204,8 @@ export const ScenePreviewGenerator = ({
     };
   }, [generationStartTime, isGenerating, isAsyncGeneration]);
 
-  // Compute display URL from result or scene prop
-  const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.image_preview_url ?? null;
+  // Compute display URL from result or scene prop (prioritize video_url over image_preview_url)
+  const displayUrl = result?.output_url ?? pollOutputUrl ?? scene.video_url ?? scene.image_preview_url ?? null;
   
   // Determine if the display content is a video or image
   const isVideoContent = displayUrl && (

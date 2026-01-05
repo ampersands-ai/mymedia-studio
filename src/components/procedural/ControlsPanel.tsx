@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass, Eye, Flashlight, Video, Radio, ArrowRight, Flower2, Crosshair, Square, Navigation, Radar, Clock, Volume2, Building, Scale, Search, Telescope, Flower, Shuffle, Infinity, ArrowLeftRight, ArrowDown } from 'lucide-react';
+import { Box, Circle, Triangle, LayoutGrid, Loader2, Waves, Target, MoveVertical, Dna, Binary, Atom, Wind, Sparkles, Hexagon, Zap, Flame, Sun, PanelTop, Fan, Ship, Flag, Sailboat, TreePine, Fish, Bird, GitCommit, RectangleVertical, Compass, Eye, Flashlight, Video, Radio, ArrowRight, Flower2, Crosshair, Square, Navigation, Radar, Clock, Volume2, Building, Scale, Search, Telescope, Flower, Shuffle, Infinity, ArrowLeftRight, ArrowDown, Donut, Diamond, Cylinder, Cone } from 'lucide-react';
 
 // Tracking-based arrangements that support movement pattern selection
 const trackingArrangements = [
@@ -61,6 +61,36 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Triangle className="h-4 w-4" />
                   Pyramid
+                </div>
+              </SelectItem>
+              <SelectItem value="torus">
+                <div className="flex items-center gap-2">
+                  <Donut className="h-4 w-4" />
+                  Torus
+                </div>
+              </SelectItem>
+              <SelectItem value="octahedron">
+                <div className="flex items-center gap-2">
+                  <Hexagon className="h-4 w-4" />
+                  Octahedron
+                </div>
+              </SelectItem>
+              <SelectItem value="diamond">
+                <div className="flex items-center gap-2">
+                  <Diamond className="h-4 w-4" />
+                  Diamond
+                </div>
+              </SelectItem>
+              <SelectItem value="cylinder">
+                <div className="flex items-center gap-2">
+                  <Cylinder className="h-4 w-4" />
+                  Cylinder
+                </div>
+              </SelectItem>
+              <SelectItem value="cone">
+                <div className="flex items-center gap-2">
+                  <Cone className="h-4 w-4" />
+                  Cone
                 </div>
               </SelectItem>
             </SelectContent>
@@ -498,6 +528,22 @@ export function ControlsPanel({ params, onChange }: ControlsPanelProps) {
             min={1000}
             max={8000}
             step={500}
+            className="cursor-pointer"
+          />
+        </div>
+
+        {/* Shape Size */}
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground sm:text-sm">Shape Size</Label>
+            <span className="text-xs font-medium text-foreground sm:text-sm">{((params.shapeSize ?? 1) * 100).toFixed(0)}%</span>
+          </div>
+          <Slider
+            value={[(params.shapeSize ?? 1) * 100]}
+            onValueChange={([value]) => onChange({ shapeSize: value / 100 })}
+            min={30}
+            max={250}
+            step={10}
             className="cursor-pointer"
           />
         </div>

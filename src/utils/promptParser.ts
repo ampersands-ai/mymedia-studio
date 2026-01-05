@@ -141,6 +141,41 @@ const SHAPE_KEYWORDS: Record<string, ShaderParams['shape']> = {
   pyramids: 'pyramid',
   triangle: 'pyramid',
   triangular: 'pyramid',
+  torus: 'torus',
+  ring: 'torus',
+  rings: 'torus',
+  donut: 'torus',
+  donuts: 'torus',
+  octahedron: 'octahedron',
+  octahedrons: 'octahedron',
+  diamond: 'diamond',
+  diamonds: 'diamond',
+  gem: 'diamond',
+  gems: 'diamond',
+  crystal: 'diamond',
+  crystals: 'diamond',
+  cylinder: 'cylinder',
+  cylinders: 'cylinder',
+  tube: 'cylinder',
+  tubes: 'cylinder',
+  pipe: 'cylinder',
+  pipes: 'cylinder',
+  cone: 'cone',
+  cones: 'cone',
+  spike: 'cone',
+  spikes: 'cone',
+};
+
+const SIZE_KEYWORDS: Record<string, number> = {
+  tiny: 0.4,
+  mini: 0.5,
+  small: 0.6,
+  medium: 1.0,
+  large: 1.5,
+  big: 1.6,
+  huge: 2.0,
+  giant: 2.3,
+  massive: 2.5,
 };
 
 const METALLIC_KEYWORDS: Record<string, number> = {
@@ -226,6 +261,14 @@ export function parsePromptToParams(prompt: string): Partial<ShaderParams> {
   for (const [keyword, count] of Object.entries(DENSITY_KEYWORDS)) {
     if (lowerPrompt.includes(keyword)) {
       result.instanceCount = count;
+      break;
+    }
+  }
+
+  // Parse size
+  for (const [keyword, size] of Object.entries(SIZE_KEYWORDS)) {
+    if (lowerPrompt.includes(keyword)) {
+      result.shapeSize = size;
       break;
     }
   }

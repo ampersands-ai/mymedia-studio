@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackgroundMediaSelector } from '../video/BackgroundMediaSelector';
 import type { SelectedMedia } from '../video/BackgroundMediaSelector';
 import { logger } from '@/lib/logger';
+import { getAllModels } from '@/lib/models/registry';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,11 +103,21 @@ export function CustomSceneCard({
 
     setIsGenerating(true);
     try {
+      // Find the Gemini flash image model
+      const modules = getAllModels();
+      const modelModule = modules.find(m => m.MODEL_CONFIG.modelId === 'google/gemini-2.5-flash-image-preview');
+      
+      if (!modelModule) {
+        throw new Error('Image generation model not found');
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
-          model_id: 'google/gemini-2.5-flash-image-preview',
+          model_id: modelModule.MODEL_CONFIG.modelId,
+          model_record_id: modelModule.MODEL_CONFIG.recordId,
+          model_config: modelModule.MODEL_CONFIG,
+          model_schema: modelModule.SCHEMA,
           prompt: scene.imagePrompt,
-          type: 'image',
         },
       });
 

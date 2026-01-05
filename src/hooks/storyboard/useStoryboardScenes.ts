@@ -242,8 +242,12 @@ export const useStoryboardScenes = (
     const { getAllModels } = await import('@/lib/models/registry');
     const modules = getAllModels();
     const modelModule = modules.find(m => m.MODEL_CONFIG.modelId === modelId);
+    
+    if (!modelModule) {
+      throw new Error(`Model not found in registry: ${modelId}`);
+    }
 
-    const tokenCost = modelModule?.MODEL_CONFIG.baseCreditCost || 1;
+    const tokenCost = modelModule.MODEL_CONFIG.baseCreditCost || 1;
     const totalCost = tokenCost * scenesToGenerate.length;
     
     const { data: tokenData } = await supabase
@@ -280,7 +284,7 @@ export const useStoryboardScenes = (
         const promptToUse = scene.imagePrompt;
         
         // Determine if we should use sync or async endpoint
-        const functionName = modelModule?.MODEL_CONFIG.provider === 'runware' 
+        const functionName = modelModule.MODEL_CONFIG.provider === 'runware' 
           ? 'generate-content-sync' 
           : 'generate-content';
 
@@ -290,6 +294,9 @@ export const useStoryboardScenes = (
           },
           body: {
             model_id: modelId,
+            model_record_id: modelModule.MODEL_CONFIG.recordId,
+            model_config: modelModule.MODEL_CONFIG,
+            model_schema: modelModule.SCHEMA,
             prompt: promptToUse,
             custom_parameters: {},
           }

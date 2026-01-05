@@ -41,11 +41,14 @@ export interface AIModel {
   show_notify_on_completion?: boolean;
   // Pricing display
   is_per_second_pricing?: boolean;
+  // Storyboarding flag
+  storyboarding?: boolean;
 }
 
 interface VisibilitySettings {
   visible: Record<string, boolean>;
   deactivated: Record<string, boolean>;
+  storyboarding: Record<string, boolean>;
 }
 
 export const useModels = () => {
@@ -59,7 +62,7 @@ export const useModels = () => {
         .eq("setting_key", "model_visibility")
         .maybeSingle();
 
-      const visibility: VisibilitySettings = (settingsData?.setting_value as unknown as VisibilitySettings) || { visible: {}, deactivated: {} };
+      const visibility: VisibilitySettings = (settingsData?.setting_value as unknown as VisibilitySettings) || { visible: {}, deactivated: {}, storyboarding: {} };
 
       // Read directly from registry (no database query!)
       const modules = getAllModels();
@@ -115,6 +118,8 @@ export const useModels = () => {
           show_notify_on_completion: m.MODEL_CONFIG.showNotifyOnCompletion ?? true,
           // Pricing display
           is_per_second_pricing: (m.MODEL_CONFIG as any).isPerSecondPricing ?? false,
+          // Storyboarding flag from admin settings
+          storyboarding: visibility.storyboarding?.[m.MODEL_CONFIG.recordId] ?? false,
         }));
     },
     staleTime: 30 * 1000, // 30 seconds

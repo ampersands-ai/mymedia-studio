@@ -260,17 +260,17 @@ export const ScenePreviewGenerator = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error]);
 
-  // Filter to ONLY prompt-to-image and image-to-video models based on groups
+  // Filter to ONLY prompt-to-image and image-to-video models that have storyboarding enabled
   const imageModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
-      return groups.includes('prompt_to_image');
+      return groups.includes('prompt_to_image') && m.storyboarding === true;
     });
 
   const videoModels = (models ?? [])
     .filter(m => {
       const groups = Array.isArray(m.groups) ? m.groups : [];
-      return groups.includes('image_to_video');
+      return groups.includes('image_to_video') && m.storyboarding === true;
     });
 
   // Use appropriate model list based on mode

@@ -28,6 +28,7 @@ import { RenderVideoButton } from './RenderVideoButton';
 import { RerenderConfirmDialog } from './RerenderConfirmDialog';
 import { FinalVideoPlayer } from './FinalVideoPlayer';
 import { BulkPreviewGenerator } from './BulkPreviewGenerator';
+import { BulkAnimationGenerator } from './BulkAnimationGenerator';
 import { GeneratingOutputConsole } from './GeneratingOutputConsole';
 import { SubtitleCustomizer } from './SubtitleCustomizer';
 import type { SubtitleSettings } from '@/types/subtitle';
@@ -54,6 +55,7 @@ export const StoryboardEditor = () => {
     updateSceneImage,
     updateRenderSettings,
     generateAllScenePreviews,
+    generateAllSceneAnimations,
   } = useStoryboard();
   
   const { availableCredits } = useUserCredits();
@@ -186,6 +188,12 @@ export const StoryboardEditor = () => {
           storyboard={storyboard}
           scenes={scenes}
           onGenerateAll={generateAllScenePreviews}
+        />
+        
+        <BulkAnimationGenerator
+          storyboard={storyboard}
+          scenes={scenes}
+          onAnimateAll={generateAllSceneAnimations}
         />
         
         <IntroSceneCard

@@ -296,17 +296,31 @@ export const ScenePreviewGenerator = ({
     }
   }, [availableModels, generationMode]);
 
+  // Default model ID for Seedance 1.5 Pro I2V
+  const DEFAULT_ANIMATION_MODEL = 'b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7';
+
   // Auto-select first available model if current selection is invalid
   useEffect(() => {
     if (availableModels.length > 0 && !availableModels.find(m => m.record_id === selectedModelId)) {
-      setSelectedModelId(availableModels[0].record_id);
+      // For animate mode, prefer Seedance 1.5 Pro as default
+      if (generationMode === 'animate') {
+        const seedanceModel = availableModels.find(m => m.record_id === DEFAULT_ANIMATION_MODEL);
+        setSelectedModelId(seedanceModel?.record_id || availableModels[0].record_id);
+      } else {
+        setSelectedModelId(availableModels[0].record_id);
+      }
     }
-  }, [availableModels, selectedModelId]);
+  }, [availableModels, selectedModelId, generationMode]);
 
-  // Reset to first model when switching modes
+  // Reset to appropriate default when switching modes
   useEffect(() => {
     if (availableModels.length > 0) {
-      setSelectedModelId(availableModels[0].record_id);
+      if (generationMode === 'animate') {
+        const seedanceModel = availableModels.find(m => m.record_id === DEFAULT_ANIMATION_MODEL);
+        setSelectedModelId(seedanceModel?.record_id || availableModels[0].record_id);
+      } else {
+        setSelectedModelId(availableModels[0].record_id);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationMode]);

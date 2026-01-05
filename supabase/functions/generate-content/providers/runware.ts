@@ -332,6 +332,20 @@ export async function callRunware(request: ProviderRequest): Promise<ProviderRes
     taskPayload.duration = Math.round(Number(taskPayload.duration));
   }
 
+  // For video inference: convert inputImage to frameImages format (Runware's expected format)
+  // Runware video models expect frameImages array, not inputImage parameter
+  if (isVideo && params.inputImage && !taskPayload.frameImages) {
+    const inputImageUrl = typeof params.inputImage === 'string' ? params.inputImage : null;
+    if (inputImageUrl) {
+      taskPayload.frameImages = [{ inputImage: inputImageUrl }];
+      logger.info('Converted inputImage to frameImages for video inference', {
+        metadata: { hasInputImage: true }
+      });
+    }
+    // Remove inputImage from payload as Runware doesn't accept it directly
+    delete taskPayload.inputImage;
+  }
+
   // Convert frameImages to Runware format for video tasks
   // Handles both legacy string[] and structured [{inputImage: string}] formats
   if (isVideo && taskPayload.frameImages !== undefined && taskPayload.frameImages !== null) {

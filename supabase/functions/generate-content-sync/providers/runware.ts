@@ -243,6 +243,20 @@ export async function callRunware(
     taskPayload[promptField] = effectivePrompt;
   }
 
+  // For video inference: convert inputImage to frameImages format (Runware's expected format)
+  // Runware video models expect frameImages array, not inputImage parameter
+  if (isVideo && params.inputImage && !taskPayload.frameImages) {
+    const inputImageUrl = typeof params.inputImage === 'string' ? params.inputImage : null;
+    if (inputImageUrl) {
+      taskPayload.frameImages = [{ inputImage: inputImageUrl }];
+      logger.info('Converted inputImage to frameImages for video inference', {
+        metadata: { hasInputImage: true }
+      });
+    }
+    // Remove inputImage from payload as Runware doesn't accept it directly
+    delete taskPayload.inputImage;
+  }
+
   // Build request payload with authentication and task
   const requestBody = [
     {

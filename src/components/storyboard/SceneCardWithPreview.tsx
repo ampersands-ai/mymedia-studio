@@ -17,6 +17,7 @@ interface SceneCardWithPreviewProps {
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
   aspectRatio?: string | null;
   nextSceneImageUrl?: string | null;
+  hasNextScene?: boolean;
 }
 
 /**
@@ -33,6 +34,7 @@ export const SceneCardWithPreview = ({
   onImageGenerated,
   aspectRatio,
   nextSceneImageUrl,
+  hasNextScene,
 }: SceneCardWithPreviewProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
@@ -53,6 +55,7 @@ export const SceneCardWithPreview = ({
           onImageGenerated={onImageGenerated}
           aspectRatio={aspectRatio}
           nextSceneImageUrl={nextSceneImageUrl}
+          hasNextScene={hasNextScene}
         />
       </div>
     </div>

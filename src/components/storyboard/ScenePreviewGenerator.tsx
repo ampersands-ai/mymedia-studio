@@ -31,6 +31,7 @@ interface ScenePreviewGeneratorProps {
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
   aspectRatio?: string | null;
   nextSceneImageUrl?: string | null;
+  hasNextScene?: boolean;
 }
 
 export const ScenePreviewGenerator = ({
@@ -39,6 +40,7 @@ export const ScenePreviewGenerator = ({
   onImageGenerated,
   aspectRatio,
   nextSceneImageUrl,
+  hasNextScene,
 }: ScenePreviewGeneratorProps) => {
   const [generationMode, setGenerationMode] = useState<'regenerate' | 'animate'>('regenerate');
   const [connectToNextScene, setConnectToNextScene] = useState(false);
@@ -488,25 +490,33 @@ export const ScenePreviewGenerator = ({
         </div>
       )}
 
-      {/* Connect to Next Scene Toggle - Only show in animate mode when next scene has an image */}
-      {generationMode === 'animate' && nextSceneImageUrl && hasExistingPreview && !isGenerating && !isAsyncGeneration && (
+      {/* Connect to Next Scene Toggle - Show in animate mode when there's a next scene */}
+      {generationMode === 'animate' && hasNextScene && hasExistingPreview && !isGenerating && !isAsyncGeneration && (
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border/30">
           <Switch
             id="connect-next-scene"
             checked={connectToNextScene}
             onCheckedChange={setConnectToNextScene}
+            disabled={!nextSceneImageUrl}
           />
           <Label 
             htmlFor="connect-next-scene" 
-            className="text-sm text-muted-foreground cursor-pointer flex-1"
+            className={cn(
+              "text-sm cursor-pointer flex-1",
+              nextSceneImageUrl ? "text-muted-foreground" : "text-muted-foreground/50"
+            )}
           >
             Connect to next scene
           </Label>
-          {connectToNextScene && (
+          {!nextSceneImageUrl ? (
+            <Badge variant="outline" className="text-xs text-muted-foreground/70">
+              Next scene needs image
+            </Badge>
+          ) : connectToNextScene ? (
             <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30">
               End frame linked
             </Badge>
-          )}
+          ) : null}
         </div>
       )}
 

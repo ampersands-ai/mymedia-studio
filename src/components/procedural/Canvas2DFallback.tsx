@@ -2,7 +2,8 @@ import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 
 import { ShaderParams } from '@/types/procedural-background';
 
 // Import tracking renderers
-import { TrackingParticle, AttractorState, RenderContext } from './renderers/types';
+import { TrackingParticle, AttractorState, RenderContext, mapMovementPattern } from './renderers/types';
+import { updateAttractor } from './renderers/trackingUtils';
 import { initEyesParticles, updateEyesAttractor, renderEyes } from './renderers/EyesRenderer';
 import { initSpotlightsParticles, updateSpotlightsAttractor, renderSpotlights } from './renderers/SpotlightsRenderer';
 import { initCamerasParticles, updateCamerasAttractor, renderCameras } from './renderers/CamerasRenderer';
@@ -312,6 +313,10 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
   const windGustRef = useRef(0); // For gust wave position
   const waveTimeRef = useRef(0); // For ocean waves
   const magnetPositionRef = useRef({ x: 0.5, y: 0.5, angle: 0 }); // For compass magnet
+  const compassAttractorRef = useRef<AttractorState>({ 
+    x: 0.5, y: 0.5, time: 0, pattern: 'trueRandom',
+    vx: 0, vy: 0, targetX: 0.5, targetY: 0.5, nextChangeTime: 0 
+  });
   const dominoTriggerRef = useRef(0); // For domino chain reaction
   const pendulumTimeRef = useRef(0); // For pendulum phase
 
@@ -3022,12 +3027,17 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
     else if (arrangement === 'compass') {
       const particles = compassParticlesRef.current;
       timeRef.current += 0.02 * params.cameraSpeed;
-      const time = timeRef.current;
 
-      // Moving magnet position (figure-8 path)
-      const magnetX = 0.5 + Math.sin(time * 0.5) * 0.35;
-      const magnetY = 0.5 + Math.sin(time) * Math.cos(time * 0.5) * 0.25;
-      magnetPositionRef.current = { x: magnetX, y: magnetY, angle: time };
+      // Get the movement pattern and update attractor
+      const pattern = mapMovementPattern(params.movementPattern);
+      compassAttractorRef.current = updateAttractor(
+        { ...compassAttractorRef.current, pattern }, 
+        0.016, 
+        params.cameraSpeed * 0.5
+      );
+      const magnetX = compassAttractorRef.current.x;
+      const magnetY = compassAttractorRef.current.y;
+      magnetPositionRef.current = { x: magnetX, y: magnetY, angle: timeRef.current };
 
       // Background
       const bgColor = hexToRgb(params.backgroundColor);
@@ -3167,86 +3177,89 @@ export const Canvas2DFallback = forwardRef<HTMLCanvasElement, Canvas2DFallbackPr
         }
       }
 
+      // Get the movement pattern from params
+      const pattern = mapMovementPattern(params.movementPattern);
+
       // Update attractor and render based on arrangement type
       switch (arrangement) {
         case 'eyes':
-          attractorRef.current = updateEyesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateEyesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderEyes(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'spotlights':
-          attractorRef.current = updateSpotlightsAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateSpotlightsAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderSpotlights(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'cameras':
-          attractorRef.current = updateCamerasAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateCamerasAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderCameras(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'satellites':
-          attractorRef.current = updateSatellitesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateSatellitesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderSatellites(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'arrows':
-          attractorRef.current = updateArrowsAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateArrowsAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderArrows(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'sunfloweremoji':
-          attractorRef.current = updateSunflowerEmojiAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateSunflowerEmojiAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderSunflowerEmoji(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'turrets':
-          attractorRef.current = updateTurretsAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateTurretsAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderTurrets(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'mirrors':
-          attractorRef.current = updateMirrorsAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateMirrorsAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderMirrors(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'periscopes':
-          attractorRef.current = updatePeriscopesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updatePeriscopesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderPeriscopes(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'radar':
-          attractorRef.current = updateRadarAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateRadarAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderRadar(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'clocks':
-          attractorRef.current = updateClocksAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateClocksAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderClocks(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'lasers':
-          attractorRef.current = updateLasersAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateLasersAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderLasers(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'flowers':
-          attractorRef.current = updateFlowersAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateFlowersAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderFlowers(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'speakers':
-          attractorRef.current = updateSpeakersAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateSpeakersAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderSpeakers(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'watchtowers':
-          attractorRef.current = updateWatchtowersAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateWatchtowersAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderWatchtowers(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'metronomes':
-          attractorRef.current = updateMetronomesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateMetronomesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderMetronomes(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'windvanes':
-          attractorRef.current = updateWindvanesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateWindvanesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderWindvanes(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'searchlights':
-          attractorRef.current = updateSearchlightsAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateSearchlightsAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderSearchlights(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'telescopes':
-          attractorRef.current = updateTelescopesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateTelescopesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderTelescopes(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
         case 'flames':
-          attractorRef.current = updateFlamesAttractor(attractorRef.current, params.cameraSpeed);
+          attractorRef.current = updateFlamesAttractor(attractorRef.current, params.cameraSpeed, pattern);
           renderFlames(renderContext, trackingParticlesRef.current, attractorRef.current);
           break;
       }

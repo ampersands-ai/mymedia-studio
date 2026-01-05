@@ -1,6 +1,6 @@
 // Metronomes Renderer - Swinging pendulums with magnetic attraction
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -24,8 +24,8 @@ export function initMetronomesParticles(instanceCount: number): TrackingParticle
   return particles;
 }
 
-export function updateMetronomesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'figure8' }, 0.016, speed * 0.5);
+export function updateMetronomesAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.5);
 }
 
 export function renderMetronomes(

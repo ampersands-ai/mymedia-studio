@@ -1,6 +1,6 @@
 // Searchlights Renderer - Military searchlights scanning sky
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   updateAttractor, 
   angleToTarget, 
@@ -33,8 +33,8 @@ export function initSearchlightsParticles(instanceCount: number): TrackingPartic
   return particles;
 }
 
-export function updateSearchlightsAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.5);
+export function updateSearchlightsAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.5);
 }
 
 export function renderSearchlights(

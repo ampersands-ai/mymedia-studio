@@ -1,6 +1,6 @@
 // Windvanes Renderer - Weather vanes on rooftops
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -18,8 +18,8 @@ export function initWindvanesParticles(instanceCount: number): TrackingParticle[
   });
 }
 
-export function updateWindvanesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.4);
+export function updateWindvanesAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.4);
 }
 
 export function renderWindvanes(

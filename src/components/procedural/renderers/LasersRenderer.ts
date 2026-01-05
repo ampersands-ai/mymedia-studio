@@ -1,6 +1,6 @@
 // Lasers Renderer - Grid of laser beams converging on target
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -22,8 +22,8 @@ export function initLasersParticles(instanceCount: number): TrackingParticle[] {
   return particles;
 }
 
-export function updateLasersAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'figure8' }, 0.016, speed * 0.7);
+export function updateLasersAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.7);
 }
 
 export function renderLasers(

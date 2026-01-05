@@ -1,6 +1,6 @@
 // Spotlights Renderer - Theater spotlights with visible light cones
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   updateAttractor, 
   angleToTarget, 
@@ -33,8 +33,8 @@ export function initSpotlightsParticles(instanceCount: number): TrackingParticle
   return particles;
 }
 
-export function updateSpotlightsAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'groundSweep' }, 0.016, speed * 0.6);
+export function updateSpotlightsAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.6);
 }
 
 export function renderSpotlights(

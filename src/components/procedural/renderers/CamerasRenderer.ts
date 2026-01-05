@@ -1,6 +1,6 @@
 // Cameras Renderer - Security cameras with red LEDs
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -25,8 +25,8 @@ export function initCamerasParticles(instanceCount: number): TrackingParticle[] 
   return particles;
 }
 
-export function updateCamerasAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.4);
+export function updateCamerasAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.4);
 }
 
 export function renderCameras(

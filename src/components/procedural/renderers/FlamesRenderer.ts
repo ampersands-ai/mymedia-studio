@@ -1,6 +1,6 @@
 // Flames Renderer - Candles/torches bending toward attractor
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -25,8 +25,8 @@ export function initFlamesParticles(instanceCount: number): TrackingParticle[] {
   return particles;
 }
 
-export function updateFlamesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'trueRandom' }, 0.016, speed * 0.6);
+export function updateFlamesAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.6);
 }
 
 export function renderFlames(

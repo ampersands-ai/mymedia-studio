@@ -1,6 +1,6 @@
 // Telescopes Renderer - Observatory telescopes tracking celestial objects
 
-import { TrackingParticle, RenderContext, AttractorState } from './types';
+import { TrackingParticle, RenderContext, AttractorState, AttractorPattern } from './types';
 import { 
   initTrackingGrid, 
   updateAttractor, 
@@ -25,8 +25,8 @@ export function initTelescopesParticles(instanceCount: number): TrackingParticle
   return particles;
 }
 
-export function updateTelescopesAttractor(current: AttractorState, speed: number): AttractorState {
-  return updateAttractor({ ...current, pattern: 'skyArc' }, 0.016, speed * 0.2);
+export function updateTelescopesAttractor(current: AttractorState, speed: number, pattern: AttractorPattern = 'trueRandom'): AttractorState {
+  return updateAttractor({ ...current, pattern }, 0.016, speed * 0.2);
 }
 
 export function renderTelescopes(

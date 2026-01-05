@@ -49,6 +49,7 @@ export function PromptInput({ onApply }: PromptInputProps) {
     instanceCount: 'Density',
     backgroundColor: 'Background',
     panelSize: 'Panel Size',
+    movementPattern: 'Movement',
   };
 
   return (

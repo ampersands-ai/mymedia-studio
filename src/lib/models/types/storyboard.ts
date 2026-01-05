@@ -21,6 +21,12 @@ export interface StoryboardContext {
   
   /** Duration in seconds (for video models) */
   duration?: number;
+  
+  /** Next scene's image URL for end-frame transitions */
+  nextSceneImage?: string | null;
+  
+  /** Whether to connect to next scene (use next scene image as end frame) */
+  connectToNextScene?: boolean;
 }
 
 /**

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, RefreshCw, Image as ImageIcon, Video, CheckCircle2, Clock } from 'lucide-react';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useModels } from '@/hooks/useModels';
@@ -28,6 +30,7 @@ interface ScenePreviewGeneratorProps {
   sceneNumber: number;
   onImageGenerated: (sceneId: string, imageUrl: string) => void;
   aspectRatio?: string | null;
+  nextSceneImageUrl?: string | null;
 }
 
 export const ScenePreviewGenerator = ({
@@ -35,8 +38,10 @@ export const ScenePreviewGenerator = ({
   sceneNumber,
   onImageGenerated,
   aspectRatio,
+  nextSceneImageUrl,
 }: ScenePreviewGeneratorProps) => {
   const [generationMode, setGenerationMode] = useState<'regenerate' | 'animate'>('regenerate');
+  const [connectToNextScene, setConnectToNextScene] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [pendingGenerationId, setPendingGenerationId] = useState<string | null>(null);
   const [isAsyncGeneration, setIsAsyncGeneration] = useState(false);
@@ -355,6 +360,8 @@ export const ScenePreviewGenerator = ({
       aspectRatio: aspectRatio,
       inputImage: generationMode === 'animate' ? displayUrl : undefined,
       duration: 4, // Default duration for storyboard animations
+      nextSceneImage: nextSceneImageUrl,
+      connectToNextScene: connectToNextScene,
     };
 
     // Try to get storyboard-specific defaults for this model
@@ -478,6 +485,28 @@ export const ScenePreviewGenerator = ({
               <span>Animate</span>
             </ToggleGroupItem>
           </ToggleGroup>
+        </div>
+      )}
+
+      {/* Connect to Next Scene Toggle - Only show in animate mode when next scene has an image */}
+      {generationMode === 'animate' && nextSceneImageUrl && hasExistingPreview && !isGenerating && !isAsyncGeneration && (
+        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border/30">
+          <Switch
+            id="connect-next-scene"
+            checked={connectToNextScene}
+            onCheckedChange={setConnectToNextScene}
+          />
+          <Label 
+            htmlFor="connect-next-scene" 
+            className="text-sm text-muted-foreground cursor-pointer flex-1"
+          >
+            Connect to next scene
+          </Label>
+          {connectToNextScene && (
+            <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30">
+              End frame linked
+            </Badge>
+          )}
         </div>
       )}
 

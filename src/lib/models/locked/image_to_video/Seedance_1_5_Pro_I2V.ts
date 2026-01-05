@@ -279,4 +279,32 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   return generation.id;
 }
 
-export default { MODEL_CONFIG, SCHEMA, preparePayload, calculateCost, validate, execute };
+// ============================================================================
+// STORYBOARD DEFAULTS
+// ============================================================================
+
+import type { StoryboardContext, StoryboardDefaults } from '@/lib/models/types/storyboard';
+
+/**
+ * Storyboard-optimized defaults for Seedance 1.5 Pro I2V
+ * Returns exact parameters accepted by kie_ai provider
+ * Supports dual-image input: current scene + next scene (if connected)
+ */
+export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefaults {
+  // Build input_urls array: [current_image, next_scene_image?]
+  const inputUrls: string[] = [];
+  if (ctx.inputImage) inputUrls.push(ctx.inputImage);
+  if (ctx.connectToNextScene && ctx.nextSceneImage) inputUrls.push(ctx.nextSceneImage);
+  
+  return {
+    prompt: ctx.prompt,
+    input_urls: inputUrls,
+    aspect_ratio: ctx.aspectRatio || "16:9",
+    duration: "4",           // Fastest generation
+    resolution: "480p",      // Lower cost for storyboarding
+    fixed_lens: false,       // Allow natural camera movement
+    generate_audio: false,   // Skip audio to reduce cost/time
+  };
+}
+
+export default { MODEL_CONFIG, SCHEMA, preparePayload, calculateCost, validate, execute, getStoryboardDefaults };

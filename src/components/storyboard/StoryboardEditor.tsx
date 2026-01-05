@@ -198,19 +198,26 @@ export const StoryboardEditor = () => {
           onImageGenerated={handleImageGenerated}
         />
         
-        {scenes.map((scene, idx) => (
-          <SceneCardWithPreview
-            key={scene.id}
-            scene={scene}
-            sceneNumber={idx + 2}
-            isActive={activeSceneId === scene.id}
-            onUpdate={updateScene}
-            onRegenerate={regenerateScene}
-            onClick={() => setActiveScene(scene.id)}
-            onImageGenerated={handleImageGenerated}
-            aspectRatio={storyboard?.aspect_ratio}
-          />
-        ))}
+        {scenes.map((scene, idx) => {
+          // Get next scene's image_preview_url (if exists)
+          const nextScene = idx < scenes.length - 1 ? scenes[idx + 1] : null;
+          const nextSceneImageUrl = nextScene?.image_preview_url || null;
+          
+          return (
+            <SceneCardWithPreview
+              key={scene.id}
+              scene={scene}
+              sceneNumber={idx + 2}
+              isActive={activeSceneId === scene.id}
+              onUpdate={updateScene}
+              onRegenerate={regenerateScene}
+              onClick={() => setActiveScene(scene.id)}
+              onImageGenerated={handleImageGenerated}
+              aspectRatio={storyboard?.aspect_ratio}
+              nextSceneImageUrl={nextSceneImageUrl}
+            />
+          );
+        })}
       </ScenesCollapsible>
       
       {/* Voice & Settings */}

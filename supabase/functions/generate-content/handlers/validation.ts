@@ -185,6 +185,19 @@ export async function checkRateLimits(
   logger: EdgeLogger,
   responseHeaders: Record<string, string>
 ): Promise<Response | null> {
+  // Check if user is admin - admins bypass all rate limits
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (roleData) {
+    logger.info('Admin user - bypassing rate limits', { userId });
+    return null;
+  }
+
   const { data: userSubscription } = await supabase
     .from('user_subscriptions')
     .select('plan')

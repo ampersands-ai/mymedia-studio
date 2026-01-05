@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Search, Eye, EyeOff, Ban, EyeIcon, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Eye, EyeOff, Ban, EyeIcon, ArrowUpDown, ArrowUp, ArrowDown, Film, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { getAllModels } from "@/lib/models/registry";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
 
 type TimePeriod = "day" | "week" | "month" | "all";
 
-type SortField = "model_name" | "provider" | "content_type" | "base_cost" | "visible" | "deactivated" | "runs" | "successful" | "failed";
+type SortField = "model_name" | "provider" | "content_type" | "base_cost" | "visible" | "deactivated" | "storyboarding" | "runs" | "successful" | "failed";
 type SortDirection = "asc" | "desc" | null;
 
 interface ModelStats {
@@ -34,6 +34,7 @@ interface ModelStats {
 interface VisibilitySettings {
   visible: Record<string, boolean>;
   deactivated: Record<string, boolean>;
+  storyboarding: Record<string, boolean>;
 }
 
 export default function AIModelsDashboard() {
@@ -42,7 +43,7 @@ export default function AIModelsDashboard() {
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("week");
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
-  const [settings, setSettings] = useState<VisibilitySettings>({ visible: {}, deactivated: {} });
+  const [settings, setSettings] = useState<VisibilitySettings>({ visible: {}, deactivated: {}, storyboarding: {} });
   const [saving, setSaving] = useState(false);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -81,6 +82,7 @@ export default function AIModelsDashboard() {
         setSettings({
           visible: (val.visible as Record<string, boolean>) || {},
           deactivated: (val.deactivated as Record<string, boolean>) || {},
+          storyboarding: (val.storyboarding as Record<string, boolean>) || {},
         });
       }
     };
@@ -191,6 +193,30 @@ export default function AIModelsDashboard() {
     const success = await saveSettings(newSettings);
     if (success) {
       toast.success(`Model ${!currentDeactivated ? "deactivated" : "activated"}`);
+    } else {
+      setSettings(settings); // Revert
+    }
+  };
+
+  // Toggle storyboarding for a model (only for prompt_to_image and image_to_video)
+  const toggleStoryboarding = async (recordId: string, contentType: string) => {
+    if (!['prompt_to_image', 'image_to_video'].includes(contentType)) {
+      toast.error("Storyboarding only applies to image and video models");
+      return;
+    }
+    
+    const currentEnabled = settings.storyboarding[recordId] || false;
+    const newSettings = {
+      ...settings,
+      storyboarding: {
+        ...settings.storyboarding,
+        [recordId]: !currentEnabled,
+      },
+    };
+    setSettings(newSettings);
+    const success = await saveSettings(newSettings);
+    if (success) {
+      toast.success(`Storyboarding ${!currentEnabled ? "enabled" : "disabled"}`);
     } else {
       setSettings(settings); // Revert
     }
@@ -322,6 +348,10 @@ export default function AIModelsDashboard() {
             aValue = settings.deactivated[a.record_id] ? 1 : 0;
             bValue = settings.deactivated[b.record_id] ? 1 : 0;
             break;
+          case "storyboarding":
+            aValue = settings.storyboarding[a.record_id] ? 1 : 0;
+            bValue = settings.storyboarding[b.record_id] ? 1 : 0;
+            break;
           case "runs":
             aValue = stats?.[a.record_id]?.total || 0;
             bValue = stats?.[b.record_id]?.total || 0;
@@ -352,11 +382,15 @@ export default function AIModelsDashboard() {
     const totalModels = models.length;
     const visibleModels = models.filter(m => isVisibleToUsers(m.record_id)).length;
     const deactivatedModels = models.filter(m => settings.deactivated[m.record_id]).length;
+    const storyboardingModels = models.filter(m => 
+      settings.storyboarding[m.record_id] && 
+      ['prompt_to_image', 'image_to_video'].includes(m.content_type)
+    ).length;
     const totalRuns = Object.values(stats || {}).reduce((sum, s) => sum + s.total, 0);
     const successRate = totalRuns > 0
       ? Math.round((Object.values(stats || {}).reduce((sum, s) => sum + s.successful, 0) / totalRuns) * 100)
       : 0;
-    return { totalModels, visibleModels, deactivatedModels, totalRuns, successRate };
+    return { totalModels, visibleModels, deactivatedModels, storyboardingModels, totalRuns, successRate };
   }, [models, stats, settings]);
 
   return (
@@ -381,7 +415,7 @@ export default function AIModelsDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Models</CardTitle>
@@ -404,6 +438,14 @@ export default function AIModelsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{summaryStats.deactivatedModels}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Storyboarding</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{summaryStats.storyboardingModels}</div>
           </CardContent>
         </Card>
         <Card>
@@ -542,6 +584,15 @@ export default function AIModelsDashboard() {
                   </div>
                 </TableHead>
                 <TableHead
+                  className="text-center cursor-pointer select-none hover:bg-muted/50"
+                  onClick={() => handleSort("storyboarding")}
+                >
+                  <div className="flex items-center justify-center">
+                    Storyboard
+                    {renderSortIcon("storyboarding")}
+                  </div>
+                </TableHead>
+                <TableHead
                   className="text-right cursor-pointer select-none hover:bg-muted/50"
                   onClick={() => handleSort("runs")}
                 >
@@ -641,6 +692,24 @@ export default function AIModelsDashboard() {
                           />
                           {deactivated && <Ban className="h-4 w-4 text-red-500" />}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {['prompt_to_image', 'image_to_video'].includes(model.content_type) ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Switch
+                              checked={settings.storyboarding[model.record_id] || false}
+                              onCheckedChange={() => toggleStoryboarding(model.record_id, model.content_type)}
+                              disabled={saving}
+                            />
+                            {settings.storyboarding[model.record_id] && (
+                              model.content_type === 'image_to_video' 
+                                ? <Film className="h-4 w-4 text-purple-500" />
+                                : <ImageIcon className="h-4 w-4 text-blue-500" />
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">N/A</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {modelStats.total}

@@ -173,3 +173,31 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
   startPolling(gen.id);
   return gen.id;
 }
+
+// ============================================================================
+// STORYBOARD DEFAULTS
+// ============================================================================
+
+import type { StoryboardContext, StoryboardDefaults } from '@/lib/models/types/storyboard';
+
+/**
+ * Storyboard-optimized defaults for Kling V2.1 Pro I2V
+ * Returns exact parameters accepted by kie_ai provider
+ * Supports end frame via tail_image_url (if connected to next scene)
+ */
+export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefaults {
+  const result: StoryboardDefaults = {
+    prompt: ctx.prompt,
+    image_url: ctx.inputImage || "",
+    duration: "5",                              // Shortest option (5s)
+    negative_prompt: "blur, distort, low quality",
+    cfg_scale: 0.5,                             // Balanced prompt adherence
+  };
+  
+  // Add tail_image_url if connecting to next scene
+  if (ctx.connectToNextScene && ctx.nextSceneImage) {
+    result.tail_image_url = ctx.nextSceneImage;
+  }
+  
+  return result;
+}

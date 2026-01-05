@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ModelFamilySelector } from '@/components/custom-creation/ModelFamilySelector';
-import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
+import { getModelStoryboardDefaults } from '@/lib/models/storyboard-defaults-registry';
 import { logger } from '@/lib/logger';
 
 
@@ -349,39 +349,45 @@ export const ScenePreviewGenerator = ({
       }
     }
 
-    // Get the selected model's schema to auto-detect aspect ratio format
-    const selectedModelData = availableModels.find(m => m.record_id === selectedModelId);
-    
-    // Map aspect ratio to model-specific parameters
-    const aspectRatioParams = selectedModelData?.input_schema 
-      ? mapAspectRatioToModelParameters(
-          aspectRatio,
-          selectedModelData.input_schema as Record<string, unknown>
-        )
-      : {};
+    // Build storyboard context for defaults lookup
+    const storyboardContext = {
+      prompt: scene.image_prompt,
+      aspectRatio: aspectRatio,
+      inputImage: generationMode === 'animate' ? displayUrl : undefined,
+      duration: 4, // Default duration for storyboard animations
+    };
+
+    // Try to get storyboard-specific defaults for this model
+    const storyboardDefaults = selectedModelId 
+      ? getModelStoryboardDefaults(selectedModelId, storyboardContext)
+      : null;
 
     logger.debug('Scene generation initiated', {
       component: 'ScenePreviewGenerator',
       sceneId: scene.id,
-      aspectRatioParams,
+      usingStoryboardDefaults: !!storyboardDefaults,
       generationMode,
       hasDisplayUrl: !!displayUrl,
       operation: 'handleGeneratePreview'
     });
 
-    // For animate mode, pass the image URL as reference (inputImage is the I2V model field name)
-    const customParams = generationMode === 'animate' && displayUrl
-      ? { inputImage: displayUrl, ...aspectRatioParams }
-      : aspectRatioParams;
+    // Use storyboard defaults if available, otherwise fall back to basic params
+    const customParams = storyboardDefaults 
+      ? { 
+          ...storyboardDefaults, 
+          __useStoryboardDefaults: true,
+          skip_token_deduction: isFreeRetry 
+        }
+      : { 
+          ...(generationMode === 'animate' && displayUrl ? { inputImage: displayUrl } : {}),
+          skip_token_deduction: isFreeRetry 
+        };
 
     try {
       const generationResult = await generate({
         model_record_id: selectedModelId,
         prompt: scene.image_prompt,
-        custom_parameters: {
-          ...customParams,
-          skip_token_deduction: isFreeRetry
-        },
+        custom_parameters: customParams,
       });
 
       // Check if this is an async generation (no output_url yet)

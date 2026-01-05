@@ -246,10 +246,21 @@ Deno.serve(async (req) => {
       properties?: Record<string, SchemaProperty>;
     }
 
+    // Check if storyboard defaults are being used (skip schema default injection)
+    const useStoryboardDefaults = custom_parameters.__useStoryboardDefaults === true;
+    if (useStoryboardDefaults) {
+      delete custom_parameters.__useStoryboardDefaults;
+      logger.info('Using storyboard defaults - skipping schema default injection', {
+        userId: user.id,
+        metadata: { parameter_keys: Object.keys(custom_parameters) }
+      });
+    }
+
     // Validate and filter parameters
     function validateAndFilterParameters(
       parameters: Record<string, unknown>,
-      schema: InputSchema
+      schema: InputSchema,
+      applyDefaults: boolean = true
     ): Record<string, unknown> {
       if (!schema?.properties) return parameters;
 
@@ -261,7 +272,7 @@ Deno.serve(async (req) => {
         const candidateValue = parameters[key];
         
         // For parameters marked showToUser: false, ALWAYS use schema default (ignore user input)
-        if (schemaProperty?.showToUser === false) {
+        if (schemaProperty?.showToUser === false && applyDefaults) {
           if (schemaProperty?.default !== undefined) {
             filtered[key] = schemaProperty.default;
           }
@@ -271,11 +282,11 @@ Deno.serve(async (req) => {
         // For user-visible parameters, handle normally
         if (schemaProperty?.enum && Array.isArray(schemaProperty.enum)) {
           if (candidateValue === "" || candidateValue === undefined || candidateValue === null) {
-            if (schemaProperty.default !== undefined) {
+            if (applyDefaults && schemaProperty.default !== undefined) {
               filtered[key] = schemaProperty.default;
             }
           } else if (!schemaProperty.enum.includes(candidateValue)) {
-            if (schemaProperty.default !== undefined) {
+            if (applyDefaults && schemaProperty.default !== undefined) {
               filtered[key] = schemaProperty.default;
             } else {
               throw new Error(`Invalid parameter '${key}'. Value '${candidateValue}' not in allowed values.`);
@@ -285,7 +296,7 @@ Deno.serve(async (req) => {
           }
         } else if (candidateValue !== undefined && candidateValue !== null && candidateValue !== '') {
           filtered[key] = candidateValue;
-        } else if (schemaProperty?.default !== undefined) {
+        } else if (applyDefaults && schemaProperty?.default !== undefined) {
           filtered[key] = schemaProperty.default;
         } else if (candidateValue !== undefined) {
           filtered[key] = candidateValue;
@@ -297,7 +308,8 @@ Deno.serve(async (req) => {
 
     let parameters = validateAndFilterParameters(
       custom_parameters, 
-      (model.input_schema || { properties: {} }) as InputSchema
+      (model.input_schema || { properties: {} }) as InputSchema,
+      !useStoryboardDefaults // Skip defaults if using storyboard defaults
     );
     
     // Flatten nested input structure ONLY for Qwen model which uses wrapper payload structure

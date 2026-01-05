@@ -78,6 +78,44 @@ export function calculateCost(_inputs: Record<string, any>) {
   return MODEL_CONFIG.baseCreditCost;
 }
 
+// ============================================================================
+// STORYBOARD DEFAULTS - Exact parameters for storyboard generation
+// ============================================================================
+
+import type { StoryboardContext, StoryboardDefaults } from "@/lib/models/types/storyboard";
+
+const DIMENSION_PRESETS = {
+  "9:16": { width: 896, height: 1152 },
+  "16:9": { width: 1152, height: 896 },
+  "1:1": { width: 1024, height: 1024 },
+  "4:3": { width: 1024, height: 768 },
+  "3:4": { width: 768, height: 1024 },
+} as const;
+
+/**
+ * Returns exact provider-ready parameters for storyboard image generation.
+ * Only includes parameters that Runware actually accepts for this model.
+ */
+export function getStoryboardDefaults(ctx: StoryboardContext): StoryboardDefaults {
+  const aspectRatio = (ctx.aspectRatio || "9:16") as keyof typeof DIMENSION_PRESETS;
+  const dimensions = DIMENSION_PRESETS[aspectRatio] || DIMENSION_PRESETS["9:16"];
+
+  return {
+    taskType: "imageInference",
+    positivePrompt: ctx.prompt || "",
+    numberResults: 1,
+    outputFormat: "PNG",
+    width: dimensions.width,
+    height: dimensions.height,
+    steps: 4,
+    CFGScale: 1,
+    scheduler: "FlowMatchEulerDiscreteScheduler",
+    includeCost: true,
+    checkNSFW: true,
+    outputType: ["URL"],
+  };
+}
+
 export async function execute(params: ExecuteGenerationParams): Promise<string> {
   return executeModelGeneration({
     modelConfig: MODEL_CONFIG,

@@ -162,17 +162,6 @@ export const StoryboardEditor = () => {
         />
       )}
       
-      {/* Generation Progress Console */}
-      {isRendering && (
-        <GeneratingOutputConsole
-          progress={renderProgress}
-          statusMessage={renderStatusMessage}
-          elapsedTime={renderingStartTime ? Date.now() - renderingStartTime : 0}
-          onCheckStatus={refreshStatus}
-          onCancelRender={cancelRender}
-          isCanceling={isCancelingRender}
-        />
-      )}
       
       {/* Stuck Video Alert */}
       <StuckVideoAlert
@@ -233,6 +222,18 @@ export const StoryboardEditor = () => {
         }}
         onOpenSubtitleCustomizer={() => setShowSubtitleCustomizer(true)}
       />
+      
+      {/* Generation Progress Console */}
+      {isRendering && (
+        <GeneratingOutputConsole
+          progress={renderProgress}
+          statusMessage={renderStatusMessage}
+          elapsedTime={renderingStartTime ? Date.now() - renderingStartTime : 0}
+          onCheckStatus={refreshStatus}
+          onCancelRender={cancelRender}
+          isCanceling={isCancelingRender}
+        />
+      )}
       
       {/* Render Button */}
       {!isRendering && (

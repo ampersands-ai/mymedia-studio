@@ -199,9 +199,10 @@ export const StoryboardEditor = () => {
         />
         
         {scenes.map((scene, idx) => {
-          // Get next scene's image_preview_url (if exists)
+          // Get next scene info (if exists)
           const nextScene = idx < scenes.length - 1 ? scenes[idx + 1] : null;
           const nextSceneImageUrl = nextScene?.image_preview_url || null;
+          const hasNextScene = nextScene !== null;
           
           return (
             <SceneCardWithPreview
@@ -215,6 +216,7 @@ export const StoryboardEditor = () => {
               onImageGenerated={handleImageGenerated}
               aspectRatio={storyboard?.aspect_ratio}
               nextSceneImageUrl={nextSceneImageUrl}
+              hasNextScene={hasNextScene}
             />
           );
         })}

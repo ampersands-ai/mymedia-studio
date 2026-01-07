@@ -69,10 +69,34 @@ serve(async (req) => {
     const resolvedErrors = errors?.filter(e => e.is_resolved).length || 0;
     const newUserCount = newUsers?.length || 0;
 
-    // Group errors by route
+    // Group errors by error message for detailed view
+    const errorsByMessage: Record<string, { count: number; severity: string; route: string; errorType: string }> = {};
+    errors?.forEach(err => {
+      const key = err.error_message || 'Unknown error';
+      if (!errorsByMessage[key]) {
+        errorsByMessage[key] = {
+          count: 0,
+          severity: err.severity || 'medium',
+          route: err.route_name !== 'unknown' ? err.route_name : (err.route_path || 'unknown'),
+          errorType: err.error_type || 'unknown'
+        };
+      }
+      errorsByMessage[key].count++;
+    });
+
+    // Create top errors list with descriptions
+    const topErrors = Object.entries(errorsByMessage)
+      .sort(([, a], [, b]) => b.count - a.count)
+      .slice(0, 5)
+      .map(([message, data]) => 
+        `[${data.severity.toUpperCase()}] ${message} (${data.count}x) - Route: ${data.route}`
+      );
+
+    // Group errors by route (with path fallback)
     const errorsByRoute: Record<string, number> = {};
     errors?.forEach(err => {
-      errorsByRoute[err.route_name] = (errorsByRoute[err.route_name] || 0) + 1;
+      const routeKey = err.route_name !== 'unknown' ? err.route_name : (err.route_path || 'unknown');
+      errorsByRoute[routeKey] = (errorsByRoute[routeKey] || 0) + 1;
     });
 
     const topRoutes = Object.entries(errorsByRoute)
@@ -101,6 +125,11 @@ serve(async (req) => {
             ${criticalErrors > 0 ? `<p style="color: #dc2626;">🚨 <strong>Critical Errors:</strong> ${criticalErrors}</p>` : ''}
           `
         },
+        ...(topErrors.length > 0 ? [{
+          type: 'list' as const,
+          title: 'Top Error Messages',
+          content: topErrors
+        }] : []),
         ...(topRoutes.length > 0 ? [{
           type: 'list' as const,
           title: 'Most Problematic Routes',

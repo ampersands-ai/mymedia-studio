@@ -199,7 +199,7 @@ export const BulkAnimationGenerator = ({ storyboard, scenes, onAnimateAll }: Bul
             <Progress value={(progress.current / progress.total) * 100} />
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                Animating scene {progress.current} of {progress.total}...
+                Completed {progress.current} of {progress.total} animations...
               </p>
               <Button
                 size="sm"

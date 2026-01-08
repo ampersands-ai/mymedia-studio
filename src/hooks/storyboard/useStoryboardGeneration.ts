@@ -1,8 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+
+const GENERATING_KEY = 'storyboard_generating';
+const GENERATING_TIMEOUT = 2 * 60 * 1000; // 2 minute timeout
 
 interface StoryboardInput {
   topic: string;
@@ -49,12 +52,53 @@ interface StoryboardInput {
   draftMode?: boolean;
 }
 
+// Helper to check if generation is in progress from localStorage
+const isGenerationInProgress = (): boolean => {
+  try {
+    const saved = localStorage.getItem(GENERATING_KEY);
+    if (saved) {
+      const { timestamp } = JSON.parse(saved);
+      if (Date.now() - timestamp < GENERATING_TIMEOUT) {
+        return true;
+      }
+      localStorage.removeItem(GENERATING_KEY);
+    }
+  } catch {
+    localStorage.removeItem(GENERATING_KEY);
+  }
+  return false;
+};
+
 export const useStoryboardGeneration = (
   setAndPersistStoryboardId: (id: string | null) => void,
   setActiveSceneId: (id: string | null) => void
 ) => {
   const queryClient = useQueryClient();
-  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Initialize from localStorage
+  const [isGenerating, setIsGenerating] = useState(() => isGenerationInProgress());
+
+  // Sync generating state across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === GENERATING_KEY) {
+        setIsGenerating(isGenerationInProgress());
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Persist generating state to localStorage
+  const setGenerating = useCallback((value: boolean) => {
+    if (value) {
+      localStorage.setItem(GENERATING_KEY, JSON.stringify({ timestamp: Date.now() }));
+    } else {
+      localStorage.removeItem(GENERATING_KEY);
+    }
+    setIsGenerating(value);
+  }, []);
 
   // Generate storyboard mutation
   const generateMutation = useMutation({
@@ -101,6 +145,11 @@ export const useStoryboardGeneration = (
     onSuccess: (data) => {
       const newStoryboardId = data.storyboard.id;
       
+      // Handle duplicate detection from backend
+      if (data.duplicate) {
+        toast.info('Found your existing storyboard', { id: 'generate-storyboard' });
+      }
+      
       // Prime caches so UI can show instantly
       queryClient.setQueryData(['storyboard', newStoryboardId], data.storyboard);
       queryClient.setQueryData(['storyboard-scenes', newStoryboardId], data.scenes);
@@ -111,6 +160,7 @@ export const useStoryboardGeneration = (
       
       // Then set the new ID (triggers new queries)
       setAndPersistStoryboardId(newStoryboardId);
+      setActiveSceneId(null); // Reset active scene for new storyboard
       
       // Invalidate to force refetch
       queryClient.invalidateQueries({ queryKey: ['storyboard', newStoryboardId] });
@@ -126,15 +176,19 @@ export const useStoryboardGeneration = (
         description: 'Please check your credits and try again',
         duration: 5000
       });
-      setIsGenerating(false);
+      setGenerating(false);
     },
   });
 
   const generateStoryboard = useCallback(async (input: StoryboardInput) => {
-    setIsGenerating(true);
-    // Clear the old storyboard ID BEFORE generating
-    setAndPersistStoryboardId(null);
-    setActiveSceneId(null);
+    // Check if already generating (prevents double-clicks and race conditions)
+    if (isGenerating) {
+      toast.info('Generation already in progress', { id: 'generate-storyboard' });
+      return;
+    }
+    
+    setGenerating(true);
+    // Don't clear storyboard ID until success - keeps previous storyboard visible
     
     try {
       toast.loading('Generating storyboard...', { id: 'generate-storyboard' });
@@ -156,9 +210,9 @@ export const useStoryboardGeneration = (
         }
       );
     } finally {
-      setIsGenerating(false);
+      setGenerating(false);
     }
-  }, [generateMutation, setAndPersistStoryboardId, setActiveSceneId]);
+  }, [generateMutation, setGenerating, isGenerating]);
 
   return {
     isGenerating,

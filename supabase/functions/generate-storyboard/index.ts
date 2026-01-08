@@ -36,8 +36,43 @@ Deno.serve(async (req) => {
     }
     const user = userData.user;
 
+    // Check for in-progress storyboard generation (prevent duplicate submissions)
+    const { data: inProgressStoryboard } = await supabaseClient
+      .from('storyboards')
+      .select('id, topic, created_at, status')
+      .eq('user_id', user.id)
+      .eq('status', 'draft')
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (inProgressStoryboard) {
+      logger.warn('Duplicate generation blocked - returning existing storyboard', {
+        userId: user.id,
+        metadata: { existingId: inProgressStoryboard.id, topic: inProgressStoryboard.topic }
+      });
+      
+      // Return the existing storyboard instead of creating a new one
+      const { data: existingScenes } = await supabaseClient
+        .from('storyboard_scenes')
+        .select('*')
+        .eq('storyboard_id', inProgressStoryboard.id)
+        .order('order_number');
+      
+      return new Response(
+        JSON.stringify({
+          storyboard: inProgressStoryboard,
+          scenes: existingScenes || [],
+          duplicate: true,
+          message: 'Returning existing storyboard created recently'
+        }),
+        { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { 
-      topic, 
+      topic,
       duration, 
       style, 
       tone, 

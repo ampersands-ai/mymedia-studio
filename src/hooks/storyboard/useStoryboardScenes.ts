@@ -260,97 +260,102 @@ export const useStoryboardScenes = (
       throw new Error(`Insufficient credits. Need ${totalCost} credits to generate ${scenesToGenerate.length} previews.`);
     }
 
-    // 3. Generate all previews SEQUENTIALLY (one at a time for stability)
+    // 3. Generate all previews in PARALLEL with concurrency control
+    const PREVIEW_CONCURRENCY_LIMIT = 10;
+    
     const results: Array<{
       sceneNumber: number;
       success: boolean;
       url?: string;
       error?: string;
     }> = [];
-    
-    // Generate scenes one by one
-    for (let i = 0; i < scenesToGenerate.length; i++) {
+
+    // Helper function to process a single scene
+    const processSinglePreview = async (scene: typeof scenesToGenerate[0]) => {
+      const promptToUse = scene.imagePrompt;
+      
+      // Determine if we should use sync or async endpoint
+      const functionName = modelModule.MODEL_CONFIG.provider === 'runware' 
+        ? 'generate-content-sync' 
+        : 'generate-content';
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          model_id: modelId,
+          model_record_id: modelModule.MODEL_CONFIG.recordId,
+          model_config: modelModule.MODEL_CONFIG,
+          model_schema: modelModule.SCHEMA,
+          prompt: promptToUse,
+          custom_parameters: {},
+        }
+      });
+      
+      if (error) {
+        const errorStatus = (error as any)?.status || (error as any)?.context?.status;
+        if (error.message?.includes('Unauthorized') || errorStatus === 401) {
+          throw new Error('Authentication failed. Please try logging out and back in.');
+        }
+        throw error;
+      }
+      
+      // Handle async generation (polling required)
+      let outputUrl = data.output_url;
+      
+      if (!outputUrl && data.id) {
+        outputUrl = await pollForGenerationResult(data.id, signal);
+      }
+
+      // Update scene with preview URL
+      if (scene.isIntro) {
+        await updateIntroSceneMutation.mutateAsync({ 
+          field: 'intro_image_preview_url', 
+          value: outputUrl 
+        });
+      } else {
+        await updateSceneImageMutation.mutateAsync({ 
+          sceneId: scene.id, 
+          imageUrl: outputUrl 
+        });
+      }
+
+      return { sceneNumber: scene.sceneNumber, success: true, url: outputUrl };
+    };
+
+    // Process in batches with concurrency control
+    for (let i = 0; i < scenesToGenerate.length; i += PREVIEW_CONCURRENCY_LIMIT) {
       if (signal.aborted) {
         throw new Error('Cancelled by user');
       }
+
+      const batch = scenesToGenerate.slice(i, i + PREVIEW_CONCURRENCY_LIMIT);
       
-      const scene = scenesToGenerate[i];
+      const batchPromises = batch.map(scene => 
+        processSinglePreview(scene)
+          .then(result => ({ ...result, success: true as const }))
+          .catch(error => {
+            logger.error('Scene generation failed', error as Error, {
+              component: 'useStoryboardScenes',
+              operation: 'generateAllScenePreviews',
+              sceneNumber: scene.sceneNumber,
+              isIntro: scene.isIntro
+            });
+            return {
+              sceneNumber: scene.sceneNumber,
+              success: false as const,
+              error: error instanceof Error ? error.message : String(error)
+            };
+          })
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
       
-      // Update progress before starting this scene
-      onProgress?.(i + 1, scenesToGenerate.length);
-      
-      try {
-        // For intro scene, use intro image prompt
-        const promptToUse = scene.imagePrompt;
-        
-        // Determine if we should use sync or async endpoint
-        const functionName = modelModule.MODEL_CONFIG.provider === 'runware' 
-          ? 'generate-content-sync' 
-          : 'generate-content';
-
-        const { data, error } = await supabase.functions.invoke(functionName, {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: {
-            model_id: modelId,
-            model_record_id: modelModule.MODEL_CONFIG.recordId,
-            model_config: modelModule.MODEL_CONFIG,
-            model_schema: modelModule.SCHEMA,
-            prompt: promptToUse,
-            custom_parameters: {},
-          }
-        });
-        
-        if (error) {
-          // Better error handling for auth issues
-          const errorStatus = (error as any)?.status || (error as any)?.context?.status;
-          if (error.message?.includes('Unauthorized') || errorStatus === 401) {
-            throw new Error('Authentication failed. Please try logging out and back in.');
-          }
-          throw error;
-        }
-        
-        // Handle async generation (polling required)
-        let outputUrl = data.output_url;
-        
-        if (!outputUrl && data.id) {
-          // Poll for completion
-          outputUrl = await pollForGenerationResult(data.id, signal);
-        }
-
-        // Update scene with preview URL
-        if (scene.isIntro) {
-          await updateIntroSceneMutation.mutateAsync({ 
-            field: 'intro_image_preview_url', 
-            value: outputUrl 
-          });
-        } else {
-          await updateSceneImageMutation.mutateAsync({ 
-            sceneId: scene.id, 
-            imageUrl: outputUrl 
-          });
-        }
-
-        results.push({
-          sceneNumber: scene.sceneNumber,
-          success: true,
-          url: outputUrl
-        });
-
-      } catch (error) {
-        logger.error('Scene generation failed', error as Error, {
-          component: 'useStoryboardScenes',
-          operation: 'generateAllScenePreviews',
-          sceneNumber: scene.sceneNumber,
-          isIntro: scene.isIntro
-        });
-        results.push({
-          sceneNumber: scene.sceneNumber,
-          success: false,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
+      // Update progress after each batch completes
+      const completed = Math.min(i + PREVIEW_CONCURRENCY_LIMIT, scenesToGenerate.length);
+      onProgress?.(completed, scenesToGenerate.length);
     }
 
     onProgress?.(scenesToGenerate.length, scenesToGenerate.length);
@@ -443,98 +448,109 @@ export const useStoryboardScenes = (
       throw new Error(`Insufficient credits. Need ${totalCost} credits to animate ${scenesToAnimate.length} scenes.`);
     }
 
-    // 3. Generate animations sequentially
+    // 3. Generate animations in PARALLEL with concurrency control
+    const ANIMATION_CONCURRENCY_LIMIT = 5;
+    
     const results: Array<{
       sceneNumber: number;
       success: boolean;
       url?: string;
       error?: string;
     }> = [];
-    
-    for (let i = 0; i < scenesToAnimate.length; i++) {
+
+    // Import storyboard defaults once outside the loop
+    const { getModelStoryboardDefaults } = await import('@/lib/models/storyboard-defaults-registry');
+
+    // Helper function to process a single animation
+    const processSingleAnimation = async (scene: typeof scenesToAnimate[0]) => {
+      const storyboardDefaults = getModelStoryboardDefaults(modelRecordId, {
+        prompt: scene.imagePrompt,
+        aspectRatio: storyboard?.aspect_ratio,
+        inputImage: scene.imageUrl,
+        duration: 4,
+      });
+
+      const customParams = storyboardDefaults 
+        ? { ...storyboardDefaults, __useStoryboardDefaults: true }
+        : { inputImage: scene.imageUrl };
+
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          model_id: modelModule.MODEL_CONFIG.modelId,
+          model_record_id: modelRecordId,
+          model_config: modelModule.MODEL_CONFIG,
+          model_schema: modelModule.SCHEMA,
+          prompt: scene.imagePrompt,
+          custom_parameters: customParams,
+        }
+      });
+      
+      if (error) {
+        const errorStatus = (error as { status?: number })?.status;
+        if (error.message?.includes('Unauthorized') || errorStatus === 401) {
+          throw new Error('Authentication failed. Please try logging out and back in.');
+        }
+        throw error;
+      }
+      
+      // Handle async generation (polling required)
+      let outputUrl = data.output_url;
+      
+      if (!outputUrl && data.id) {
+        outputUrl = await pollForAnimationResult(data.id, signal);
+      }
+
+      // Update scene with video URL
+      if (scene.isIntro) {
+        await updateIntroSceneMutation.mutateAsync({ 
+          field: 'intro_image_preview_url',
+          value: outputUrl 
+        });
+      } else {
+        await updateSceneImageMutation.mutateAsync({ 
+          sceneId: scene.id, 
+          imageUrl: outputUrl
+        });
+      }
+
+      return { sceneNumber: scene.sceneNumber, success: true, url: outputUrl };
+    };
+
+    // Process in batches with concurrency control
+    for (let i = 0; i < scenesToAnimate.length; i += ANIMATION_CONCURRENCY_LIMIT) {
       if (signal.aborted) {
         throw new Error('Cancelled by user');
       }
+
+      const batch = scenesToAnimate.slice(i, i + ANIMATION_CONCURRENCY_LIMIT);
       
-      const scene = scenesToAnimate[i];
-      onProgress?.(i + 1, scenesToAnimate.length);
+      const batchPromises = batch.map(scene => 
+        processSingleAnimation(scene)
+          .then(result => ({ ...result, success: true as const }))
+          .catch(error => {
+            logger.error('Scene animation failed', error as Error, {
+              component: 'useStoryboardScenes',
+              operation: 'generateAllSceneAnimations',
+              sceneNumber: scene.sceneNumber,
+              isIntro: scene.isIntro
+            });
+            return {
+              sceneNumber: scene.sceneNumber,
+              success: false as const,
+              error: error instanceof Error ? error.message : String(error)
+            };
+          })
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
       
-      try {
-        // Get storyboard defaults for this model
-        const { getModelStoryboardDefaults } = await import('@/lib/models/storyboard-defaults-registry');
-        const storyboardDefaults = getModelStoryboardDefaults(modelRecordId, {
-          prompt: scene.imagePrompt,
-          aspectRatio: storyboard?.aspect_ratio,
-          inputImage: scene.imageUrl,
-          duration: 4,
-        });
-
-        const customParams = storyboardDefaults 
-          ? { ...storyboardDefaults, __useStoryboardDefaults: true }
-          : { inputImage: scene.imageUrl };
-
-        const { data, error } = await supabase.functions.invoke('generate-content', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: {
-            model_id: modelModule.MODEL_CONFIG.modelId,
-            model_record_id: modelRecordId,
-            model_config: modelModule.MODEL_CONFIG,
-            model_schema: modelModule.SCHEMA,
-            prompt: scene.imagePrompt,
-            custom_parameters: customParams,
-          }
-        });
-        
-        if (error) {
-          const errorStatus = (error as { status?: number })?.status;
-          if (error.message?.includes('Unauthorized') || errorStatus === 401) {
-            throw new Error('Authentication failed. Please try logging out and back in.');
-          }
-          throw error;
-        }
-        
-        // Handle async generation (polling required)
-        let outputUrl = data.output_url;
-        
-        if (!outputUrl && data.id) {
-          // Poll for completion (video takes longer, use 120s timeout)
-          outputUrl = await pollForAnimationResult(data.id, signal);
-        }
-
-        // Update scene with video URL
-        if (scene.isIntro) {
-          await updateIntroSceneMutation.mutateAsync({ 
-            field: 'intro_image_preview_url', // The mutation detects video URLs and updates intro_video_url
-            value: outputUrl 
-          });
-        } else {
-          await updateSceneImageMutation.mutateAsync({ 
-            sceneId: scene.id, 
-            imageUrl: outputUrl // The mutation detects video URLs and updates video_url
-          });
-        }
-
-        results.push({
-          sceneNumber: scene.sceneNumber,
-          success: true,
-          url: outputUrl
-        });
-
-      } catch (error) {
-        logger.error('Scene animation failed', error as Error, {
-          component: 'useStoryboardScenes',
-          operation: 'generateAllSceneAnimations',
-          sceneNumber: scene.sceneNumber,
-          isIntro: scene.isIntro
-        });
-        results.push({
-          sceneNumber: scene.sceneNumber,
-          success: false,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
+      // Update progress after each batch completes
+      const completed = Math.min(i + ANIMATION_CONCURRENCY_LIMIT, scenesToAnimate.length);
+      onProgress?.(completed, scenesToAnimate.length);
     }
 
     onProgress?.(scenesToAnimate.length, scenesToAnimate.length);

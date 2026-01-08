@@ -192,7 +192,7 @@ export const BulkPreviewGenerator = ({ storyboard, scenes, onGenerateAll }: Bulk
             <Progress value={(progress.current / progress.total) * 100} />
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                Generating scene {progress.current} of {progress.total}...
+                Completed {progress.current} of {progress.total} scenes...
               </p>
               <Button
                 size="sm"

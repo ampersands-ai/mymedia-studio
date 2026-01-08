@@ -21,6 +21,15 @@ export function registerServiceWorker() {
                            window.location.hostname.includes('lovable.dev') ||
                            window.location.hostname.includes('localhost');
   
+  // Skip for known bots/crawlers that don't support service workers
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isBot = /googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkshare|w3c_validator|lighthouse|applebot|duckduckbot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider/i.test(userAgent);
+  
+  // Silently skip for bots - they don't support service workers
+  if (isBot) {
+    return;
+  }
+  
   // Only register in production and not in preview iframe
   if (import.meta.env.PROD && !isInIframe && !isLovablePreview) {
     updateSW = registerSW({

@@ -1400,12 +1400,12 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   // HiDream-i1 Fast
   "9c0d1e2f-3a4b-5c6d-7e8f-678901234567": {
     recordId: "9c0d1e2f-3a4b-5c6d-7e8f-678901234567",
-    modelId: "runware:97@1",
+    modelId: "runware:97@3",
     modelName: "HiDream-i1 Fast",
     provider: "runware",
     contentType: "prompt_to_image",
-    baseCreditCost: 0.30,
-    estimatedTimeSeconds: 10,
+    baseCreditCost: 0.40,
+    estimatedTimeSeconds: 12,
     isActive: true,
   },
   // Runware Seedance 1.0 Pro Fast (I2V)

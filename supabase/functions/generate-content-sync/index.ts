@@ -352,55 +352,42 @@ Deno.serve(async (req) => {
     if (skipTokenDeduction) {
       logger.info('Free regeneration - skipping token deduction', { userId: user.id });
     } else {
-      // Check and deduct tokens
-      const { data: subscription, error: subError } = await supabase
-        .from('user_subscriptions')
-        .select('tokens_remaining')
-        .eq('user_id', user.id)
-        .single();
-
-      if (subError || !subscription) {
-        throw new Error('Subscription not found');
-      }
-
-      if (subscription.tokens_remaining < tokenCost) {
-        return new Response(
-          JSON.stringify({
-            error: 'Insufficient credits',
-            type: 'INSUFFICIENT_TOKENS',
-            required: tokenCost,
-            available: subscription.tokens_remaining,
-          }),
-          { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Deduct tokens with row count verification
-      const { data: updateResult, error: deductError } = await supabase
-        .from('user_subscriptions')
-        .update({ tokens_remaining: subscription.tokens_remaining - tokenCost })
-        .eq('user_id', user.id)
-        .eq('tokens_remaining', subscription.tokens_remaining)
-        .select('tokens_remaining');
+      // Deduct tokens atomically using RPC function with row-level locking
+      // This prevents race conditions from concurrent requests
+      const { data: deductResult, error: deductError } = await supabase
+        .rpc('deduct_user_tokens', {
+          p_user_id: user.id,
+          p_cost: tokenCost
+        });
 
       if (deductError) {
         logger.error('Token deduction failed', deductError instanceof Error ? deductError : new Error(String(deductError) || 'Database error'), { userId: user.id });
         throw new Error('Failed to deduct tokens - database error');
       }
 
-      if (!updateResult || updateResult.length === 0) {
-        logger.error('Optimistic lock failed - concurrent update', undefined, {
+      // deduct_user_tokens returns array with { success, new_balance, message }
+      const result = deductResult?.[0];
+      if (!result?.success) {
+        const message = result?.message || 'Insufficient credits';
+        logger.warn('Token deduction rejected', {
           userId: user.id,
-          metadata: { expected_tokens: subscription.tokens_remaining, cost: tokenCost }
+          metadata: { message, cost: tokenCost }
         });
-        throw new Error('Failed to deduct tokens - concurrent update detected. Please retry.');
+        return new Response(
+          JSON.stringify({
+            error: message,
+            type: 'INSUFFICIENT_TOKENS',
+            required: tokenCost,
+          }),
+          { status: 402, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       logger.info('Tokens deducted successfully', {
         userId: user.id,
         metadata: { 
           tokens_deducted: tokenCost,
-          new_balance: updateResult[0]?.tokens_remaining 
+          new_balance: result.new_balance 
         }
       });
 
@@ -410,7 +397,7 @@ Deno.serve(async (req) => {
         action: AUDIT_ACTIONS.TOKENS_DEDUCTED,
         metadata: {
           tokens_deducted: tokenCost,
-          tokens_remaining: updateResult[0]?.tokens_remaining,
+          tokens_remaining: result.new_balance,
           model_id: model.id,
           operation: 'sync_generation'
         }

@@ -98,6 +98,11 @@ export const useImageUpload = (currentModel: AIModel | null) => {
     const storageKey = getStorageKey(currentModel?.record_id || null);
     const stored = sessionStorage.getItem(storageKey);
     
+    // Reset file input to allow re-selecting same file after model change
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -141,16 +146,32 @@ export const useImageUpload = (currentModel: AIModel | null) => {
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    const modelMaxImages = currentModel?.max_images ?? 0;
+    // Reset input value immediately so same file can be selected again
+    if (e.target) {
+      e.target.value = '';
+    }
     
-    // If max_images is 0, don't allow uploads
-    if (modelMaxImages === 0) {
-      toast.error("This model does not accept image uploads");
+    // Guard: if model is not loaded yet, show error
+    if (!currentModel) {
+      toast.error("Please wait for model to load");
       return;
     }
     
+    const modelMaxImages = currentModel.max_images ?? 0;
+    
+    // If max_images is 0, check if this is an image-input model type
+    if (modelMaxImages === 0) {
+      const isImageInputModel = ['image_editing', 'image_to_video', 'image_to_image'].includes(currentModel.content_type);
+      if (!isImageInputModel) {
+        toast.error("This model does not accept image uploads");
+        return;
+      }
+      // For image-input models with max_images=0, use fallback of 1
+      logger.warn('max_images is 0 for image-input model, using fallback of 1');
+    }
+    
     // Determine effective max images
-    let effectiveMax = modelMaxImages;
+    let effectiveMax = modelMaxImages || 1;
     
     // For single image fields, max is 1
     if (!imageFieldInfo.isArray && imageFieldInfo.fieldName) {

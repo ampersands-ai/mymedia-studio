@@ -143,7 +143,7 @@ const VideoEditorPage = () => {
           {/* Video Output - Full Width */}
           <div className="bg-card border rounded-lg p-4">
             <h3 className="font-medium mb-4">Video Output</h3>
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-xl mx-auto">
               <VideoPreview />
             </div>
           </div>

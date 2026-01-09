@@ -44,9 +44,9 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align={align} 
-        className="w-[580px] p-5 bg-card/95 backdrop-blur-xl border-2 border-primary-orange/30 rounded-2xl shadow-2xl shadow-primary-orange/20 z-[100]"
+        className="w-[680px] p-5 bg-card/95 backdrop-blur-xl border-2 border-primary-orange/30 rounded-2xl shadow-2xl shadow-primary-orange/20 z-[100]"
       >
-        <div className="grid grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-6 gap-3 mb-4">
           {/* Image */}
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Image</p>
@@ -76,7 +76,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             </Link>
           </div>
 
-          {/* Video */}
+          {/* Video Column 1 */}
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Video</p>
             <Link
@@ -103,6 +103,11 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
                 <p className="font-semibold text-xs text-foreground">Image to Video</p>
               </div>
             </Link>
+          </div>
+
+          {/* Video Column 2 */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-transparent uppercase tracking-wider px-1">&nbsp;</p>
             <Link
               to="/dashboard/custom-creation?group=video_to_video"
               onClick={() => setOpenDropdown(null)}

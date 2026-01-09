@@ -261,8 +261,19 @@ Deno.serve(async (req) => {
       // Create or update generation record
       let gen: unknown, genError: unknown;
       if (existingGenerationId) {
+        // First fetch existing settings to preserve video_job_id and other fields
+        const { data: existingGen } = await supabase.from('generations')
+          .select('settings')
+          .eq('id', existingGenerationId)
+          .single();
+        
+        const mergedSettings = {
+          ...(existingGen?.settings as Record<string, unknown> || {}),
+          ...generationSettings,
+        };
+        
         const { data, error } = await supabase.from('generations')
-          .update({ model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: generationSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending' })
+          .update({ model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: mergedSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending' })
           .eq('id', existingGenerationId).eq('user_id', authenticatedUser.id).select().single();
         gen = data; genError = error;
       }

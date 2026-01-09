@@ -174,8 +174,6 @@ export const useVideoEditorAssets = () => {
       queryClient.invalidateQueries({ 
         queryKey: ['video-editor-assets', user?.id] 
       });
-      
-      toast.success('Added to media library');
     },
     onError: (error) => {
       console.error('Failed to add asset from URL:', error);

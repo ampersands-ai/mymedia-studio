@@ -42,7 +42,7 @@ const toMediaAsset = (record: VideoEditorAssetRecord): MediaAsset => ({
 export const useVideoEditorAssets = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { removeAsset: removeAssetFromStore } = useVideoEditorStore();
+  const { removeAsset: removeAssetFromStore, addAsset, addClipFromAsset } = useVideoEditorStore();
 
   // Fetch assets from database
   const { 
@@ -121,6 +121,68 @@ export const useVideoEditorAssets = () => {
     },
   });
 
+  // Add asset from URL (for adding generations)
+  const addAssetFromUrlMutation = useMutation({
+    mutationFn: async ({ url, type, name }: { url: string; type: 'image' | 'video'; name: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      // Determine mime type
+      const mimeType = type === 'video' ? 'video/mp4' : 'image/png';
+      
+      // Insert into database (the URL is already a storage URL)
+      const { data: insertedAsset, error: dbError } = await supabase
+        .from('video_editor_assets')
+        .insert({
+          user_id: user.id,
+          type,
+          name,
+          url,
+          thumbnail_url: type === 'image' ? url : null,
+          duration: null,
+          width: null,
+          height: null,
+          size: 0, // Unknown for external URLs
+          mime_type: mimeType,
+          storage_path: '', // Empty for external URLs
+        })
+        .select()
+        .single();
+
+      if (dbError || !insertedAsset) {
+        throw new Error(`Failed to add asset: ${dbError?.message || 'Unknown error'}`);
+      }
+
+      return insertedAsset;
+    },
+    onSuccess: (insertedAsset) => {
+      const mediaAsset: MediaAsset = {
+        id: insertedAsset.id,
+        type: insertedAsset.type as MediaType,
+        name: insertedAsset.name,
+        url: insertedAsset.url,
+        thumbnailUrl: insertedAsset.thumbnail_url || undefined,
+        duration: insertedAsset.duration || undefined,
+        size: insertedAsset.size,
+        mimeType: insertedAsset.mime_type,
+        uploadedAt: insertedAsset.created_at || new Date().toISOString(),
+        storagePath: insertedAsset.storage_path || undefined,
+      };
+
+      addAsset(mediaAsset);
+      addClipFromAsset(mediaAsset.id);
+
+      queryClient.invalidateQueries({ 
+        queryKey: ['video-editor-assets', user?.id] 
+      });
+      
+      toast.success('Added to media library');
+    },
+    onError: (error) => {
+      console.error('Failed to add asset from URL:', error);
+      toast.error('Failed to add asset');
+    },
+  });
+
   // Clear all assets mutation
   const clearAllAssetsMutation = useMutation({
     mutationFn: async () => {
@@ -134,13 +196,17 @@ export const useVideoEditorAssets = () => {
 
       if (fetchError) throw fetchError;
 
-      // Delete all files from storage
+      // Delete all files from storage (only ones with storage paths)
       if (userAssets && userAssets.length > 0) {
-        const paths = userAssets.map((a: { storage_path: string }) => a.storage_path);
-        await supabase.storage
-          .from('generated-content')
-          .remove(paths)
-          .catch(console.warn);
+        const paths = userAssets
+          .map((a: { storage_path: string }) => a.storage_path)
+          .filter((p: string) => p && p.length > 0);
+        if (paths.length > 0) {
+          await supabase.storage
+            .from('generated-content')
+            .remove(paths)
+            .catch(console.warn);
+        }
       }
 
       // Delete all records from database
@@ -163,6 +229,10 @@ export const useVideoEditorAssets = () => {
     },
   });
 
+  const addAssetFromUrl = async (url: string, type: 'image' | 'video', name: string) => {
+    return addAssetFromUrlMutation.mutateAsync({ url, type, name });
+  };
+
   return {
     assets,
     isLoading,
@@ -170,6 +240,8 @@ export const useVideoEditorAssets = () => {
     refetch,
     deleteAsset: deleteAssetMutation.mutate,
     isDeletingAsset: deleteAssetMutation.isPending,
+    addAssetFromUrl,
+    isAddingAsset: addAssetFromUrlMutation.isPending,
     clearAllAssets: clearAllAssetsMutation.mutate,
     isClearingAssets: clearAllAssetsMutation.isPending,
   };

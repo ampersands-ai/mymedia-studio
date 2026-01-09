@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    let backgroundMediaType: 'video' | 'image' = (job.background_media_type || 'video') as 'video' | 'image';
+    let backgroundMediaType: 'video' | 'image' | 'hybrid' = (job.background_media_type || 'video') as 'video' | 'image' | 'hybrid';
     logger.info("Initial background media type", { metadata: { backgroundMediaType } });
 
     // Step 3: Fetch multiple background videos or images
@@ -227,6 +227,10 @@ Deno.serve(async (req) => {
     
     let backgroundVideoUrls: string[] = [];
     let backgroundImageUrls: string[] = [];
+    
+    // Calculate how many clips we need (3-5 second clips, average 4s)
+    const averageClipDuration = 4;
+    const numberOfClipsNeeded = Math.min(30, Math.ceil(videoDuration / averageClipDuration));
     
     if (backgroundMediaType === 'image') {
       // For images: Use custom background or fetch from Pixabay
@@ -244,7 +248,7 @@ Deno.serve(async (req) => {
         metadata: { imageCount: backgroundImageUrls.length, jobId: job_id }
       });
     } else {
-      // For videos: Try to fetch, fall back to images if insufficient variety
+      // For videos: Try to fetch, use hybrid if insufficient variety
       try {
         backgroundVideoUrls = await getBackgroundVideos(
           supabaseClient,
@@ -264,10 +268,57 @@ Deno.serve(async (req) => {
         backgroundVideoUrls = [];
       }
       
-      // Fallback to images if videos insufficient (<3 unique)
-      if (backgroundVideoUrls.length < 3) {
+      // Get unique video count (dedupe by URL)
+      const uniqueVideoUrls = [...new Set(backgroundVideoUrls)];
+      
+      // If videos cover all clips without repeats, use videos only
+      if (uniqueVideoUrls.length >= numberOfClipsNeeded) {
+        backgroundMediaType = 'video';
+        // Use only unique videos, no repeats
+        backgroundVideoUrls = uniqueVideoUrls.slice(0, numberOfClipsNeeded);
+        logger.info("Sufficient video variety, using videos only", {
+          metadata: { uniqueCount: uniqueVideoUrls.length, clipsNeeded: numberOfClipsNeeded }
+        });
+      } 
+      // If we have some videos but not enough for all clips, use hybrid
+      else if (uniqueVideoUrls.length >= 3) {
+        const imagesNeeded = numberOfClipsNeeded - uniqueVideoUrls.length;
+        logger.info("Insufficient video variety, fetching images for hybrid", {
+          metadata: { uniqueVideos: uniqueVideoUrls.length, imagesNeeded, clipsNeeded: numberOfClipsNeeded }
+        });
+        
+        try {
+          backgroundImageUrls = await getBackgroundImages(
+            supabaseClient,
+            job.style,
+            job_id,
+            user.id,
+            job.aspect_ratio || '4:5',
+            undefined, // Don't use custom for supplementary images
+            job.topic,
+            logger
+          );
+          backgroundMediaType = 'hybrid';
+          backgroundVideoUrls = uniqueVideoUrls; // Use only unique videos
+          logger.info("Hybrid mode: videos + images", { 
+            metadata: { 
+              videoCount: uniqueVideoUrls.length, 
+              imageCount: backgroundImageUrls.length,
+              totalAvailable: uniqueVideoUrls.length + backgroundImageUrls.length
+            } 
+          });
+        } catch (imageError) {
+          // If images fail, just use videos with minimal repeats
+          logger.warn("Image fetch failed for hybrid, using videos with repeats", {
+            metadata: { error: (imageError as Error).message }
+          });
+          backgroundMediaType = 'video';
+        }
+      }
+      // If no videos or too few (<3), fall back to images only
+      else {
         logger.warn("Insufficient video variety, falling back to images", {
-          metadata: { videoCount: backgroundVideoUrls.length }
+          metadata: { videoCount: uniqueVideoUrls.length }
         });
         
         try {
@@ -281,13 +332,12 @@ Deno.serve(async (req) => {
             job.topic,
             logger
           );
-          backgroundMediaType = 'image'; // Switch to image assembly
+          backgroundMediaType = 'image';
           logger.info("Image fallback successful", { 
             metadata: { imageCount: backgroundImageUrls.length, newMediaType: 'image' } 
           });
         } catch (imageError) {
-          // If both fail, throw error
-          throw new Error(`No background media available: videos=${backgroundVideoUrls.length}, images failed: ${(imageError as Error).message}`);
+          throw new Error(`No background media available: videos=${uniqueVideoUrls.length}, images failed: ${(imageError as Error).message}`);
         }
       }
     }
@@ -392,6 +442,16 @@ Deno.serve(async (req) => {
 async function updateJobStatus(supabase: SupabaseClient, jobId: string, status: string, logger?: EdgeLogger) {
   await supabase.from('video_jobs').update({ status }).eq('id', jobId);
   logger?.debug("Job status updated", { metadata: { jobId, status } });
+}
+
+// Fisher-Yates shuffle for proper randomization
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function extractSearchTerms(topic: string): string {
@@ -720,30 +780,27 @@ async function getBackgroundVideos(
     metadata: { numberOfClips, duration, averageClipDuration, availableVideos: videosToUse.length }
   });
 
-  // Shuffle videos array for variety instead of sequential selection
-  const shuffledVideos = [...videosToUse].sort(() => Math.random() - 0.5);
+  // Shuffle videos using proper Fisher-Yates algorithm
+  const shuffledVideos = shuffleArray(videosToUse);
   
-  // Select videos, cycling through shuffled array
+  // Extract unique URLs first to avoid duplicates
+  const uniqueUrls = new Set<string>();
   const selectedVideos: string[] = [];
-  let videoIndex = 0;
   
-  for (let i = 0; i < numberOfClips; i++) {
-    // Reshuffle if we've exhausted the pool (for very long videos)
-    if (videoIndex >= shuffledVideos.length) {
-      shuffledVideos.sort(() => Math.random() - 0.5);
-      videoIndex = 0;
-      logger?.warn("Video pool exhausted, reshuffling for long video", {
-        metadata: { clipIndex: i, totalClips: numberOfClips }
-      });
-    }
-    
-    const video = shuffledVideos[videoIndex];
+  // First pass: collect unique video URLs
+  for (const video of shuffledVideos) {
     const videoUrl = selectVideoUrl(video);
-    if (videoUrl) {
+    if (videoUrl && !uniqueUrls.has(videoUrl)) {
+      uniqueUrls.add(videoUrl);
       selectedVideos.push(videoUrl);
     }
-    videoIndex++;
+    // Stop when we have enough unique videos
+    if (selectedVideos.length >= numberOfClips) break;
   }
+  
+  logger?.info("Unique videos selected (no repeats)", {
+    metadata: { uniqueCount: selectedVideos.length, targetClips: numberOfClips }
+  });
   
   logger?.info("Background videos selected", { 
     metadata: { 
@@ -768,7 +825,7 @@ async function assembleVideo(
   userId: string,
   aspectRatio: string = '4:5',
   captionStyle?: CaptionStyle,
-  backgroundMediaType: 'video' | 'image' = 'video',
+  backgroundMediaType: 'video' | 'image' | 'hybrid' = 'video',
   logger?: EdgeLogger
 ): Promise<string> {
   // Default caption style matching official Shotstack format
@@ -918,13 +975,15 @@ async function assembleVideo(
   });
   
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
+    // Image-only mode: use shuffled unique images
+    const shuffledImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
     const imageClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
     let imageIndex = 0;
     
     while (currentTime < assets.duration) {
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
-      const imageUrl = assets.backgroundImageUrls[imageIndex % assets.backgroundImageUrls.length];
+      const imageUrl = shuffledImages[imageIndex % shuffledImages.length];
       
       imageClips.push({
         asset: {
@@ -943,21 +1002,87 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: imageClips });
-    logger?.info("Added background image clips with 3-5s duration and random transitions", { metadata: { clipCount: imageClips.length, totalDuration: assets.duration } });
+    logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length, uniqueImages: shuffledImages.length } });
+  } else if (backgroundMediaType === 'hybrid' && assets.backgroundVideoUrls.length > 0 && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
+    // Hybrid mode: use unique videos first, then unique images (no repeats)
+    const uniqueVideos = shuffleArray([...new Set(assets.backgroundVideoUrls)]);
+    const uniqueImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
+    
+    // Combine: all unique videos first, then fill with images
+    const combinedMedia: Array<{ type: 'video' | 'image'; url: string }> = [];
+    
+    // Add all unique videos
+    for (const url of uniqueVideos) {
+      combinedMedia.push({ type: 'video', url });
+    }
+    // Add unique images to fill remaining
+    for (const url of uniqueImages) {
+      combinedMedia.push({ type: 'image', url });
+    }
+    
+    const mediaClips: Array<Record<string, unknown>> = [];
+    let currentTime = 0;
+    let mediaIndex = 0;
+    
+    while (currentTime < assets.duration) {
+      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
+      const media = combinedMedia[mediaIndex % combinedMedia.length];
+      
+      if (media.type === 'video') {
+        mediaClips.push({
+          asset: {
+            type: 'video',
+            src: media.url,
+            volume: 0
+          },
+          start: currentTime,
+          length: clipDuration,
+          fit: 'cover',
+          scale: 1.05,
+          ...(mediaClips.length > 0 && { transition: getRandomTransition() })
+        });
+      } else {
+        mediaClips.push({
+          asset: {
+            type: 'image',
+            src: media.url
+          },
+          start: currentTime,
+          length: clipDuration,
+          fit: 'cover',
+          scale: 1.05,
+          ...(mediaClips.length > 0 && { transition: getRandomTransition() })
+        });
+      }
+      
+      currentTime += clipDuration;
+      mediaIndex++;
+    }
+    
+    edit.timeline.tracks.push({ clips: mediaClips });
+    logger?.info("Added hybrid background clips (videos + images)", { 
+      metadata: { 
+        clipCount: mediaClips.length, 
+        uniqueVideos: uniqueVideos.length, 
+        uniqueImages: uniqueImages.length 
+      } 
+    });
   } else {
+    // Video-only mode: use shuffled unique videos
+    const shuffledVideos = shuffleArray([...new Set(assets.backgroundVideoUrls)]);
     const videoClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
     let videoIndex = 0;
     
     while (currentTime < assets.duration) {
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
-      const videoUrl = assets.backgroundVideoUrls[videoIndex % assets.backgroundVideoUrls.length];
+      const videoUrl = shuffledVideos[videoIndex % shuffledVideos.length];
       
       videoClips.push({
         asset: {
           type: 'video',
           src: videoUrl,
-          volume: 0 // Mute background video audio
+          volume: 0
         },
         start: currentTime,
         length: clipDuration,
@@ -971,7 +1096,7 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: videoClips });
-    logger?.info("Added background video clips with 3-5s duration and random transitions", { metadata: { clipCount: videoClips.length, totalDuration: assets.duration } });
+    logger?.info("Added background video clips", { metadata: { clipCount: videoClips.length, uniqueVideos: shuffledVideos.length } });
   }
 
   // Debug: Log track order before submission

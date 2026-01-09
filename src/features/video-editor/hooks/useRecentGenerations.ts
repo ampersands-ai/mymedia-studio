@@ -13,6 +13,20 @@ interface RecentGeneration {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
+const KNOWN_BUCKETS = ['generated-content', 'storyboard-videos', 'faceless-videos', 'voice-previews'];
+
+const buildStorageUrl = (storagePath: string): string => {
+  const firstSegment = storagePath.split('/')[0];
+  
+  if (KNOWN_BUCKETS.includes(firstSegment)) {
+    const bucket = firstSegment;
+    const pathWithoutBucket = storagePath.substring(bucket.length + 1);
+    return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${pathWithoutBucket}`;
+  }
+  
+  return `${SUPABASE_URL}/storage/v1/object/public/generated-content/${storagePath}`;
+};
+
 export const useRecentGenerations = (limit = 6) => {
   const { user } = useAuth();
 
@@ -38,11 +52,9 @@ export const useRecentGenerations = (limit = 6) => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  // Build full URLs for the generations
   const generationsWithUrls = generations.map(gen => ({
     ...gen,
-    fullUrl: gen.output_url || 
-      (gen.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/generated-content/${gen.storage_path}` : null),
+    fullUrl: gen.output_url || (gen.storage_path ? buildStorageUrl(gen.storage_path) : null),
   }));
 
   return {

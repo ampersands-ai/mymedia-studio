@@ -974,6 +974,9 @@ async function assembleVideo(
     out: TRANSITIONS_OUT[Math.floor(Math.random() * TRANSITIONS_OUT.length)]
   });
   
+  // Transition duration for clip overlap - prevents black frames between clips
+  const TRANSITION_DURATION = 0.5;
+  
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     // Image-only mode: use shuffled unique images
     const shuffledImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
@@ -984,6 +987,7 @@ async function assembleVideo(
     while (currentTime < assets.duration) {
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
       const imageUrl = shuffledImages[imageIndex % shuffledImages.length];
+      const isFirstClip = imageClips.length === 0;
       
       imageClips.push({
         asset: {
@@ -994,10 +998,11 @@ async function assembleVideo(
         length: clipDuration,
         fit: 'cover',
         scale: 1.05,
-        ...(imageClips.length > 0 && { transition: getRandomTransition() })
+        ...(!isFirstClip && { transition: getRandomTransition() })
       });
       
-      currentTime += clipDuration;
+      // Overlap clips by transition duration to prevent black frames
+      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
       imageIndex++;
     }
     
@@ -1027,6 +1032,7 @@ async function assembleVideo(
     while (currentTime < assets.duration) {
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
       const media = combinedMedia[mediaIndex % combinedMedia.length];
+      const isFirstClip = mediaClips.length === 0;
       
       if (media.type === 'video') {
         mediaClips.push({
@@ -1039,7 +1045,7 @@ async function assembleVideo(
           length: clipDuration,
           fit: 'cover',
           scale: 1.05,
-          ...(mediaClips.length > 0 && { transition: getRandomTransition() })
+          ...(!isFirstClip && { transition: getRandomTransition() })
         });
       } else {
         mediaClips.push({
@@ -1051,11 +1057,12 @@ async function assembleVideo(
           length: clipDuration,
           fit: 'cover',
           scale: 1.05,
-          ...(mediaClips.length > 0 && { transition: getRandomTransition() })
+          ...(!isFirstClip && { transition: getRandomTransition() })
         });
       }
       
-      currentTime += clipDuration;
+      // Overlap clips by transition duration to prevent black frames
+      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
       mediaIndex++;
     }
     
@@ -1077,6 +1084,7 @@ async function assembleVideo(
     while (currentTime < assets.duration) {
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
       const videoUrl = shuffledVideos[videoIndex % shuffledVideos.length];
+      const isFirstClip = videoClips.length === 0;
       
       videoClips.push({
         asset: {
@@ -1088,10 +1096,11 @@ async function assembleVideo(
         length: clipDuration,
         fit: 'cover',
         scale: 1.05,
-        ...(videoClips.length > 0 && { transition: getRandomTransition() })
+        ...(!isFirstClip && { transition: getRandomTransition() })
       });
       
-      currentTime += clipDuration;
+      // Overlap clips by transition duration to prevent black frames
+      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
       videoIndex++;
     }
     

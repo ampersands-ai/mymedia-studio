@@ -27,7 +27,7 @@ const buildStorageUrl = (storagePath: string): string => {
   return `${SUPABASE_URL}/storage/v1/object/public/generated-content/${storagePath}`;
 };
 
-export const useRecentGenerations = (limit = 6) => {
+export const useRecentGenerations = (limit = 24) => {
   const { user } = useAuth();
 
   const { data: generations = [], isLoading } = useQuery<RecentGeneration[]>({

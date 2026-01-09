@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Upload, Film, Image, Music, Sparkles, Loader2 } from 'lucide-react';
+import { Upload, Film, Image, Music, Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { useMediaUpload } from '../hooks/useMediaUpload';
 import { MAX_FILE_SIZE_MB, MAX_FILES } from '../types';
 import { useVideoEditorAssets } from '../hooks/useVideoEditorAssets';
@@ -9,8 +9,9 @@ import { cn } from '@/lib/utils';
 export const MediaUploader = () => {
   const { uploadFiles, isUploading, uploadProgress } = useMediaUpload();
   const { assets, addAssetFromUrl } = useVideoEditorAssets();
-  const { generations, isLoading: isLoadingGenerations } = useRecentGenerations(6);
+  const { generations, isLoading: isLoadingGenerations } = useRecentGenerations(24);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -115,7 +116,7 @@ export const MediaUploader = () => {
             <span>Recent generations</span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {availableGenerations.slice(0, 6).map((gen) => (
+            {availableGenerations.slice(0, visibleCount).map((gen) => (
               <button
                 key={gen.id}
                 onClick={() => handleAddGeneration(gen)}
@@ -163,6 +164,17 @@ export const MediaUploader = () => {
               </button>
             ))}
           </div>
+          
+          {/* Show more button */}
+          {availableGenerations.length > visibleCount && (
+            <button
+              onClick={() => setVisibleCount(prev => Math.min(prev + 6, availableGenerations.length))}
+              className="w-full py-2 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+            >
+              <ChevronDown className="h-4 w-4" />
+              Show more ({availableGenerations.length - visibleCount} remaining)
+            </button>
+          )}
         </div>
       )}
 

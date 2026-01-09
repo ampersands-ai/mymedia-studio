@@ -48,7 +48,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
       >
         <div className="grid grid-cols-6 gap-3 mb-4">
           {/* Image */}
-          <div className="space-y-2">
+          <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Image</p>
             <Link
               to="/dashboard/custom-creation?group=image_editing"
@@ -106,7 +106,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           </div>
 
           {/* Video Column 2 */}
-          <div className="space-y-2">
+          <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-transparent uppercase tracking-wider px-1">&nbsp;</p>
             <Link
               to="/dashboard/custom-creation?group=video_to_video"
@@ -136,7 +136,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           </div>
 
           {/* Audio */}
-          <div className="space-y-2">
+          <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Audio</p>
             <Link
               to="/dashboard/custom-creation?group=prompt_to_audio"
@@ -153,7 +153,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           </div>
 
           {/* Editing */}
-          <div className="space-y-2">
+          <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Editing</p>
             <Link
               to="/dashboard/video-editor"

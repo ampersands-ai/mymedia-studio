@@ -66,10 +66,7 @@ const Community = () => {
         async () => {
           let query = supabase
             .from("community_creations_public")
-            .select(`
-              *,
-              generations!inner(storage_path, workflow_execution_id)
-            `);
+            .select("*");
 
           // Apply filter
           if (filter !== "all") {
@@ -87,16 +84,14 @@ const Community = () => {
 
           if (error) throw error;
 
-          // Fetch signed URLs for all creations using storage_path from generations
+          // Fetch signed URLs for creations - use output_url if available, otherwise fetch storage_path
           const creationsWithUrls = await Promise.all(
             (data || []).map(async (creation: any) => {
-              const storagePath = creation.generations?.storage_path;
-              const workflowExecutionId = creation.generations?.workflow_execution_id;
               const creationData: CommunityCreation = {
                 id: creation.id,
                 prompt: creation.prompt || '',
-                output_url: null,
-                storage_path: storagePath || null,
+                output_url: creation.output_url || null,
+                storage_path: null,
                 content_type: creation.content_type || 'image',
                 model_id: creation.model_id || '',
                 likes_count: creation.likes_count || 0,
@@ -104,12 +99,25 @@ const Community = () => {
                 is_featured: creation.is_featured || false,
                 shared_at: creation.shared_at || creation.created_at || new Date().toISOString(),
                 user_id: creation.user_id || '',
-                workflow_execution_id: workflowExecutionId || null,
+                workflow_execution_id: null,
               };
-              if (storagePath) {
-                const signedUrl = await createSignedUrl("generated-content", storagePath);
-                creationData.output_url = signedUrl;
+
+              // If no output_url, try to get storage_path from generations table
+              if (!creationData.output_url && creation.generation_id) {
+                const { data: genData } = await supabase
+                  .from("generations")
+                  .select("storage_path, workflow_execution_id")
+                  .eq("id", creation.generation_id)
+                  .maybeSingle();
+                
+                if (genData?.storage_path) {
+                  const signedUrl = await createSignedUrl("generated-content", genData.storage_path);
+                  creationData.output_url = signedUrl;
+                  creationData.storage_path = genData.storage_path;
+                }
+                creationData.workflow_execution_id = genData?.workflow_execution_id || null;
               }
+
               return creationData;
             })
           );

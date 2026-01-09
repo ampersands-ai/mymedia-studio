@@ -31,7 +31,9 @@ export const MediaLibrary = () => {
     assets, 
     isLoading, 
     deleteAsset, 
-    isDeletingAsset 
+    isDeletingAsset,
+    clearAllAssets,
+    isClearingAssets
   } = useVideoEditorAssets();
 
   const handleAddToSequence = (asset: MediaAsset) => {
@@ -75,7 +77,24 @@ export const MediaLibrary = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => clearAllAssets()}
+          disabled={isClearingAssets}
+          className="text-destructive hover:text-destructive"
+        >
+          {isClearingAssets ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4 mr-2" />
+          )}
+          Clear All
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {assets.map((asset: MediaAsset) => (
         <div
           key={asset.id}
@@ -149,6 +168,7 @@ export const MediaLibrary = () => {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 };

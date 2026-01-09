@@ -283,9 +283,10 @@ export const useVideoEditorStore = create<VideoEditorState & VideoEditorActions>
           // Build tracks array - caption track goes on top (first in array)
           const tracks: ShotstackTrack[] = [];
           
-          // Add caption track if auto-captions enabled
-          const hasCaptionSource = useSoundtrackForCaptions || firstVideoClipId;
-          if (subtitleConfig.mode === 'auto' && hasCaptionSource) {
+          // Add caption track if auto-captions enabled AND we have a valid speech source
+          // Only add if: 1) audio track exists for captions, OR 2) there's at least one video clip with audio
+          const hasValidSpeechSource = useSoundtrackForCaptions || (firstVideoClipId && videoClipsWithAudio.length > 0);
+          if (subtitleConfig.mode === 'auto' && hasValidSpeechSource) {
             // Caption asset structure per Shotstack API
             const captionAsset: any = {
               type: 'caption',

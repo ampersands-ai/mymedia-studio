@@ -1,9 +1,10 @@
-import { Upload } from 'lucide-react';
+import { Upload, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVideoEditorStore } from '../store';
 import { SubtitleMode } from '../types';
 
@@ -27,7 +28,15 @@ const FONT_SIZES = [
 ];
 
 export const SubtitlePanel = () => {
-  const { subtitleConfig, updateSubtitleConfig } = useVideoEditorStore();
+  const { subtitleConfig, updateSubtitleConfig, clips, audioTrack, assets } = useVideoEditorStore();
+  
+  // Check if there's a valid speech source for auto-captions
+  const hasAudioTrack = !!audioTrack?.assetId;
+  const hasVideoClips = clips.some(clip => {
+    const asset = assets.find(a => a.id === clip.assetId);
+    return asset?.type === 'video';
+  });
+  const hasValidSpeechSource = hasAudioTrack || hasVideoClips;
 
   const handleSRTUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +78,16 @@ export const SubtitlePanel = () => {
           ))}
         </RadioGroup>
       </div>
+
+      {/* Warning for auto-captions without speech source */}
+      {subtitleConfig.mode === 'auto' && !hasValidSpeechSource && (
+        <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            Auto-captions require an audio track or video clips with audio. Add media to enable this feature.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* SRT Upload (only when mode is 'upload') */}
       {subtitleConfig.mode === 'upload' && (

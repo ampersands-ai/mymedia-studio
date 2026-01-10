@@ -2048,6 +2048,45 @@ export type Database = {
         }
         Relationships: []
       }
+      prerender_cache: {
+        Row: {
+          content_hash: string | null
+          created_at: string
+          expires_at: string
+          html_size_bytes: number | null
+          id: string
+          render_time_ms: number | null
+          rendered_at: string
+          rendered_html: string
+          updated_at: string
+          url_path: string
+        }
+        Insert: {
+          content_hash?: string | null
+          created_at?: string
+          expires_at?: string
+          html_size_bytes?: number | null
+          id?: string
+          render_time_ms?: number | null
+          rendered_at?: string
+          rendered_html: string
+          updated_at?: string
+          url_path: string
+        }
+        Update: {
+          content_hash?: string | null
+          created_at?: string
+          expires_at?: string
+          html_size_bytes?: number | null
+          id?: string
+          render_time_ms?: number | null
+          rendered_at?: string
+          rendered_html?: string
+          updated_at?: string
+          url_path?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
@@ -4750,6 +4789,7 @@ export type Database = {
         }[]
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_expired_prerender_cache: { Args: never; Returns: number }
       cleanup_expired_rate_limits: { Args: never; Returns: number }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_verification_tokens: { Args: never; Returns: undefined }

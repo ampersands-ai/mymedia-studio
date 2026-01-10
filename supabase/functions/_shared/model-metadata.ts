@@ -1236,7 +1236,7 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // VIDEO TO VIDEO MODELS (2 total)
+  // VIDEO TO VIDEO MODELS (3 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c": {
     recordId: "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
@@ -1256,6 +1256,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     contentType: "video_to_video",
     baseCreditCost: 10,
     estimatedTimeSeconds: 240,
+    isActive: true,
+  },
+  "d6e7f8a9-0b1c-2d3e-4f5a-6b7c8d9e0f1a": {
+    recordId: "d6e7f8a9-0b1c-2d3e-4f5a-6b7c8d9e0f1a",
+    modelId: "kling-2.6/motion-control",
+    modelName: "Kling 2.6 Motion Control",
+    provider: "kie_ai",
+    contentType: "video_to_video",
+    baseCreditCost: 15,
+    estimatedTimeSeconds: 180,
     isActive: true,
   },
 

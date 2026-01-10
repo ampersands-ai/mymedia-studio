@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Eye, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,24 +120,7 @@ export default function ModelPageEditor() {
         hero_video_url: existingPage.hero_video_url || "",
         og_image_url: existingPage.og_image_url || "",
         highlights: existingPage.highlights || [],
-        specifications: existingPage.specifications as Record<string, string | number> || {},
-        use_cases: existingPage.use_cases || [],
-        faqs: existingPage.faqs || [],
-        pricing_note: existingPage.pricing_note || "",
-        is_published: existingPage.is_published || false,
-        is_featured: existingPage.is_featured || false,
-        display_order: existingPage.display_order || 0,
-      });
-        tagline: existingPage.tagline || "",
-        description: existingPage.description || "",
-        meta_title: existingPage.meta_title,
-        meta_description: existingPage.meta_description,
-        keywords: existingPage.keywords || [],
-        hero_image_url: existingPage.hero_image_url || "",
-        hero_video_url: existingPage.hero_video_url || "",
-        og_image_url: existingPage.og_image_url || "",
-        highlights: existingPage.highlights || [],
-        specifications: existingPage.specifications || {},
+        specifications: (existingPage.specifications as Record<string, string | number>) || {},
         use_cases: existingPage.use_cases || [],
         faqs: existingPage.faqs || [],
         pricing_note: existingPage.pricing_note || "",

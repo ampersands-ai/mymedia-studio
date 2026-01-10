@@ -7,8 +7,8 @@ import { Search, Sparkles, Image, Video, Music, User } from "lucide-react";
 interface ModelDirectoryHeroProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  selectedCategory?: string;
+  onCategoryChange: (category: string | undefined) => void;
   totalModels: number;
 }
 

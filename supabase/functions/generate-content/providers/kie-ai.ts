@@ -45,7 +45,10 @@ async function uploadToKieFileApi(
 
     const data = await response.json();
     
-    if (!data.success || !data.data?.fileUrl) {
+    // API returns downloadUrl, not fileUrl
+    const kieUrl = data.data?.downloadUrl || data.data?.fileUrl;
+    
+    if (!data.success || !kieUrl) {
       logger.error('KIE File Upload API returned invalid response', undefined, {
         metadata: { response: data }
       });
@@ -53,10 +56,10 @@ async function uploadToKieFileApi(
     }
 
     logger.info('File uploaded to KIE successfully', { 
-      metadata: { kieUrl: data.data.fileUrl } 
+      metadata: { kieUrl } 
     });
     
-    return data.data.fileUrl;
+    return kieUrl;
   } catch (error) {
     logger.error('Failed to upload file to KIE', error as Error);
     throw error;

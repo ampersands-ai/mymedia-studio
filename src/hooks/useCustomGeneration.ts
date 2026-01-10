@@ -94,9 +94,9 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
           prompt: state.prompt, 
           ...state.modelParameters 
         };
-        // Pass audio duration for lip sync models (cost depends on audio length)
-        const audioDurationSeconds = state.audioDuration ?? undefined;
-        return Math.round(modelModule.calculateCost(inputs, audioDurationSeconds) * 100) / 100;
+        // Pass duration for models with per-second pricing (audio for lip_sync, video for video_to_video)
+        const durationSeconds = state.audioDuration ?? state.videoDuration ?? undefined;
+        return Math.round(modelModule.calculateCost(inputs, durationSeconds) * 100) / 100;
       }
     } catch {
       // Model not found in registry - fall through to fallback
@@ -135,7 +135,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     }
     
     return Math.round(tokens * 100) / 100;
-  }, [state.selectedModel, state.modelParameters, state.prompt, state.audioDuration, uploadedImages, filteredModels]);
+  }, [state.selectedModel, state.modelParameters, state.prompt, state.audioDuration, state.videoDuration, uploadedImages, filteredModels]);
 
   /**
    * Estimated tokens with caption cost

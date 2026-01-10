@@ -37,6 +37,7 @@ export const MODEL_CONFIG = {
   use_api_key: "KIE_AI_API_KEY_VIDEO_TO_VIDEO",
   baseCreditCost: 15, // Default: 720p × 5s = 3 × 5
   estimatedTimeSeconds: 180,
+  isPerSecondPricing: true,
   pricingPerSecond: {
     "720p": 3,
     "1080p": 4.5,

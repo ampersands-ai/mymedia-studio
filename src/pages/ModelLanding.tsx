@@ -35,17 +35,19 @@ export default function ModelLanding() {
   const { data: relatedModels } = useRelatedModels(modelPage?.category, modelPage?.id);
 
   const handleTryModel = () => {
-    if (modelPage?.model_record_id) {
-      navigate(`/dashboard/custom-creation?model=${modelPage.model_record_id}`);
+    if (modelPage?.slug) {
+      // Use slug for SEO-friendly, human-readable URLs
+      navigate(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}`);
     } else {
       navigate("/dashboard/custom-creation");
     }
   };
 
   const handleTryPrompt = (prompt: string) => {
-    if (modelPage?.model_record_id) {
+    if (modelPage?.slug) {
       const encodedPrompt = encodeURIComponent(prompt);
-      navigate(`/dashboard/custom-creation?model=${modelPage.model_record_id}&prompt=${encodedPrompt}`);
+      // Use slug for SEO-friendly URLs
+      navigate(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}&prompt=${encodedPrompt}`);
     }
   };
 

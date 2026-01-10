@@ -524,8 +524,13 @@ const CustomCreation = () => {
     if (!allModels || allModels.length === 0) return;
     
     if (urlModel) {
-      // Find the model across ALL models (not just filtered by current group)
-      const targetModel = allModels.find(m => m.record_id === urlModel);
+      // Find the model by slug first (SEO-friendly), fallback to record_id for backwards compatibility
+      // We check against model 'id' (which is the unique model identifier like 'kling-2.6/motion-control')
+      // and also the model slug from model_pages table
+      const targetModel = allModels.find(m => 
+        m.id === urlModel ||        // Match by model id (slug-based, SEO-friendly)
+        m.record_id === urlModel    // Fallback: match by record_id (UUID, legacy)
+      );
       
       if (targetModel) {
         // Determine the model's group from its groups array

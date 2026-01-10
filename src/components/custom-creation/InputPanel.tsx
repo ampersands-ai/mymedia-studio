@@ -98,6 +98,7 @@ interface InputPanelProps {
   // Per-second pricing display props
   isPerSecondPricing?: boolean;
   hasAudioUploaded?: boolean;
+  hasVideoUploaded?: boolean;
 }
 
 /**
@@ -175,6 +176,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   showNotifyOnCompletion = true,
   isPerSecondPricing = false,
   hasAudioUploaded = false,
+  hasVideoUploaded = false,
 }) => {
   // Disable if in cooldown OR at concurrent generation limit
   const isDisabled = localGenerating || isOnCooldown || (activeGenerationsCount >= maxConcurrentGenerations);
@@ -553,7 +555,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             <div className="flex items-center gap-1 bg-black/10 px-1.5 sm:px-2 py-0.5 rounded">
               <Coins className="h-3 w-3 flex-shrink-0" />
               <span className="text-xs truncate">
-                {isPerSecondPricing && !hasAudioUploaded 
+                {isPerSecondPricing && !hasAudioUploaded && !hasVideoUploaded
                   ? `${estimatedTokens.toFixed(1)}/s` 
                   : `~${estimatedTokens.toFixed(2)}`}
               </span>

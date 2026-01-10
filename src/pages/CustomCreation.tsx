@@ -771,6 +771,7 @@ const CustomCreation = () => {
             }
             isPerSecondPricing={isPerSecondPricing}
             hasAudioUploaded={hasAudioUploaded}
+            hasVideoUploaded={uploadedVideos.length > 0 && state.videoDuration != null}
             modelId={state.selectedModel || ''}
             provider={currentModel?.provider || ''}
             onReset={() => {

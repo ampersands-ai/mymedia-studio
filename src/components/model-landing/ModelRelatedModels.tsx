@@ -18,7 +18,7 @@ interface ModelRelatedModelsProps {
   currentModelName?: string;
 }
 
-export function ModelRelatedModels({ relatedModels, currentModelName }: ModelRelatedModelsProps) {
+export function ModelRelatedModels({ relatedModels }: ModelRelatedModelsProps) {
   const navigate = useNavigate();
 
   if (!relatedModels || relatedModels.length === 0) return null;

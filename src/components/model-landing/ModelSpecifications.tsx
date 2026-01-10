@@ -7,7 +7,7 @@ interface ModelSpecificationsProps {
   category?: string;
 }
 
-export function ModelSpecifications({ specifications, category }: ModelSpecificationsProps) {
+export function ModelSpecifications({ specifications }: ModelSpecificationsProps) {
   if (!specifications || Object.keys(specifications).length === 0) return null;
 
   const getSpecIcon = (key: string) => {

@@ -244,7 +244,7 @@ export function useFeaturedModels() {
 
       if (error) throw error;
       
-      return (data || []).map(page => ({
+      return (data || []).map((page: typeof data[number]) => ({
         ...page,
         highlights: (page.highlights as unknown as HighlightItem[]) || [],
         use_cases: (page.use_cases as unknown as UseCaseItem[]) || [],

@@ -10,11 +10,10 @@ import type { ModelSample } from "@/hooks/useModelPages";
 interface ModelSampleGalleryProps {
   samples: ModelSample[];
   modelName: string;
-  modelRecordId?: string;
   onTryPrompt: (prompt: string) => void;
 }
 
-export function ModelSampleGallery({ samples, modelName, modelRecordId, onTryPrompt }: ModelSampleGalleryProps) {
+export function ModelSampleGallery({ samples, modelName, onTryPrompt }: ModelSampleGalleryProps) {
   const [selectedSample, setSelectedSample] = useState<ModelSample | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 

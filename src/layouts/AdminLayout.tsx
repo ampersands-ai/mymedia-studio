@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu } from "lucide-react";
+import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu, Globe } from "lucide-react";
 import { AdminAlertBell } from "@/components/admin/AdminAlertBell";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
@@ -32,6 +32,7 @@ const navItems = [
   { path: "/admin/email-settings", label: "Email Settings", icon: Mail },
   { path: "/admin/video-jobs", label: "Video Jobs", icon: Video },
   { path: "/admin/template-landing", label: "Landing Pages", icon: FileText },
+  { path: "/admin/model-pages", label: "Model Pages", icon: Globe },
   { path: "/admin/template-categories", label: "Categories", icon: FolderTree },
   { path: "/admin/template-analytics", label: "Template Analytics", icon: BarChart3 },
   { path: "/admin/cinematic-prompts", label: "Cinematic Prompts", icon: Sparkles },

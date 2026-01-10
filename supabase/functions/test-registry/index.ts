@@ -16,8 +16,8 @@ serve(async (req) => {
     const availableIds = getAvailableModelRecordIds();
     logger.info('Found models in registry', { metadata: { count: availableIds.length } });
 
-    // Test 2: Get a specific model (ElevenLabs Fast)
-    const testRecordId = "7cd9f31d-82d6-49a8-a4ae-13dbe9b73c2f";
+    // Test 2: Get a specific model (Kling 2.6 Motion Control)
+    const testRecordId = "d6e7f8a9-0b1c-2d3e-4f5a-6b7c8d9e0f1a";
     logger.info('Testing model import', { metadata: { recordId: testRecordId } });
 
     const config = getModelConfig(testRecordId);

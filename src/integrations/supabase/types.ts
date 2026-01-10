@@ -1753,6 +1753,184 @@ export type Database = {
           },
         ]
       }
+      model_pages: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          faqs: Json | null
+          hero_image_url: string | null
+          hero_video_url: string | null
+          highlights: Json | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          keywords: string[] | null
+          meta_description: string
+          meta_title: string
+          model_name: string
+          model_record_id: string
+          og_image_url: string | null
+          pricing_note: string | null
+          provider: string
+          slug: string
+          specifications: Json | null
+          tagline: string | null
+          updated_at: string | null
+          use_cases: Json | null
+          view_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          faqs?: Json | null
+          hero_image_url?: string | null
+          hero_video_url?: string | null
+          highlights?: Json | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          meta_description: string
+          meta_title: string
+          model_name: string
+          model_record_id: string
+          og_image_url?: string | null
+          pricing_note?: string | null
+          provider: string
+          slug: string
+          specifications?: Json | null
+          tagline?: string | null
+          updated_at?: string | null
+          use_cases?: Json | null
+          view_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          faqs?: Json | null
+          hero_image_url?: string | null
+          hero_video_url?: string | null
+          highlights?: Json | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          meta_description?: string
+          meta_title?: string
+          model_name?: string
+          model_record_id?: string
+          og_image_url?: string | null
+          pricing_note?: string | null
+          provider?: string
+          slug?: string
+          specifications?: Json | null
+          tagline?: string | null
+          updated_at?: string | null
+          use_cases?: Json | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      model_prompt_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          model_page_id: string
+          prompt_template: string
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          model_page_id: string
+          prompt_template: string
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          model_page_id?: string
+          prompt_template?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_prompt_templates_model_page_id_fkey"
+            columns: ["model_page_id"]
+            isOneToOne: false
+            referencedRelation: "model_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_samples: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_featured: boolean | null
+          model_page_id: string
+          negative_prompt: string | null
+          output_type: string
+          output_url: string
+          parameters: Json | null
+          prompt: string
+          thumbnail_url: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_featured?: boolean | null
+          model_page_id: string
+          negative_prompt?: string | null
+          output_type: string
+          output_url: string
+          parameters?: Json | null
+          prompt: string
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_featured?: boolean | null
+          model_page_id?: string
+          negative_prompt?: string | null
+          output_type?: string
+          output_url?: string
+          parameters?: Json | null
+          prompt?: string
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_samples_model_page_id_fkey"
+            columns: ["model_page_id"]
+            isOneToOne: false
+            referencedRelation: "model_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_exemptions: {
         Row: {
           granted_at: string
@@ -4687,6 +4865,10 @@ export type Database = {
       }
       increment_blog_view_count: {
         Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_model_page_view_count: {
+        Args: { page_id: string }
         Returns: undefined
       }
       increment_prompt_use_count: {

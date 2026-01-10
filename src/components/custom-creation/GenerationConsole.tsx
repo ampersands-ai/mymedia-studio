@@ -126,12 +126,15 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
           ) : (
             // Normal generation display
             <>
-          <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-muted-foreground">
-              Feel free to navigate away - your generation will be saved in History
-            </p>
-          </div>
+          {/* Only show "navigate away" message after setup phase completes (when apiCallStartTime is set) */}
+          {generationState.apiCallStartTime && (
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Feel free to navigate away - your generation will be saved in History
+              </p>
+            </div>
+          )}
 
           {showProgress && (
             <GenerationProgress

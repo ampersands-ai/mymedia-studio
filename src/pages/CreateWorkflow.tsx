@@ -360,12 +360,15 @@ const CreateWorkflow = () => {
                   {isExecuting && (
                     <Card className="border border-gray-200 shadow-sm bg-muted/50 rounded-xl">
                       <CardContent className="p-4 space-y-4">
-                        <div className="flex items-start gap-2">
-                          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-muted-foreground">
-                            Feel free to navigate away - your generation will be saved in History
-                          </p>
-                        </div>
+                        {/* Only show navigate away message after result is ready (setup complete) */}
+                        {result && (
+                          <div className="flex items-start gap-2">
+                            <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-muted-foreground">
+                              Feel free to navigate away - your generation will be saved in History
+                            </p>
+                          </div>
+                        )}
 
                         {generationStartTimeRef.current && (
                           <GenerationProgress

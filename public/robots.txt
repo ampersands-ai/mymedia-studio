@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://artifio.ai/sitemap.xml
+# Dynamic sitemap generated from database
+Sitemap: https://gzlwkvmivbfcvczoqphq.supabase.co/functions/v1/sitemap

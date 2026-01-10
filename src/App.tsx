@@ -82,6 +82,10 @@ const ModelPricing = lazy(() => import("./pages/admin/ModelPricing"));
 const FeatureSettings = lazy(() => import("./pages/admin/FeatureSettings"));
 const SecurityDashboard = lazy(() => import("./pages/admin/SecurityDashboard"));
 const CinematicTest = lazy(() => import("./pages/CinematicTest"));
+const ModelDirectory = lazy(() => import("./pages/ModelDirectory"));
+const ModelLanding = lazy(() => import("./pages/ModelLanding"));
+const ModelPagesManager = lazy(() => import("./pages/admin/ModelPagesManager"));
+const ModelPageEditor = lazy(() => import("./pages/admin/ModelPageEditor"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -213,6 +217,8 @@ const AppContent = () => {
               <Route path="feature-settings" element={<RouteErrorBoundary routeName="Admin > Feature Settings"><FeatureSettings /></RouteErrorBoundary>} />
               <Route path="security" element={<RouteErrorBoundary routeName="Admin > Security"><SecurityDashboard /></RouteErrorBoundary>} />
               <Route path="moderation" element={<RouteErrorBoundary routeName="Admin > Moderation"><ModerationDashboard /></RouteErrorBoundary>} />
+              <Route path="model-pages" element={<RouteErrorBoundary routeName="Admin > Model Pages"><ModelPagesManager /></RouteErrorBoundary>} />
+              <Route path="model-pages/:id" element={<RouteErrorBoundary routeName="Admin > Model Page Editor"><ModelPageEditor /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />
@@ -227,6 +233,8 @@ const AppContent = () => {
             <Route path="/templates" element={<Navigate to="/dashboard/templates" replace />} />
             <Route path="/custom-creation" element={<Navigate to="/dashboard/custom-creation" replace />} />
             <Route path="/templates/:category/:slug" element={<RouteErrorBoundary routeName="Template Landing"><TemplateLanding /></RouteErrorBoundary>} />
+            <Route path="/models" element={<RouteErrorBoundary routeName="Model Directory"><ModelDirectory /></RouteErrorBoundary>} />
+            <Route path="/models/:slug" element={<RouteErrorBoundary routeName="Model Landing"><ModelLanding /></RouteErrorBoundary>} />
             <Route path="/share/:token" element={<RouteErrorBoundary routeName="Shared Content"><SharedContent /></RouteErrorBoundary>} />
             <Route path="/verify-email" element={<RouteErrorBoundary routeName="Verify Email"><VerifyEmail /></RouteErrorBoundary>} />
             <Route path="/forgot-password" element={<RouteErrorBoundary routeName="Forgot Password"><ForgotPassword /></RouteErrorBoundary>} />

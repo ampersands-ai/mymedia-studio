@@ -3,22 +3,81 @@
  * Video player with download and open in new tab buttons
  */
 
-import { Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Loader2, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FinalVideoPlayerProps {
   videoUrl: string | null;
   storyboardId: string;
   isLoading: boolean;
+  storagePath?: string | null;
 }
 
 export const FinalVideoPlayer = ({
   videoUrl,
   storyboardId,
   isLoading,
+  storagePath,
 }: FinalVideoPlayerProps) => {
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isCreatingShareLink, setIsCreatingShareLink] = useState(false);
+
+  // Create share link when video is available
+  useEffect(() => {
+    if (videoUrl && storagePath && !shareUrl && !isCreatingShareLink) {
+      createShareLink();
+    }
+  }, [videoUrl, storagePath]);
+
+  const createShareLink = async () => {
+    if (!storagePath) return;
+    
+    setIsCreatingShareLink(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setIsCreatingShareLink(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-share-link', {
+        body: {
+          storage_path: storagePath,
+          content_type: 'video',
+          bucket_name: 'generated-content'
+        }
+      });
+
+      if (!error && data?.share_url) {
+        setShareUrl(data.share_url);
+      }
+    } catch (err) {
+      logger.warn('Failed to create share link, falling back to direct URL', {
+        component: 'FinalVideoPlayer',
+        operation: 'createShareLink',
+        storyboardId
+      });
+    } finally {
+      setIsCreatingShareLink(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const urlToCopy = shareUrl || videoUrl;
+    if (!urlToCopy) return;
+    
+    try {
+      await navigator.clipboard.writeText(urlToCopy);
+      toast.success('Link copied to clipboard!');
+    } catch {
+      toast.error('Failed to copy link');
+    }
+  };
+
   const handleDownload = async () => {
     try {
       if (!videoUrl) {
@@ -51,6 +110,8 @@ export const FinalVideoPlayer = ({
     }
   };
 
+  const displayUrl = shareUrl || videoUrl || '';
+
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-bold">🎬 Final Video</h3>
@@ -77,9 +138,26 @@ export const FinalVideoPlayer = ({
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => window.open(videoUrl || '', '_blank')}
+          onClick={() => window.open(displayUrl, '_blank')}
+          disabled={isCreatingShareLink || !displayUrl}
         >
-          Open in New Tab
+          {isCreatingShareLink ? (
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Creating link...
+            </>
+          ) : (
+            'Open in New Tab'
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopyLink}
+          disabled={!displayUrl}
+          title="Copy link"
+        >
+          <Link2 className="w-4 h-4" />
         </Button>
         <Button
           variant="outline"

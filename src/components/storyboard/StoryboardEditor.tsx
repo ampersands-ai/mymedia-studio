@@ -286,6 +286,7 @@ export const StoryboardEditor = () => {
           videoUrl={videoSignedUrl}
           storyboardId={storyboard.id}
           isLoading={isLoadingVideo}
+          storagePath={storyboard.video_storage_path}
         />
       )}
       

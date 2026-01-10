@@ -3,6 +3,111 @@ import { EdgeLogger } from "../../_shared/edge-logger.ts";
 import { GENERATION_STATUS } from "../../_shared/constants.ts";
 import { API_ENDPOINTS } from "../../_shared/api-endpoints.ts";
 
+// KIE File Upload API base URL
+const KIE_FILE_UPLOAD_URL = "https://kieai.redpandaai.co/api/file-url-upload";
+
+// Models that require files to be uploaded via KIE's File Upload API
+const MODELS_REQUIRING_FILE_UPLOAD = [
+  "kling-2.6/motion-control",
+];
+
+/**
+ * Upload a file URL to KIE's File Upload API and get a KIE-hosted URL
+ */
+async function uploadToKieFileApi(
+  fileUrl: string,
+  apiKey: string,
+  uploadPath: string,
+  logger: EdgeLogger
+): Promise<string> {
+  logger.info('Uploading file to KIE File API', { metadata: { uploadPath } });
+  
+  try {
+    const response = await fetch(KIE_FILE_UPLOAD_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fileUrl: fileUrl,
+        uploadPath: uploadPath,
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('KIE File Upload API error', undefined, {
+        metadata: { status: response.status, body: errorText }
+      });
+      throw new Error(`File upload failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.data?.fileUrl) {
+      logger.error('KIE File Upload API returned invalid response', undefined, {
+        metadata: { response: data }
+      });
+      throw new Error(`File upload failed: ${data.msg || 'Invalid response'}`);
+    }
+
+    logger.info('File uploaded to KIE successfully', { 
+      metadata: { kieUrl: data.data.fileUrl } 
+    });
+    
+    return data.data.fileUrl;
+  } catch (error) {
+    logger.error('Failed to upload file to KIE', error as Error);
+    throw error;
+  }
+}
+
+/**
+ * Pre-upload files for models that require KIE-hosted URLs
+ */
+async function preUploadFilesIfRequired(
+  request: ProviderRequest,
+  apiKey: string,
+  logger: EdgeLogger
+): Promise<ProviderRequest> {
+  // Check if this model requires file pre-upload
+  if (!MODELS_REQUIRING_FILE_UPLOAD.includes(request.model)) {
+    return request;
+  }
+
+  logger.info('Model requires KIE file pre-upload', { metadata: { model: request.model } });
+  
+  const updatedParams = { ...request.parameters };
+  
+  // Upload input_urls (images) if present
+  if (updatedParams.input_urls && Array.isArray(updatedParams.input_urls)) {
+    const uploadedUrls: string[] = [];
+    for (const url of updatedParams.input_urls as string[]) {
+      const kieUrl = await uploadToKieFileApi(url, apiKey, 'images', logger);
+      uploadedUrls.push(kieUrl);
+    }
+    updatedParams.input_urls = uploadedUrls;
+    logger.info('Uploaded input_urls to KIE', { metadata: { count: uploadedUrls.length } });
+  }
+  
+  // Upload video_urls if present
+  if (updatedParams.video_urls && Array.isArray(updatedParams.video_urls)) {
+    const uploadedUrls: string[] = [];
+    for (const url of updatedParams.video_urls as string[]) {
+      const kieUrl = await uploadToKieFileApi(url, apiKey, 'videos', logger);
+      uploadedUrls.push(kieUrl);
+    }
+    updatedParams.video_urls = uploadedUrls;
+    logger.info('Uploaded video_urls to KIE', { metadata: { count: uploadedUrls.length } });
+  }
+  
+  return {
+    ...request,
+    parameters: updatedParams
+  };
+}
+
 // API key mapping logic for provider
 function getKieApiKey(modelId: string, recordId: string): string {
   const veo3Models = [
@@ -60,14 +165,17 @@ export async function callKieAI(
   const logger = new EdgeLogger('kie-ai-provider', crypto.randomUUID());
   const KIE_AI_API_KEY = getKieApiKey(request.model, request.model_record_id || '');
 
-  const createTaskUrl = request.api_endpoint
-    ? `${API_ENDPOINTS.KIE_AI.BASE}${request.api_endpoint}`
+  // Pre-upload files to KIE if required by this model
+  const processedRequest = await preUploadFilesIfRequired(request, KIE_AI_API_KEY, logger);
+
+  const createTaskUrl = processedRequest.api_endpoint
+    ? `${API_ENDPOINTS.KIE_AI.BASE}${processedRequest.api_endpoint}`
     : API_ENDPOINTS.KIE_AI.createTaskUrl;
 
   logger.info('Calling generation API', {
     metadata: {
-      model: request.model,
-      payloadStructure: request.payload_structure || 'wrapper',
+      model: processedRequest.model,
+      payloadStructure: processedRequest.payload_structure || 'wrapper',
       endpoint: createTaskUrl
     }
   });
@@ -85,12 +193,12 @@ export async function callKieAI(
   
   logger.debug('Callback URL configured with security tokens');
 
-  const useFlatStructure = request.payload_structure === 'flat';
+  const useFlatStructure = processedRequest.payload_structure === 'flat';
   let payload: Record<string, unknown>;
   
   // Handle reference_image_urls - ensure it's an array if it's a string
-  if (request.parameters.reference_image_urls && typeof request.parameters.reference_image_urls === 'string') {
-    request.parameters.reference_image_urls = [request.parameters.reference_image_urls];
+  if (processedRequest.parameters.reference_image_urls && typeof processedRequest.parameters.reference_image_urls === 'string') {
+    processedRequest.parameters.reference_image_urls = [processedRequest.parameters.reference_image_urls];
   }
   
   // No more generic transformations - all model-specific logic moved to locked model files
@@ -101,25 +209,25 @@ export async function callKieAI(
     logger.debug('Using FLAT payload structure');
     
     // Check if taskType is already provided by the model's preparePayload (e.g., mj_video, mj_txt2img)
-    const hasTaskType = 'taskType' in request.parameters;
+    const hasTaskType = 'taskType' in processedRequest.parameters;
     
     // Determine the correct field name: 'taskType' for Midjourney models, 'model' for others
     const isMidjourneyModel = hasTaskType || 
-                               request.model === 'mj_txt2img' || 
-                               request.model === 'midjourney/text-to-image' ||
-                               request.model.includes('midjourney');
+                               processedRequest.model === 'mj_txt2img' || 
+                               processedRequest.model === 'midjourney/text-to-image' ||
+                               processedRequest.model.includes('midjourney');
     const modelFieldName = isMidjourneyModel ? 'taskType' : 'model';
     
     // For Midjourney, use the taskType from parameters if provided, else default to mj_txt2img
     const modelValue = hasTaskType 
-      ? request.parameters.taskType  // Respect model's preparePayload (e.g., mj_video)
-      : (isMidjourneyModel ? 'mj_txt2img' : request.model);
+      ? processedRequest.parameters.taskType  // Respect model's preparePayload (e.g., mj_video)
+      : (isMidjourneyModel ? 'mj_txt2img' : processedRequest.model);
     
     // No more FLAT_MODEL_DEFAULTS - all transformations happen in locked model files
     payload = {
       [modelFieldName]: modelValue,
       callBackUrl: callbackUrl,  // System field - not from schema
-      ...request.parameters // All parameters come from locked model preparePayload or schema
+      ...processedRequest.parameters // All parameters come from locked model preparePayload or schema
     };
   } else {
     // Standard nested input structure for other models
@@ -127,7 +235,7 @@ export async function callKieAI(
     
     // Strip "input." prefix from parameter keys if present
     const cleanedParameters: Record<string, any> = {};
-    for (const [key, value] of Object.entries(request.parameters)) {
+    for (const [key, value] of Object.entries(processedRequest.parameters)) {
       const cleanKey = key.startsWith('input.') ? key.substring(6) : key;
       cleanedParameters[cleanKey] = value;
     }
@@ -135,7 +243,7 @@ export async function callKieAI(
     // For wrapper structure, callBackUrl must be at the TOP LEVEL (not inside input)
     // This matches the November 17th working structure
     payload = {
-      model: request.model,
+      model: processedRequest.model,
       callBackUrl: callbackUrl, // System field - TOP LEVEL to match provider expectations
       input: cleanedParameters
     };
@@ -151,7 +259,7 @@ export async function callKieAI(
 
   try {
     // Step 1: Create the task
-    logger.info('Creating generation task', { metadata: { model: request.model } });
+    logger.info('Creating generation task', { metadata: { model: processedRequest.model } });
 
     const createResponse = await fetch(createTaskUrl, {
       method: 'POST',
@@ -172,8 +280,8 @@ export async function callKieAI(
           httpStatusText: createResponse.statusText,
           responseHeaders: responseHeaders,
           responseBody: responseText,
-          model: request.model,
-          recordId: request.model_record_id,
+          model: processedRequest.model,
+          recordId: processedRequest.model_record_id,
           endpoint: createTaskUrl
         }
       });
@@ -242,7 +350,7 @@ export async function callKieAI(
       file_extension: 'pending',
       file_size: 0,
       metadata: {
-        model: request.model,
+        model: processedRequest.model,
         task_id: taskId,
         status: GENERATION_STATUS.PROCESSING,
         callback_url: callbackUrl
@@ -250,7 +358,7 @@ export async function callKieAI(
     };
 
   } catch (error) {
-    logger.error('Generation provider error', error as Error, { metadata: { model: request.model } });
+    logger.error('Generation provider error', error as Error, { metadata: { model: processedRequest.model } });
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`Generation provider failed: ${errorMsg}`);
   }

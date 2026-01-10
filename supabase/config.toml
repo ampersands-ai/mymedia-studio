@@ -112,3 +112,12 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
+
+[functions.prerender]
+verify_jwt = false
+
+[functions.invalidate-prerender-cache]
+verify_jwt = true
+
+[functions.warm-prerender-cache]
+verify_jwt = true

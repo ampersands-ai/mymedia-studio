@@ -516,6 +516,52 @@ const CustomCreation = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sync URL model and prompt params to state on mount (for deep linking from model pages)
+  useEffect(() => {
+    const urlModel = searchParams.get('model');
+    const urlPrompt = searchParams.get('prompt');
+    
+    if (!allModels || allModels.length === 0) return;
+    
+    if (urlModel) {
+      // Find the model across ALL models (not just filtered by current group)
+      const targetModel = allModels.find(m => m.record_id === urlModel);
+      
+      if (targetModel) {
+        // Determine the model's group from its groups array
+        const modelGroups = (Array.isArray(targetModel.groups) ? targetModel.groups : []) as string[];
+        const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
+                             'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
+        
+        // Find the first valid group this model belongs to
+        const targetGroup = modelGroups.find(g => validGroups.includes(g)) as CreationGroup | undefined;
+        
+        if (targetGroup && targetGroup !== state.selectedGroup) {
+          // Switch to the correct group first
+          setStateSelectedGroup(targetGroup);
+        }
+        
+        // Set the model
+        setStateSelectedModel(urlModel);
+        
+        // Clear the model param from URL to prevent re-triggering
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('model');
+        if (urlPrompt) newParams.delete('prompt');
+        newParams.set('group', targetGroup || state.selectedGroup);
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+    
+    // Set prompt if provided
+    if (urlPrompt) {
+      setStatePrompt(decodeURIComponent(urlPrompt));
+    }
+    
+    // Only run once when models are loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allModels]);
+
   // Sync state changes back to URL (when user clicks group buttons)
   useEffect(() => {
     const currentUrlGroup = searchParams.get('group');

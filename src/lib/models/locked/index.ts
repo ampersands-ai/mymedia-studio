@@ -102,9 +102,10 @@ import * as Seedance15Pro_ImageToVideo from "./image_to_video/Seedance_1_5_Pro_I
 import * as Wan26_ImageToVideo from "./image_to_video/Wan_2_6_I2V";
 import * as RunwareSeedanceProFastI2V from "./image_to_video/Runware_Seedance_Pro_Fast_I2V";
 
-// Video to Video Models (2)
+// Video to Video Models (3)
 import * as TopazVideoUpscale from "./video_to_video/Topaz_Video_Upscale";
 import * as Wan26_VideoToVideo from "./video_to_video/Wan_2_6_V2V";
+import * as Kling26MotionControl from "./video_to_video/Kling_2_6_Motion_Control";
 // Prompt to Audio Models (8)
 import * as ElevenLabsFast from "./prompt_to_audio/ElevenLabs_Fast";
 import * as ElevenLabsTTS from "./prompt_to_audio/ElevenLabs_TTS";
@@ -451,10 +452,11 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "e4f5a6b7-1c2d-3e4f-5a6b-7c8d9e0f1a2b": Wan22AnimateReplace_LipSync as ModelModule,     // Wan 2.2 Animate Replace | lip_sync | kie_ai
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // VIDEO TO VIDEO MODELS (2 total)
+  // VIDEO TO VIDEO MODELS (3 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c": TopazVideoUpscale as ModelModule,                 // Topaz Video Upscale | video_to_video | kie_ai
   "a2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d": Wan26_VideoToVideo as ModelModule,                // Wan 2.6 V2V | video_to_video | kie_ai
+  "d6e7f8a9-0b1c-2d3e-4f5a-6b7c8d9e0f1a": Kling26MotionControl as ModelModule,              // Kling 2.6 Motion Control | video_to_video | kie_ai
 
   // Additional Wan 2.6 models
   "b3c4d5e6-7f8a-9b0c-1d2e-3f4a5b6c7d8e": Wan26_ImageToVideo as ModelModule,                // Wan 2.6 I2V | image_to_video | kie_ai

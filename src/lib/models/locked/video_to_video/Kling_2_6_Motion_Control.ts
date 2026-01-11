@@ -100,6 +100,7 @@ export const SCHEMA = Object.freeze({
       items: { type: "string", format: "uri" },
       minItems: 1,
       maxItems: 1,
+      maxFileSize: 100 * 1024 * 1024, // 100MB
     },
     character_orientation: {
       type: "string",

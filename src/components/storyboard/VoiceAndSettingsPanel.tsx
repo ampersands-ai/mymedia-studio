@@ -7,7 +7,6 @@ import { ChevronDown, Volume2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
@@ -17,11 +16,8 @@ import {
 } from '@/components/ui/collapsible';
 import { VoiceSelector } from '@/components/generation/VoiceSelector';
 import { SubtitleSettingsSection } from './SubtitleSettingsSection';
-import { AudioSettingsSection } from './AudioSettingsSection';
-import { ImageAnimationSection } from './ImageAnimationSection';
 import type { Storyboard } from '@/types/storyboard';
 import type { 
-  ImageAnimationSettings,
   MusicSettingsUpdate,
   ImageAnimationSettingsUpdate 
 } from '@/types/media-settings';
@@ -41,7 +37,7 @@ interface VoiceAndSettingsPanelProps {
 
 /**
  * Complete voice & advanced settings panel
- * Contains voice selector, video quality, and all collapsible sections
+ * Contains voice selector and subtitle settings
  */
 export const VoiceAndSettingsPanel = ({
   storyboard,
@@ -105,47 +101,12 @@ export const VoiceAndSettingsPanel = ({
             </Dialog>
           </div>
 
-          {/* Video Quality */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Video Quality</Label>
-            <Select 
-              value={storyboard?.video_quality || 'high'}
-              onValueChange={(value) => {
-                onUpdateSettings({ video_quality: value });
-              }}
-              disabled={isRendering}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Subtitle Settings */}
           <SubtitleSettingsSection
             subtitleSettings={storyboard?.subtitle_settings}
             onUpdate={onUpdateSettings}
             isRendering={isRendering}
             onOpenCustomizer={onOpenSubtitleCustomizer}
-          />
-
-          {/* Audio Settings */}
-          <AudioSettingsSection
-            musicSettings={storyboard?.music_settings}
-            onUpdate={onUpdateSettings}
-            isRendering={isRendering}
-          />
-
-          {/* Image Animation */}
-          <ImageAnimationSection
-            animationSettings={storyboard?.image_animation_settings as Partial<ImageAnimationSettings> | undefined}
-            onUpdate={onUpdateSettings}
-            isRendering={isRendering}
           />
 
           <p className="text-xs text-muted-foreground pt-2 border-t">

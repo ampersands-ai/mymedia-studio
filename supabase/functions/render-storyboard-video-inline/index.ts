@@ -352,8 +352,8 @@ Deno.serve(async (req) => {
         
         // Intro content
         introText: storyboard.intro_voiceover_text || '',
-        introImagePrompt: storyboard.intro_image_prompt || '',
-        introImagePrompt2: storyboard.intro_image_prompt || '',  // Re-use intro prompt for second image
+        introImagePrompt: storyboard.intro_image_prompt || 'A professional, visually engaging scene that captures attention',
+        introImagePrompt2: storyboard.intro_image_prompt || 'A professional, visually engaging scene that captures attention',
         
         // Scenes array for iteration
         scenes: scenesVariables,

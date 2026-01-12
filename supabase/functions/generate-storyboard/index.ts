@@ -120,20 +120,25 @@ Deno.serve(async (req) => {
     const styleGuideline = STYLE_GUIDELINES[style] || STYLE_GUIDELINES['hyper-realistic'];
 
 // Prepare AI prompt with enhanced narrative structure for DUAL IMAGE generation
+    // NEW: Split voiceover into two halves, generate distinct images for each half
     const systemPrompt = `You are a viral faceless video creator specializing in engaging, educational content that tells compelling stories.
 
 OUTPUT FORMAT (strict JSON only):
 {
   "comment": "Creative direction note",
   "variables": {
-    "introImagePrompt": "${style} WIDE ESTABLISHING SHOT - sets the scene",
-    "introImagePrompt2": "${style} DIFFERENT ANGLE/CLOSE-UP - creates visual progression",
-    "introVoiceoverText": "Attention-grabbing title\\nCompelling hook line",
+    "introLine1": "First line - attention-grabbing question or statement",
+    "introLine2": "Second line - compelling hook that draws viewer in",
+    "introImagePrompt": "${style} image matching introLine1",
+    "introImagePrompt2": "${style} image matching introLine2",
+    "introVoiceoverText": "introLine1\\nintroLine2",
     "scenes": [
       {
-        "voiceOverText": "Natural speaking sentence",
-        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} FIRST visual concept from voiceover",
-        "imagePrompt2": "${style} SECOND DIFFERENT visual moment from voiceover"`}
+        "voiceOverText": "Full natural speaking sentence (10-15 words)",
+        "voiceOverPart1": "First half of the sentence (~5-7 words)",
+        "voiceOverPart2": "Second half of the sentence (~5-7 words)",
+        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} image that DIRECTLY illustrates voiceOverPart1",
+        "imagePrompt2": "${style} image that DIRECTLY illustrates voiceOverPart2"`}
       }
     ]
   }
@@ -161,33 +166,45 @@ STORY FLOW:
 - Use connective language between scenes
 - Build momentum toward the conclusion
 
-${mediaType === 'image' ? `IMAGE PROMPTS (DUAL IMAGE SYSTEM - CRITICAL REQUIREMENT):
-⚠️ EVERY SCENE NEEDS TWO COMPLETELY DIFFERENT IMAGES ⚠️
+${mediaType === 'image' ? `IMAGE PROMPTS (CONTENT-MATCHED DUAL IMAGE SYSTEM):
+⚠️ CRITICAL: SPLIT VOICEOVER → SPLIT IMAGES ⚠️
 
-You MUST generate "imagePrompt" AND "imagePrompt2" that are VISUALLY DISTINCT:
-- imagePrompt: First ~4.5 seconds - establishes the concept
-- imagePrompt2: Next ~4.5 seconds - MUST SHOW SOMETHING DIFFERENT
+STEP 1 - SPLIT THE VOICEOVER:
+For each scene, split voiceOverText into two meaningful halves:
+- voiceOverPart1: First half (~5-7 words) - the setup or first concept
+- voiceOverPart2: Second half (~5-7 words) - the follow-up or second concept
 
-MANDATORY DIFFERENTIATION (use at least ONE):
-1. Different camera angle (wide shot → close-up, or exterior → interior)
-2. Different subject focus (environment → person/object, or cause → effect)
-3. Different moment in time (before → after, or beginning → end)
-4. Different perspective (observer view → participant view)
+STEP 2 - MATCH IMAGES TO CONTENT:
+- imagePrompt: Create image that DIRECTLY illustrates what voiceOverPart1 says
+- imagePrompt2: Create image that DIRECTLY illustrates what voiceOverPart2 says
 
-❌ WRONG - These are TOO SIMILAR:
-  imagePrompt: "ancient temple covered in vines"
-  imagePrompt2: "ancient temple covered in vines at sunset"
+EXAMPLE:
+voiceOverText: "Ancient temples held secrets for centuries, until explorers discovered the hidden chamber"
+voiceOverPart1: "Ancient temples held secrets for centuries"
+voiceOverPart2: "until explorers discovered the hidden chamber"
+imagePrompt: "${style} ${styleGuideline}, mysterious ancient temple exterior covered in vines, untouched and weathered by time"
+imagePrompt2: "${style} ${styleGuideline}, explorer with torch illuminating a hidden underground chamber filled with artifacts"
 
-✅ CORRECT - These are DIFFERENT:
-  imagePrompt: "${style} ${styleGuideline}, wide establishing shot of ancient temple exterior covered in vines, mysterious atmosphere"
-  imagePrompt2: "${style} ${styleGuideline}, close-up of weathered stone carvings inside the temple, dust particles in light beams"
+INTRO IMAGES:
+- introLine1: First line of intro voiceover
+- introLine2: Second line of intro voiceover  
+- introImagePrompt: Image matching introLine1
+- introImagePrompt2: Image matching introLine2
 
-SAME FOR INTRO:
-- introImagePrompt: Wide/establishing shot that sets the scene
-- introImagePrompt2: Close-up/detail or different angle for visual movement
+❌ WRONG - Same concept twice:
+  voiceOverPart1: "The ocean covers vast areas"
+  voiceOverPart2: "of our planet's surface"
+  imagePrompt: "vast ocean view"
+  imagePrompt2: "vast ocean view from different angle"
+
+✅ CORRECT - Different content, different images:
+  voiceOverPart1: "The ocean covers vast areas"
+  voiceOverPart2: "hiding mysteries in the depths"
+  imagePrompt: "${style} ${styleGuideline}, aerial view of endless blue ocean stretching to the horizon"
+  imagePrompt2: "${style} ${styleGuideline}, deep sea creatures and ancient shipwreck in dark ocean depths"
 
 All prompts MUST start with "${style}" then add "${styleGuideline}"
-If both prompts describe the same thing, YOUR VIDEO WILL LOOK STATIC AND BORING!` : ''}
+Since each image matches DIFFERENT content, they will naturally be DIFFERENT!` : ''}
 
 ${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
 - Provide 3-5 specific keywords for video stock footage
@@ -339,6 +356,10 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     interface SceneData {
       voiceOverText?: string;
       voice_over_text?: string;
+      voiceOverPart1?: string;
+      voice_over_part_1?: string;
+      voiceOverPart2?: string;
+      voice_over_part_2?: string;
       videoSearchQuery?: string;
       video_search_query?: string;
       imagePrompt?: string;
@@ -346,6 +367,45 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       imagePrompt2?: string;
       image_prompt_2?: string;
     }
+
+    // Helper function to split voiceover text into two halves
+    const splitVoiceover = (text: string): { part1: string; part2: string } => {
+      if (!text) return { part1: '', part2: '' };
+      
+      // Try to split at natural break points: comma, semicolon, "but", "and", "while", "as", "until"
+      const breakPatterns = [
+        /,\s+/,                           // comma
+        /;\s+/,                           // semicolon
+        /\s+but\s+/i,                     // "but"
+        /\s+and\s+/i,                     // "and" 
+        /\s+while\s+/i,                   // "while"
+        /\s+as\s+/i,                      // "as"
+        /\s+until\s+/i,                   // "until"
+        /\s+when\s+/i,                    // "when"
+        /\s+then\s+/i,                    // "then"
+      ];
+      
+      for (const pattern of breakPatterns) {
+        const match = text.match(pattern);
+        if (match && match.index) {
+          const splitIndex = match.index + match[0].length;
+          const part1 = text.substring(0, match.index).trim();
+          const part2 = text.substring(splitIndex).trim();
+          // Only use this split if both parts have reasonable length
+          if (part1.length >= 10 && part2.length >= 10) {
+            return { part1, part2 };
+          }
+        }
+      }
+      
+      // Fallback: split at middle word boundary
+      const words = text.split(/\s+/);
+      const midPoint = Math.ceil(words.length / 2);
+      return {
+        part1: words.slice(0, midPoint).join(' '),
+        part2: words.slice(midPoint).join(' ')
+      };
+    };
 
     const invalidScenes = scenes.filter((scene: SceneData, index: number) => {
       const hasVoiceOver = scene.voiceOverText || scene.voice_over_text;
@@ -366,6 +426,19 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     if (invalidScenes.length > 0) {
       throw new Error(`${invalidScenes.length} scenes missing required fields (voiceOverText and ${mediaType === 'video' ? 'videoSearchQuery' : 'imagePrompt'})`);
     }
+    
+    // Log if AI provided split voiceover parts
+    const scenesWithSplitVoiceover = scenes.filter((scene: SceneData) => 
+      scene.voiceOverPart1 || scene.voice_over_part_1 || scene.voiceOverPart2 || scene.voice_over_part_2
+    );
+    logger.info('Voiceover split analysis', {
+      userId: user.id,
+      metadata: { 
+        total_scenes: scenes.length,
+        scenes_with_ai_split: scenesWithSplitVoiceover.length,
+        will_use_fallback: scenes.length - scenesWithSplitVoiceover.length
+      }
+    });
     
     logger.info('Successfully validated AI response', {
       userId: user.id,
@@ -413,6 +486,23 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
 
     logger.debug('JSONB validation passed', { userId: user.id });
 
+    // Ensure intro image prompts are distinct
+    // Intro voiceover typically has two lines separated by \n
+    let finalIntroImagePrompt2 = introImagePrompt2;
+    if (!introImagePrompt2 || arePromptsTooSimilar(introImagePrompt, introImagePrompt2)) {
+      // Try to create distinct prompt from second line of intro voiceover
+      const introLines = (introVoiceoverText || '').split('\n').filter((l: string) => l.trim());
+      if (introLines.length >= 2) {
+        finalIntroImagePrompt2 = `${style} ${styleGuideline}, close-up perspective illustrating: ${introLines[1]}`;
+        logger.debug('Generated distinct intro_image_prompt_2 from second voiceover line', {
+          userId: user.id,
+          metadata: { line2: introLines[1] }
+        });
+      } else {
+        finalIntroImagePrompt2 = `${introImagePrompt}, different angle close-up detail shot`;
+      }
+    }
+
     // Create storyboard record (no credit deduction - charged at render time)
     const { data: storyboard, error: storyboardError } = await supabaseClient
       .from('storyboards')
@@ -425,7 +515,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         voice_id: voiceID,
         voice_name: voiceName,
         intro_image_prompt: introImagePrompt,
-        intro_image_prompt_2: introImagePrompt2 || introImagePrompt, // Fallback to first prompt if not set
+        intro_image_prompt_2: finalIntroImagePrompt2,
         intro_voiceover_text: introVoiceoverText,
         tokens_cost: tokenCost,
         status: STORYBOARD_STATUS.DRAFT,
@@ -480,23 +570,79 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
 
     // Insert scenes - handle both camelCase and snake_case formats from AI
-    // Now includes dual image prompts for ~4.5s per image instead of ~9s
-    const scenesData = scenes.map((scene: SceneData, index: number) => ({
-      storyboard_id: storyboard.id,
-      order_number: index + 1,
-      voice_over_text: scene.voiceOverText || scene.voice_over_text || '',
-      image_prompt: mediaType === 'image' || mediaType === 'animated' 
+    // Now includes dual image prompts based on split voiceover content
+    // Ensures imagePrompt and imagePrompt2 are distinct
+    
+    // Helper to check if two prompts are too similar (more than 80% overlap)
+    const arePromptsTooSimilar = (prompt1: string, prompt2: string): boolean => {
+      if (!prompt1 || !prompt2) return false;
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      const p1 = normalize(prompt1);
+      const p2 = normalize(prompt2);
+      if (p1 === p2) return true;
+      // Check word overlap
+      const words1 = new Set(p1.split(/\s+/));
+      const words2 = new Set(p2.split(/\s+/));
+      const intersection = [...words1].filter(w => words2.has(w)).length;
+      const overlap = intersection / Math.max(words1.size, words2.size);
+      return overlap > 0.8;
+    };
+    
+    // Helper to create a distinct second prompt based on voiceover part
+    const ensureDistinctPrompt2 = (
+      prompt1: string | null, 
+      prompt2: string | null, 
+      voiceOverText: string,
+      stylePrefix: string
+    ): string | null => {
+      if (!prompt1) return null;
+      
+      // If prompt2 exists and is distinct, use it
+      if (prompt2 && !arePromptsTooSimilar(prompt1, prompt2)) {
+        return prompt2;
+      }
+      
+      // Split voiceover and create a prompt for the second half
+      const { part2 } = splitVoiceover(voiceOverText);
+      if (part2 && part2.length > 5) {
+        // Create a more focused prompt based on the second half content
+        const distinctPrompt = `${stylePrefix} ${styleGuideline}, close-up perspective illustrating: ${part2}`;
+        logger.debug('Generated fallback prompt2 from voiceover split', {
+          userId: user.id,
+          metadata: { part2, original_prompt2: prompt2?.substring(0, 50) }
+        });
+        return distinctPrompt;
+      }
+      
+      // Last resort: append differentiation to prompt1
+      return `${prompt1}, different angle close-up detail shot`;
+    };
+    
+    const scenesData = scenes.map((scene: SceneData, index: number) => {
+      const voiceOverText = scene.voiceOverText || scene.voice_over_text || '';
+      const imagePrompt = mediaType === 'image' || mediaType === 'animated' 
         ? (scene.imagePrompt || scene.image_prompt || null) 
-        : null,
-      image_prompt_2: mediaType === 'image' || mediaType === 'animated' 
-        ? (scene.imagePrompt2 || scene.image_prompt_2 || null) 
-        : null,
-      video_search_query: mediaType === 'video'
-        ? (scene.videoSearchQuery || scene.video_search_query || null)
-        : null,
-      video_url: null, // Will be populated later via video search
-      is_edited: false
-    }));
+        : null;
+      const rawImagePrompt2 = scene.imagePrompt2 || scene.image_prompt_2 || null;
+      
+      // Ensure imagePrompt2 is distinct from imagePrompt
+      const imagePrompt2 = mediaType === 'image' || mediaType === 'animated'
+        ? ensureDistinctPrompt2(imagePrompt, rawImagePrompt2, voiceOverText, style)
+        : null;
+      
+      return {
+        storyboard_id: storyboard.id,
+        order_number: index + 1,
+        voice_over_text: voiceOverText,
+        image_prompt: imagePrompt,
+        image_prompt_2: imagePrompt2,
+        video_search_query: mediaType === 'video'
+          ? (scene.videoSearchQuery || scene.video_search_query || null)
+          : null,
+        video_url: null, // Will be populated later via video search
+        is_edited: false
+      };
+    });
 
     logger.debug('Inserting scenes', {
       userId: user.id,

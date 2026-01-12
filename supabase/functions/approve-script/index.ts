@@ -70,7 +70,33 @@ Deno.serve(async (req) => {
 
     // Allow retry if job is stuck in generating_voice (e.g., previous timeout)
     const allowedStatuses = ['awaiting_script_approval', 'awaiting_voice_approval', 'generating_voice'];
-    if (!allowedStatuses.includes(job.status)) {
+    
+    // If job has already progressed past script approval, return success (idempotent)
+    const progressedStatuses = ['fetching_video', 'assembling', 'completed'];
+    if (progressedStatuses.includes(job.status)) {
+      logger.info('Job already progressed past script approval', {
+        userId: user.id,
+        metadata: { jobId: job_id, currentStatus: job.status }
+      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Job already in ${job.status} status`,
+          status: job.status,
+          alreadyProgressed: true
+        }),
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If job failed, allow retry from script approval
+    if (job.status === 'failed') {
+      logger.info('Allowing retry for failed job', {
+        userId: user.id,
+        metadata: { jobId: job_id }
+      });
+      // Continue with the flow - will reset status below
+    } else if (!allowedStatuses.includes(job.status)) {
       throw new Error(
         `Job is in ${job.status} status, expected one of: ${allowedStatuses.join(', ')}`
       );

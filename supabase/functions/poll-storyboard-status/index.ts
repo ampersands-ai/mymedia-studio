@@ -160,6 +160,10 @@ serve(async (req) => {
             status = 'failed';
             progress = 0;
 
+            // Extract error message from API response
+            const errorMessage = statusData.movie?.error || statusData.error || statusData.message || 'Unknown rendering error';
+            logger.error('JSON2Video rendering failed', { metadata: { error: errorMessage, rawStatus: statusData } });
+
             // Refund tokens
             const tokenCost = storyboard.estimated_render_cost || 0;
             await supabaseClient.rpc('increment_tokens', {
@@ -167,17 +171,16 @@ serve(async (req) => {
               amount: tokenCost
             });
 
-            // Update database
+            // Update database with error message
             await supabaseClient
               .from('storyboards')
               .update({
                 status: GENERATION_STATUS.FAILED,
+                error_message: errorMessage,
                 updated_at: new Date().toISOString()
               })
               .eq('id', storyboardId);
               
-            logger.error('Storyboard rendering failed');
-            
           } else if (statusData.movie?.status === 'rendering' || statusData.movie?.status === GENERATION_STATUS.PROCESSING) {
             status = 'rendering';
             progress = statusData.movie.progress || 50;

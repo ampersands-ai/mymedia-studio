@@ -260,12 +260,12 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
     
     // Try multiple possible response formats
-    let introImagePrompt, introVoiceoverText, scenes;
+    let introImagePrompt, introImagePrompt2, introVoiceoverText, scenes;
     
     if (parsedContent.variables?.scenes) {
       // Format 1: Expected format with nested variables
       logger.debug('Using nested variables format', { userId: user.id });
-      ({ introImagePrompt, introVoiceoverText, scenes } = parsedContent.variables);
+      ({ introImagePrompt, introImagePrompt2, introVoiceoverText, scenes } = parsedContent.variables);
     } else if (parsedContent.scenes) {
       // Format 2: Scenes at root level
       logger.debug('Using root level scenes format', { userId: user.id });
@@ -275,6 +275,9 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       introImagePrompt = parsedContent.variables?.introImagePrompt 
         || parsedContent.introImagePrompt 
         || parsedContent.intro_image_prompt;
+      introImagePrompt2 = parsedContent.variables?.introImagePrompt2 
+        || parsedContent.introImagePrompt2 
+        || parsedContent.intro_image_prompt_2;
       introVoiceoverText = parsedContent.variables?.introVoiceoverText 
         || parsedContent.introVoiceoverText 
         || parsedContent.intro_voiceover_text;
@@ -290,6 +293,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       logger.debug('Using data.scenes format', { userId: user.id });
       scenes = parsedContent.data.scenes;
       introImagePrompt = parsedContent.data.introImagePrompt || parsedContent.data.intro_image_prompt;
+      introImagePrompt2 = parsedContent.data.introImagePrompt2 || parsedContent.data.intro_image_prompt_2;
       introVoiceoverText = parsedContent.data.introVoiceoverText || parsedContent.data.intro_voiceover_text;
     } else {
       logger.error('Unknown response structure', undefined, {
@@ -405,6 +409,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         voice_id: voiceID,
         voice_name: voiceName,
         intro_image_prompt: introImagePrompt,
+        intro_image_prompt_2: introImagePrompt2 || introImagePrompt, // Fallback to first prompt if not set
         intro_voiceover_text: introVoiceoverText,
         tokens_cost: tokenCost,
         status: STORYBOARD_STATUS.DRAFT,

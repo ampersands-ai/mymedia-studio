@@ -2577,6 +2577,7 @@ export type Database = {
           image_model: string | null
           intro_image_preview_url: string | null
           intro_image_prompt: string | null
+          intro_image_prompt_2: string | null
           intro_video_url: string | null
           intro_voiceover_text: string | null
           media_type: string | null
@@ -2634,6 +2635,7 @@ export type Database = {
           image_model?: string | null
           intro_image_preview_url?: string | null
           intro_image_prompt?: string | null
+          intro_image_prompt_2?: string | null
           intro_video_url?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null
@@ -2691,6 +2693,7 @@ export type Database = {
           image_model?: string | null
           intro_image_preview_url?: string | null
           intro_image_prompt?: string | null
+          intro_image_prompt_2?: string | null
           intro_video_url?: string | null
           intro_voiceover_text?: string | null
           media_type?: string | null

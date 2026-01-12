@@ -151,6 +151,8 @@ export const StoryboardEditor = () => {
   }, [storyboard, scenes, updateIntroScene, updateSceneImage]);
   
   if (!storyboard || scenes.length === 0) return null;
+
+  const isQuickMode = storyboard.render_mode === 'quick';
   
   return (
     <div className="space-y-6">
@@ -177,60 +179,62 @@ export const StoryboardEditor = () => {
         estimatedDuration={storyboard.duration}
       />
       
-      {/* Scenes Section */}
-      <ScenesCollapsible
-        open={state.showScenes}
-        onOpenChange={setShowScenes}
-        isRendering={isRendering}
-        isComplete={storyboard.status === 'complete'}
-      >
-        <BulkPreviewGenerator
-          storyboard={storyboard}
-          scenes={scenes}
-          onGenerateAll={generateAllScenePreviews}
-        />
-        
-        <BulkAnimationGenerator
-          storyboard={storyboard}
-          scenes={scenes}
-          onAnimateAll={generateAllSceneAnimations}
-        />
-        
-        <IntroSceneCard
-          storyboard={storyboard}
-          introVoiceOverText={introVoiceOverText}
-          onIntroTextChange={setIntroVoiceOverText}
-          introImagePrompt={introImagePrompt}
-          onIntroPromptChange={setIntroImagePrompt}
-          disabled={isRendering}
-          onImageGenerated={handleImageGenerated}
-          hasNextScene={scenes.length > 0}
-          nextSceneImageUrl={scenes[0]?.image_preview_url || null}
-        />
-        
-        {scenes.map((scene, idx) => {
-          // Get next scene info (if exists)
-          const nextScene = idx < scenes.length - 1 ? scenes[idx + 1] : null;
-          const nextSceneImageUrl = nextScene?.image_preview_url || null;
-          const hasNextScene = nextScene !== null;
+      {/* Scenes Section - Only show in customize mode */}
+      {!isQuickMode && (
+        <ScenesCollapsible
+          open={state.showScenes}
+          onOpenChange={setShowScenes}
+          isRendering={isRendering}
+          isComplete={storyboard.status === 'complete'}
+        >
+          <BulkPreviewGenerator
+            storyboard={storyboard}
+            scenes={scenes}
+            onGenerateAll={generateAllScenePreviews}
+          />
           
-          return (
-            <SceneCardWithPreview
-              key={scene.id}
-              scene={scene}
-              sceneNumber={idx + 2}
-              isActive={activeSceneId === scene.id}
-              onUpdate={updateScene}
-              onRegenerate={regenerateScene}
-              onClick={() => setActiveScene(scene.id)}
-              onImageGenerated={handleImageGenerated}
-              aspectRatio={storyboard?.aspect_ratio}
-              nextSceneImageUrl={nextSceneImageUrl}
-              hasNextScene={hasNextScene}
-            />
-          );
-        })}
-      </ScenesCollapsible>
+          <BulkAnimationGenerator
+            storyboard={storyboard}
+            scenes={scenes}
+            onAnimateAll={generateAllSceneAnimations}
+          />
+          
+          <IntroSceneCard
+            storyboard={storyboard}
+            introVoiceOverText={introVoiceOverText}
+            onIntroTextChange={setIntroVoiceOverText}
+            introImagePrompt={introImagePrompt}
+            onIntroPromptChange={setIntroImagePrompt}
+            disabled={isRendering}
+            onImageGenerated={handleImageGenerated}
+            hasNextScene={scenes.length > 0}
+            nextSceneImageUrl={scenes[0]?.image_preview_url || null}
+          />
+          
+          {scenes.map((scene, idx) => {
+            // Get next scene info (if exists)
+            const nextScene = idx < scenes.length - 1 ? scenes[idx + 1] : null;
+            const nextSceneImageUrl = nextScene?.image_preview_url || null;
+            const hasNextScene = nextScene !== null;
+            
+            return (
+              <SceneCardWithPreview
+                key={scene.id}
+                scene={scene}
+                sceneNumber={idx + 2}
+                isActive={activeSceneId === scene.id}
+                onUpdate={updateScene}
+                onRegenerate={regenerateScene}
+                onClick={() => setActiveScene(scene.id)}
+                onImageGenerated={handleImageGenerated}
+                aspectRatio={storyboard?.aspect_ratio}
+                nextSceneImageUrl={nextSceneImageUrl}
+                hasNextScene={hasNextScene}
+              />
+            );
+          })}
+        </ScenesCollapsible>
+      )}
       
       {/* Voice & Settings */}
       <VoiceAndSettingsPanel

@@ -2507,6 +2507,7 @@ export type Database = {
           id: string
           image_preview_url: string | null
           image_prompt: string | null
+          image_prompt_2: string | null
           is_edited: boolean | null
           motion_effect: Json | null
           order_number: number
@@ -2521,6 +2522,7 @@ export type Database = {
           id?: string
           image_preview_url?: string | null
           image_prompt?: string | null
+          image_prompt_2?: string | null
           is_edited?: boolean | null
           motion_effect?: Json | null
           order_number: number
@@ -2535,6 +2537,7 @@ export type Database = {
           id?: string
           image_preview_url?: string | null
           image_prompt?: string | null
+          image_prompt_2?: string | null
           is_edited?: boolean | null
           motion_effect?: Json | null
           order_number?: number

@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     const styleGuideline = STYLE_GUIDELINES[style] || STYLE_GUIDELINES['hyper-realistic'];
 
-    // Prepare AI prompt with enhanced narrative structure
+// Prepare AI prompt with enhanced narrative structure for DUAL IMAGE generation
     const systemPrompt = `You are a viral faceless video creator specializing in engaging, educational content that tells compelling stories.
 
 OUTPUT FORMAT (strict JSON only):
@@ -127,11 +127,13 @@ OUTPUT FORMAT (strict JSON only):
   "comment": "Creative direction note",
   "variables": {
     "introImagePrompt": "${style} image prompt with detailed description",
+    "introImagePrompt2": "${style} second image for intro transition",
     "introVoiceoverText": "Attention-grabbing title\\nCompelling hook line",
     "scenes": [
       {
         "voiceOverText": "Natural speaking sentence",
-        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords",' : '"imagePrompt": "' + style + ' detailed visual description"'}
+        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} visual for first half of voiceover",
+        "imagePrompt2": "${style} visual for second half of voiceover"`}
       }
     ]
   }
@@ -159,12 +161,17 @@ STORY FLOW:
 - Use connective language between scenes
 - Build momentum toward the conclusion
 
-${mediaType === 'image' ? `IMAGE PROMPTS:
-- MUST start with "${style}" 
+${mediaType === 'image' ? `IMAGE PROMPTS (DUAL IMAGE SYSTEM - 2 images per voiceover, ~4.5s each):
+- You MUST generate TWO image prompts per scene: "imagePrompt" and "imagePrompt2"
+- imagePrompt: Visual for the FIRST HALF of the voiceover (first concept/idea)
+- imagePrompt2: Visual for the SECOND HALF (transition, evolution, or continuation)
+- Both MUST start with "${style}" 
 - Then add: "${styleGuideline}"
-- Then describe the specific scene content
-- Example: "${style} ${styleGuideline}, showing [specific scene description]"
-- Be highly detailed and specific` : ''}
+- Each should represent distinct visual moments from the voiceover text
+- Example for "The ancient temple held secrets for centuries, until explorers found the hidden chamber":
+  * imagePrompt: "${style} ${styleGuideline}, mysterious ancient temple exterior covered in vines"
+  * imagePrompt2: "${style} ${styleGuideline}, explorers with torches discovering hidden underground chamber"
+- Be highly detailed and specific for BOTH prompts` : ''}
 
 ${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
 - Provide 3-5 specific keywords for video stock footage
@@ -316,6 +323,8 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       video_search_query?: string;
       imagePrompt?: string;
       image_prompt?: string;
+      imagePrompt2?: string;
+      image_prompt_2?: string;
     }
 
     const invalidScenes = scenes.filter((scene: SceneData, index: number) => {
@@ -450,12 +459,16 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     }
 
     // Insert scenes - handle both camelCase and snake_case formats from AI
+    // Now includes dual image prompts for ~4.5s per image instead of ~9s
     const scenesData = scenes.map((scene: SceneData, index: number) => ({
       storyboard_id: storyboard.id,
       order_number: index + 1,
       voice_over_text: scene.voiceOverText || scene.voice_over_text || '',
       image_prompt: mediaType === 'image' || mediaType === 'animated' 
         ? (scene.imagePrompt || scene.image_prompt || null) 
+        : null,
+      image_prompt_2: mediaType === 'image' || mediaType === 'animated' 
+        ? (scene.imagePrompt2 || scene.image_prompt_2 || null) 
         : null,
       video_search_query: mediaType === 'video'
         ? (scene.videoSearchQuery || scene.video_search_query || null)

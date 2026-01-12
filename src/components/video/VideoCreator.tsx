@@ -554,8 +554,8 @@ export function VideoCreator() {
 
       setRenderingStartTime(null);
       setIsPolling(false);
-      setState((prev) => ({ ...prev, step: 'render_setup' }));
-      toast.success('Job reset. You can try rendering again.');
+      setState((prev) => ({ ...prev, step: 'voiceover_review' }));
+      toast.success('Job reset. You can review and regenerate voiceover or continue to render.');
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 

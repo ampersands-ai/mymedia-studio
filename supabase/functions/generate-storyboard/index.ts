@@ -173,11 +173,18 @@ CRITICAL RULES:
 NARRATIVE STRUCTURE (CRITICAL):
 - Scene 1: HOOK - Start with a surprising fact or question that grabs attention immediately
 - Scenes 2-${sceneCount-1}: BUILD - Each scene reveals the next piece of the puzzle
-  * Use transitional phrases: "But here's the twist...", "This is where it gets interesting...", "What happened next changed everything..."
-  * Build suspense and curiosity that propels viewer forward
+  * Create natural transitions that flow from the previous scene's content
+  * AVOID generic phrases like "what happened next", "here's the twist", "this is where it gets interesting"
+  * Be SPECIFIC to your topic - reference actual content, not clichéd transitions
+  * Build suspense through revelation of specific details
   * Each scene should naturally flow from the previous one
   * Create a progressive revelation of information
 - Scene ${sceneCount}: PAYOFF - Satisfying conclusion that ties everything together with a memorable insight
+
+AVOID CLICHÉS (CRITICAL):
+- DO NOT use: "what happened next changed everything", "but here's the twist", "this is where it gets interesting", "little did they know"
+- Instead: Use topic-specific transitions that reference actual content
+- Example: Instead of "what happened next changed everything" → "When scientists analyzed the data, they discovered something unexpected"
 
 STORY FLOW:
 - NOT a list of disconnected facts

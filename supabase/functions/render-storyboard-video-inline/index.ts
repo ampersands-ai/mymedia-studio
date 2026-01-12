@@ -352,7 +352,8 @@ Deno.serve(async (req) => {
         
         // Intro content
         introText: storyboard.intro_voiceover_text || '',
-        introImagePrompt: storyboard.intro_image_prompt || '',  // Add intro prompt for AI generation
+        introImagePrompt: storyboard.intro_image_prompt || '',
+        introImagePrompt2: storyboard.intro_image_prompt || '',  // Re-use intro prompt for second image
         
         // Scenes array for iteration
         scenes: scenesVariables,
@@ -397,13 +398,14 @@ Deno.serve(async (req) => {
       ],
       
       // Scenes array - intro + iterable scenes (using AI image generation with dual images)
-      // Each voiceover gets TWO images at ~4.5 seconds each for better visual variety
+      // Each scene: TWO images displayed during continuous voiceover playback
       scenes: [
-        // Intro scene with AI-generated dual images
+        // Intro scene - dual images with continuous voice
         {
           id: generateElementId(),
-          comment: "Intro - Image 1",
+          comment: "Intro - Dual images + Voice",
           elements: [
+            // First image - displays for first 4.5 seconds
             {
               type: "image",
               id: generateElementId(),
@@ -413,43 +415,42 @@ Deno.serve(async (req) => {
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight,
+              start: 0,
               duration: 4.5
-            }
-          ]
-        },
-        {
-          id: generateElementId(),
-          comment: "Intro - Image 2 + Voice",
-          elements: [
+            },
+            // Second image - starts at 4.5s, fills remaining voice duration
             {
               type: "image",
               id: generateElementId(),
               model: "{{imageModel}}",
-              prompt: "{{introImagePrompt}}",  // Re-use intro prompt for second half
+              prompt: "{{introImagePrompt2}}",
               zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight,
-              duration: -1  // Let voice dictate duration
+              start: 4.5,
+              duration: -1
             },
+            // Voice plays continuously from start
             {
               type: "voice",
               id: generateElementId(),
               text: "{{introText}}",
               voice: "{{voiceID}}",
               model: "{{voiceModel}}",
-              volume: 1
+              volume: 1,
+              start: 0
             }
           ]
         },
-        // Iterable scenes with AI-generated DUAL images per voiceover
-        // First image for ~4.5s
+        // Iterable scenes - dual images with continuous voice per scene
         {
           id: generateElementId(),
-          comment: "Scene X - Image 1",
+          comment: "Scene - Dual images + Voice",
           iterate: "scenes",
           cache: false,
           elements: [
+            // First image - displays for first 4.5 seconds
             {
               type: "image",
               id: generateElementId(),
@@ -459,35 +460,31 @@ Deno.serve(async (req) => {
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight,
-              duration: 4.5  // Fixed 4.5s duration for first image
-            }
-          ]
-        },
-        // Second image for remaining voiceover duration
-        {
-          id: generateElementId(),
-          comment: "Scene X - Image 2 + Voice",
-          iterate: "scenes",
-          cache: false,
-          elements: [
+              start: 0,
+              duration: 4.5
+            },
+            // Second image - starts at 4.5s, fills remaining voice duration
             {
               type: "image",
               id: generateElementId(),
               model: "{{imageModel}}",
-              prompt: "{{imagePrompt2}}",  // Second image prompt
+              prompt: "{{imagePrompt2}}",
               zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight,
-              duration: -1  // Let voice dictate duration
+              start: 4.5,
+              duration: -1
             },
+            // Voice plays continuously from start
             {
               type: "voice",
               id: generateElementId(),
               text: "{{voiceOverText}}",
               voice: "{{voiceID}}",
               model: "{{voiceModel}}",
-              volume: 1
+              volume: 1,
+              start: 0
             }
           ]
         }

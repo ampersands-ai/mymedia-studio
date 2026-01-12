@@ -121,7 +121,8 @@ Deno.serve(async (req) => {
       'cartoon': '2D cartoon illustration, bold outlines, flat colors, playful proportions, hand-drawn aesthetic, expressive characters',
       'natural': 'Natural photography, authentic lighting, real-world setting, documentary style, genuine atmosphere, organic composition',
       'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style',
-      'pop-art': 'Pop art illustration, bold contrasting colors, halftone dots, comic-book style, screen-print texture, high energy composition'
+      'pop-art': 'Pop art illustration, bold contrasting colors, halftone dots, comic-book style, screen-print texture, high energy composition',
+      'minimalist': 'Minimalist design, clean lines, simple shapes, lots of negative space, restrained color palette, uncluttered composition, modern minimal aesthetic'
     };
 
     // Validate style early (avoid DB constraint violations and confusing 500s)

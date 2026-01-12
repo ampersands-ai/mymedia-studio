@@ -114,10 +114,17 @@ Deno.serve(async (req) => {
       'animated': 'Pixar-style 3D animation, vibrant colors, soft lighting, high-quality CGI, rounded shapes, detailed textures, animated movie quality',
       'cartoon': '2D cartoon illustration, bold outlines, flat colors, playful proportions, hand-drawn aesthetic, expressive characters',
       'natural': 'Natural photography, authentic lighting, real-world setting, documentary style, genuine atmosphere, organic composition',
-      'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style'
+      'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style',
+      'pop-art': 'Pop art illustration, bold contrasting colors, halftone dots, comic-book style, screen-print texture, high energy composition'
     };
 
-    const styleGuideline = STYLE_GUIDELINES[style] || STYLE_GUIDELINES['hyper-realistic'];
+    // Validate style early (avoid DB constraint violations and confusing 500s)
+    if (!style || !STYLE_GUIDELINES[style]) {
+      const allowed = Object.keys(STYLE_GUIDELINES).join(', ');
+      throw new Error(`Unsupported style: "${style}". Allowed styles: ${allowed}`);
+    }
+
+    const styleGuideline = STYLE_GUIDELINES[style];
 
 // Prepare AI prompt with enhanced narrative structure for DUAL IMAGE generation
     // NEW: Split voiceover into two halves, generate distinct images for each half
@@ -578,10 +585,15 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       .single();
 
     if (storyboardError) {
-      logger.error('Storyboard creation error', storyboardError instanceof Error ? storyboardError : undefined, {
-        userId: user.id
+      logger.error('Storyboard creation error', new Error(storyboardError.message), {
+        userId: user.id,
+        metadata: {
+          code: storyboardError.code,
+          details: storyboardError.details,
+          hint: storyboardError.hint,
+        },
       });
-      throw new Error('Failed to create storyboard');
+      throw new Error(`Failed to create storyboard: ${storyboardError.message}`);
     }
 
     // Insert scenes - handle both camelCase and snake_case formats from AI

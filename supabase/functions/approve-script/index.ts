@@ -107,15 +107,44 @@ Deno.serve(async (req) => {
       throw new Error('No script available');
     }
 
-    logger.info('Processing approve-script request', {
-      userId: user.id,
-      metadata: { jobId: job_id, status: job.status, hasEditedScript: !!edited_script }
-    });
-
     // Determine if this is a regeneration (explicit flag OR edited script)
     const tier = voiceover_tier || 'standard';
     const isScriptEdited = edited_script && edited_script !== job.script;
     const isRegeneration = regenerate === true || isScriptEdited;
+
+    logger.info('Processing approve-script request', {
+      userId: user.id,
+      metadata: { jobId: job_id, status: job.status, hasEditedScript: !!edited_script, isRegeneration }
+    });
+
+    // If voiceover already exists AND script unchanged AND not explicit regeneration → reuse existing
+    if (job.voiceover_url && !isScriptEdited && !regenerate) {
+      logger.info('Reusing existing voiceover - script unchanged', {
+        userId: user.id,
+        metadata: { jobId: job_id, voiceoverUrl: job.voiceover_url }
+      });
+
+      // Update status to voice approval if not already there
+      if (job.status !== 'awaiting_voice_approval') {
+        await supabaseClient
+          .from('video_jobs')
+          .update({
+            status: 'awaiting_voice_approval',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', job_id);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          voiceoverUrl: job.voiceover_url,
+          reused: true,
+          message: 'Existing voiceover reused'
+        }),
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const isFirstProGeneration = tier === 'pro' && !job.voiceover_url && !isRegeneration;
 
     // Calculate voiceover cost:

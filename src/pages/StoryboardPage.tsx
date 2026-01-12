@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { StoryboardInput } from '@/components/storyboard/StoryboardInput';
 import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
+import { StoryboardModeSelector } from '@/components/storyboard/StoryboardModeSelector';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { Film, ChevronDown, RotateCcw, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,19 +23,47 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function StoryboardPage() {
+  const queryClient = useQueryClient();
   const { execute } = useErrorHandler();
-  const { storyboard, clearStoryboard } = useStoryboard();
+  const { storyboard, scenes, clearStoryboard } = useStoryboard();
   const [showInputForm, setShowInputForm] = useState(true);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showModeSelector, setShowModeSelector] = useState(false);
 
-  // Auto-collapse form when storyboard is generated, re-expand when cleared
+  // Show mode selector when storyboard is generated without a render_mode set
   useEffect(() => {
-    if (storyboard) {
+    if (storyboard && !storyboard.render_mode) {
+      setShowModeSelector(true);
+      setShowInputForm(false);
+    } else if (storyboard) {
+      setShowModeSelector(false);
       setShowInputForm(false);
     } else {
+      setShowModeSelector(false);
       setShowInputForm(true);
     }
   }, [storyboard]);
+
+  const handleModeSelection = async (mode: 'quick' | 'customize') => {
+    if (!storyboard) return;
+    
+    try {
+      const { error } = await supabase
+        .from('storyboards')
+        .update({ render_mode: mode })
+        .eq('id', storyboard.id);
+
+      if (error) throw error;
+
+      // Invalidate and refetch the storyboard query
+      await queryClient.invalidateQueries({ queryKey: ['storyboard', storyboard.id] });
+      setShowModeSelector(false);
+      toast.success(mode === 'quick' ? 'Quick mode selected' : 'Customize mode selected');
+    } catch (error) {
+      console.error('Failed to update render mode:', error);
+      toast.error('Failed to save mode selection');
+    }
+  };
 
   const handleReset = async () => {
     if (storyboard?.id) {
@@ -117,9 +148,19 @@ export default function StoryboardPage() {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Storyboard Editor */}
-        {storyboard && <StoryboardEditor />}
+        {/* Storyboard Editor - only show when mode is selected */}
+        {storyboard && storyboard.render_mode && <StoryboardEditor />}
       </div>
+
+      {/* Mode Selector Dialog */}
+      {storyboard && (
+        <StoryboardModeSelector
+          open={showModeSelector}
+          onSelectMode={handleModeSelection}
+          sceneCount={scenes.length}
+          estimatedDuration={storyboard.duration}
+        />
+      )}
 
       {/* Reset Confirmation Dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>

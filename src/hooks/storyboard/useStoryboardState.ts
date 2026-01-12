@@ -50,6 +50,7 @@ interface Storyboard {
   completed_at?: string;
   video_quality?: string;
   aspect_ratio?: string | null;
+  render_mode?: 'quick' | 'customize';
   subtitle_settings?: {
     style?: string;
     fontFamily?: string;

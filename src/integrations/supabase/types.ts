@@ -2568,6 +2568,7 @@ export type Database = {
           notify_on_completion: boolean | null
           original_character_count: number | null
           render_job_id: string | null
+          render_mode: string | null
           status: string
           style: string
           subtitle_all_caps: boolean | null
@@ -2624,6 +2625,7 @@ export type Database = {
           notify_on_completion?: boolean | null
           original_character_count?: number | null
           render_job_id?: string | null
+          render_mode?: string | null
           status?: string
           style: string
           subtitle_all_caps?: boolean | null
@@ -2680,6 +2682,7 @@ export type Database = {
           notify_on_completion?: boolean | null
           original_character_count?: number | null
           render_job_id?: string | null
+          render_mode?: string | null
           status?: string
           style?: string
           subtitle_all_caps?: boolean | null

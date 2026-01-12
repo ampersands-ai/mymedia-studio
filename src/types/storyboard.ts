@@ -54,6 +54,7 @@ export interface Storyboard {
   estimated_render_cost: number;
   video_quality?: string;
   aspect_ratio?: string | null;
+  render_mode?: 'quick' | 'customize';
   subtitle_settings?: Record<string, any>;
   music_settings?: Record<string, any>;
   image_animation_settings?: {

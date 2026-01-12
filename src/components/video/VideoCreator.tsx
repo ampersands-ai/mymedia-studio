@@ -41,6 +41,8 @@ type VideoCreatorStep =
   | 'rendering'
   | 'complete';
 
+import type { BackgroundMode } from './steps/RenderSetupStep';
+
 interface VideoCreatorState {
   step: VideoCreatorStep;
   jobId: string | null;
@@ -59,6 +61,7 @@ interface VideoCreatorState {
   caption: string;
   hashtags: string[];
   notifyOnCompletion: boolean;
+  backgroundMode: BackgroundMode;
 }
 
 const initialState: VideoCreatorState = {
@@ -79,6 +82,7 @@ const initialState: VideoCreatorState = {
   caption: '',
   hashtags: [],
   notifyOnCompletion: true,
+  backgroundMode: 'stock',
 };
 
 const FACELESS_VIDEO_DRAFT_KEY = 'faceless_video_draft';
@@ -459,15 +463,17 @@ export function VideoCreator() {
         .update({
           aspect_ratio: state.aspectRatio,
           caption_style: state.captionStyle,
-          custom_background_video: state.selectedBackgroundMedia[0]?.url || null,
-          background_video_thumbnail: state.selectedBackgroundMedia[0]?.thumbnail || null,
+          custom_background_video: state.backgroundMode === 'stock' ? (state.selectedBackgroundMedia[0]?.url || null) : null,
+          background_video_thumbnail: state.backgroundMode === 'stock' ? (state.selectedBackgroundMedia[0]?.thumbnail || null) : null,
+          background_mode: state.backgroundMode,
         })
         .eq('id', state.jobId);
 
       const { error } = await supabase.functions.invoke('approve-voiceover', {
         body: {
           job_id: state.jobId,
-          background_media: state.selectedBackgroundMedia,
+          background_media: state.backgroundMode === 'stock' ? state.selectedBackgroundMedia : [],
+          background_mode: state.backgroundMode,
         },
       });
 
@@ -747,10 +753,12 @@ export function VideoCreator() {
               duration={state.duration}
               style={state.style}
               notifyOnCompletion={state.notifyOnCompletion}
+              backgroundMode={state.backgroundMode}
               onAspectRatioChange={(ratio) => setState((prev) => ({ ...prev, aspectRatio: ratio }))}
               onCaptionStyleChange={(style) => setState((prev) => ({ ...prev, captionStyle: style }))}
               onBackgroundMediaChange={(media) => setState((prev) => ({ ...prev, selectedBackgroundMedia: media }))}
               onNotifyOnCompletionChange={(notify) => setState((prev) => ({ ...prev, notifyOnCompletion: notify }))}
+              onBackgroundModeChange={(mode) => setState((prev) => ({ ...prev, backgroundMode: mode }))}
               onRenderVideo={handleRenderVideo}
               isRendering={false}
               isDisabled={isProcessing || state.step !== 'render_setup'}

@@ -27,6 +27,8 @@ export interface CaptionStyle {
   shadowBlur?: number;
 }
 
+export type BackgroundMode = 'stock' | 'ai_generated';
+
 export interface VideoJobInput {
   topic: string;
   duration: number;
@@ -38,6 +40,7 @@ export interface VideoJobInput {
   background_video_thumbnail?: string;
   background_media_type?: 'video' | 'image';
   caption_style?: CaptionStyle;
+  background_mode?: BackgroundMode;
 }
 
 export interface VideoJob {

@@ -294,37 +294,11 @@ Deno.serve(async (req) => {
     );
     const verticalHeight = getVerticalHeight(storyboard.aspect_ratio || 'instagram-feed');
 
-    // Determine intro media source
-    let introMediaSrc = '';
-    let introMediaType: 'video' | 'image' = 'video';
-    
-    if (storyboard.intro_video_url) {
-      introMediaSrc = storyboard.intro_video_url;
-      introMediaType = 'video';
-    } else if (isVideoUrl(storyboard.intro_image_preview_url)) {
-      introMediaSrc = storyboard.intro_image_preview_url;
-      introMediaType = 'video';
-    } else if (storyboard.intro_image_preview_url) {
-      introMediaSrc = storyboard.intro_image_preview_url;
-      introMediaType = 'image';
-    }
-
-    // Build scenes array for variables
-    const scenesVariables = scenes.map(s => {
-      let mediaUrl = '';
-      if (s.video_url) {
-        mediaUrl = s.video_url;
-      } else if (isVideoUrl(s.image_preview_url)) {
-        mediaUrl = s.image_preview_url;
-      } else if (s.image_preview_url) {
-        mediaUrl = s.image_preview_url;
-      }
-      
-      return {
-        voiceOverText: s.voice_over_text,
-        videoUrl: mediaUrl,
-      };
-    });
+    // Build scenes array for variables - use image prompts for AI generation
+    const scenesVariables = scenes.map(s => ({
+      voiceOverText: s.voice_over_text,
+      imagePrompt: s.image_prompt,  // Always pass the prompt for AI image generation
+    }));
 
     // Build the INLINE movie structure (matching user's working sample)
     const renderPayload: Record<string, unknown> = {
@@ -371,13 +345,13 @@ Deno.serve(async (req) => {
         musicFadeOut: storyboard.music_settings?.fadeOut ?? 2,
         musicVolume: storyboard.music_settings?.volume ?? 0.05,
         
-        // Image model (for AI generation if needed)
+        // Image model for AI generation
         imageModel: storyboard.image_model || 'freepik-classic',
         audioURL: storyboard.background_music_url || '',
         
         // Intro content
         introText: storyboard.intro_voiceover_text || '',
-        introVideoUrl: introMediaSrc,
+        introImagePrompt: storyboard.intro_image_prompt || '',  // Add intro prompt for AI generation
         
         // Scenes array for iteration
         scenes: scenesVariables,
@@ -421,19 +395,19 @@ Deno.serve(async (req) => {
         }] : [])
       ],
       
-      // Scenes array - intro + iterable scenes
+      // Scenes array - intro + iterable scenes (using AI image generation)
       scenes: [
-        // Intro scene
+        // Intro scene with AI-generated image
         {
           id: generateElementId(),
           comment: "Intro",
           elements: [
             {
-              type: introMediaType,
+              type: "image",
               id: generateElementId(),
-              src: "{{introVideoUrl}}",
-              duration: 8,
-              volume: 0,
+              model: "{{imageModel}}",
+              prompt: "{{introImagePrompt}}",
+              zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight
@@ -448,7 +422,7 @@ Deno.serve(async (req) => {
             }
           ]
         },
-        // Iterable scenes
+        // Iterable scenes with AI-generated images
         {
           id: generateElementId(),
           comment: "Scene X",
@@ -456,11 +430,11 @@ Deno.serve(async (req) => {
           cache: false,
           elements: [
             {
-              type: "video",
+              type: "image",
               id: generateElementId(),
-              src: "{{videoUrl}}",
-              duration: 8,
-              volume: 0,
+              model: "{{imageModel}}",
+              prompt: "{{imagePrompt}}",
+              zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
               height: verticalHeight

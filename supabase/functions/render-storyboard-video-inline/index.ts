@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
     // Fetch scenes
     const { data: scenes, error: scenesError } = await supabaseClient
       .from('storyboard_scenes')
-      .select('id, order_number, voice_over_text, image_prompt, image_preview_url, video_url')
+      .select('id, order_number, voice_over_text, image_prompt, image_prompt_2, image_preview_url, video_url')
       .eq('storyboard_id', storyboardId)
       .order('order_number', { ascending: true });
 
@@ -295,9 +295,11 @@ Deno.serve(async (req) => {
     const verticalHeight = getVerticalHeight(storyboard.aspect_ratio || 'instagram-feed');
 
     // Build scenes array for variables - use image prompts for AI generation
+    // Now includes dual images per scene for ~4.5s per image
     const scenesVariables = scenes.map(s => ({
       voiceOverText: s.voice_over_text,
-      imagePrompt: s.image_prompt,  // Always pass the prompt for AI image generation
+      imagePrompt: s.image_prompt,  // First image prompt (~4.5s)
+      imagePrompt2: s.image_prompt_2 || s.image_prompt,  // Second image prompt (~4.5s), fallback to first if not set
     }));
 
     // Build the INLINE movie structure (matching user's working sample)
@@ -394,12 +396,13 @@ Deno.serve(async (req) => {
         }] : [])
       ],
       
-      // Scenes array - intro + iterable scenes (using AI image generation)
+      // Scenes array - intro + iterable scenes (using AI image generation with dual images)
+      // Each voiceover gets TWO images at ~4.5 seconds each for better visual variety
       scenes: [
-        // Intro scene with AI-generated image
+        // Intro scene with AI-generated dual images
         {
           id: generateElementId(),
-          comment: "Intro",
+          comment: "Intro - Image 1",
           elements: [
             {
               type: "image",
@@ -409,7 +412,25 @@ Deno.serve(async (req) => {
               zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
-              height: verticalHeight
+              height: verticalHeight,
+              duration: 4.5
+            }
+          ]
+        },
+        {
+          id: generateElementId(),
+          comment: "Intro - Image 2 + Voice",
+          elements: [
+            {
+              type: "image",
+              id: generateElementId(),
+              model: "{{imageModel}}",
+              prompt: "{{introImagePrompt}}",  // Re-use intro prompt for second half
+              zoom: 2,
+              position: "center-center",
+              "aspect-ratio": "vertical",
+              height: verticalHeight,
+              duration: -1  // Let voice dictate duration
             },
             {
               type: "voice",
@@ -421,10 +442,11 @@ Deno.serve(async (req) => {
             }
           ]
         },
-        // Iterable scenes with AI-generated images
+        // Iterable scenes with AI-generated DUAL images per voiceover
+        // First image for ~4.5s
         {
           id: generateElementId(),
-          comment: "Scene X",
+          comment: "Scene X - Image 1",
           iterate: "scenes",
           cache: false,
           elements: [
@@ -436,7 +458,28 @@ Deno.serve(async (req) => {
               zoom: 2,
               position: "center-center",
               "aspect-ratio": "vertical",
-              height: verticalHeight
+              height: verticalHeight,
+              duration: 4.5  // Fixed 4.5s duration for first image
+            }
+          ]
+        },
+        // Second image for remaining voiceover duration
+        {
+          id: generateElementId(),
+          comment: "Scene X - Image 2 + Voice",
+          iterate: "scenes",
+          cache: false,
+          elements: [
+            {
+              type: "image",
+              id: generateElementId(),
+              model: "{{imageModel}}",
+              prompt: "{{imagePrompt2}}",  // Second image prompt
+              zoom: 2,
+              position: "center-center",
+              "aspect-ratio": "vertical",
+              height: verticalHeight,
+              duration: -1  // Let voice dictate duration
             },
             {
               type: "voice",

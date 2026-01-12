@@ -546,7 +546,6 @@ export function VideoCreator() {
         .update({
           status: 'awaiting_voice_approval',
           shotstack_render_id: null,
-          renderer: null,
           error_message: null,
         })
         .eq('id', state.jobId);
@@ -558,7 +557,12 @@ export function VideoCreator() {
       setState((prev) => ({ ...prev, step: 'render_setup' }));
       toast.success('Job reset. You can try rendering again.');
     } catch (err) {
-      logger.error('Failed to reset rendering', err instanceof Error ? err : new Error(String(err)));
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : (typeof err === 'object' && err !== null && 'message' in err) 
+          ? String((err as { message: unknown }).message) 
+          : 'Unknown error';
+      logger.error('Failed to reset rendering', new Error(errorMessage));
       toast.error('Failed to reset job. Please try again.');
     }
   };

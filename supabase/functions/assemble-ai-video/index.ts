@@ -45,17 +45,8 @@ Deno.serve(async (req) => {
   try {
     logger.info("Assemble AI video request received");
     
-    // Only allow internal calls (service role)
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.includes('service_role')) {
-      // Verify it's an internal call
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      
-      if (!authHeader?.includes(supabaseServiceKey.slice(0, 20))) {
-        // Allow bearer token auth for internal function calls
-      }
-    }
+    // Note: verify_jwt = false in config.toml allows internal service-to-service calls
+    // This function is invoked by approve-voiceover using service role key
 
     const body: AssembleRequest = await req.json();
     const { 

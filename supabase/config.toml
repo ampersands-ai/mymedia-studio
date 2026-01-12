@@ -121,3 +121,7 @@ verify_jwt = true
 
 [functions.warm-prerender-cache]
 verify_jwt = true
+
+[functions.assemble-ai-video]
+verify_jwt = false
+max_duration_seconds = 400

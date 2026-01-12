@@ -46,7 +46,6 @@ export const FinalVideoPlayer = ({
 
       const { data, error } = await supabase.functions.invoke('create-share-link', {
         body: {
-          video_job_id: storyboardId,
           storage_path: storagePath,
           content_type: 'video',
           bucket_name: 'generated-content'

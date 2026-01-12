@@ -368,9 +368,29 @@ export function VideoCreator() {
     if (!state.jobId) return;
 
     setError(null);
-    setState((prev) => ({ ...prev, step: 'voiceover_generating' }));
 
     try {
+      // Check if voiceover already exists for this exact script
+      const { data: job } = await supabase
+        .from('video_jobs')
+        .select('voiceover_url, script')
+        .eq('id', state.jobId)
+        .single();
+
+      // If voiceover exists and script matches, skip to review immediately
+      if (job?.voiceover_url && job?.script === state.script) {
+        logger.info('Reusing existing voiceover - script unchanged');
+        setState((prev) => ({
+          ...prev,
+          step: 'voiceover_review',
+          voiceoverUrl: job.voiceover_url,
+        }));
+        return;
+      }
+
+      // Otherwise, generate new voiceover
+      setState((prev) => ({ ...prev, step: 'voiceover_generating' }));
+
       // Update job with voiceover tier
       await supabase
         .from('video_jobs')

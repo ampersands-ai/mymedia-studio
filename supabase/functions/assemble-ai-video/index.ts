@@ -214,17 +214,61 @@ async function assembleVideoWithAIBackgrounds(
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`;
   const uniqueRenderJobId = `video-job-${videoJobId}-${Date.now()}`;
 
+  // Complete subtitle settings matching JSON2Video template requirements
   const subtitleSettings = captionStyle ? {
+    // Transcription settings
     subtitlesModel: 'default',
     subtitleStyle: 'boxed-word',
-    fontFamily: captionStyle.fontFamily || 'Montserrat ExtraBold',
-    fontSize: captionStyle.fontSize || 48,
+    keywords: [],
+    fontUrl: '',
+    
+    // Font settings
+    fontFamily: captionStyle.fontFamily || 'Oswald Bold',
+    fontSize: captionStyle.fontSize || 140,
+    allCaps: false,
+    
+    // Colors
     boxColor: captionStyle.backgroundColor || '#000000',
     lineColor: captionStyle.textColor || '#FFFFFF',
-    wordColor: captionStyle.textColor || '#FFFFFF',
+    wordColor: captionStyle.textColor || '#FFFF00',
+    
+    // Outline and shadow
+    outlineColor: '#000000',
+    outlineWidth: 8,
+    shadowColor: '#000000',
+    shadowOffset: 0,
+    
+    // Position
     position: captionStyle.position === 'bottom' ? 'mid-bottom-center' : 
-              captionStyle.position === 'top' ? 'mid-top-center' : 'mid-center',
-  } : {};
+              captionStyle.position === 'top' ? 'mid-top-center' : 'mid-bottom-center',
+    x: 0,
+    y: 0,
+    maxWordsPerLine: 4,
+  } : {
+    // Default settings when no caption style provided
+    subtitlesModel: 'default',
+    subtitleStyle: 'boxed-word',
+    keywords: [],
+    fontUrl: '',
+    fontFamily: 'Oswald Bold',
+    fontSize: 140,
+    allCaps: false,
+    boxColor: '#000000',
+    lineColor: '#FFFFFF',
+    wordColor: '#FFFF00',
+    outlineColor: '#000000',
+    outlineWidth: 8,
+    shadowColor: '#000000',
+    shadowOffset: 0,
+    position: 'mid-bottom-center',
+    x: 0,
+    y: 0,
+    maxWordsPerLine: 4,
+  };
+
+  logger?.info('Subtitle settings for JSON2Video', { 
+    metadata: { subtitleSettings, hasCaptionStyle: !!captionStyle } 
+  });
 
   const renderPayload = {
     template: 'hae1en4rQdJHFgFS3545',

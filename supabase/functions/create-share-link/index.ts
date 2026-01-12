@@ -86,7 +86,12 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     logger.error('Failed to create share link', error as Error);
-    const message = error instanceof Error ? error.message : 'Unknown error occurred';
+    const message =
+      error instanceof Error
+        ? error.message
+        : error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: message }),
       { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }

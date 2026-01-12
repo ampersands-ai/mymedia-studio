@@ -2496,12 +2496,13 @@ export type Database = {
           created_at: string | null
           id: string
           image_preview_url: string | null
-          image_prompt: string
+          image_prompt: string | null
           is_edited: boolean | null
           motion_effect: Json | null
           order_number: number
           storyboard_id: string
           updated_at: string | null
+          video_search_query: string | null
           video_url: string | null
           voice_over_text: string
         }
@@ -2509,12 +2510,13 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_preview_url?: string | null
-          image_prompt: string
+          image_prompt?: string | null
           is_edited?: boolean | null
           motion_effect?: Json | null
           order_number: number
           storyboard_id: string
           updated_at?: string | null
+          video_search_query?: string | null
           video_url?: string | null
           voice_over_text: string
         }
@@ -2522,12 +2524,13 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_preview_url?: string | null
-          image_prompt?: string
+          image_prompt?: string | null
           is_edited?: boolean | null
           motion_effect?: Json | null
           order_number?: number
           storyboard_id?: string
           updated_at?: string | null
+          video_search_query?: string | null
           video_url?: string | null
           voice_over_text?: string
         }

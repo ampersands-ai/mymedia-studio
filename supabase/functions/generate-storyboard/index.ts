@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       'natural': 'Natural photography, authentic lighting, real-world setting, documentary style, genuine atmosphere, organic composition',
       'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style',
       'pop-art': 'Pop art illustration, bold contrasting colors, halftone dots, comic-book style, screen-print texture, high energy composition',
-      'minimalist': 'Minimalist design, clean lines, simple shapes, lots of negative space, restrained color palette, uncluttered composition, modern minimal aesthetic'
+      'minimalist': 'Single simple line icon, small centered symbol, flat design, monochrome or duo-tone, white or light solid background, one concept per icon, no detailed scenes'
     };
 
     // Validate style early (avoid DB constraint violations and confusing 500s)
@@ -224,7 +224,39 @@ INTRO IMAGES:
   imagePrompt2: "${style} ${styleGuideline}, deep sea creatures and ancient shipwreck in dark ocean depths"
 
 All prompts MUST start with "${style}" then add "${styleGuideline}"
-Since each image matches DIFFERENT content, they will naturally be DIFFERENT!` : ''}
+Since each image matches DIFFERENT content, they will naturally be DIFFERENT!
+
+${style === 'minimalist' ? `
+⚠️ MINIMALIST ICON RULES (CRITICAL - OVERRIDE ALL ABOVE):
+For minimalist style, DO NOT generate detailed scene images!
+Instead, generate prompts for SIMPLE ICONS only:
+
+ICON REQUIREMENTS:
+- Single, small, centered icon on solid white or light gray background
+- One simple symbol representing the KEY CONCEPT from the voiceover
+- Line icon style (thin strokes) or flat minimal icon
+- Monochrome (single color) or duo-tone maximum
+- NO people, NO detailed scenes, NO complex compositions, NO backgrounds with elements
+- Think: what ONE simple icon best represents this voiceover part?
+
+ICON EXAMPLES:
+- "idea/discovery" → lightbulb icon
+- "time/history" → clock or hourglass icon  
+- "world/global" → simple globe icon
+- "mystery/secret" → lock or key icon
+- "growth/success" → upward arrow icon
+- "knowledge/learning" → book icon
+- "connection" → chain link or wifi icon
+
+MINIMALIST PROMPT FORMAT:
+"minimalist single line icon of [simple object], centered, small, on white background, flat design, monochrome [color]"
+
+EXAMPLE FOR MINIMALIST:
+voiceOverPart1: "Ancient temples held secrets for centuries"
+imagePrompt: "minimalist single line icon of a temple silhouette, centered, small, on white background, flat design, monochrome gray"
+voiceOverPart2: "until explorers discovered the hidden chamber"  
+imagePrompt2: "minimalist single line icon of a key, centered, small, on white background, flat design, monochrome gray"
+` : ''}` : ''}
 
 ${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
 - Provide 3-5 specific keywords for video stock footage

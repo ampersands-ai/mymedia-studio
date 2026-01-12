@@ -126,14 +126,14 @@ OUTPUT FORMAT (strict JSON only):
 {
   "comment": "Creative direction note",
   "variables": {
-    "introImagePrompt": "${style} image prompt with detailed description",
-    "introImagePrompt2": "${style} second image for intro transition",
+    "introImagePrompt": "${style} WIDE ESTABLISHING SHOT - sets the scene",
+    "introImagePrompt2": "${style} DIFFERENT ANGLE/CLOSE-UP - creates visual progression",
     "introVoiceoverText": "Attention-grabbing title\\nCompelling hook line",
     "scenes": [
       {
         "voiceOverText": "Natural speaking sentence",
-        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} visual for first half of voiceover",
-        "imagePrompt2": "${style} visual for second half of voiceover"`}
+        ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} FIRST visual concept from voiceover",
+        "imagePrompt2": "${style} SECOND DIFFERENT visual moment from voiceover"`}
       }
     ]
   }
@@ -161,17 +161,33 @@ STORY FLOW:
 - Use connective language between scenes
 - Build momentum toward the conclusion
 
-${mediaType === 'image' ? `IMAGE PROMPTS (DUAL IMAGE SYSTEM - 2 images per voiceover, ~4.5s each):
-- You MUST generate TWO image prompts per scene: "imagePrompt" and "imagePrompt2"
-- imagePrompt: Visual for the FIRST HALF of the voiceover (first concept/idea)
-- imagePrompt2: Visual for the SECOND HALF (transition, evolution, or continuation)
-- Both MUST start with "${style}" 
-- Then add: "${styleGuideline}"
-- Each should represent distinct visual moments from the voiceover text
-- Example for "The ancient temple held secrets for centuries, until explorers found the hidden chamber":
-  * imagePrompt: "${style} ${styleGuideline}, mysterious ancient temple exterior covered in vines"
-  * imagePrompt2: "${style} ${styleGuideline}, explorers with torches discovering hidden underground chamber"
-- Be highly detailed and specific for BOTH prompts` : ''}
+${mediaType === 'image' ? `IMAGE PROMPTS (DUAL IMAGE SYSTEM - CRITICAL REQUIREMENT):
+⚠️ EVERY SCENE NEEDS TWO COMPLETELY DIFFERENT IMAGES ⚠️
+
+You MUST generate "imagePrompt" AND "imagePrompt2" that are VISUALLY DISTINCT:
+- imagePrompt: First ~4.5 seconds - establishes the concept
+- imagePrompt2: Next ~4.5 seconds - MUST SHOW SOMETHING DIFFERENT
+
+MANDATORY DIFFERENTIATION (use at least ONE):
+1. Different camera angle (wide shot → close-up, or exterior → interior)
+2. Different subject focus (environment → person/object, or cause → effect)
+3. Different moment in time (before → after, or beginning → end)
+4. Different perspective (observer view → participant view)
+
+❌ WRONG - These are TOO SIMILAR:
+  imagePrompt: "ancient temple covered in vines"
+  imagePrompt2: "ancient temple covered in vines at sunset"
+
+✅ CORRECT - These are DIFFERENT:
+  imagePrompt: "${style} ${styleGuideline}, wide establishing shot of ancient temple exterior covered in vines, mysterious atmosphere"
+  imagePrompt2: "${style} ${styleGuideline}, close-up of weathered stone carvings inside the temple, dust particles in light beams"
+
+SAME FOR INTRO:
+- introImagePrompt: Wide/establishing shot that sets the scene
+- introImagePrompt2: Close-up/detail or different angle for visual movement
+
+All prompts MUST start with "${style}" then add "${styleGuideline}"
+If both prompts describe the same thing, YOUR VIDEO WILL LOOK STATIC AND BORING!` : ''}
 
 ${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
 - Provide 3-5 specific keywords for video stock footage

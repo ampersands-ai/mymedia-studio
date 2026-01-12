@@ -315,6 +315,19 @@ export function VideoCreator() {
                  state.step === 'rendering' && !renderingStartTime) {
         // Restore rendering start time on page reload from job updated_at
         setRenderingStartTime(new Date(job.updated_at).getTime());
+      } else if (job.status === 'awaiting_voice_approval' && state.step === 'rendering') {
+        // Render failed and job was reset to voiceover approval - return to voiceover review
+        const errorMsg = job.error_message || 'Rendering failed. Please try again.';
+        setError(errorMsg);
+        setState((prev) => ({ 
+          ...prev, 
+          step: 'voiceover_review',
+          voiceoverUrl: job.voiceover_url || prev.voiceoverUrl,
+        }));
+        setIsPolling(false);
+        setRenderingStartTime(null);
+        refetchCredits();
+        toast.error('Rendering failed. You can review and retry.');
       } else if (job.status === 'failed') {
         setError(job.error_message || 'An error occurred');
         setIsPolling(false);

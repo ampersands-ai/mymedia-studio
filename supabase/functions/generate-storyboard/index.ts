@@ -104,6 +104,12 @@ Deno.serve(async (req) => {
     // Calculate scene count: (duration / 5) - 1
     const sceneCount = Math.floor(duration / 5) - 1;
     
+    // Calculate word budgets for accurate duration (2-2.5 words/second for natural speech)
+    const totalWordBudget = Math.floor(duration * 2.5); // Max words for entire video
+    const introWordBudget = Math.min(20, Math.floor(totalWordBudget * 0.15)); // ~15% for intro
+    const scenesWordBudget = totalWordBudget - introWordBudget;
+    const wordsPerScene = Math.floor(scenesWordBudget / sceneCount);
+    
     // Initial cost estimate: 0.25 credits per second of video duration
     const tokenCost = duration * 0.25;
 
@@ -138,12 +144,12 @@ OUTPUT FORMAT (strict JSON only):
     "introLine2": "Second line - compelling hook that draws viewer in",
     "introImagePrompt": "${style} image matching introLine1",
     "introImagePrompt2": "${style} image matching introLine2",
-    "introVoiceoverText": "introLine1\\nintroLine2",
+    "introVoiceoverText": "introLine1\\nintroLine2 (MAX ${introWordBudget} words total)",
     "scenes": [
       {
-        "voiceOverText": "Full natural speaking sentence (10-15 words)",
-        "voiceOverPart1": "First half of the sentence (~5-7 words)",
-        "voiceOverPart2": "Second half of the sentence (~5-7 words)",
+        "voiceOverText": "Scene voiceover (${wordsPerScene - 2} to ${wordsPerScene} words MAX)",
+        "voiceOverPart1": "First half of the sentence",
+        "voiceOverPart2": "Second half of the sentence",
         ${mediaType === 'video' ? '"videoSearchQuery": "specific video search keywords"' : `"imagePrompt": "${style} image that DIRECTLY illustrates voiceOverPart1",
         "imagePrompt2": "${style} image that DIRECTLY illustrates voiceOverPart2"`}
       }
@@ -151,9 +157,15 @@ OUTPUT FORMAT (strict JSON only):
   }
 }
 
-CRITICAL RULES:
+⚠️ WORD BUDGET (CRITICAL - affects video duration and cost):
+- Total video duration: ${duration} seconds
+- MAXIMUM TOTAL WORDS: ${totalWordBudget} (at 2-2.5 words/second speaking rate)
+- Intro (2 lines combined): MAXIMUM ${introWordBudget} words
+- Each scene voiceover: ${wordsPerScene - 2} to ${wordsPerScene} words (NO MORE!)
 - Generate exactly ${sceneCount} scenes
-- Each scene voiceover = 10-15 words (takes ~5 seconds to speak naturally)
+- DO NOT exceed these word limits - the video duration depends on it!
+
+CRITICAL RULES:
 - Write voiceover that flows naturally when spoken aloud
 - Tone: ${tone}
 

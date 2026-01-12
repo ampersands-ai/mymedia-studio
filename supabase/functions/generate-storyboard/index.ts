@@ -449,15 +449,25 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       throw new Error('Failed to create storyboard');
     }
 
-    // Insert scenes
+    // Insert scenes - handle both camelCase and snake_case formats from AI
     const scenesData = scenes.map((scene: SceneData, index: number) => ({
       storyboard_id: storyboard.id,
       order_number: index + 1,
-      voice_over_text: scene.voiceOverText,
-      image_prompt: mediaType === 'image' || mediaType === 'animated' ? scene.imagePrompt : null,
+      voice_over_text: scene.voiceOverText || scene.voice_over_text || '',
+      image_prompt: mediaType === 'image' || mediaType === 'animated' 
+        ? (scene.imagePrompt || scene.image_prompt || null) 
+        : null,
+      video_search_query: mediaType === 'video'
+        ? (scene.videoSearchQuery || scene.video_search_query || null)
+        : null,
       video_url: null, // Will be populated later via video search
       is_edited: false
     }));
+
+    logger.debug('Inserting scenes', {
+      userId: user.id,
+      metadata: { sceneCount: scenesData.length, sampleScene: scenesData[0] }
+    });
 
     const { data: createdScenes, error: scenesError } = await supabaseClient
       .from('storyboard_scenes')
@@ -465,10 +475,15 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       .select();
 
     if (scenesError) {
-      logger.error('Scenes creation error', scenesError instanceof Error ? scenesError : undefined, {
-        userId: user.id
+      logger.error('Scenes creation error', new Error(scenesError.message), {
+        userId: user.id,
+        metadata: { 
+          code: scenesError.code, 
+          details: scenesError.details,
+          hint: scenesError.hint 
+        }
       });
-      throw new Error('Failed to create scenes');
+      throw new Error(`Failed to create scenes: ${scenesError.message}`);
     }
 
     logger.logDuration('Storyboard generation completed', startTime, {

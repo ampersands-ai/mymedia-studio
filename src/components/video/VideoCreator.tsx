@@ -28,7 +28,7 @@ import { ScriptReviewStep } from './steps/ScriptReviewStep';
 import { VoiceoverSetupStep } from './steps/VoiceoverSetupStep';
 import { VoiceoverReviewStep } from './steps/VoiceoverReviewStep';
 import { RenderSetupStep } from './steps/RenderSetupStep';
-import { Loader2, AlertCircle, Download, Sparkles, Copy, Check } from 'lucide-react';
+import { Loader2, AlertCircle, Download, Sparkles, Copy, Check, RefreshCw } from 'lucide-react';
 
 type VideoCreatorStep =
   | 'topic'
@@ -98,6 +98,8 @@ export function VideoCreator() {
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [renderingStartTime, setRenderingStartTime] = useState<number | null>(null);
+  const [, forceUpdate] = useState(0); // For elapsed time updates
 
   const queryClient = useQueryClient();
   const { createJob, isCreating } = useVideoJobs();
@@ -295,8 +297,13 @@ export function VideoCreator() {
       } else if (job.status === 'completed' && state.step === 'rendering') {
         setState((prev) => ({ ...prev, step: 'complete', videoUrl: job.final_video_url || '' }));
         setIsPolling(false);
+        setRenderingStartTime(null);
         queryClient.invalidateQueries({ queryKey: ['video-jobs'] });
         refetchCredits();
+      } else if ((job.status === 'assembling' || job.status === 'rendering' || job.status === 'fetching_video') && 
+                 state.step === 'rendering' && !renderingStartTime) {
+        // Restore rendering start time on page reload from job updated_at
+        setRenderingStartTime(new Date(job.updated_at).getTime());
       } else if (job.status === 'failed') {
         setError(job.error_message || 'An error occurred');
         setIsPolling(false);
@@ -476,6 +483,7 @@ export function VideoCreator() {
       }
 
       setState((prev) => ({ ...prev, step: 'rendering' }));
+      setRenderingStartTime(Date.now());
 
       // Update job with final settings
       await supabase
@@ -525,7 +533,50 @@ export function VideoCreator() {
     setState(initialState);
     setError(null);
     setIsPolling(false);
+    setRenderingStartTime(null);
   };
+
+  // Reset rendering to retry
+  const handleResetRendering = async () => {
+    if (!state.jobId) return;
+
+    try {
+      const { error } = await supabase
+        .from('video_jobs')
+        .update({
+          status: 'awaiting_voice_approval',
+          shotstack_render_id: null,
+          renderer: null,
+          error_message: null,
+        })
+        .eq('id', state.jobId);
+
+      if (error) throw error;
+
+      setRenderingStartTime(null);
+      setIsPolling(false);
+      setState((prev) => ({ ...prev, step: 'render_setup' }));
+      toast.success('Job reset. You can try rendering again.');
+    } catch (err) {
+      logger.error('Failed to reset rendering', err instanceof Error ? err : new Error(String(err)));
+      toast.error('Failed to reset job. Please try again.');
+    }
+  };
+
+  // Format elapsed time for display
+  const formatElapsedTime = (ms: number): string => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // Update elapsed time display every second while rendering
+  useEffect(() => {
+    if (state.step !== 'rendering' || !renderingStartTime) return;
+    const interval = setInterval(() => forceUpdate((n) => n + 1), 1000);
+    return () => clearInterval(interval);
+  }, [state.step, renderingStartTime]);
 
   // Generate caption and hashtags
   const handleGenerateCaption = async () => {
@@ -764,6 +815,31 @@ export function VideoCreator() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Rendering your video...</p>
               <p className="text-xs text-muted-foreground">This may take a few minutes</p>
+              
+              {/* Elapsed time display */}
+              {renderingStartTime && (
+                <p className="text-xs text-muted-foreground">
+                  Time elapsed: {formatElapsedTime(Date.now() - renderingStartTime)}
+                </p>
+              )}
+              
+              {/* Warning after 5 minutes */}
+              {renderingStartTime && (Date.now() - renderingStartTime) > 5 * 60 * 1000 && (
+                <p className="text-xs text-amber-500">
+                  Rendering is taking longer than expected
+                </p>
+              )}
+              
+              {/* Always visible Reset button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetRendering}
+                className="mt-2"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reset & Retry
+              </Button>
             </div>
           ) : (
             <RenderSetupStep

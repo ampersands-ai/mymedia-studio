@@ -5,12 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, Loader2, Video, Check } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronDown, Loader2, Video, Check, Film, Sparkles } from 'lucide-react';
 import { BackgroundMediaSelector, SelectedMedia } from '../BackgroundMediaSelector';
 import { captionPresets, aspectRatioConfig, CAPTION_FONTS } from '@/config/captionStyles';
 import { CaptionStyle } from '@/types/video';
 import { cn } from '@/lib/utils';
 import { NotifyOnCompletionToggle } from '@/components/shared/NotifyOnCompletionToggle';
+
+export type BackgroundMode = 'stock' | 'ai_generated';
 
 interface RenderSetupStepProps {
   aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
@@ -19,10 +22,12 @@ interface RenderSetupStepProps {
   duration: number;
   style: string;
   notifyOnCompletion: boolean;
+  backgroundMode: BackgroundMode;
   onAspectRatioChange: (ratio: '16:9' | '9:16' | '4:5' | '1:1') => void;
   onCaptionStyleChange: (style: CaptionStyle) => void;
   onBackgroundMediaChange: (media: SelectedMedia[]) => void;
   onNotifyOnCompletionChange: (notify: boolean) => void;
+  onBackgroundModeChange: (mode: BackgroundMode) => void;
   onRenderVideo: () => void;
   isRendering: boolean;
   isDisabled: boolean;
@@ -35,10 +40,12 @@ export function RenderSetupStep({
   duration,
   style,
   notifyOnCompletion,
+  backgroundMode,
   onAspectRatioChange,
   onCaptionStyleChange,
   onBackgroundMediaChange,
   onNotifyOnCompletionChange,
+  onBackgroundModeChange,
   onRenderVideo,
   isRendering,
   isDisabled,
@@ -277,18 +284,54 @@ export function RenderSetupStep({
       </Collapsible>
 
       {/* Background Media */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label className="text-sm font-bold">Background Media</Label>
-        <BackgroundMediaSelector
-          style={style}
-          duration={duration}
-          aspectRatio={aspectRatio}
-          selectedMedia={selectedBackgroundMedia}
-          onSelectMedia={onBackgroundMediaChange}
-        />
-        <p className="text-xs text-muted-foreground">
-          Leave empty for auto-selection based on topic
-        </p>
+        <Tabs 
+          value={backgroundMode} 
+          onValueChange={(value) => onBackgroundModeChange(value as BackgroundMode)}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="stock" disabled={isDisabled} className="gap-2">
+              <Film className="w-4 h-4" />
+              Stock
+            </TabsTrigger>
+            <TabsTrigger value="ai_generated" disabled={isDisabled} className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Generated
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {backgroundMode === 'stock' ? (
+          <>
+            <BackgroundMediaSelector
+              style={style}
+              duration={duration}
+              aspectRatio={aspectRatio}
+              selectedMedia={selectedBackgroundMedia}
+              onSelectMedia={onBackgroundMediaChange}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty for auto-selection based on topic
+            </p>
+          </>
+        ) : (
+          <div className="rounded-lg border-2 border-dashed border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-full bg-primary/10 shrink-0">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">AI-Generated Backgrounds</p>
+                <p className="text-xs text-muted-foreground">
+                  Custom images will be generated based on your script during video rendering. 
+                  This uses AI to create unique visuals that match your content.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Notification Toggle */}

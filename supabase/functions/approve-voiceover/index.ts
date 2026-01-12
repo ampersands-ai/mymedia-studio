@@ -47,6 +47,7 @@ interface VideoJob {
   topic?: string;
   actual_audio_duration?: number;
   background_media_type?: string;
+  background_mode?: 'stock' | 'ai_generated';
 }
 
 interface CaptionStyle {
@@ -176,7 +177,7 @@ Deno.serve(async (req) => {
     // Get job and verify ownership
     const { data: job, error: jobError} = await supabaseClient
       .from('video_jobs')
-      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration, background_media_type, notify_on_completion')
+      .select('user_id, script, voiceover_url, style, duration, aspect_ratio, caption_style, custom_background_video, status, topic, actual_audio_duration, background_media_type, notify_on_completion, background_mode')
       .eq('id', job_id)
       .single();
 
@@ -219,6 +220,61 @@ Deno.serve(async (req) => {
       }
     });
 
+    // Check if using AI-generated backgrounds
+    const backgroundMode = (job as any).background_mode || 'stock';
+    logger.info("Background mode", { metadata: { backgroundMode } });
+
+    if (backgroundMode === 'ai_generated') {
+      // AI-Generated path: Use JSON2Video with AI image generation
+      await updateJobStatus(supabaseClient, job_id, 'assembling', logger);
+      
+      // Validate voiceover URL is accessible
+      logger.debug("Validating voiceover URL accessibility");
+      try {
+        const headResponse = await fetch(job.voiceover_url, { method: 'HEAD' });
+        if (!headResponse.ok) {
+          logger.error("Voiceover URL not accessible", undefined, {
+            metadata: { url: job.voiceover_url, status: headResponse.status }
+          });
+          throw new Error(`Voiceover not accessible: ${headResponse.status}`);
+        }
+        logger.info("Voiceover URL validated successfully");
+      } catch (validateError) {
+        logger.error("Voiceover validation failed", validateError as Error);
+        throw new Error('Failed to access voiceover file');
+      }
+
+      const renderId = await assembleVideoWithAIBackgrounds(
+        supabaseClient,
+        {
+          script: job.script,
+          voiceoverUrl: job.voiceover_url,
+          topic: job.topic || 'general content',
+          duration: videoDuration,
+        },
+        job_id,
+        user.id,
+        job.aspect_ratio || '4:5',
+        job.caption_style,
+        logger
+      );
+      
+      await supabaseClient.from('video_jobs').update({ 
+        shotstack_render_id: renderId,
+        renderer: 'json2video' 
+      }).eq('id', job_id);
+      logger.info("Submitted to JSON2Video for AI generation", { metadata: { renderId, jobId: job_id } });
+
+      // Poll for completion using JSON2Video polling
+      await pollJson2VideoStatus(supabaseClient, job_id, renderId, user.id, logger, (job as any).notify_on_completion);
+
+      return new Response(
+        JSON.stringify({ success: true, job_id }),
+        { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Stock path: Fetch background videos/images from Pixabay
     let backgroundMediaType: 'video' | 'image' | 'hybrid' = (job.background_media_type || 'video') as 'video' | 'image' | 'hybrid';
     logger.info("Initial background media type", { metadata: { backgroundMediaType } });
 
@@ -1532,4 +1588,217 @@ async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderI
   }
 
   throw new Error('Render timeout after 20 minutes');
+}
+
+// AI-Generated backgrounds: Use JSON2Video with AI image generation
+async function assembleVideoWithAIBackgrounds(
+  supabase: SupabaseClient,
+  assets: {
+    script: string;
+    voiceoverUrl: string;
+    topic: string;
+    duration: number;
+  },
+  videoJobId: string,
+  userId: string,
+  aspectRatio: string = '4:5',
+  captionStyle?: CaptionStyle,
+  logger?: EdgeLogger
+): Promise<string> {
+  const json2videoApiKey = Deno.env.get('JSON2VIDEO_API_KEY');
+  if (!json2videoApiKey) {
+    throw new Error('JSON2VIDEO_API_KEY not configured');
+  }
+
+  // Map aspect ratio to JSON2Video resolution
+  const resolutionMap: Record<string, string> = {
+    '16:9': 'full-hd',
+    '9:16': 'instagram-story',
+    '4:5': 'instagram-feed',
+    '1:1': 'squared'
+  };
+  const resolution = resolutionMap[aspectRatio] || 'instagram-feed';
+
+  // Split script into scenes (by sentences or paragraphs)
+  const sentences = assets.script
+    .split(/(?<=[.!?])\s+/)
+    .filter(s => s.trim().length > 10);
+  
+  // Group sentences into ~4 second chunks (roughly 10-15 words per chunk)
+  const scenes: { voiceOverText: string; imagePrompt: string }[] = [];
+  let currentChunk = '';
+  
+  for (const sentence of sentences) {
+    currentChunk += (currentChunk ? ' ' : '') + sentence;
+    const wordCount = currentChunk.split(/\s+/).length;
+    
+    if (wordCount >= 10 || sentence === sentences[sentences.length - 1]) {
+      // Create image prompt from the chunk content
+      const imagePrompt = `Professional ${assets.topic} visual: ${currentChunk.slice(0, 150)}. High quality, cinematic, 4K`;
+      scenes.push({
+        voiceOverText: currentChunk,
+        imagePrompt
+      });
+      currentChunk = '';
+    }
+  }
+
+  // Ensure we have at least one scene
+  if (scenes.length === 0) {
+    scenes.push({
+      voiceOverText: assets.script,
+      imagePrompt: `Professional visual about ${assets.topic}. High quality, cinematic, 4K`
+    });
+  }
+
+  logger?.info("Generated scenes for AI backgrounds", { 
+    metadata: { sceneCount: scenes.length, topic: assets.topic } 
+  });
+
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`;
+  const uniqueRenderJobId = `video-job-${videoJobId}-${Date.now()}`;
+
+  // Build caption style settings
+  const subtitleSettings = captionStyle ? {
+    subtitlesModel: 'default',
+    subtitleStyle: 'boxed-word',
+    fontFamily: captionStyle.fontFamily || 'Montserrat ExtraBold',
+    fontSize: captionStyle.fontSize || 48,
+    boxColor: captionStyle.backgroundColor || '#000000',
+    lineColor: captionStyle.textColor || '#FFFFFF',
+    wordColor: captionStyle.textColor || '#FFFFFF',
+    position: captionStyle.position === 'bottom' ? 'mid-bottom-center' : 
+              captionStyle.position === 'top' ? 'mid-top-center' : 'mid-center',
+  } : {};
+
+  const renderPayload = {
+    template: 'hae1en4rQdJHFgFS3545', // AI-generated template
+    variables: {
+      voiceModel: 'azure',
+      voiceID: 'en-US-AndrewMultilingualNeural',
+      audioURL: assets.voiceoverUrl,
+      imageModel: 'freepik-classic',
+      introText: '',
+      scenes,
+      ...subtitleSettings,
+    },
+    project: uniqueRenderJobId,
+    exports: [{
+      destinations: [{
+        type: "webhook",
+        endpoint: webhookUrl,
+        "content-type": "json"
+      }]
+    }],
+    resolution,
+    quality: 'high',
+    cache: true,
+    draft: false,
+  };
+
+  logger?.info('Calling JSON2Video API for AI backgrounds', { 
+    metadata: { sceneCount: scenes.length, resolution } 
+  });
+
+  const response = await fetch(API_ENDPOINTS.JSON2VIDEO.moviesUrl, {
+    method: 'POST',
+    headers: {
+      'x-api-key': json2videoApiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(renderPayload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logger?.error('JSON2Video API error', new Error(errorText));
+    throw new Error(`JSON2Video API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  logger?.info('JSON2Video response', { metadata: { project: data.project } });
+  
+  return data.project;
+}
+
+// Poll JSON2Video render status
+async function pollJson2VideoStatus(
+  supabase: SupabaseClient,
+  jobId: string,
+  projectId: string,
+  userId: string,
+  logger?: EdgeLogger,
+  notifyOnCompletion?: boolean
+) {
+  const json2videoApiKey = Deno.env.get('JSON2VIDEO_API_KEY');
+  if (!json2videoApiKey) {
+    throw new Error('JSON2VIDEO_API_KEY not configured');
+  }
+
+  const maxAttempts = 120; // 20 minutes with 10s intervals
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second intervals
+
+    const response = await fetch(`${API_ENDPOINTS.JSON2VIDEO.moviesUrl}?project=${projectId}`, {
+      method: 'GET',
+      headers: { 'x-api-key': json2videoApiKey },
+    });
+
+    if (!response.ok) {
+      logger?.warn('JSON2Video status check failed', { metadata: { status: response.status } });
+      attempts++;
+      continue;
+    }
+
+    const data = await response.json();
+    const status = data.status;
+
+    logger?.debug('JSON2Video status', { metadata: { status, attempt: attempts } });
+
+    if (status === 'done' && data.movie) {
+      // Download and upload to Supabase storage
+      const videoUrl = data.movie;
+      const videoResponse = await fetch(videoUrl);
+      if (!videoResponse.ok) {
+        throw new Error('Failed to download rendered video');
+      }
+
+      const videoBlob = await videoResponse.blob();
+      const storagePath = `video-jobs/${userId}/${jobId}/final-video.mp4`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('generations')
+        .upload(storagePath, videoBlob, {
+          contentType: 'video/mp4',
+          upsert: true
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('generations')
+        .getPublicUrl(storagePath);
+
+      await supabase.from('video_jobs').update({
+        status: 'completed',
+        final_video_url: publicUrlData.publicUrl,
+        completed_at: new Date().toISOString()
+      }).eq('id', jobId);
+
+      logger?.info('Video completed via JSON2Video', { metadata: { jobId } });
+      return;
+    }
+
+    if (status === 'failed' || status === 'error') {
+      throw new Error(`JSON2Video rendering failed: ${data.error || 'Unknown error'}`);
+    }
+
+    attempts++;
+  }
+
+  throw new Error('JSON2Video render timeout after 20 minutes');
 }

@@ -41,10 +41,6 @@ Deno.serve(async (req) => {
       throw new Error('Missing required fields: storage_path, content_type');
     }
 
-    if (!generation_id && !video_job_id) {
-      throw new Error('Must provide either generation_id or video_job_id');
-    }
-
     // Generate random token (21 chars, URL-safe)
     const token = crypto.randomUUID().replace(/-/g, '').substring(0, 21);
 

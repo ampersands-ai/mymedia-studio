@@ -336,6 +336,21 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       throw new Error(`Invalid AI response format. Expected 'scenes' array but got: ${JSON.stringify(Object.keys(parsedContent))}`);
     }
     
+    // Helper to check if two prompts are too similar (more than 80% overlap)
+    const arePromptsTooSimilar = (prompt1: string, prompt2: string): boolean => {
+      if (!prompt1 || !prompt2) return false;
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      const p1 = normalize(prompt1);
+      const p2 = normalize(prompt2);
+      if (p1 === p2) return true;
+      // Check word overlap
+      const words1 = new Set(p1.split(/\s+/));
+      const words2 = new Set(p2.split(/\s+/));
+      const intersection = [...words1].filter(w => words2.has(w)).length;
+      const overlap = intersection / Math.max(words1.size, words2.size);
+      return overlap > 0.8;
+    };
+
     // Validate scenes array
     if (!Array.isArray(scenes) || scenes.length === 0) {
       logger.error('Invalid scenes array', undefined, {
@@ -572,21 +587,6 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     // Insert scenes - handle both camelCase and snake_case formats from AI
     // Now includes dual image prompts based on split voiceover content
     // Ensures imagePrompt and imagePrompt2 are distinct
-    
-    // Helper to check if two prompts are too similar (more than 80% overlap)
-    const arePromptsTooSimilar = (prompt1: string, prompt2: string): boolean => {
-      if (!prompt1 || !prompt2) return false;
-      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-      const p1 = normalize(prompt1);
-      const p2 = normalize(prompt2);
-      if (p1 === p2) return true;
-      // Check word overlap
-      const words1 = new Set(p1.split(/\s+/));
-      const words2 = new Set(p2.split(/\s+/));
-      const intersection = [...words1].filter(w => words2.has(w)).length;
-      const overlap = intersection / Math.max(words1.size, words2.size);
-      return overlap > 0.8;
-    };
     
     // Helper to create a distinct second prompt based on voiceover part
     const ensureDistinctPrompt2 = (

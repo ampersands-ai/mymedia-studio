@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useVideoJobs } from '@/hooks/useVideoJobs';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useQueryClient } from '@tanstack/react-query';
@@ -527,13 +538,30 @@ export function VideoCreator() {
   };
 
   // Reset to create new video
-  const handleReset = () => {
+  const handleReset = async () => {
+    // If there's an active job, mark it as cancelled
+    if (state.jobId) {
+      try {
+        await supabase
+          .from('video_jobs')
+          .update({ 
+            status: 'cancelled',
+            error_message: 'Cancelled by user'
+          })
+          .eq('id', state.jobId);
+      } catch (err) {
+        logger.error('Failed to cancel job during reset', err instanceof Error ? err : new Error(String(err)));
+        // Continue with reset even if cancel fails
+      }
+    }
+    
     clearCriticalId(FACELESS_VIDEO_JOB_KEY);
     localStorage.removeItem(FACELESS_VIDEO_DRAFT_KEY);
     setState(initialState);
     setError(null);
     setIsPolling(false);
     setRenderingStartTime(null);
+    toast.success('Started fresh. Create a new video!');
   };
 
   // Reset rendering to retry
@@ -682,6 +710,38 @@ export function VideoCreator() {
   return (
     <Card className="border-2 w-full overflow-hidden">
       <CardContent className="space-y-3 min-w-0 py-6">
+        {/* Universal Reset Button */}
+        {state.step !== 'topic' && (
+          <div className="flex justify-end -mt-2 mb-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Start Over
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will reset all your progress including your script, voiceover, and any 
+                    rendering in progress. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleReset}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Yes, Start Over
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <Alert variant="destructive">

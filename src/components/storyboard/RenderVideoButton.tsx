@@ -82,38 +82,40 @@ export const RenderVideoButton = ({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Render Video?</AlertDialogTitle>
-              <AlertDialogDescription className="space-y-2">
-                <p>This will create your final video with {sceneCount} scenes and charge your account.</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Base cost (from {estimatedDuration}s duration):</span>
-                    <span>{initialEstimate.toFixed(2)} credits</span>
-                  </div>
-                  {costDifference !== 0 && (
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <span className="block">This will create your final video with {sceneCount} scenes and charge your account.</span>
+                  <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Script adjustment:</span>
-                      <span className={costDifference > 0 ? "text-amber-600" : "text-green-600"}>
-                        {costDifference > 0 ? '+' : ''}{costDifference.toFixed(2)} credits
-                      </span>
+                      <span>Base cost (from {estimatedDuration}s duration):</span>
+                      <span className="text-foreground">{initialEstimate.toFixed(2)} credits</span>
                     </div>
-                  )}
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="font-semibold">You will be charged:</span>
-                    <span className="font-bold text-primary">{actualRenderCost.toFixed(2)} credits</span>
+                    {costDifference !== 0 && (
+                      <div className="flex justify-between items-center">
+                        <span>Script adjustment:</span>
+                        <span className={costDifference > 0 ? "text-amber-600" : "text-green-600"}>
+                          {costDifference > 0 ? '+' : ''}{costDifference.toFixed(2)} credits
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <span className="font-semibold text-foreground">You will be charged:</span>
+                      <span className="font-bold text-primary">{actualRenderCost.toFixed(2)} credits</span>
+                    </div>
+                    {costDifference !== 0 && (
+                      <span className="block text-xs">
+                        {costDifference > 0 
+                          ? `Script expanded by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`
+                          : `Script shortened by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`}
+                      </span>
+                    )}
                   </div>
-                  {costDifference !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {costDifference > 0 
-                        ? `Script expanded by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`
-                        : `Script shortened by ${Math.floor(Math.abs(costDifference / 0.25) * 100)}+ characters`}
-                    </p>
-                  )}
+                  <span className="block text-xs pt-2 border-t">
+                    {tokenBalance < actualRenderCost
+                      ? `Insufficient balance. Need ${actualRenderCost.toFixed(2)} credits to render.`
+                      : `Current balance: ${tokenBalance.toFixed(2)} credits`} • Est. time: ~60s
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground pt-2 border-t">
-                  {tokenBalance < actualRenderCost
-                    ? `Insufficient balance. Need ${actualRenderCost.toFixed(2)} credits to render.`
-                    : `Current balance: ${tokenBalance.toFixed(2)} credits`} • Est. time: ~60s
-                </p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -96,8 +96,13 @@ export const StoryboardEditor = () => {
       return;
     }
     
+    // Immediate feedback to reduce perceived lag
+    toast.loading('Starting video render...', { id: 'render-starting' });
+    
     try {
       const result = await renderVideo(false, notifyOnCompletion);
+      
+      toast.dismiss('render-starting');
       
       if (result?.requiresConfirmation) {
         updateState({
@@ -110,6 +115,7 @@ export const StoryboardEditor = () => {
       
       toast.success('Video rendering started!');
     } catch (error) {
+      toast.dismiss('render-starting');
       logger.error('Video rendering failed to start', error instanceof Error ? error : new Error(String(error)), {
         component: 'StoryboardEditor',
         operation: 'handleRender',

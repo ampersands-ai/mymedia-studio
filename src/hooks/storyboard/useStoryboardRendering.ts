@@ -122,6 +122,8 @@ export const useStoryboardRendering = (
           setIsRendering(false);
           setRenderingStartTime(null);
           setEstimatedRenderTime(null);
+          toast.error('Video rendering failed. Your credits have been refunded.');
+          queryClient.invalidateQueries({ queryKey: ['storyboard', currentStoryboardId] });
         }
 
         // Phase 4: Timeout detection (10 minutes)
@@ -198,6 +200,7 @@ export const useStoryboardRendering = (
           setRenderProgress(100);
         } else if (updatedStoryboard.status === 'failed' && isRendering) {
           setIsRendering(false);
+          toast.error('Video rendering failed. Your credits have been refunded.');
         }
       })
       .subscribe();

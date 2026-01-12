@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     // Fetch storyboard
     const { data: storyboard, error: storyboardError } = await supabaseClient
       .from('storyboards')
-      .select('*, intro_image_preview_url, intro_voiceover_text, intro_video_url, estimated_render_cost')
+      .select('*, intro_image_preview_url, intro_voiceover_text, intro_video_url, intro_image_prompt_2, estimated_render_cost')
       .eq('id', storyboardId)
       .eq('user_id', user.id)
       .single();
@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
         // Intro content
         introText: storyboard.intro_voiceover_text || '',
         introImagePrompt: storyboard.intro_image_prompt || 'A professional, visually engaging scene that captures attention',
-        introImagePrompt2: storyboard.intro_image_prompt || 'A professional, visually engaging scene that captures attention',
+        introImagePrompt2: storyboard.intro_image_prompt_2 || storyboard.intro_image_prompt || 'A professional, visually engaging scene that captures attention',
         
         // Scenes array for iteration
         scenes: scenesVariables,

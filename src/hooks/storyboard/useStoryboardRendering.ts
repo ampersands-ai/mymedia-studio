@@ -18,7 +18,20 @@ export const useStoryboardRendering = (
   // Render video mutation
   const renderVideoMutation = useMutation({
     mutationFn: async ({ confirmRerender = false, notifyOnCompletion = true }: { confirmRerender?: boolean; notifyOnCompletion?: boolean } = {}) => {
-      const { data, error } = await supabase.functions.invoke('render-storyboard-video', {
+      // Use inline render for Quick Mode, template-based for Customize mode
+      const isQuickMode = storyboard?.render_mode === 'quick';
+      const renderFunction = isQuickMode 
+        ? 'render-storyboard-video-inline' 
+        : 'render-storyboard-video';
+      
+      logger.info(`Using ${renderFunction} for ${isQuickMode ? 'Quick' : 'Customize'} mode`, {
+        component: 'useStoryboardRendering',
+        operation: 'renderVideo',
+        storyboardId: currentStoryboardId,
+        renderMode: storyboard?.render_mode
+      });
+
+      const { data, error } = await supabase.functions.invoke(renderFunction, {
         body: { 
           storyboardId: currentStoryboardId,
           confirmRerender,

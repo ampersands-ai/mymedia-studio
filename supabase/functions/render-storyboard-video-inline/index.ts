@@ -305,7 +305,6 @@ Deno.serve(async (req) => {
       // Metadata
       comment: "Storyboard video render (inline)",
       id: generateElementId(),
-      project: uniqueRenderJobId,
       
       // Resolution settings
       ...aspectRatioConfig,

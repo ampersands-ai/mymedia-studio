@@ -31,14 +31,18 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { generation_id, video_job_id, content_type, storage_path, bucket_name } = await req.json();
+    const { generation_id, video_job_id, storyboard_id, content_type, storage_path, bucket_name } = await req.json();
     
     logger.info('Creating share link', { 
-      metadata: { userId: user.id, generation_id, video_job_id, content_type } 
+      metadata: { userId: user.id, generation_id, video_job_id, storyboard_id, content_type } 
     });
 
     if (!storage_path || !content_type) {
       throw new Error('Missing required fields: storage_path, content_type');
+    }
+
+    if (!generation_id && !video_job_id && !storyboard_id) {
+      throw new Error('Must provide either generation_id, video_job_id, or storyboard_id');
     }
 
     // Generate random token (21 chars, URL-safe)
@@ -51,6 +55,7 @@ Deno.serve(async (req) => {
         token,
         generation_id: generation_id || null,
         video_job_id: video_job_id || null,
+        storyboard_id: storyboard_id || null,
         user_id: user.id,
         content_type,
         storage_path,
@@ -59,7 +64,7 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) throw new Error(insertError.message);
 
     const appUrl = Deno.env.get('VITE_SUPABASE_URL')?.includes('localhost') 
       ? 'http://localhost:5173'

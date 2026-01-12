@@ -2393,6 +2393,7 @@ export type Database = {
           id: string
           last_viewed_at: string | null
           storage_path: string
+          storyboard_id: string | null
           token: string
           user_id: string
           video_job_id: string | null
@@ -2407,6 +2408,7 @@ export type Database = {
           id?: string
           last_viewed_at?: string | null
           storage_path: string
+          storyboard_id?: string | null
           token: string
           user_id: string
           video_job_id?: string | null
@@ -2421,6 +2423,7 @@ export type Database = {
           id?: string
           last_viewed_at?: string | null
           storage_path?: string
+          storyboard_id?: string | null
           token?: string
           user_id?: string
           video_job_id?: string | null
@@ -2432,6 +2435,13 @@ export type Database = {
             columns: ["generation_id"]
             isOneToOne: false
             referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_tokens_storyboard_id_fkey"
+            columns: ["storyboard_id"]
+            isOneToOne: false
+            referencedRelation: "storyboards"
             referencedColumns: ["id"]
           },
           {

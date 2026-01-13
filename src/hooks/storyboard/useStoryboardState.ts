@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   saveCriticalId, 
   loadCriticalId, 
@@ -71,28 +72,41 @@ interface Storyboard {
 }
 
 export const useStoryboardState = () => {
+  const { user, loading: authLoading } = useAuth();
+  
   // Initialize from localStorage on mount with verification
   const [currentStoryboardId, setCurrentStoryboardId] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
 
-  // Verify storyboard exists on mount
+  // Verify storyboard exists on mount - ONLY after auth is ready
   useEffect(() => {
+    // Don't verify until auth is loaded
+    if (authLoading) {
+      return;
+    }
+
     const verifyAndLoadStoryboard = async () => {
       const savedId = loadCriticalId(STORYBOARD_ID_KEY, STORYBOARD_EXPIRY_HOURS);
       
       if (savedId) {
-        const storyboardState = await verifyStoryboard(savedId);
-        
-        if (storyboardState.exists) {
-          setCurrentStoryboardId(savedId);
-        } else if (storyboardState.verified) {
-          // Storyboard definitely doesn't exist in DB (verified=true), safe to clear
-          logger.info('Storyboard not found in database, clearing local state');
-          clearCriticalId(STORYBOARD_ID_KEY);
+        // Only verify if user is logged in (RLS requires auth)
+        if (user) {
+          const storyboardState = await verifyStoryboard(savedId);
+          
+          if (storyboardState.exists) {
+            setCurrentStoryboardId(savedId);
+          } else if (storyboardState.verified) {
+            // Storyboard definitely doesn't exist in DB (verified=true), safe to clear
+            logger.info('Storyboard not found in database, clearing local state');
+            clearCriticalId(STORYBOARD_ID_KEY);
+          } else {
+            // Couldn't verify (network/auth issue) - preserve existing ID
+            logger.warn('Could not verify storyboard, preserving local state');
+            setCurrentStoryboardId(savedId);
+          }
         } else {
-          // Couldn't verify (network/auth issue) - preserve existing ID
-          logger.warn('Could not verify storyboard, preserving local state');
+          // No user but have saved ID - preserve it until login
           setCurrentStoryboardId(savedId);
         }
       }
@@ -100,7 +114,7 @@ export const useStoryboardState = () => {
     };
     
     verifyAndLoadStoryboard();
-  }, []);
+  }, [authLoading, user]);
 
   // Wrapper to persist storyboard ID to localStorage
   const setAndPersistStoryboardId = useCallback((id: string | null) => {

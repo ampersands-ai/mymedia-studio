@@ -44,8 +44,11 @@ export class OutputProcessor {
     
     const elapsed = Date.now() - this.pollingStartTime;
     if (elapsed >= MAX_POLLING_DURATION_MS) {
+      // Graceful timeout - don't treat as error, just stop polling
+      // Generation continues in background
+      logger.info('[OutputProcessor] Max polling duration reached, transitioning to background');
       this.stop();
-      this.config.onError('Generation timed out after 30 minutes');
+      // Don't call onError - this is not a failure
       return;
     }
     

@@ -162,3 +162,22 @@ export const POLLING_CONFIG = {
   // Maximum polling duration (2 hours)
   MAX_DURATION: 7200000
 } as const;
+
+// Generation timeout configuration (for auto-timeout edge function)
+export const GENERATION_TIMEOUTS = {
+  // Default timeout for standard models (60 minutes)
+  DEFAULT_MS: 60 * 60 * 1000,
+  
+  // Long-running models like Sora, KlingAI Avatar (180 minutes)
+  LONG_RUNNING_MS: 180 * 60 * 1000,
+  
+  // Model patterns that use LONG_RUNNING_MS timeout
+  LONG_RUNNING_PATTERNS: [
+    'sora',
+    'klingai:avatar',
+    'storyboard',
+    'luma-ray',
+    'wan',
+    'seedance',
+  ] as const,
+} as const;

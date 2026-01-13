@@ -22,6 +22,7 @@ interface UseOutputProcessorOptions {
   onComplete?: (outputs: GenerationOutput[], parentId: string) => void;
   onError?: (error: string) => void;
   onApiCallStarted?: (timestamp: number) => void;
+  onBackgroundTransition?: (generationId: string) => void;
 }
 
 interface UseOutputProcessorReturn {
@@ -162,12 +163,13 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
 
     // Check for 180-minute max polling duration - gracefully transition to background
     if (elapsedMs >= MAX_POLLING_DURATION_MS) {
-      logger.info('[useOutputProcessor] Max polling duration reached, continuing in background', { generationId } as any);
+      logger.info('[useOutputProcessor] Max polling duration reached, transitioning to background', { generationId } as any);
       clearPolling();
       // Don't treat as error - generation continues in background
       setStatus('idle');
       setIsProcessing(false);
-      // Don't call onError - this is not a failure, just stopping active polling
+      // Notify parent component of background transition
+      optionsRef.current.onBackgroundTransition?.(generationId);
       return;
     }
 

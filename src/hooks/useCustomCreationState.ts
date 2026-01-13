@@ -114,6 +114,7 @@ const INITIAL_STATE: CustomCreationState = {
   generationStartTime: null,
   apiCallStartTime: null,
   generationCompleteTime: null,
+  isBackgroundProcessing: false,
   
   // UI state
   showLightbox: false,

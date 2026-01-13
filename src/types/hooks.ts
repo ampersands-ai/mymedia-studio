@@ -45,6 +45,7 @@ export interface UsePollingReturn {
   stopPolling: () => void;
   isPolling: boolean;
   pollingId: string | null;
+  isBackgroundProcessing?: boolean;
 }
 
 export interface UseVideoJobsReturn {

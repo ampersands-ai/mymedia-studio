@@ -83,6 +83,7 @@ export interface CustomCreationState {
   generationStartTime: number | null;
   apiCallStartTime: number | null; // When the actual API call started (after setup)
   generationCompleteTime: number | null;
+  isBackgroundProcessing: boolean; // When polling stopped but generation continues in background
   
   // UI state
   showLightbox: boolean;

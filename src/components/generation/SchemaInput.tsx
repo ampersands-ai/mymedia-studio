@@ -123,10 +123,13 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     // Get duration options from n_frames schema
     const schemaProperties = modelSchema?.properties as Record<string, { enum?: string[]; enumLabels?: Record<string, string> }> | undefined;
     const nFramesSchema = schemaProperties?.n_frames;
+    console.log('[SchemaInput] nFramesSchema:', nFramesSchema);
+    console.log('[SchemaInput] totalDuration from allValues:', allValues?.n_frames);
     const durationOptions: DurationOption[] = nFramesSchema?.enum?.map((v: string) => ({
       value: v,
       label: nFramesSchema?.enumLabels?.[v] || `${v}s`
     })) || [];
+    console.log('[SchemaInput] durationOptions:', durationOptions);
 
     // Create a handler to update n_frames in the parent form
     const handleDurationChange = (newDuration: number) => {

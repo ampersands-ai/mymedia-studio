@@ -2,6 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useGenerationPolling } from '@/hooks/useGenerationPolling';
 import type { GenerationOutput } from '@/hooks/useGenerationState';
 import { logger } from '@/lib/logger';
+import { getPublicImageUrl } from '@/lib/supabase-images';
 
 interface PendingResolver {
   resolve: (url: string | null) => void;
@@ -27,20 +28,23 @@ export const useBlackboardPolling = () => {
 
   const { startPolling, stopPolling, isPolling } = useGenerationPolling({
     onComplete: (outputs: GenerationOutput[], parentId: string) => {
-      logger.info('Blackboard polling complete', { 
-        parentId, 
-        outputCount: outputs.length,
-        component: 'useBlackboardPolling'
-      });
-
       const resolver = resolversRef.current.get(parentId);
       if (resolver) {
         clearTimeout(resolver.timeoutId);
         resolversRef.current.delete(parentId);
         activePollingIdRef.current = null;
         
-        // Extract output URL from the first output
-        const outputUrl = outputs[0]?.storage_path || null;
+        // Convert storage_path to a full public URL
+        const storagePath = outputs[0]?.storage_path || null;
+        const outputUrl = storagePath ? getPublicImageUrl(storagePath) : null;
+        
+        logger.info('Blackboard polling complete', { 
+          parentId, 
+          storagePath,
+          outputUrl,
+          component: 'useBlackboardPolling'
+        });
+        
         resolver.resolve(outputUrl);
       }
     },

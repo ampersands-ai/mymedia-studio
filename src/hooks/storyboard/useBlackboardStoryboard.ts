@@ -105,13 +105,10 @@ export const useBlackboardStoryboard = () => {
         prompt: scene.imagePrompt,
         custom_parameters: {
           ...aspectRatioParams,
+          // Add image input for I2I mode - must be INSIDE custom_parameters
+          ...(useImageToImage && previousImageUrl ? { image_input: [previousImageUrl] } : {}),
         },
       };
-
-      // Add image input for I2I mode
-      if (useImageToImage && previousImageUrl) {
-        body.image_input = [previousImageUrl];
-      }
 
       const { data, error } = await supabase.functions.invoke('generate-content', { body });
 

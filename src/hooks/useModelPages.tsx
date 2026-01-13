@@ -54,6 +54,8 @@ export interface ModelSample {
   title: string | null;
   prompt: string;
   negative_prompt: string | null;
+  input_url: string | null;
+  input_type: string | null;
   output_url: string;
   output_type: string;
   thumbnail_url: string | null;

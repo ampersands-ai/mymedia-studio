@@ -1883,6 +1883,8 @@ export type Database = {
           created_at: string | null
           display_order: number | null
           id: string
+          input_type: string | null
+          input_url: string | null
           is_featured: boolean | null
           model_page_id: string
           negative_prompt: string | null
@@ -1897,6 +1899,8 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           id?: string
+          input_type?: string | null
+          input_url?: string | null
           is_featured?: boolean | null
           model_page_id: string
           negative_prompt?: string | null
@@ -1911,6 +1915,8 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           id?: string
+          input_type?: string | null
+          input_url?: string | null
           is_featured?: boolean | null
           model_page_id?: string
           negative_prompt?: string | null

@@ -30,6 +30,7 @@ export function BlackboardStoryboardInput() {
     finalVideoUrl,
     estimatedCost,
     totalEstimatedCost,
+    imageCreditCost,
   } = useBlackboardStoryboard();
 
   const { availableCredits } = useUserCredits();
@@ -99,6 +100,7 @@ export function BlackboardStoryboardInput() {
                 totalScenes={scenes.length}
                 disabled={isProcessing}
                 previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
+                imageCreditCost={imageCreditCost}
                 onUpdate={(updates) => updateScene(scene.id, updates)}
                 onRemove={() => removeScene(scene.id)}
                 onGenerateImage={() => generateImage(scene.id)}

@@ -21,11 +21,17 @@ const Settings = () => {
   const searchParams = new URLSearchParams(location.search);
   const tabFromQuery = searchParams.get('tab');
   const tabFromState = (location.state as {defaultTab?: string})?.defaultTab;
-  const defaultTab = tabFromQuery || tabFromState || 'profile';
+  const [activeTab, setActiveTab] = useState(tabFromQuery || tabFromState || 'profile');
   const [profileData, setProfileData] = useState({
     display_name: "",
     email_verified: false,
   });
+  
+  // Update active tab when URL changes
+  useEffect(() => {
+    const newTab = tabFromQuery || tabFromState || 'profile';
+    setActiveTab(newTab);
+  }, [tabFromQuery, tabFromState]);
   
   // Use react-query hook for subscription data - auto-updates when invalidated
   const { data: userTokenData } = useUserTokens();
@@ -84,7 +90,7 @@ const Settings = () => {
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-black gradient-text mb-8">Settings</h1>
 
-        <Tabs defaultValue={defaultTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <TabsList className="flex w-max gap-2 pb-1">
               <TabsTrigger value="profile" className="flex-shrink-0 px-4">Profile</TabsTrigger>

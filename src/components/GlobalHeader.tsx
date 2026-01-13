@@ -81,7 +81,7 @@ export const GlobalHeader = () => {
 
             {user && creditBalance !== null && (
               <button
-                onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'usage' } })}
+                onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'credits' } })}
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
               >
                 <Coins className="h-5 w-5 text-primary-orange" />

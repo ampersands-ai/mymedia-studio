@@ -2,10 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins } from 'lucide-react';
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { BlackboardSceneCard } from './BlackboardSceneCard';
-import { useBlackboardStoryboard } from '@/hooks/storyboard/useBlackboardStoryboard';
+import { useBlackboardStoryboard, VideoModelType } from '@/hooks/storyboard/useBlackboardStoryboard';
 import { useUserCredits } from '@/hooks/useUserCredits';
 
 export function BlackboardStoryboardInput() {
@@ -13,6 +14,8 @@ export function BlackboardStoryboardInput() {
     scenes,
     aspectRatio,
     setAspectRatio,
+    videoModelType,
+    setVideoModelType,
     addScene,
     removeScene,
     updateScene,
@@ -31,6 +34,7 @@ export function BlackboardStoryboardInput() {
     estimatedCost,
     totalEstimatedCost,
     imageCreditCost,
+    videoCreditCost,
   } = useBlackboardStoryboard();
 
   const { availableCredits } = useUserCredits();
@@ -72,6 +76,42 @@ export function BlackboardStoryboardInput() {
           onAspectRatioChange={setAspectRatio}
           disabled={isProcessing}
         />
+
+        {/* Video Model Selector */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Video Generation Model</Label>
+          <RadioGroup 
+            value={videoModelType} 
+            onValueChange={(value) => setVideoModelType(value as VideoModelType)}
+            disabled={isProcessing}
+            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+          >
+            <div className="relative">
+              <RadioGroupItem value="first_last_frames" id="first_last" className="peer sr-only" />
+              <Label 
+                htmlFor="first_last" 
+                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Veo3 Image-to-Video</span>
+                <span className="text-xs text-muted-foreground">
+                  First/last frame transition ({videoCreditCost} credits)
+                </span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="reference" id="reference" className="peer sr-only" />
+              <Label 
+                htmlFor="reference" 
+                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Veo3 Reference</span>
+                <span className="text-xs text-muted-foreground">
+                  Style reference material ({videoCreditCost} credits)
+                </span>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
 
         <Separator />
 

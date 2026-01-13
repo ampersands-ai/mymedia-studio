@@ -23,7 +23,10 @@ export interface BlackboardScene {
 // Fixed model IDs (not user-selectable)
 const TEXT_TO_IMAGE_MODEL_ID = 'c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f'; // Nano Banana Pro (T2I)
 const IMAGE_TO_IMAGE_MODEL_ID = 'b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e'; // Nano Banana Pro (I2I)
-const VIDEO_MODEL_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
+const VIDEO_MODEL_REFERENCE_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
+const VIDEO_MODEL_FIRST_LAST_ID = '8aac94cb-5625-47f4-880c-4f0fd8bd83a1'; // Google Veo 3.1 Fast (Image-to-Video)
+
+export type VideoModelType = 'reference' | 'first_last_frames';
 
 export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
   id: crypto.randomUUID(),
@@ -39,6 +42,7 @@ export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => (
 export const useBlackboardStoryboard = () => {
   const [scenes, setScenes] = useState<BlackboardScene[]>([createEmptyScene(true)]);
   const [aspectRatio, setAspectRatio] = useState('hd');
+  const [videoModelType, setVideoModelType] = useState<VideoModelType>('first_last_frames');
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -164,7 +168,8 @@ export const useBlackboardStoryboard = () => {
   const generateSingleVideo = useCallback(async (
     scene: BlackboardScene,
     startImageUrl: string,
-    endImageUrl: string
+    endImageUrl: string,
+    modelType: VideoModelType
   ): Promise<string | null> => {
     if (!scene.videoPrompt.trim()) {
       return null;
@@ -172,11 +177,20 @@ export const useBlackboardStoryboard = () => {
 
     try {
       const modules = getAllModels();
-      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === VIDEO_MODEL_ID);
+      const modelRecordId = modelType === 'reference' 
+        ? VIDEO_MODEL_REFERENCE_ID 
+        : VIDEO_MODEL_FIRST_LAST_ID;
+      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === modelRecordId);
       
       if (!modelModule) {
         throw new Error('Video generation model not found');
       }
+
+      // For reference mode - use single image as style reference
+      // For first/last frame mode - use both images in order
+      const imageUrls = modelType === 'reference' 
+        ? [startImageUrl] 
+        : [startImageUrl, endImageUrl];
 
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
@@ -185,7 +199,7 @@ export const useBlackboardStoryboard = () => {
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
           prompt: scene.videoPrompt,
-          imageUrls: [startImageUrl, endImageUrl],
+          imageUrls,
         },
       });
 
@@ -225,7 +239,8 @@ export const useBlackboardStoryboard = () => {
         const videoUrl = await generateSingleVideo(
           currentScene,
           currentScene.generatedImageUrl,
-          nextScene.generatedImageUrl
+          nextScene.generatedImageUrl,
+          videoModelType
         );
         
         if (videoUrl) {
@@ -248,7 +263,7 @@ export const useBlackboardStoryboard = () => {
     } finally {
       setIsGeneratingVideos(false);
     }
-  }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
+  }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
   const renderFinalVideo = useCallback(async () => {
     const videosToStitch = scenes
@@ -371,7 +386,7 @@ export const useBlackboardStoryboard = () => {
     
     updateScene(sceneId, { videoGenerationStatus: 'generating' });
     
-    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl);
+    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl, videoModelType);
     
     if (videoUrl) {
       updateScene(sceneId, { 
@@ -385,7 +400,7 @@ export const useBlackboardStoryboard = () => {
     }
     
     refetchCredits();
-  }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
+  }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
   // Regenerate a single video (clears existing, generates fresh)
   const regenerateVideo = useCallback(async (sceneId: string) => {
@@ -403,7 +418,7 @@ export const useBlackboardStoryboard = () => {
       videoGenerationStatus: 'generating' 
     });
     
-    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl);
+    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl, videoModelType);
     
     if (videoUrl) {
       updateScene(sceneId, { 
@@ -417,13 +432,14 @@ export const useBlackboardStoryboard = () => {
     }
     
     refetchCredits();
-  }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
+  }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
   // Calculate estimated costs using actual model cost
   const imageCreditCost = NANO_BANANA_CONFIG.baseCreditCost;
+  const videoCreditCost = 30; // Both Veo3 models cost 30 credits
   const estimatedCost = {
     images: scenes.filter(s => !s.generatedImageUrl && s.imagePrompt.trim()).length * imageCreditCost,
-    videos: Math.max(0, scenes.filter(s => s.generatedImageUrl).length - 1) * 50, // ~50 credits per video
+    videos: Math.max(0, scenes.filter(s => s.generatedImageUrl).length - 1) * videoCreditCost,
     stitching: scenes.filter(s => s.generatedVideoUrl).length * 5 * 0.25, // ~0.25 credits per second
   };
 
@@ -433,6 +449,8 @@ export const useBlackboardStoryboard = () => {
     scenes,
     aspectRatio,
     setAspectRatio,
+    videoModelType,
+    setVideoModelType,
     addScene,
     removeScene,
     updateScene,
@@ -451,5 +469,6 @@ export const useBlackboardStoryboard = () => {
     estimatedCost,
     totalEstimatedCost,
     imageCreditCost,
+    videoCreditCost,
   };
 };

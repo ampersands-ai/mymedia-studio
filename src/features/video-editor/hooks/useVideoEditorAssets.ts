@@ -39,6 +39,27 @@ const toMediaAsset = (record: VideoEditorAssetRecord): MediaAsset => ({
   uploadedAt: record.created_at,
 });
 
+// Extract video duration from URL by loading metadata
+const getVideoDurationFromUrl = (url: string): Promise<number> => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.crossOrigin = 'anonymous';
+    
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      video.src = '';
+      resolve(isFinite(duration) ? duration : 0);
+    };
+    
+    video.onerror = () => {
+      resolve(0);
+    };
+    
+    video.src = url;
+  });
+};
+
 export const useVideoEditorAssets = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -126,8 +147,14 @@ export const useVideoEditorAssets = () => {
     mutationFn: async ({ url, type, name }: { url: string; type: 'image' | 'video'; name: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
-      // Determine mime type
       const mimeType = type === 'video' ? 'video/mp4' : 'image/png';
+      
+      // Extract video duration if type is video
+      let duration: number | null = null;
+      if (type === 'video') {
+        duration = await getVideoDurationFromUrl(url);
+        if (duration === 0) duration = null;
+      }
       
       // Insert into database (the URL is already a storage URL)
       const { data: insertedAsset, error: dbError } = await supabase
@@ -138,12 +165,12 @@ export const useVideoEditorAssets = () => {
           name,
           url,
           thumbnail_url: type === 'image' ? url : null,
-          duration: null,
+          duration,
           width: null,
           height: null,
-          size: 0, // Unknown for external URLs
+          size: 0,
           mime_type: mimeType,
-          storage_path: '', // Empty for external URLs
+          storage_path: '',
         })
         .select()
         .single();

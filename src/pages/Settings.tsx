@@ -16,7 +16,12 @@ const Settings = () => {
   const { user } = useAuth();
   const { execute } = useErrorHandler();
   const location = useLocation();
-  const defaultTab = (location.state as {defaultTab?: string})?.defaultTab || 'profile';
+  
+  // Check URL query param first, then location state, then default to 'profile'
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromQuery = searchParams.get('tab');
+  const tabFromState = (location.state as {defaultTab?: string})?.defaultTab;
+  const defaultTab = tabFromQuery || tabFromState || 'profile';
   const [profileData, setProfileData] = useState({
     display_name: "",
     email_verified: false,

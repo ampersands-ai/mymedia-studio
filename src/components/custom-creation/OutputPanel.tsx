@@ -18,6 +18,7 @@ interface OutputPanelProps {
     apiCallStartTime: number | null;
     generationCompleteTime: number | null;
     generatedOutput: string | null;
+    isBackgroundProcessing?: boolean;
   };
   contentType: string;
   estimatedTimeSeconds: number | null;

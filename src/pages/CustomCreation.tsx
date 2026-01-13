@@ -137,6 +137,18 @@ const CustomCreation = () => {
         updateState({ apiCallStartTime: timestamp });
       }
     },
+    onBackgroundTransition: (generationId) => {
+      // Polling stopped but generation continues in background
+      logger.info('Generation transitioning to background processing', { generationId });
+      updateState({
+        isBackgroundProcessing: true,
+        localGenerating: false,
+      });
+      toast.info('Generation continuing in background', {
+        description: 'You can navigate away. Check My Creations when complete, or wait for an email notification.',
+        duration: 8000,
+      });
+    },
     onComplete: async (outputs, parentId) => {
       logger.info('OutputProcessor onComplete called', { outputCount: outputs.length, parentId });
       
@@ -178,6 +190,7 @@ const CustomCreation = () => {
         localGenerating: false,
         pollingGenerationId: null,
         parentGenerationId: parentId || null,
+        isBackgroundProcessing: false, // Clear background state on completion
       });
 
       // Track first generation for onboarding
@@ -203,6 +216,7 @@ const CustomCreation = () => {
       updateState({ 
         localGenerating: false, 
         pollingGenerationId: null,
+        isBackgroundProcessing: false, // Clear background state on error
         failedGenerationError: {
           message: message || 'Generation failed',
           generationId: state.pollingGenerationId || 'unknown',
@@ -814,6 +828,7 @@ const CustomCreation = () => {
                 apiCallStartTime: state.apiCallStartTime,
                 generationCompleteTime: state.generationCompleteTime,
                 generatedOutput: state.generatedOutput,
+                isBackgroundProcessing: state.isBackgroundProcessing,
               }}
               contentType={contentType}
               estimatedTimeSeconds={currentModel?.estimated_time_seconds || null}

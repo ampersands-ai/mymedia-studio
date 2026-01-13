@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Trash2, Film, Clock, Sparkles } from "lucide-react";
 
 export interface Shot {
@@ -10,17 +11,26 @@ export interface Shot {
   duration: number;
 }
 
+export interface DurationOption {
+  value: string;
+  label: string;
+}
+
 interface StoryboardShotsInputProps {
   value: Shot[];
   onChange: (shots: Shot[]) => void;
   totalDuration: number;
+  onDurationChange?: (duration: number) => void;
+  durationOptions?: DurationOption[];
   required?: boolean;
 }
 
 export const StoryboardShotsInput = ({ 
   value, 
   onChange, 
-  totalDuration, 
+  totalDuration,
+  onDurationChange,
+  durationOptions,
   required 
 }: StoryboardShotsInputProps) => {
   const [expandedScene, setExpandedScene] = useState<number | null>(null);
@@ -88,6 +98,36 @@ export const StoryboardShotsInput = ({
 
   return (
     <div className="space-y-4">
+      {/* Video Duration Selector - at the top */}
+      {onDurationChange && durationOptions && durationOptions.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-medium">Video Duration</Label>
+              </div>
+              <Select 
+                value={String(totalDuration)} 
+                onValueChange={(v) => onDurationChange(parseInt(v))}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {durationOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Storyboard Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Film className="h-5 w-5 text-primary" />
@@ -107,35 +147,6 @@ export const StoryboardShotsInput = ({
           Auto-distribute
         </Button>
       </div>
-
-      {/* Duration Progress */}
-      <Card className="border-border/50">
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Duration:</span>
-              <span className={`font-medium ${isBalanced ? 'text-green-600' : usedDuration > totalDuration ? 'text-destructive' : 'text-yellow-600'}`}>
-                {usedDuration.toFixed(1)}s
-              </span>
-              <span className="text-muted-foreground">/ {totalDuration}s</span>
-            </div>
-            {!isBalanced && (
-              <span className={`text-xs font-medium ${usedDuration > totalDuration ? 'text-destructive' : 'text-yellow-600'}`}>
-                {usedDuration > totalDuration 
-                  ? `${(usedDuration - totalDuration).toFixed(1)}s over` 
-                  : `${remainingDuration.toFixed(1)}s remaining`}
-              </span>
-            )}
-          </div>
-          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className={`absolute left-0 top-0 h-full transition-all duration-300 rounded-full ${getProgressColor()}`}
-              style={{ width: `${Math.min(100, progressPercent)}%` }}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Scene Cards */}
       <div className="space-y-3">
@@ -218,6 +229,35 @@ export const StoryboardShotsInput = ({
         <Plus className="h-4 w-4" />
         Add Scene
       </Button>
+
+      {/* Duration Progress - below scenes */}
+      <Card className="border-border/50">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-sm">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Duration:</span>
+              <span className={`font-medium ${isBalanced ? 'text-green-600' : usedDuration > totalDuration ? 'text-destructive' : 'text-yellow-600'}`}>
+                {usedDuration}s
+              </span>
+              <span className="text-muted-foreground">/ {totalDuration}s</span>
+            </div>
+            {!isBalanced && (
+              <span className={`text-xs font-medium ${usedDuration > totalDuration ? 'text-destructive' : 'text-yellow-600'}`}>
+                {usedDuration > totalDuration 
+                  ? `${usedDuration - totalDuration}s over` 
+                  : `${remainingDuration}s remaining`}
+              </span>
+            )}
+          </div>
+          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className={`absolute left-0 top-0 h-full transition-all duration-300 rounded-full ${getProgressColor()}`}
+              style={{ width: `${Math.min(100, progressPercent)}%` }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Validation Warning */}
       {!isBalanced && (

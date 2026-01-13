@@ -1,11 +1,16 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, ImageIcon, Video, Loader2, Check, X, RefreshCw, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, ImageIcon, Video, Loader2, RefreshCw, Sparkles, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BlackboardScene } from '@/hooks/storyboard/useBlackboardStoryboard';
+
+// Credit costs (should match model costs in registry)
+const IMAGE_CREDIT_COST = 5;
+const VIDEO_CREDIT_COST = 50;
 
 interface BlackboardSceneCardProps {
   scene: BlackboardScene;
@@ -37,228 +42,265 @@ export function BlackboardSceneCard({
   const isVideoGenerating = scene.videoGenerationStatus === 'generating';
   const hasImage = !!scene.generatedImageUrl;
   const hasVideo = !!scene.generatedVideoUrl;
+  const isLastScene = index === totalScenes - 1;
 
   return (
-    <Card className="relative bg-card/95 backdrop-blur-xl border border-border/30 hover:border-border/50 transition-all duration-300">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            Scene {index + 1}
-            {index < totalScenes - 1 && (
-              <span className="text-xs text-muted-foreground font-normal">
-                → Video to Scene {index + 2}
-              </span>
-            )}
-          </CardTitle>
-          {totalScenes > 1 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onRemove}
+    <div className="space-y-4 p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm">
+      {/* Bold Scene Badge Header */}
+      <div className="flex items-center justify-between">
+        <Badge className="bg-amber-600 hover:bg-amber-600 text-white px-4 py-1.5 text-sm font-bold rounded-full">
+          Scene {index + 1}
+        </Badge>
+        {totalScenes > 1 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            disabled={disabled}
+            className="h-8 w-8 p-0 hover:bg-destructive/10 rounded-full"
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        )}
+      </div>
+
+      {/* Main Two-Column Layout for Image */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* LEFT: Prompts */}
+        <div className="space-y-4">
+          {/* Image Prompt */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-primary" />
+              Image Prompt
+            </Label>
+            <Textarea
+              value={scene.imagePrompt}
+              onChange={(e) => onUpdate({ imagePrompt: e.target.value })}
+              placeholder="Describe the image for this scene in detail..."
               disabled={disabled}
-              className="h-8 w-8 p-0 hover:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4 text-destructive" />
-            </Button>
+              className="min-h-[120px] resize-none bg-muted/30 border-border/40 focus:border-primary/50"
+            />
+          </div>
+
+          {/* Seed Toggle (Scene 2+) */}
+          {index > 0 && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/30">
+              <Label className="text-sm text-muted-foreground cursor-pointer">
+                Use Scene {index} image as seed
+              </Label>
+              <Switch
+                checked={scene.usePreviousImageAsSeed}
+                onCheckedChange={(checked) => onUpdate({ usePreviousImageAsSeed: checked })}
+                disabled={disabled}
+              />
+            </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Image Section - Side by Side */}
-        <div className="p-4 rounded-xl bg-background/50 border border-border/30">
-          <div className="flex items-center gap-2 mb-3">
-            <ImageIcon className="w-4 h-4 text-primary" />
-            <Label className="text-sm font-medium">Image</Label>
-            {scene.imageGenerationStatus === 'complete' && (
-              <Check className="w-4 h-4 text-green-500 ml-auto" />
-            )}
-            {scene.imageGenerationStatus === 'failed' && (
-              <X className="w-4 h-4 text-destructive ml-auto" />
-            )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-[1fr,240px] gap-4">
-            {/* Left: Prompt + Toggle */}
-            <div className="space-y-3">
-              <Textarea
-                value={scene.imagePrompt}
-                onChange={(e) => onUpdate({ imagePrompt: e.target.value })}
-                placeholder="Describe the image for this scene..."
-                disabled={disabled}
-                className="min-h-[100px] resize-none bg-background/50"
-              />
-              
-              {/* Seed toggle for Scene 2+ */}
-              {index > 0 && (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/20">
-                  <Label className="text-xs text-muted-foreground cursor-pointer">
-                    Use Scene {index} image as seed
-                  </Label>
-                  <Switch
-                    checked={scene.usePreviousImageAsSeed}
-                    onCheckedChange={(checked) => onUpdate({ usePreviousImageAsSeed: checked })}
-                    disabled={disabled}
-                  />
-                </div>
-              )}
-            </div>
 
-            {/* Right: Enhanced Preview */}
-            <div className="space-y-2">
-              <div className={cn(
-                "relative rounded-xl overflow-hidden border-2 h-[160px] transition-all duration-300",
-                hasImage 
-                  ? "border-primary/30 bg-black/5" 
-                  : "border-dashed border-muted-foreground/30 bg-muted/30"
-              )}>
-                {isImageGenerating ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-xs font-medium text-muted-foreground">Generating...</p>
-                  </div>
-                ) : hasImage ? (
-                  <div className="relative w-full h-full group">
-                    <img
-                      src={scene.generatedImageUrl}
-                      alt={`Scene ${index + 1} image`}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <p className="text-xs text-white/90 bg-black/40 backdrop-blur-sm rounded px-2 py-1">
-                          ✅ Ready for video render
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
-                    <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
-                    <p className="text-xs text-muted-foreground/60 text-center">No image yet</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Action Button */}
-              {hasImage ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full bg-background/50 hover:bg-background"
-                  onClick={onRegenerateImage}
-                  disabled={disabled || isImageGenerating}
-                >
-                  <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", isImageGenerating && "animate-spin")} />
-                  Regenerate
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={onGenerateImage}
-                  disabled={disabled || isImageGenerating || !scene.imagePrompt.trim()}
-                >
-                  <Sparkles className={cn("w-3.5 h-3.5 mr-1.5", isImageGenerating && "animate-spin")} />
-                  Generate Image
-                </Button>
-              )}
-            </div>
+        {/* RIGHT: Preview Card */}
+        <Card className="p-4 bg-card/95 backdrop-blur-xl border border-border/30">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Scene {index + 1} Preview
+            </h4>
+            {hasImage && (
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                Generated
+              </Badge>
+            )}
           </div>
+
+          {/* Large Preview Area - 280px */}
+          <div className={cn(
+            "relative h-[280px] rounded-xl overflow-hidden border-2 transition-all duration-300",
+            hasImage 
+              ? "border-primary/40 bg-black/5" 
+              : "border-dashed border-muted-foreground/30 bg-muted/20"
+          )}>
+            {isImageGenerating ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                  <ImageIcon className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">Generating Image...</p>
+                  <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
+                </div>
+              </div>
+            ) : hasImage ? (
+              <div className="relative w-full h-full group">
+                <img
+                  src={scene.generatedImageUrl}
+                  alt={`Scene ${index + 1} preview`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-sm text-white font-medium">
+                      ✅ Image ready for video generation
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                  <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-muted-foreground">No preview generated</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">
+                    Write a prompt and generate to see what this scene will look like
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Generate/Regenerate Button */}
+          <Button 
+            className={cn(
+              "w-full mt-4",
+              hasImage && "bg-muted hover:bg-muted/80 text-foreground"
+            )}
+            variant={hasImage ? "outline" : "default"}
+            onClick={hasImage ? onRegenerateImage : onGenerateImage}
+            disabled={disabled || isImageGenerating || (!hasImage && !scene.imagePrompt.trim())}
+          >
+            {isImageGenerating ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : hasImage ? (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            {hasImage ? 'Regenerate Image' : `Generate Preview (${IMAGE_CREDIT_COST} credits)`}
+          </Button>
+        </Card>
+      </div>
+
+      {/* Video Section - ALWAYS visible */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-border/30">
+        {/* LEFT: Video Prompt */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Film className="w-4 h-4 text-primary" />
+            Video Prompt
+            {!isLastScene && (
+              <span className="text-xs text-muted-foreground font-normal">
+                (Scene {index + 1} → {index + 2})
+              </span>
+            )}
+          </Label>
+          <Textarea
+            value={scene.videoPrompt}
+            onChange={(e) => onUpdate({ videoPrompt: e.target.value })}
+            placeholder={isLastScene 
+              ? "Add another scene to enable video generation between scenes..."
+              : "Describe the motion/transition between this scene and the next..."
+            }
+            disabled={disabled || isLastScene}
+            className={cn(
+              "min-h-[120px] resize-none bg-muted/30 border-border/40 focus:border-primary/50",
+              isLastScene && "opacity-50"
+            )}
+          />
+          {isLastScene && (
+            <p className="text-xs text-muted-foreground italic">
+              This is the last scene. Add another scene to create a video transition.
+            </p>
+          )}
         </div>
 
-        {/* Video Section - only show for non-last scenes */}
-        {index < totalScenes - 1 && (
-          <div className="p-4 rounded-xl bg-background/50 border border-border/30">
-            <div className="flex items-center gap-2 mb-3">
-              <Video className="w-4 h-4 text-primary" />
-              <Label className="text-sm font-medium">
-                Video (Scene {index + 1} → {index + 2})
-              </Label>
-              {scene.videoGenerationStatus === 'complete' && (
-                <Check className="w-4 h-4 text-green-500 ml-auto" />
-              )}
-              {scene.videoGenerationStatus === 'failed' && (
-                <X className="w-4 h-4 text-destructive ml-auto" />
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-[1fr,240px] gap-4">
-              {/* Left: Prompt */}
-              <Textarea
-                value={scene.videoPrompt}
-                onChange={(e) => onUpdate({ videoPrompt: e.target.value })}
-                placeholder="Describe the motion/transition between images..."
-                disabled={disabled}
-                className="min-h-[100px] resize-none bg-background/50"
-              />
-
-              {/* Right: Enhanced Video Preview */}
-              <div className="space-y-2">
-                <div className={cn(
-                  "relative rounded-xl overflow-hidden border-2 h-[160px] transition-all duration-300",
-                  hasVideo 
-                    ? "border-primary/30 bg-black/5" 
-                    : "border-dashed border-muted-foreground/30 bg-muted/30"
-                )}>
-                  {isVideoGenerating ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      <p className="text-xs font-medium text-muted-foreground">Generating video...</p>
-                    </div>
-                  ) : hasVideo ? (
-                    <div className="relative w-full h-full group">
-                      <video
-                        src={scene.generatedVideoUrl}
-                        className="w-full h-full object-cover"
-                        controls
-                        muted
-                        loop
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <p className="text-xs text-white/90 bg-black/40 backdrop-blur-sm rounded px-2 py-1">
-                            ✅ Video ready
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
-                      <Video className="w-10 h-10 text-muted-foreground/40" />
-                      <p className="text-xs text-muted-foreground/60 text-center">No video yet</p>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Action Button */}
-                {hasVideo ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full bg-background/50 hover:bg-background"
-                    onClick={onRegenerateVideo}
-                    disabled={disabled || isVideoGenerating}
-                  >
-                    <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", isVideoGenerating && "animate-spin")} />
-                    Regenerate
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={onGenerateVideo}
-                    disabled={disabled || isVideoGenerating || !hasImage}
-                  >
-                    <Sparkles className={cn("w-3.5 h-3.5 mr-1.5", isVideoGenerating && "animate-spin")} />
-                    Generate Video
-                  </Button>
-                )}
-              </div>
-            </div>
+        {/* RIGHT: Video Preview Card */}
+        <Card className={cn(
+          "p-4 bg-card/95 backdrop-blur-xl border border-border/30",
+          isLastScene && "opacity-60"
+        )}>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+              <Video className="w-4 h-4" />
+              Video Output
+            </h4>
+            {hasVideo && (
+              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                Generated
+              </Badge>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Video Preview Area - 280px */}
+          <div className={cn(
+            "relative h-[280px] rounded-xl overflow-hidden border-2 transition-all duration-300",
+            hasVideo 
+              ? "border-primary/40 bg-black" 
+              : "border-dashed border-muted-foreground/30 bg-muted/20"
+          )}>
+            {isVideoGenerating ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                  <Video className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">Generating Video...</p>
+                  <p className="text-xs text-muted-foreground mt-1">This may take a few minutes</p>
+                </div>
+              </div>
+            ) : hasVideo ? (
+              <video
+                src={scene.generatedVideoUrl}
+                className="w-full h-full object-cover"
+                controls
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Video className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {isLastScene ? 'Last scene - no video' : 'No video generated'}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">
+                    {isLastScene 
+                      ? 'Videos are created between adjacent scenes'
+                      : 'Generate the image first, then create the video transition'
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Generate/Regenerate Button */}
+          <Button 
+            className={cn(
+              "w-full mt-4",
+              hasVideo && "bg-muted hover:bg-muted/80 text-foreground"
+            )}
+            variant={hasVideo ? "outline" : "default"}
+            onClick={hasVideo ? onRegenerateVideo : onGenerateVideo}
+            disabled={disabled || isVideoGenerating || isLastScene || !hasImage}
+          >
+            {isVideoGenerating ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : hasVideo ? (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            {hasVideo ? 'Regenerate Video' : `Generate Video (${VIDEO_CREDIT_COST} credits)`}
+          </Button>
+        </Card>
+      </div>
+    </div>
   );
 }

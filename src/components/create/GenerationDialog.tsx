@@ -44,7 +44,7 @@ export const GenerationDialog = ({
   isPolling,
   userTokens,
   generationState,
-  onDownload,
+  onDownload: _onDownload,
   onDownloadAll: _onDownloadAll,
   onViewHistory,
   onRetry: _onRetry,
@@ -136,9 +136,7 @@ export const GenerationDialog = ({
           {/* Output Console */}
           <GenerationConsole
             generationState={generationState}
-            contentType={selectedTemplate?.primaryContentType || "image"}
             isPolling={isPolling}
-            onDownload={onDownload}
             onViewHistory={onViewHistory}
           />
         </div>

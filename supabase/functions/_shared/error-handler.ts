@@ -35,6 +35,13 @@ export function createSafeErrorResponse(
     safeMessage = 'Request rejected by safety system';
     status = 400;
   } else if (
+    errorMsg.includes('prompt too long') ||
+    (errorMsg.includes('exceeds') && errorMsg.includes('character limit'))
+  ) {
+    // Pass through prompt length errors as-is (they're already user-friendly)
+    safeMessage = originalErrorMsg;
+    status = 400;
+  } else if (
     errorMsg.includes('invalid') || 
     errorMsg.includes('validation') ||
     errorMsg.includes('unsupportedparameter') ||

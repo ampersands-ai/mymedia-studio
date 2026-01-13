@@ -290,7 +290,16 @@ Deno.serve(async (req) => {
 
       // Prompt validation
       if (hasPromptField && promptRequired && (!prompt || prompt.trim() === '')) throw new Error('Prompt is required for this model');
-      if (prompt && (prompt.length < 3 || prompt.length > 10000)) throw new Error('Prompt must be between 3 and 10000 characters');
+      if (prompt) {
+        if (prompt.length < 3) {
+          throw new Error('Prompt must be at least 3 characters');
+        }
+        // Get model-specific limit from schema, fallback to 10000
+        const maxPromptLength = (model.input_schema?.properties?.prompt as { maxLength?: number })?.maxLength || 10000;
+        if (prompt.length > maxPromptLength) {
+          throw new Error(`Prompt too long: ${prompt.length.toLocaleString()}/${maxPromptLength.toLocaleString()} characters`);
+        }
+      }
 
     } catch (txError) {
       if (generationCreated && generation) {

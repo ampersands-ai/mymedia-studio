@@ -9,6 +9,7 @@ interface ModelSchema {
     properties?: Record<string, {
       type?: string;
       maxItems?: number;
+      maxLength?: number;
     }>;
     conditionalFields?: Record<string, {
       dependsOn?: string;
@@ -79,17 +80,25 @@ export const isKieAiAudioModel = isPrimaryProviderAudioModel;
 
 /**
  * Get max prompt length based on model and customMode
+ * Reads model-specific maxLength from schema if available
  */
 export const getMaxPromptLength = (model: ModelSchema, customMode: boolean | undefined): number => {
-  if (!model) return 5000;
+  const DEFAULT_LIMIT = 5000;
+  
+  if (!model) return DEFAULT_LIMIT;
 
   // Primary provider audio in non-custom mode has 500 char limit
   if (isPrimaryProviderAudioModel(model) && customMode === false) {
     return 500;
   }
 
-  // Default limit for all other cases
-  return 5000;
+  // Read model-specific maxLength from schema if available
+  const promptMaxLength = model.input_schema?.properties?.prompt?.maxLength;
+  if (promptMaxLength && typeof promptMaxLength === 'number') {
+    return promptMaxLength;
+  }
+
+  return DEFAULT_LIMIT;
 };
 
 /**

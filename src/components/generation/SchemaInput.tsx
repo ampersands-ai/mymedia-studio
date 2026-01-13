@@ -41,9 +41,11 @@ interface SchemaInputProps {
   rows?: number;
   modelId?: string;
   provider?: string;
+  /** Callback to update other parameters (e.g., n_frames from storyboard shots) */
+  onParameterChange?: (key: string, value: ModelParameterValue) => void;
 }
 
-export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId: _modelId, provider: _provider }: SchemaInputProps) => {
+export const SchemaInput = ({ name, schema, value, onChange, required, filteredEnum, allValues, modelSchema, rows, modelId: _modelId, provider: _provider, onParameterChange }: SchemaInputProps) => {
   const { user } = useAuth();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -123,22 +125,17 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     // Get duration options from n_frames schema
     const schemaProperties = modelSchema?.properties as Record<string, { enum?: string[]; enumLabels?: Record<string, string> }> | undefined;
     const nFramesSchema = schemaProperties?.n_frames;
-    console.log('[SchemaInput] nFramesSchema:', nFramesSchema);
-    console.log('[SchemaInput] totalDuration from allValues:', allValues?.n_frames);
     const durationOptions: DurationOption[] = nFramesSchema?.enum?.map((v: string) => ({
       value: v,
       label: nFramesSchema?.enumLabels?.[v] || `${v}s`
     })) || [];
-    console.log('[SchemaInput] durationOptions:', durationOptions);
 
     // Create a handler to update n_frames in the parent form
     const handleDurationChange = (newDuration: number) => {
-      // This requires accessing the parent's onChange for n_frames
-      // We'll emit a custom event that the parent form can listen to
-      const event = new CustomEvent('storyboard-duration-change', { 
-        detail: { duration: newDuration } 
-      });
-      window.dispatchEvent(event);
+      // Use onParameterChange callback if available (preferred)
+      if (onParameterChange) {
+        onParameterChange('n_frames', String(newDuration));
+      }
     };
 
     return (

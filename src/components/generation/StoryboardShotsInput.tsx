@@ -111,7 +111,7 @@ export const StoryboardShotsInput = ({
                 value={String(totalDuration)} 
                 onValueChange={(v) => onDurationChange(parseInt(v))}
               >
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

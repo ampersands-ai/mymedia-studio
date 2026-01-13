@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Eye, Plus, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, Trash2, GripVertical, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,6 +92,8 @@ export default function ModelPageEditor() {
     output_url: "",
     output_type: "image",
     title: "",
+    input_url: "",
+    input_type: "image",
   });
 
   // Template form
@@ -219,9 +221,14 @@ export default function ModelPageEditor() {
     if (!id || isNew || !newSample.prompt || !newSample.output_url) return;
     await createSampleMutation.mutateAsync({
       model_page_id: id,
-      ...newSample,
+      title: newSample.title || undefined,
+      prompt: newSample.prompt,
+      output_url: newSample.output_url,
+      output_type: newSample.output_type,
+      input_url: newSample.input_url || undefined,
+      input_type: newSample.input_url ? newSample.input_type : undefined,
     });
-    setNewSample({ prompt: "", output_url: "", output_type: "image", title: "" });
+    setNewSample({ prompt: "", output_url: "", output_type: "image", title: "", input_url: "", input_type: "image" });
   };
 
   const handleDeleteSample = async (sampleId: string) => {
@@ -611,18 +618,54 @@ export default function ModelPageEditor() {
             <CardContent className="space-y-4">
               {samples?.map((sample) => (
                 <div key={sample.id} className="flex items-center gap-4 p-3 bg-muted rounded">
+                  {/* Show input media if exists */}
+                  {sample.input_url && (
+                    <>
+                      <div className="relative">
+                        {sample.input_type === "video" ? (
+                          <video
+                            src={sample.input_url}
+                            className="w-16 h-16 object-cover rounded"
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={sample.input_url}
+                            alt="Input"
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        )}
+                        <Badge className="absolute -top-1 -left-1 text-[10px] px-1 py-0">IN</Badge>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    </>
+                  )}
+                  {/* Output media */}
                   {sample.thumbnail_url || sample.output_url ? (
-                    <img
-                      src={sample.thumbnail_url || sample.output_url}
-                      alt={sample.title || "Sample"}
-                      className="w-16 h-16 object-cover rounded"
-                    />
+                    <div className="relative">
+                      {sample.output_type === "video" ? (
+                        <video
+                          src={sample.output_url}
+                          className="w-16 h-16 object-cover rounded"
+                          muted
+                        />
+                      ) : (
+                        <img
+                          src={sample.thumbnail_url || sample.output_url}
+                          alt={sample.title || "Sample"}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      )}
+                      {sample.input_url && (
+                        <Badge className="absolute -top-1 -left-1 text-[10px] px-1 py-0">OUT</Badge>
+                      )}
+                    </div>
                   ) : (
                     <div className="w-16 h-16 bg-muted-foreground/20 rounded flex items-center justify-center">
                       {sample.output_type}
                     </div>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium">{sample.title || "Untitled"}</p>
                     <p className="text-sm text-muted-foreground line-clamp-1">{sample.prompt}</p>
                   </div>
@@ -660,6 +703,31 @@ export default function ModelPageEditor() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Input Media Section */}
+                <div className="space-y-2 border-l-2 border-primary/50 pl-4">
+                  <Label className="text-sm font-medium text-primary">Input Media (for before/after comparison)</Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input
+                      placeholder="Input URL (image or video used as input)"
+                      value={newSample.input_url}
+                      onChange={(e) => setNewSample(prev => ({ ...prev, input_url: e.target.value }))}
+                    />
+                    <Select
+                      value={newSample.input_type}
+                      onValueChange={(value) => setNewSample(prev => ({ ...prev, input_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Input Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="image">Image</SelectItem>
+                        <SelectItem value="video">Video</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <Input
                   placeholder="Output URL *"
                   value={newSample.output_url}

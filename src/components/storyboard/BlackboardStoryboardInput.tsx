@@ -20,7 +20,9 @@ export function BlackboardStoryboardInput() {
     generateAllVideos,
     renderFinalVideo,
     resetAll,
+    generateImage,
     regenerateImage,
+    generateVideo,
     regenerateVideo,
     isGeneratingImages,
     isGeneratingVideos,
@@ -99,7 +101,9 @@ export function BlackboardStoryboardInput() {
                 previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
                 onUpdate={(updates) => updateScene(scene.id, updates)}
                 onRemove={() => removeScene(scene.id)}
+                onGenerateImage={() => generateImage(scene.id)}
                 onRegenerateImage={() => regenerateImage(scene.id)}
+                onGenerateVideo={() => generateVideo(scene.id)}
                 onRegenerateVideo={() => regenerateVideo(scene.id)}
               />
             ))}

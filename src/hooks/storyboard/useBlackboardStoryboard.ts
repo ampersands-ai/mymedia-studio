@@ -292,6 +292,32 @@ export const useBlackboardStoryboard = () => {
     setFinalVideoUrl(null);
   }, []);
 
+  // Generate a single image (for individual scene generation)
+  const generateImage = useCallback(async (sceneId: string) => {
+    const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+    const scene = scenes[sceneIndex];
+    if (!scene) return;
+    
+    const previousImageUrl = sceneIndex > 0 ? scenes[sceneIndex - 1].generatedImageUrl : undefined;
+    
+    updateScene(sceneId, { imageGenerationStatus: 'generating' });
+    
+    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl);
+    
+    if (imageUrl) {
+      updateScene(sceneId, { 
+        generatedImageUrl: imageUrl, 
+        imageGenerationStatus: 'complete' 
+      });
+      toast.success('Image generated!');
+    } else {
+      updateScene(sceneId, { imageGenerationStatus: 'failed' });
+      toast.error('Failed to generate image');
+    }
+    
+    refetchCredits();
+  }, [scenes, updateScene, generateSingleImage, refetchCredits]);
+
   // Regenerate a single image (clears existing, generates fresh)
   const regenerateImage = useCallback(async (sceneId: string) => {
     const sceneIndex = scenes.findIndex(s => s.id === sceneId);
@@ -321,7 +347,36 @@ export const useBlackboardStoryboard = () => {
     refetchCredits();
   }, [scenes, updateScene, generateSingleImage, refetchCredits]);
 
-  // Regenerate a single video
+  // Generate a single video (for individual scene generation)
+  const generateVideo = useCallback(async (sceneId: string) => {
+    const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+    const scene = scenes[sceneIndex];
+    const nextScene = scenes[sceneIndex + 1];
+    
+    if (!scene || !nextScene || !scene.generatedImageUrl || !nextScene.generatedImageUrl) {
+      toast.error('Both adjacent images required');
+      return;
+    }
+    
+    updateScene(sceneId, { videoGenerationStatus: 'generating' });
+    
+    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl);
+    
+    if (videoUrl) {
+      updateScene(sceneId, { 
+        generatedVideoUrl: videoUrl, 
+        videoGenerationStatus: 'complete' 
+      });
+      toast.success('Video generated!');
+    } else {
+      updateScene(sceneId, { videoGenerationStatus: 'failed' });
+      toast.error('Failed to generate video');
+    }
+    
+    refetchCredits();
+  }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
+
+  // Regenerate a single video (clears existing, generates fresh)
   const regenerateVideo = useCallback(async (sceneId: string) => {
     const sceneIndex = scenes.findIndex(s => s.id === sceneId);
     const scene = scenes[sceneIndex];
@@ -373,7 +428,9 @@ export const useBlackboardStoryboard = () => {
     generateAllVideos,
     renderFinalVideo,
     resetAll,
+    generateImage,
     regenerateImage,
+    generateVideo,
     regenerateVideo,
     isGeneratingImages,
     isGeneratingVideos,

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useStoryboardForm } from '@/hooks/storyboard/useStoryboardForm';
-import { Film, Loader2, Sparkles, Edit3 } from 'lucide-react';
+import { Film, Loader2, Sparkles, Edit3, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopicSection } from './sections/TopicSection';
 import { DurationSection } from './sections/DurationSection';
@@ -15,9 +15,10 @@ import { ToneSelector } from './sections/ToneSelector';
 import { MediaTypeSelector } from './sections/MediaTypeSelector';
 import { CostDisplay } from './sections/CostDisplay';
 import { CustomStoryboardInput } from './CustomStoryboardInput';
+import { BlackboardStoryboardInput } from './BlackboardStoryboardInput';
 
 export function StoryboardInput() {
-  const [mode, setMode] = useState<'ai' | 'custom'>('ai');
+  const [mode, setMode] = useState<'ai' | 'custom' | 'blackboard'>('ai');
   const { formState, updateField, estimatedRenderCost, canGenerate } = useStoryboardForm();
   const { generateStoryboard, isGenerating } = useStoryboard();
   const { availableCredits } = useUserCredits();
@@ -79,8 +80,8 @@ export function StoryboardInput() {
   };
 
   return (
-    <Tabs value={mode} onValueChange={(v) => setMode(v as 'ai' | 'custom')} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
+    <Tabs value={mode} onValueChange={(v) => setMode(v as 'ai' | 'custom' | 'blackboard')} className="w-full">
+      <TabsList className="grid w-full grid-cols-3 mb-4">
         <TabsTrigger value="ai" className="gap-2">
           <Sparkles className="w-4 h-4" />
           AI Generated
@@ -88,6 +89,10 @@ export function StoryboardInput() {
         <TabsTrigger value="custom" className="gap-2">
           <Edit3 className="w-4 h-4" />
           Custom
+        </TabsTrigger>
+        <TabsTrigger value="blackboard" className="gap-2">
+          <Palette className="w-4 h-4" />
+          Blackboard
         </TabsTrigger>
       </TabsList>
 
@@ -175,6 +180,10 @@ export function StoryboardInput() {
 
       <TabsContent value="custom" className="mt-0">
         <CustomStoryboardInput />
+      </TabsContent>
+
+      <TabsContent value="blackboard" className="mt-0">
+        <BlackboardStoryboardInput />
       </TabsContent>
     </Tabs>
   );

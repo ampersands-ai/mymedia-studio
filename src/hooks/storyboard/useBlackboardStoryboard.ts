@@ -6,6 +6,7 @@ import { getAllModels } from '@/lib/models/registry';
 import { logger } from '@/lib/logger';
 import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 import { MODEL_CONFIG as NANO_BANANA_CONFIG } from '@/lib/models/locked/prompt_to_image/Nano_Banana_Pro';
+import { useBlackboardPolling } from './useBlackboardPolling';
 
 export interface BlackboardScene {
   id: string;
@@ -48,6 +49,7 @@ export const useBlackboardStoryboard = () => {
   const [isRendering, setIsRendering] = useState(false);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const { refetch: refetchCredits } = useUserCredits();
+  const { waitForGeneration } = useBlackboardPolling();
 
   const addScene = useCallback(() => {
     setScenes(prev => [...prev, createEmptyScene(false)]);
@@ -67,42 +69,6 @@ export const useBlackboardStoryboard = () => {
     setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, ...updates } : s));
   }, []);
 
-  // Helper function to poll for async generation result
-  const pollForGenerationResult = useCallback(async (
-    generationId: string,
-    maxAttempts: number = 90 // 90 seconds max for images
-  ): Promise<string | null> => {
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      const { data, error } = await supabase
-        .from('generations')
-        .select('status, output_url')
-        .eq('id', generationId)
-        .single();
-
-      if (error) {
-        logger.error('Polling error', error, { component: 'useBlackboardStoryboard', generationId });
-        return null;
-      }
-
-      if (data.status === 'completed' && data.output_url) {
-        return data.output_url;
-      }
-
-      if (data.status === 'failed') {
-        logger.error('Generation failed', new Error('Generation failed'), { component: 'useBlackboardStoryboard', generationId });
-        return null;
-      }
-
-      // Wait 1 second before next poll
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      attempts++;
-    }
-
-    logger.error('Generation timed out', new Error('Polling timeout'), { component: 'useBlackboardStoryboard', generationId });
-    return null;
-  }, []);
 
   const generateSingleImage = useCallback(async (
     scene: BlackboardScene,
@@ -153,8 +119,8 @@ export const useBlackboardStoryboard = () => {
       
       // Check if it's an async generation that needs polling
       if (data?.is_async && data?.generation_id) {
-        // Poll for the result
-        return await pollForGenerationResult(data.generation_id);
+        // Use hybrid polling (Realtime + fallback) - 90s timeout for images
+        return await waitForGeneration(data.generation_id, 90000);
       }
       
       return data?.output_url || null;
@@ -165,7 +131,7 @@ export const useBlackboardStoryboard = () => {
       });
       return null;
     }
-  }, [pollForGenerationResult]);
+  }, [waitForGeneration]);
 
   const generateAllImages = useCallback(async () => {
     setIsGeneratingImages(true);
@@ -251,8 +217,8 @@ export const useBlackboardStoryboard = () => {
       
       // Check if it's an async generation that needs polling
       if (data?.is_async && data?.generation_id) {
-        // Poll for the result (video can take up to 10 minutes - 600 seconds)
-        return await pollForGenerationResult(data.generation_id, 600);
+        // Use hybrid polling (Realtime + fallback) - 10 minute timeout for videos
+        return await waitForGeneration(data.generation_id, 600000);
       }
       
       return data?.output_url || null;
@@ -263,7 +229,7 @@ export const useBlackboardStoryboard = () => {
       });
       return null;
     }
-  }, [pollForGenerationResult]);
+  }, [waitForGeneration]);
 
   const generateAllVideos = useCallback(async () => {
     // Validate all images are generated

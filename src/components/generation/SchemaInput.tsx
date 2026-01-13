@@ -21,6 +21,7 @@ import type {
   ModelParameters,
   ModelParameterValue
 } from "@/types/model-schema";
+import { StoryboardShotsInput, Shot } from "./StoryboardShotsInput";
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -95,6 +96,28 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
   }
   
   const isRequired = isConditionallyRequired();
+  
+  // Detect storyboard shots array (for Sora 2 Pro Storyboard model)
+  const isStoryboardShots = 
+    schema.type === "array" &&
+    name === "shots" &&
+    schema.items?.type === "object" &&
+    schema.items?.properties?.Scene &&
+    schema.items?.properties?.duration;
+
+  // Handle storyboard shots with custom component
+  if (isStoryboardShots) {
+    const totalDuration = parseInt(allValues?.n_frames as string || "15");
+    const shotsValue = Array.isArray(value) ? (value as unknown as Shot[]) : [];
+    return (
+      <StoryboardShotsInput
+        value={shotsValue}
+        onChange={(shots) => onChange(shots as unknown as ModelParameterValue)}
+        totalDuration={totalDuration}
+        required={isRequired}
+      />
+    );
+  }
   
   const displayName = schema.title || name.split('_').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1)

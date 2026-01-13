@@ -8,34 +8,34 @@ import { logger } from '@/lib/logger';
 export interface BlackboardScene {
   id: string;
   imagePrompt: string;
-  imageModelId: string;
   generatedImageUrl?: string;
   imageGenerationStatus: 'idle' | 'generating' | 'complete' | 'failed';
   
   videoPrompt: string;
-  videoModelId: string;
   generatedVideoUrl?: string;
   videoGenerationStatus: 'idle' | 'generating' | 'complete' | 'failed';
+  
+  usePreviousImageAsSeed: boolean;
 }
 
-// Default model record IDs
-const DEFAULT_IMAGE_MODEL_ID = 'c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f'; // Nano Banana Pro
-const DEFAULT_VIDEO_MODEL_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
+// Fixed model IDs (not user-selectable)
+const TEXT_TO_IMAGE_MODEL_ID = 'c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f'; // Nano Banana Pro (T2I)
+const IMAGE_TO_IMAGE_MODEL_ID = 'b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e'; // Nano Banana Pro (I2I)
+const VIDEO_MODEL_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
 
-export const createEmptyScene = (): BlackboardScene => ({
+export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
   id: crypto.randomUUID(),
   imagePrompt: '',
-  imageModelId: DEFAULT_IMAGE_MODEL_ID,
   generatedImageUrl: undefined,
   imageGenerationStatus: 'idle',
   videoPrompt: '',
-  videoModelId: DEFAULT_VIDEO_MODEL_ID,
   generatedVideoUrl: undefined,
   videoGenerationStatus: 'idle',
+  usePreviousImageAsSeed: !isFirst,
 });
 
 export const useBlackboardStoryboard = () => {
-  const [scenes, setScenes] = useState<BlackboardScene[]>([createEmptyScene()]);
+  const [scenes, setScenes] = useState<BlackboardScene[]>([createEmptyScene(true)]);
   const [aspectRatio, setAspectRatio] = useState('hd');
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
@@ -44,7 +44,7 @@ export const useBlackboardStoryboard = () => {
   const { refetch: refetchCredits } = useUserCredits();
 
   const addScene = useCallback(() => {
-    setScenes(prev => [...prev, createEmptyScene()]);
+    setScenes(prev => [...prev, createEmptyScene(false)]);
   }, []);
 
   const removeScene = useCallback((sceneId: string) => {
@@ -61,28 +61,41 @@ export const useBlackboardStoryboard = () => {
     setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, ...updates } : s));
   }, []);
 
-  const generateSingleImage = useCallback(async (scene: BlackboardScene): Promise<string | null> => {
+  const generateSingleImage = useCallback(async (
+    scene: BlackboardScene,
+    sceneIndex: number,
+    previousImageUrl?: string
+  ): Promise<string | null> => {
     if (!scene.imagePrompt.trim()) {
       return null;
     }
 
     try {
       const modules = getAllModels();
-      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === scene.imageModelId);
+      
+      // Scene 1 uses T2I; Scene 2+ uses I2I if seed toggle is ON and previous image exists
+      const useImageToImage = sceneIndex > 0 && scene.usePreviousImageAsSeed && !!previousImageUrl;
+      const modelRecordId = useImageToImage ? IMAGE_TO_IMAGE_MODEL_ID : TEXT_TO_IMAGE_MODEL_ID;
+      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === modelRecordId);
       
       if (!modelModule) {
         throw new Error('Image generation model not found');
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-content', {
-        body: {
-          model_id: modelModule.MODEL_CONFIG.modelId,
-          model_record_id: modelModule.MODEL_CONFIG.recordId,
-          model_config: modelModule.MODEL_CONFIG,
-          model_schema: modelModule.SCHEMA,
-          prompt: scene.imagePrompt,
-        },
-      });
+      const body: Record<string, unknown> = {
+        model_id: modelModule.MODEL_CONFIG.modelId,
+        model_record_id: modelModule.MODEL_CONFIG.recordId,
+        model_config: modelModule.MODEL_CONFIG,
+        model_schema: modelModule.SCHEMA,
+        prompt: scene.imagePrompt,
+      };
+
+      // Add image input for I2I mode
+      if (useImageToImage && previousImageUrl) {
+        body.image_input = [previousImageUrl];
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-content', { body });
 
       if (error) throw error;
       return data?.output_url || null;
@@ -99,19 +112,27 @@ export const useBlackboardStoryboard = () => {
     setIsGeneratingImages(true);
     
     try {
-      for (const scene of scenes) {
-        if (scene.generatedImageUrl) continue; // Skip already generated
+      let previousImageUrl: string | undefined;
+      
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i];
+        
+        if (scene.generatedImageUrl) {
+          previousImageUrl = scene.generatedImageUrl;
+          continue; // Skip already generated
+        }
         if (!scene.imagePrompt.trim()) continue;
 
         updateScene(scene.id, { imageGenerationStatus: 'generating' });
         
-        const imageUrl = await generateSingleImage(scene);
+        const imageUrl = await generateSingleImage(scene, i, previousImageUrl);
         
         if (imageUrl) {
           updateScene(scene.id, { 
             generatedImageUrl: imageUrl, 
             imageGenerationStatus: 'complete' 
           });
+          previousImageUrl = imageUrl; // Update for next scene
         } else {
           updateScene(scene.id, { imageGenerationStatus: 'failed' });
         }
@@ -140,7 +161,7 @@ export const useBlackboardStoryboard = () => {
 
     try {
       const modules = getAllModels();
-      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === scene.videoModelId);
+      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === VIDEO_MODEL_ID);
       
       if (!modelModule) {
         throw new Error('Video generation model not found');
@@ -267,9 +288,70 @@ export const useBlackboardStoryboard = () => {
   }, [scenes, aspectRatio, refetchCredits]);
 
   const resetAll = useCallback(() => {
-    setScenes([createEmptyScene()]);
+    setScenes([createEmptyScene(true)]);
     setFinalVideoUrl(null);
   }, []);
+
+  // Regenerate a single image (clears existing, generates fresh)
+  const regenerateImage = useCallback(async (sceneId: string) => {
+    const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+    const scene = scenes[sceneIndex];
+    if (!scene) return;
+    
+    const previousImageUrl = sceneIndex > 0 ? scenes[sceneIndex - 1].generatedImageUrl : undefined;
+    
+    updateScene(sceneId, { 
+      generatedImageUrl: undefined, 
+      imageGenerationStatus: 'generating' 
+    });
+    
+    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl);
+    
+    if (imageUrl) {
+      updateScene(sceneId, { 
+        generatedImageUrl: imageUrl, 
+        imageGenerationStatus: 'complete' 
+      });
+      toast.success('Image regenerated!');
+    } else {
+      updateScene(sceneId, { imageGenerationStatus: 'failed' });
+      toast.error('Failed to regenerate image');
+    }
+    
+    refetchCredits();
+  }, [scenes, updateScene, generateSingleImage, refetchCredits]);
+
+  // Regenerate a single video
+  const regenerateVideo = useCallback(async (sceneId: string) => {
+    const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+    const scene = scenes[sceneIndex];
+    const nextScene = scenes[sceneIndex + 1];
+    
+    if (!scene || !nextScene || !scene.generatedImageUrl || !nextScene.generatedImageUrl) {
+      toast.error('Both adjacent images required');
+      return;
+    }
+    
+    updateScene(sceneId, { 
+      generatedVideoUrl: undefined, 
+      videoGenerationStatus: 'generating' 
+    });
+    
+    const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl);
+    
+    if (videoUrl) {
+      updateScene(sceneId, { 
+        generatedVideoUrl: videoUrl, 
+        videoGenerationStatus: 'complete' 
+      });
+      toast.success('Video regenerated!');
+    } else {
+      updateScene(sceneId, { videoGenerationStatus: 'failed' });
+      toast.error('Failed to regenerate video');
+    }
+    
+    refetchCredits();
+  }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
 
   // Calculate estimated costs
   const estimatedCost = {
@@ -291,6 +373,8 @@ export const useBlackboardStoryboard = () => {
     generateAllVideos,
     renderFinalVideo,
     resetAll,
+    regenerateImage,
+    regenerateVideo,
     isGeneratingImages,
     isGeneratingVideos,
     isRendering,

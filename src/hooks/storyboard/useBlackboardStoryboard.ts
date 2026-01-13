@@ -67,6 +67,43 @@ export const useBlackboardStoryboard = () => {
     setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, ...updates } : s));
   }, []);
 
+  // Helper function to poll for async generation result
+  const pollForGenerationResult = useCallback(async (
+    generationId: string,
+    maxAttempts: number = 90 // 90 seconds max for images
+  ): Promise<string | null> => {
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const { data, error } = await supabase
+        .from('generations')
+        .select('status, output_url')
+        .eq('id', generationId)
+        .single();
+
+      if (error) {
+        logger.error('Polling error', error, { component: 'useBlackboardStoryboard', generationId });
+        return null;
+      }
+
+      if (data.status === 'completed' && data.output_url) {
+        return data.output_url;
+      }
+
+      if (data.status === 'failed') {
+        logger.error('Generation failed', new Error('Generation failed'), { component: 'useBlackboardStoryboard', generationId });
+        return null;
+      }
+
+      // Wait 1 second before next poll
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
+    logger.error('Generation timed out', new Error('Polling timeout'), { component: 'useBlackboardStoryboard', generationId });
+    return null;
+  }, []);
+
   const generateSingleImage = useCallback(async (
     scene: BlackboardScene,
     sceneIndex: number,
@@ -113,6 +150,13 @@ export const useBlackboardStoryboard = () => {
       const { data, error } = await supabase.functions.invoke('generate-content', { body });
 
       if (error) throw error;
+      
+      // Check if it's an async generation that needs polling
+      if (data?.is_async && data?.generation_id) {
+        // Poll for the result
+        return await pollForGenerationResult(data.generation_id);
+      }
+      
       return data?.output_url || null;
     } catch (error) {
       logger.error('Blackboard image generation failed', error instanceof Error ? error : new Error(String(error)), {
@@ -121,7 +165,7 @@ export const useBlackboardStoryboard = () => {
       });
       return null;
     }
-  }, []);
+  }, [pollForGenerationResult]);
 
   const generateAllImages = useCallback(async () => {
     setIsGeneratingImages(true);
@@ -204,6 +248,13 @@ export const useBlackboardStoryboard = () => {
       });
 
       if (error) throw error;
+      
+      // Check if it's an async generation that needs polling
+      if (data?.is_async && data?.generation_id) {
+        // Poll for the result (video can take longer - 180 seconds)
+        return await pollForGenerationResult(data.generation_id, 180);
+      }
+      
       return data?.output_url || null;
     } catch (error) {
       logger.error('Blackboard video generation failed', error instanceof Error ? error : new Error(String(error)), {
@@ -212,7 +263,7 @@ export const useBlackboardStoryboard = () => {
       });
       return null;
     }
-  }, []);
+  }, [pollForGenerationResult]);
 
   const generateAllVideos = useCallback(async () => {
     // Validate all images are generated

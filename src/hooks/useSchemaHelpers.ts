@@ -62,17 +62,29 @@ export const useSchemaHelpers = () => {
 
   /**
    * Determine max prompt length based on model and customMode
+   * Reads model-specific maxLength from schema if available
    */
   const getMaxPromptLength = useCallback((model: AIModel | null, customMode?: boolean): number => {
-    if (!model) return 5000;
+    const DEFAULT_LIMIT = 5000;
+    
+    if (!model) return DEFAULT_LIMIT;
 
     // Primary provider audio in non-custom mode has 500 char limit
     if (isKieAiAudioModel(model) && customMode === false) {
       return 500;
     }
 
-    // Default limit for all other cases
-    return 5000;
+    // Read model-specific maxLength from schema if available
+    const schema = model.input_schema as { 
+      properties?: Record<string, { maxLength?: number }> 
+    };
+    const promptMaxLength = schema?.properties?.prompt?.maxLength;
+    
+    if (promptMaxLength && typeof promptMaxLength === 'number') {
+      return promptMaxLength;
+    }
+
+    return DEFAULT_LIMIT;
   }, []);
 
   /**

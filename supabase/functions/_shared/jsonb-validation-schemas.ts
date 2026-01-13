@@ -230,12 +230,19 @@ export function validateGenerationSettingsWithSchema(
   const schemaShape: Record<string, z.ZodTypeAny> = {
     // Always allow webhook token (internal security field)
     _webhook_token: z.string().min(16).max(128).optional(),
-    // Always allow prompt fields
-    prompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
-    positivePrompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
-    negativePrompt: z.string().max(MAX_PROMPT_LENGTH).optional(),
     enhance_prompt: z.boolean().optional(),
   };
+
+  // Handle prompt fields with model-specific maxLength
+  const promptFields = ['prompt', 'positivePrompt', 'negativePrompt'] as const;
+  for (const field of promptFields) {
+    const fieldSchema = modelSchema.properties?.[field] as { maxLength?: number } | undefined;
+    const maxLen = fieldSchema?.maxLength || MAX_PROMPT_LENGTH;
+    const fieldLabel = field === 'prompt' ? 'Prompt' : field === 'positivePrompt' ? 'Positive prompt' : 'Negative prompt';
+    schemaShape[field] = z.string().max(maxLen, { 
+      message: `${fieldLabel} exceeds ${maxLen.toLocaleString()} character limit`
+    }).optional();
+  }
 
   // Build validators from model schema properties
   for (const [key, propUnknown] of Object.entries(modelSchema.properties)) {

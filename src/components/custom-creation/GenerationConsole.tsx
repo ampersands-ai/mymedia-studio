@@ -103,10 +103,14 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                   </div>
                   <div className="flex-1 space-y-2">
                     <h3 className="font-semibold text-foreground">Generation Failed</h3>
-                    <p className="text-sm font-semibold text-destructive">Model Status: Temporarily Offline, try a different model.</p>
+                    {(failedGenerationError.message.toLowerCase().includes('offline') || 
+                      failedGenerationError.message.toLowerCase().includes('provider') ||
+                      failedGenerationError.message.toLowerCase().includes('unavailable')) && (
+                      <p className="text-sm font-semibold text-destructive">Model Status: Temporarily Offline, try a different model.</p>
+                    )}
                     <p className="text-sm text-muted-foreground">{failedGenerationError.message}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Your credits have been refunded automatically
+                      If the generation failed, your credits will be refunded automatically.
                     </p>
                   </div>
                 </div>
@@ -126,12 +130,13 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
           ) : (
             // Normal generation display
             <>
-          {/* Only show "navigate away" message after setup phase completes (when apiCallStartTime is set) */}
-          {generationState.apiCallStartTime && (
+          {/* Show "navigate away" message when generation starts */}
+          {generationState.generationStartTime && !generationState.generatedOutput && generationState.generatedOutputs.length === 0 && (
             <div className="flex items-start gap-2">
               <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <p className="text-xs text-muted-foreground">
-                Feel free to navigate away - your generation will be saved in History
+                Feel free to navigate away - your generation will continue in the background. 
+                You'll receive an email when it's ready, and you can find it in <strong>My Creations</strong>.
               </p>
             </div>
           )}

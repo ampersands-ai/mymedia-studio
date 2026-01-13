@@ -160,14 +160,14 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
 
     const elapsedMs = Date.now() - pollingStartTimeRef.current;
 
-    // Check for 30-minute timeout
+    // Check for 180-minute max polling duration - gracefully transition to background
     if (elapsedMs >= MAX_POLLING_DURATION_MS) {
-      logger.error('[useOutputProcessor] 30-minute timeout reached', { generationId } as any);
+      logger.info('[useOutputProcessor] Max polling duration reached, continuing in background', { generationId } as any);
       clearPolling();
-      setError('Generation timed out after 30 minutes');
-      setStatus('error');
+      // Don't treat as error - generation continues in background
+      setStatus('idle');
       setIsProcessing(false);
-      optionsRef.current.onError?.('Generation timed out after 30 minutes');
+      // Don't call onError - this is not a failure, just stopping active polling
       return;
     }
 

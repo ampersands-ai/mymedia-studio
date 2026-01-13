@@ -8,15 +8,13 @@ import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film } from 'lucide-re
 import { cn } from '@/lib/utils';
 import type { BlackboardScene } from '@/hooks/storyboard/useBlackboardStoryboard';
 
-// Credit costs (should match model costs in registry)
-const IMAGE_CREDIT_COST = 5;
-
 interface BlackboardSceneCardProps {
   scene: BlackboardScene;
   index: number;
   totalScenes: number;
   disabled: boolean;
   previousImageUrl?: string;
+  imageCreditCost: number;
   onUpdate: (updates: Partial<BlackboardScene>) => void;
   onRemove: () => void;
   onRegenerateImage: () => void;
@@ -30,6 +28,7 @@ export function BlackboardSceneCard({
   index,
   totalScenes,
   disabled,
+  imageCreditCost,
   onUpdate,
   onRemove,
   onRegenerateImage,
@@ -204,7 +203,7 @@ export function BlackboardSceneCard({
             ) : (
               <Sparkles className="w-4 h-4 mr-2" />
             )}
-            {hasImage ? 'Regenerate Image' : `Generate Preview (${IMAGE_CREDIT_COST} credits)`}
+            {hasImage ? 'Regenerate Image' : `Generate Preview (${imageCreditCost} credits)`}
           </Button>
         </Card>
       </div>

@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { getAllModels } from '@/lib/models/registry';
 import { logger } from '@/lib/logger';
+import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
+import { MODEL_CONFIG as NANO_BANANA_CONFIG } from '@/lib/models/locked/prompt_to_image/Nano_Banana_Pro';
 
 export interface BlackboardScene {
   id: string;
@@ -64,7 +66,8 @@ export const useBlackboardStoryboard = () => {
   const generateSingleImage = useCallback(async (
     scene: BlackboardScene,
     sceneIndex: number,
-    previousImageUrl?: string
+    previousImageUrl?: string,
+    storyboardAspectRatio?: string
   ): Promise<string | null> => {
     if (!scene.imagePrompt.trim()) {
       return null;
@@ -82,12 +85,20 @@ export const useBlackboardStoryboard = () => {
         throw new Error('Image generation model not found');
       }
 
+      // Map storyboard aspect ratio to model parameters
+      const aspectRatioParams = storyboardAspectRatio 
+        ? mapAspectRatioToModelParameters(storyboardAspectRatio, modelModule.SCHEMA)
+        : {};
+
       const body: Record<string, unknown> = {
         model_id: modelModule.MODEL_CONFIG.modelId,
         model_record_id: modelModule.MODEL_CONFIG.recordId,
         model_config: modelModule.MODEL_CONFIG,
         model_schema: modelModule.SCHEMA,
         prompt: scene.imagePrompt,
+        custom_parameters: {
+          ...aspectRatioParams,
+        },
       };
 
       // Add image input for I2I mode
@@ -125,7 +136,7 @@ export const useBlackboardStoryboard = () => {
 
         updateScene(scene.id, { imageGenerationStatus: 'generating' });
         
-        const imageUrl = await generateSingleImage(scene, i, previousImageUrl);
+        const imageUrl = await generateSingleImage(scene, i, previousImageUrl, aspectRatio);
         
         if (imageUrl) {
           updateScene(scene.id, { 
@@ -148,7 +159,7 @@ export const useBlackboardStoryboard = () => {
     } finally {
       setIsGeneratingImages(false);
     }
-  }, [scenes, updateScene, generateSingleImage, refetchCredits]);
+  }, [scenes, aspectRatio, updateScene, generateSingleImage, refetchCredits]);
 
   const generateSingleVideo = useCallback(async (
     scene: BlackboardScene,
@@ -302,7 +313,7 @@ export const useBlackboardStoryboard = () => {
     
     updateScene(sceneId, { imageGenerationStatus: 'generating' });
     
-    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl);
+    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl, aspectRatio);
     
     if (imageUrl) {
       updateScene(sceneId, { 
@@ -316,7 +327,7 @@ export const useBlackboardStoryboard = () => {
     }
     
     refetchCredits();
-  }, [scenes, updateScene, generateSingleImage, refetchCredits]);
+  }, [scenes, aspectRatio, updateScene, generateSingleImage, refetchCredits]);
 
   // Regenerate a single image (clears existing, generates fresh)
   const regenerateImage = useCallback(async (sceneId: string) => {
@@ -331,7 +342,7 @@ export const useBlackboardStoryboard = () => {
       imageGenerationStatus: 'generating' 
     });
     
-    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl);
+    const imageUrl = await generateSingleImage(scene, sceneIndex, previousImageUrl, aspectRatio);
     
     if (imageUrl) {
       updateScene(sceneId, { 
@@ -345,7 +356,7 @@ export const useBlackboardStoryboard = () => {
     }
     
     refetchCredits();
-  }, [scenes, updateScene, generateSingleImage, refetchCredits]);
+  }, [scenes, aspectRatio, updateScene, generateSingleImage, refetchCredits]);
 
   // Generate a single video (for individual scene generation)
   const generateVideo = useCallback(async (sceneId: string) => {
@@ -408,9 +419,10 @@ export const useBlackboardStoryboard = () => {
     refetchCredits();
   }, [scenes, updateScene, generateSingleVideo, refetchCredits]);
 
-  // Calculate estimated costs
+  // Calculate estimated costs using actual model cost
+  const imageCreditCost = NANO_BANANA_CONFIG.baseCreditCost;
   const estimatedCost = {
-    images: scenes.filter(s => !s.generatedImageUrl && s.imagePrompt.trim()).length * 5, // ~5 credits per image
+    images: scenes.filter(s => !s.generatedImageUrl && s.imagePrompt.trim()).length * imageCreditCost,
     videos: Math.max(0, scenes.filter(s => s.generatedImageUrl).length - 1) * 50, // ~50 credits per video
     stitching: scenes.filter(s => s.generatedVideoUrl).length * 5 * 0.25, // ~0.25 credits per second
   };
@@ -438,5 +450,6 @@ export const useBlackboardStoryboard = () => {
     finalVideoUrl,
     estimatedCost,
     totalEstimatedCost,
+    imageCreditCost,
   };
 };

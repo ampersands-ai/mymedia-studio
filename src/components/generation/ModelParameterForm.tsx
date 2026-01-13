@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { SchemaInput } from "./SchemaInput";
 import type {
   ModelParameters,
@@ -76,14 +76,28 @@ export const ModelParameterForm = ({
     return updatedParams;
   };
 
-  const handleParameterChange = (key: string, value: ModelParameterValue) => {
-    let updated = { ...parameters, [key]: value };
-    
-    updated = autoCorrectDependencies(key, value, updated);
-    
-    setParameters(updated);
-    onChange(updated);
-  };
+  const handleParameterChange = useCallback((key: string, value: ModelParameterValue) => {
+    setParameters(prev => {
+      const updated = autoCorrectDependencies(key, value, { ...prev, [key]: value });
+      onChange(updated);
+      return updated;
+    });
+  }, [onChange]);
+
+  // Listen for storyboard duration change events
+  useEffect(() => {
+    const handleStoryboardDurationChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ duration: number }>;
+      const newDuration = customEvent.detail.duration;
+      handleParameterChange('n_frames', String(newDuration));
+    };
+
+    window.addEventListener('storyboard-duration-change', handleStoryboardDurationChange);
+
+    return () => {
+      window.removeEventListener('storyboard-duration-change', handleStoryboardDurationChange);
+    };
+  }, [handleParameterChange]);
 
   if (!modelSchema?.properties) {
     return null;

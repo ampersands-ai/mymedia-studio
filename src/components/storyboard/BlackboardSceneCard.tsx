@@ -109,17 +109,25 @@ export function BlackboardSceneCard({
             <div className="space-y-2">
               {scene.generatedImageUrl ? (
                 <>
-                  <div className="relative rounded-lg overflow-hidden border-2 border-primary/30">
+                  <div className="group relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-primary/5 to-primary/10 ring-1 ring-primary/20 hover:ring-primary/40">
+                    {/* Blur placeholder while loading */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 animate-pulse" />
                     <img
                       src={scene.generatedImageUrl}
                       alt={`Scene ${index + 1} image`}
-                      className="w-full h-32 object-cover"
+                      className="relative w-full h-36 object-cover transition-all duration-500 group-hover:scale-105"
+                      onLoad={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.previousElementSibling?.classList.add('hidden');
+                      }}
                     />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full hover:bg-primary/10 transition-colors"
                     onClick={onRegenerateImage}
                     disabled={disabled || isImageGenerating}
                   >
@@ -132,11 +140,17 @@ export function BlackboardSceneCard({
                   </Button>
                 </>
               ) : (
-                <div className="h-32 bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                <div className="h-36 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 transition-colors hover:border-muted-foreground/40">
                   {isImageGenerating ? (
-                    <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      <span className="text-xs text-muted-foreground">Generating...</span>
+                    </div>
                   ) : (
-                    <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
+                    <div className="flex flex-col items-center gap-1">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
+                      <span className="text-xs text-muted-foreground/60">No image yet</span>
+                    </div>
                   )}
                 </div>
               )}
@@ -169,10 +183,10 @@ export function BlackboardSceneCard({
               <div className="space-y-2">
                 {scene.generatedVideoUrl ? (
                   <>
-                    <div className="relative rounded-lg overflow-hidden border-2 border-primary/30">
+                    <div className="group relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-primary/5 to-primary/10 ring-1 ring-primary/20 hover:ring-primary/40">
                       <video
                         src={scene.generatedVideoUrl}
-                        className="w-full h-32 object-cover"
+                        className="w-full h-36 object-cover"
                         controls
                         muted
                       />
@@ -180,7 +194,7 @@ export function BlackboardSceneCard({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full hover:bg-primary/10 transition-colors"
                       onClick={onRegenerateVideo}
                       disabled={disabled || isVideoGenerating}
                     >
@@ -193,11 +207,17 @@ export function BlackboardSceneCard({
                     </Button>
                   </>
                 ) : (
-                  <div className="h-32 bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                  <div className="h-36 bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 transition-colors hover:border-muted-foreground/40">
                     {isVideoGenerating ? (
-                      <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        <span className="text-xs text-muted-foreground">Generating...</span>
+                      </div>
                     ) : (
-                      <Video className="w-8 h-8 text-muted-foreground/50" />
+                      <div className="flex flex-col items-center gap-1">
+                        <Video className="w-8 h-8 text-muted-foreground/40" />
+                        <span className="text-xs text-muted-foreground/60">No video yet</span>
+                      </div>
                     )}
                   </div>
                 )}

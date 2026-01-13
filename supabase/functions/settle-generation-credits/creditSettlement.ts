@@ -30,17 +30,9 @@ export async function releaseCredits(generationId: string): Promise<void> {
     updated_at: new Date().toISOString()
   }).eq("id", generationId);
 
-  // Refund the credits back to user since generation failed
-  const { data: subscription } = await supabase
-    .from("user_subscriptions")
-    .select("tokens_remaining")
-    .eq("user_id", generation.user_id)
-    .single();
-
-  if (subscription) {
-    await supabase.from("user_subscriptions").update({ 
-      tokens_remaining: subscription.tokens_remaining + generation.tokens_used,
-      updated_at: new Date().toISOString()
-    }).eq("user_id", generation.user_id);
-  }
+  // Refund the credits back to user atomically since generation failed
+  await supabase.rpc('increment_tokens', {
+    user_id_param: generation.user_id,
+    amount: generation.tokens_used
+  });
 }

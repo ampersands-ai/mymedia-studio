@@ -99,7 +99,7 @@ export function processBackgroundUpload(context: SyncGenerationContext): void {
       const completedAtMs = Date.now();
       const timingData = await calculateTimingData(supabase, generationId, completedAtMs);
 
-      // Update generation record
+      // Update generation record and mark as charged for audit trail
       await markGenerationCompleted(
         supabase,
         generationId,
@@ -110,6 +110,12 @@ export function processBackgroundUpload(context: SyncGenerationContext): void {
         providerRequest,
         providerResponse.metadata
       );
+      
+      // Set tokens_charged to complete the audit trail
+      await supabase
+        .from('generations')
+        .update({ tokens_charged: tokenCost })
+        .eq('id', generationId);
 
       logger.info('Timing data saved', {
         userId,

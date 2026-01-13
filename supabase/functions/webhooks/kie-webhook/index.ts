@@ -498,9 +498,10 @@ Deno.serve(async (req) => {
         output_url?: string | null;
       }
 
-      const updateData: GenerationUpdate = {
+      const updateData: GenerationUpdate & { tokens_charged: number } = {
         status: GENERATION_STATUS.COMPLETED,
         file_size_bytes: fileSize,
+        tokens_charged: generation.tokens_used, // Mark as charged for audit trail
         provider_response: {
           ...payload,
           kie_credits_consumed: consumeCredits || null,

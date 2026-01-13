@@ -95,27 +95,13 @@ export async function releaseCredits(generationId: string): Promise<void> {
     logger.error("Failed to mark generation as not charged", updateError);
   }
 
-  // Refund the credits back to user since generation failed
-  const { data: subscription, error: subError } = await supabase
-    .from("user_subscriptions")
-    .select("tokens_remaining")
-    .eq("user_id", generation.user_id)
-    .single();
-
-  if (subError || !subscription) {
-    logger.error("Failed to fetch subscription for refund", subError);
-    return;
-  }
-
-  const { error: refundError } = await supabase
-    .from("user_subscriptions")
-    .update({ 
-      tokens_remaining: subscription.tokens_remaining + generation.tokens_used,
-      updated_at: new Date().toISOString()
-    })
-    .eq("user_id", generation.user_id);
+  // Refund the credits back to user atomically since generation failed
+  const { error: refundError } = await supabase.rpc('increment_tokens', {
+    user_id_param: generation.user_id,
+    amount: generation.tokens_used
+  });
 
   if (refundError) {
-    logger.error("Failed to refund credits", refundError);
+    logger.error("Failed to refund credits via RPC", refundError);
   }
 }

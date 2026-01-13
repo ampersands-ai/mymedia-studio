@@ -9,6 +9,9 @@ import { useUserRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 // Filter out generations older than this threshold (1 hour)
 const STALE_GENERATION_THRESHOLD_MS = 60 * 60 * 1000;
 
+// Include recently completed generations for this duration (2 minutes)
+const RECENTLY_COMPLETED_THRESHOLD_MS = 2 * 60 * 1000;
+
 export interface ActiveGeneration {
   id: string;
   model_id: string;
@@ -17,6 +20,7 @@ export interface ActiveGeneration {
   prompt: string;
   status: string;
   created_at: string;
+  updated_at: string;
   model_record_id: string;
 }
 
@@ -37,11 +41,20 @@ export const useActiveGenerations = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
+      // Calculate timestamp for recently completed filter
+      const recentlyCompletedThreshold = new Date(
+        Date.now() - RECENTLY_COMPLETED_THRESHOLD_MS
+      ).toISOString();
+
+      // Query active generations OR recently completed/failed ones
       const { data, error } = await supabase
         .from("generations")
-        .select("id, model_id, prompt, status, created_at, model_record_id")
+        .select("id, model_id, prompt, status, created_at, updated_at, model_record_id")
         .eq("user_id", user.id)
-        .in("status", ACTIVE_GENERATION_STATUSES as unknown as string[])
+        .or(
+          `status.in.(${ACTIVE_GENERATION_STATUSES.join(',')}),` +
+          `and(status.in.(completed,failed),updated_at.gte.${recentlyCompletedThreshold})`
+        )
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -71,6 +84,7 @@ export const useActiveGenerations = () => {
             prompt: gen.prompt as string,
             status: gen.status as string,
             created_at: gen.created_at as string,
+            updated_at: (gen.updated_at as string) || (gen.created_at as string),
             model_record_id: gen.model_record_id as string,
           };
         });

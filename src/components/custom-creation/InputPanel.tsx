@@ -445,6 +445,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                               modelSchema={modelSchema}
                               modelId={modelId}
                               provider={provider}
+                              onParameterChange={(k, v) => onModelParametersChange({ ...modelParameters, [k]: v })}
                             />
                             <SchemaInput
                               name={nextKey}
@@ -457,6 +458,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                               modelSchema={modelSchema}
                               modelId={modelId}
                               provider={provider}
+                              onParameterChange={(k, v) => onModelParametersChange({ ...modelParameters, [k]: v })}
                             />
                           </div>
                         );
@@ -476,6 +478,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                           modelSchema={modelSchema}
                           modelId={modelId}
                           provider={provider}
+                          onParameterChange={(k, v) => onModelParametersChange({ ...modelParameters, [k]: v })}
                         />
                       );
                     });

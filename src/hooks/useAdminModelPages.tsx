@@ -33,6 +33,8 @@ export interface ModelSampleInput {
   title?: string;
   prompt: string;
   negative_prompt?: string;
+  input_url?: string;
+  input_type?: string;
   output_url: string;
   output_type: string;
   thumbnail_url?: string;

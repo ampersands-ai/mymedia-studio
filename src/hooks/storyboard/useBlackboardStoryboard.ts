@@ -251,8 +251,8 @@ export const useBlackboardStoryboard = () => {
       
       // Check if it's an async generation that needs polling
       if (data?.is_async && data?.generation_id) {
-        // Poll for the result (video can take longer - 180 seconds)
-        return await pollForGenerationResult(data.generation_id, 180);
+        // Poll for the result (video can take up to 10 minutes - 600 seconds)
+        return await pollForGenerationResult(data.generation_id, 600);
       }
       
       return data?.output_url || null;

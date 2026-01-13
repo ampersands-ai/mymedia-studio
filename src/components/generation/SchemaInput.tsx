@@ -21,7 +21,7 @@ import type {
   ModelParameters,
   ModelParameterValue
 } from "@/types/model-schema";
-import { StoryboardShotsInput, Shot } from "./StoryboardShotsInput";
+import { StoryboardShotsInput, Shot, DurationOption } from "./StoryboardShotsInput";
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -105,15 +105,46 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
     schema.items?.properties?.Scene &&
     schema.items?.properties?.duration;
 
+  // Check if this is n_frames for a storyboard model - skip rendering (will be inside StoryboardShotsInput)
+  const isStoryboardDuration = 
+    name === "n_frames" && 
+    allValues && 
+    "shots" in allValues;
+
+  if (isStoryboardDuration) {
+    return null; // Rendered inside StoryboardShotsInput
+  }
+
   // Handle storyboard shots with custom component
   if (isStoryboardShots) {
     const totalDuration = parseInt(allValues?.n_frames as string || "15");
     const shotsValue = Array.isArray(value) ? (value as unknown as Shot[]) : [];
+    
+    // Get duration options from n_frames schema
+    const schemaProperties = modelSchema?.properties as Record<string, { enum?: string[]; enumLabels?: Record<string, string> }> | undefined;
+    const nFramesSchema = schemaProperties?.n_frames;
+    const durationOptions: DurationOption[] = nFramesSchema?.enum?.map((v: string) => ({
+      value: v,
+      label: nFramesSchema?.enumLabels?.[v] || `${v}s`
+    })) || [];
+
+    // Create a handler to update n_frames in the parent form
+    const handleDurationChange = (newDuration: number) => {
+      // This requires accessing the parent's onChange for n_frames
+      // We'll emit a custom event that the parent form can listen to
+      const event = new CustomEvent('storyboard-duration-change', { 
+        detail: { duration: newDuration } 
+      });
+      window.dispatchEvent(event);
+    };
+
     return (
       <StoryboardShotsInput
         value={shotsValue}
         onChange={(shots) => onChange(shots as unknown as ModelParameterValue)}
         totalDuration={totalDuration}
+        onDurationChange={handleDurationChange}
+        durationOptions={durationOptions}
         required={isRequired}
       />
     );

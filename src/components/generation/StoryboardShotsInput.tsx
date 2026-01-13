@@ -68,12 +68,13 @@ export const StoryboardShotsInput = ({
 
   const autoDistribute = () => {
     const count = shots.length;
-    const perScene = Math.round((totalDuration / count) * 10) / 10;
-    const remainder = Math.round((totalDuration - perScene * count) * 10) / 10;
+    const basePerScene = Math.floor(totalDuration / count);
+    const remainder = totalDuration - (basePerScene * count);
     
-    const newShots = shots.map((shot, i) => ({
+    const newShots = shots.map((shot, index) => ({
       ...shot,
-      duration: i === 0 ? perScene + remainder : perScene
+      // Distribute remainder to first scenes (1 extra second each)
+      duration: basePerScene + (index < remainder ? 1 : 0)
     }));
     onChange(newShots);
   };

@@ -149,7 +149,7 @@ export const SCHEMA = Object.freeze({
       type: "boolean",
       title: "Return Timestamps",
       default: false,
-      showToUser: false,
+      showToUser: true,
       description: "Whether to return timestamps for each word",
       isAdvanced: true,
     },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins } from 'lucide-react';
+import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins, XCircle } from 'lucide-react';
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { BlackboardSceneCard } from './BlackboardSceneCard';
 import { BlackboardStoryboardSelector } from './BlackboardStoryboardSelector';
@@ -23,9 +23,13 @@ import { useBlackboardStoryboard, VideoModelType } from '@/hooks/storyboard/useB
 import { useBlackboardStoryboardList } from '@/hooks/storyboard/useBlackboardStoryboardList';
 import { useUserCredits } from '@/hooks/useUserCredits';
 
+// Stuck threshold: 5 minutes
+const STUCK_THRESHOLD_MS = 5 * 60 * 1000;
+
 export function BlackboardStoryboardInput() {
   const [showRenderOptions, setShowRenderOptions] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [isStuck, setIsStuck] = useState(false);
   const {
     scenes,
     aspectRatio,
@@ -58,10 +62,31 @@ export function BlackboardStoryboardInput() {
     loadStoryboard,
     createNewStoryboard,
     deleteStoryboard,
+    videoGenerationStartTime,
+    cancelVideoGeneration,
   } = useBlackboardStoryboard();
 
   const { storyboards, isLoading: isLoadingList, refetch: refetchList } = useBlackboardStoryboardList();
   const { availableCredits } = useUserCredits();
+
+  // Check for stuck state
+  useEffect(() => {
+    if (!isGeneratingVideos || !videoGenerationStartTime) {
+      setIsStuck(false);
+      return;
+    }
+
+    const checkStuck = () => {
+      const elapsed = Date.now() - videoGenerationStartTime;
+      setIsStuck(elapsed > STUCK_THRESHOLD_MS);
+    };
+
+    // Check immediately and then every 10 seconds
+    checkStuck();
+    const interval = setInterval(checkStuck, 10000);
+
+    return () => clearInterval(interval);
+  }, [isGeneratingVideos, videoGenerationStartTime]);
 
   const allImagesGenerated = scenes.every(s => s.generatedImageUrl);
   const allVideosGenerated = scenes.slice(0, -1).every(s => s.generatedVideoUrl);
@@ -257,24 +282,39 @@ export function BlackboardStoryboardInput() {
           </Button>
 
           {/* Step 2: Generate All Videos */}
-          <Button
-            onClick={generateAllVideos}
-            disabled={!allImagesGenerated || !hasAnyVideoPrompt || isProcessing || scenes.length < 2}
-            className="w-full"
-            variant={allVideosGenerated ? "secondary" : "default"}
-          >
-            {isGeneratingVideos ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating Videos...
-              </>
-            ) : (
-              <>
-                <Video className="w-4 h-4 mr-2" />
-                {allVideosGenerated ? 'All Videos Generated ✓' : '2. Generate All Videos'}
-              </>
+          <div className="space-y-2">
+            <Button
+              onClick={generateAllVideos}
+              disabled={!allImagesGenerated || !hasAnyVideoPrompt || isProcessing || scenes.length < 2}
+              className="w-full"
+              variant={allVideosGenerated ? "secondary" : "default"}
+            >
+              {isGeneratingVideos ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating Videos...
+                </>
+              ) : (
+                <>
+                  <Video className="w-4 h-4 mr-2" />
+                  {allVideosGenerated ? 'All Videos Generated ✓' : '2. Generate All Videos'}
+                </>
+              )}
+            </Button>
+            
+            {/* Cancel button for stuck generation */}
+            {isGeneratingVideos && isStuck && (
+              <Button
+                onClick={cancelVideoGeneration}
+                variant="destructive"
+                size="sm"
+                className="w-full"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancel Stuck Generation
+              </Button>
             )}
-          </Button>
+          </div>
 
           {/* Step 3: Render Final Video */}
           <Button

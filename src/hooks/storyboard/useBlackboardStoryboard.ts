@@ -31,6 +31,9 @@ const VIDEO_MODEL_HQ_ID = 'a5c2ec16-6294-4588-86b6-7b4182601cda'; // Google Veo 
 
 const STORAGE_KEY = 'blackboard_storyboard_id';
 
+// Stuck detection threshold (5 minutes)
+
+
 export type VideoModelType = 'lite' | 'hq';
 
 export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
@@ -82,8 +85,9 @@ export const useBlackboardStoryboard = () => {
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
   const { refetch: refetchCredits } = useUserCredits();
-  const { waitForGeneration } = useBlackboardPolling();
+  const { waitForGeneration, cleanup: cleanupPolling } = useBlackboardPolling();
 
   // Load storyboard from database on mount
   useEffect(() => {
@@ -479,9 +483,17 @@ export const useBlackboardStoryboard = () => {
     }
 
     setIsGeneratingVideos(true);
+    setVideoGenerationStartTime(Date.now());
     
     try {
-      // Generate N-1 videos (each video uses adjacent image pairs)
+      // Collect all video generation tasks
+      const videoTasks: Array<{
+        scene: BlackboardScene;
+        startUrl: string;
+        endUrl: string;
+        index: number;
+      }> = [];
+
       for (let i = 0; i < scenes.length - 1; i++) {
         const currentScene = scenes[i];
         const nextScene = scenes[i + 1];
@@ -490,27 +502,88 @@ export const useBlackboardStoryboard = () => {
         if (currentScene.generatedVideoUrl) continue; // Skip already generated
         if (!currentScene.videoPrompt.trim()) continue;
 
-        updateScene(currentScene.id, { videoGenerationStatus: 'generating' });
-        
-        const videoUrl = await generateSingleVideo(
-          currentScene,
-          currentScene.generatedImageUrl,
-          nextScene.generatedImageUrl,
-          videoModelType
-        );
-        
-        if (videoUrl) {
-          updateScene(currentScene.id, { 
-            generatedVideoUrl: videoUrl, 
-            videoGenerationStatus: 'complete' 
-          });
-        } else {
-          updateScene(currentScene.id, { videoGenerationStatus: 'failed' });
-        }
+        videoTasks.push({
+          scene: currentScene,
+          startUrl: currentScene.generatedImageUrl,
+          endUrl: nextScene.generatedImageUrl,
+          index: i
+        });
       }
 
+      if (videoTasks.length === 0) {
+        toast.info('No videos to generate');
+        setIsGeneratingVideos(false);
+        return;
+      }
+
+      // Mark all as generating upfront
+      for (const task of videoTasks) {
+        updateScene(task.scene.id, { videoGenerationStatus: 'generating' });
+      }
+
+      // Stagger delay between API calls (4 seconds)
+      const STAGGER_DELAY_MS = 4000;
+
+      // Launch all API calls with staggered starts, track independently
+      const videoPromises = videoTasks.map((task, idx) => 
+        (async () => {
+          // Stagger the start to avoid rate limiting
+          if (idx > 0) {
+            await new Promise(r => setTimeout(r, idx * STAGGER_DELAY_MS));
+          }
+
+          logger.info('Starting parallel video generation', {
+            sceneId: task.scene.id,
+            index: task.index,
+            delayMs: idx * STAGGER_DELAY_MS,
+            component: 'useBlackboardStoryboard'
+          });
+
+          try {
+            const videoUrl = await generateSingleVideo(
+              task.scene,
+              task.startUrl,
+              task.endUrl,
+              videoModelType
+            );
+            
+            if (videoUrl) {
+              updateScene(task.scene.id, { 
+                generatedVideoUrl: videoUrl, 
+                videoGenerationStatus: 'complete' 
+              });
+              return { sceneId: task.scene.id, success: true };
+            } else {
+              updateScene(task.scene.id, { videoGenerationStatus: 'failed' });
+              return { sceneId: task.scene.id, success: false, error: 'No video URL returned' };
+            }
+          } catch (error) {
+            logger.error('Video generation failed for scene', error instanceof Error ? error : new Error(String(error)), {
+              sceneId: task.scene.id,
+              component: 'useBlackboardStoryboard'
+            });
+            updateScene(task.scene.id, { videoGenerationStatus: 'failed' });
+            return { sceneId: task.scene.id, success: false, error: error instanceof Error ? error.message : String(error) };
+          }
+        })()
+      );
+
+      // Wait for all videos to complete (in parallel)
+      const results = await Promise.allSettled(videoPromises);
+      
+      // Count successes and failures
+      const successes = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
+      const failures = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+
       refetchCredits();
-      toast.success('Video generation complete!');
+      
+      if (failures === 0) {
+        toast.success(`All ${successes} videos generated successfully!`);
+      } else if (successes > 0) {
+        toast.warning(`${successes} videos generated, ${failures} failed`);
+      } else {
+        toast.error('Video generation failed');
+      }
     } catch (error) {
       logger.error('Blackboard batch video generation failed', error instanceof Error ? error : new Error(String(error)), {
         component: 'useBlackboardStoryboard',
@@ -518,6 +591,7 @@ export const useBlackboardStoryboard = () => {
       toast.error('Failed to generate videos');
     } finally {
       setIsGeneratingVideos(false);
+      setVideoGenerationStartTime(null);
     }
   }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
@@ -1157,6 +1231,23 @@ export const useBlackboardStoryboard = () => {
     }
   }, [storyboardId]);
 
+  // Cancel stuck video generation
+  const cancelVideoGeneration = useCallback(() => {
+    cleanupPolling();
+    setIsGeneratingVideos(false);
+    setVideoGenerationStartTime(null);
+    
+    // Reset any scenes stuck in 'generating' status
+    setScenes(prev => prev.map(scene => {
+      if (scene.videoGenerationStatus === 'generating') {
+        return { ...scene, videoGenerationStatus: 'failed' };
+      }
+      return scene;
+    }));
+    
+    toast.warning('Video generation cancelled. Some videos may have completed.');
+  }, [cleanupPolling]);
+
   return {
     scenes,
     aspectRatio,
@@ -1189,5 +1280,7 @@ export const useBlackboardStoryboard = () => {
     loadStoryboard,
     createNewStoryboard,
     deleteStoryboard,
+    videoGenerationStartTime,
+    cancelVideoGeneration,
   };
 };

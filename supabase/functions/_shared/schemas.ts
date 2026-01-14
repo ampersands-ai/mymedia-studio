@@ -118,6 +118,9 @@ export const GenerateContentRequestSchema = z.object({
   // Pre-calculated cost from model's calculateCost() function (for audio-duration-based pricing)
   // When provided, edge function uses this instead of recalculating
   preCalculatedCost: z.number().positive().max(10000).optional(),
+  
+  // Link generation to blackboard scene for automatic sync via database trigger
+  blackboard_scene_id: z.string().uuid().optional(),
 });
 
 export const ModelInputSchemaPropertySchema = z.object({

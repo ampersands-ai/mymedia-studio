@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserCredits } from '@/hooks/useUserCredits';
@@ -8,6 +8,7 @@ import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 import { MODEL_CONFIG as NANO_BANANA_CONFIG } from '@/lib/models/locked/prompt_to_image/Nano_Banana_Pro';
 import { useBlackboardPolling } from './useBlackboardPolling';
 import { getPublicImageUrl } from '@/lib/supabase-images';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface BlackboardScene {
   id: string;
@@ -28,6 +29,8 @@ const IMAGE_TO_IMAGE_MODEL_ID = 'b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e'; // Nano 
 const VIDEO_MODEL_REFERENCE_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
 const VIDEO_MODEL_FIRST_LAST_ID = '8aac94cb-5625-47f4-880c-4f0fd8bd83a1'; // Google Veo 3.1 Fast (Image-to-Video)
 
+const STORAGE_KEY = 'blackboard_storyboard_id';
+
 export type VideoModelType = 'reference' | 'first_last_frames';
 
 export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
@@ -41,7 +44,35 @@ export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => (
   usePreviousImageAsSeed: !isFirst,
 });
 
+// Map DB scene to local scene
+const mapDbSceneToLocal = (dbScene: any): BlackboardScene => ({
+  id: dbScene.id,
+  imagePrompt: dbScene.image_prompt || '',
+  generatedImageUrl: dbScene.generated_image_url || undefined,
+  imageGenerationStatus: (dbScene.image_generation_status as BlackboardScene['imageGenerationStatus']) || 'idle',
+  videoPrompt: dbScene.video_prompt || '',
+  generatedVideoUrl: dbScene.generated_video_url || undefined,
+  videoGenerationStatus: (dbScene.video_generation_status as BlackboardScene['videoGenerationStatus']) || 'idle',
+  usePreviousImageAsSeed: dbScene.use_previous_image_as_seed ?? true,
+});
+
+// Map local scene to DB format
+const mapLocalSceneToDb = (scene: BlackboardScene, storyboardId: string, orderNumber: number) => ({
+  id: scene.id,
+  storyboard_id: storyboardId,
+  order_number: orderNumber,
+  image_prompt: scene.imagePrompt,
+  generated_image_url: scene.generatedImageUrl || null,
+  image_generation_status: scene.imageGenerationStatus,
+  video_prompt: scene.videoPrompt,
+  generated_video_url: scene.generatedVideoUrl || null,
+  video_generation_status: scene.videoGenerationStatus,
+  use_previous_image_as_seed: scene.usePreviousImageAsSeed,
+});
+
 export const useBlackboardStoryboard = () => {
+  const { user } = useAuth();
+  const [storyboardId, setStoryboardId] = useState<string | null>(null);
   const [scenes, setScenes] = useState<BlackboardScene[]>([createEmptyScene(true)]);
   const [aspectRatio, setAspectRatio] = useState('hd');
   const [videoModelType, setVideoModelType] = useState<VideoModelType>('first_last_frames');
@@ -49,11 +80,156 @@ export const useBlackboardStoryboard = () => {
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { refetch: refetchCredits } = useUserCredits();
   const { waitForGeneration } = useBlackboardPolling();
 
-  const addScene = useCallback(() => {
-    setScenes(prev => [...prev, createEmptyScene(false)]);
+  // Load storyboard from database on mount
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadStoryboard = async () => {
+      try {
+        // Check localStorage for existing storyboard ID
+        const savedId = localStorage.getItem(STORAGE_KEY);
+        
+        if (savedId) {
+          // Try to load existing storyboard
+          const { data: storyboard, error: storyboardError } = await supabase
+            .from('blackboard_storyboards')
+            .select('*')
+            .eq('id', savedId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (storyboard && !storyboardError) {
+            setStoryboardId(storyboard.id);
+            setAspectRatio(storyboard.aspect_ratio || 'hd');
+            setVideoModelType((storyboard.video_model_type as VideoModelType) || 'first_last_frames');
+            setFinalVideoUrl(storyboard.final_video_url || null);
+
+            // Load scenes
+            const { data: dbScenes, error: scenesError } = await supabase
+              .from('blackboard_scenes')
+              .select('*')
+              .eq('storyboard_id', storyboard.id)
+              .order('order_number', { ascending: true });
+
+            if (dbScenes && dbScenes.length > 0 && !scenesError) {
+              setScenes(dbScenes.map(mapDbSceneToLocal));
+            }
+            
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // No existing storyboard found, create a new one
+        const { data: newStoryboard, error: createError } = await supabase
+          .from('blackboard_storyboards')
+          .insert({
+            user_id: user.id,
+            aspect_ratio: 'hd',
+            video_model_type: 'first_last_frames',
+            status: 'draft',
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        if (newStoryboard) {
+          setStoryboardId(newStoryboard.id);
+          localStorage.setItem(STORAGE_KEY, newStoryboard.id);
+
+          // Create initial scene
+          const initialScene = createEmptyScene(true);
+          const { error: sceneError } = await supabase
+            .from('blackboard_scenes')
+            .insert(mapLocalSceneToDb(initialScene, newStoryboard.id, 0));
+
+          if (sceneError) throw sceneError;
+          setScenes([initialScene]);
+        }
+      } catch (error) {
+        logger.error('Failed to load blackboard storyboard', error instanceof Error ? error : new Error(String(error)), {
+          component: 'useBlackboardStoryboard',
+        });
+        toast.error('Failed to load storyboard');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoryboard();
+  }, [user]);
+
+  // Debounced save to database
+  const saveToDatabase = useCallback(async (
+    currentScenes: BlackboardScene[],
+    currentAspectRatio: string,
+    currentVideoModelType: VideoModelType,
+    currentFinalVideoUrl: string | null
+  ) => {
+    if (!storyboardId || !user) return;
+
+    setIsSaving(true);
+    try {
+      // Update storyboard settings
+      await supabase
+        .from('blackboard_storyboards')
+        .update({
+          aspect_ratio: currentAspectRatio,
+          video_model_type: currentVideoModelType,
+          final_video_url: currentFinalVideoUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storyboardId);
+
+      // Upsert scenes
+      const scenesToUpsert = currentScenes.map((scene, index) => 
+        mapLocalSceneToDb(scene, storyboardId, index)
+      );
+
+      await supabase
+        .from('blackboard_scenes')
+        .upsert(scenesToUpsert, { onConflict: 'id' });
+
+      // Delete scenes that no longer exist
+      const currentSceneIds = currentScenes.map(s => s.id);
+      await supabase
+        .from('blackboard_scenes')
+        .delete()
+        .eq('storyboard_id', storyboardId)
+        .not('id', 'in', `(${currentSceneIds.join(',')})`);
+
+    } catch (error) {
+      logger.error('Failed to save blackboard storyboard', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useBlackboardStoryboard',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [storyboardId, user]);
+
+  // Auto-save on changes (debounced)
+  useEffect(() => {
+    if (!storyboardId || isLoading) return;
+
+    const timeoutId = setTimeout(() => {
+      saveToDatabase(scenes, aspectRatio, videoModelType, finalVideoUrl);
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [scenes, aspectRatio, videoModelType, finalVideoUrl, storyboardId, isLoading, saveToDatabase]);
+
+  const addScene = useCallback(async () => {
+    const newScene = createEmptyScene(false);
+    setScenes(prev => [...prev, newScene]);
   }, []);
 
   const removeScene = useCallback((sceneId: string) => {
@@ -201,9 +377,12 @@ export const useBlackboardStoryboard = () => {
 
       // For reference mode - use single image as style reference
       // For first/last frame mode - use both images in order
-      const imageUrls = modelType === 'reference' 
+      const rawImageUrls = modelType === 'reference' 
         ? [startImageUrl] 
         : [startImageUrl, endImageUrl];
+
+      // Normalize image URLs to full public URLs
+      const normalizedImageUrls = rawImageUrls.map(url => getPublicImageUrl(url));
 
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
@@ -212,7 +391,10 @@ export const useBlackboardStoryboard = () => {
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
           prompt: scene.videoPrompt,
-          imageUrls,
+          custom_parameters: {
+            imageUrls: normalizedImageUrls,
+            aspectRatio: aspectRatio === 'hd' ? '16:9' : '9:16',
+          },
         },
       });
 
@@ -232,7 +414,7 @@ export const useBlackboardStoryboard = () => {
       });
       return null;
     }
-  }, [waitForGeneration]);
+  }, [waitForGeneration, aspectRatio]);
 
   const generateAllVideos = useCallback(async () => {
     // Validate all images are generated
@@ -333,10 +515,41 @@ export const useBlackboardStoryboard = () => {
     }
   }, [scenes, aspectRatio, refetchCredits]);
 
-  const resetAll = useCallback(() => {
-    setScenes([createEmptyScene(true)]);
+  const resetAll = useCallback(async () => {
+    const initialScene = createEmptyScene(true);
+    setScenes([initialScene]);
     setFinalVideoUrl(null);
-  }, []);
+
+    // If we have a storyboard ID, also reset in database
+    if (storyboardId) {
+      try {
+        // Delete all existing scenes
+        await supabase
+          .from('blackboard_scenes')
+          .delete()
+          .eq('storyboard_id', storyboardId);
+
+        // Create new initial scene
+        await supabase
+          .from('blackboard_scenes')
+          .insert(mapLocalSceneToDb(initialScene, storyboardId, 0));
+
+        // Reset storyboard
+        await supabase
+          .from('blackboard_storyboards')
+          .update({
+            final_video_url: null,
+            status: 'draft',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', storyboardId);
+      } catch (error) {
+        logger.error('Failed to reset blackboard in database', error instanceof Error ? error : new Error(String(error)), {
+          component: 'useBlackboardStoryboard',
+        });
+      }
+    }
+  }, [storyboardId]);
 
   // Generate a single image (for individual scene generation)
   const generateImage = useCallback(async (sceneId: string) => {
@@ -490,5 +703,8 @@ export const useBlackboardStoryboard = () => {
     totalEstimatedCost,
     imageCreditCost,
     videoCreditCost,
+    isLoading,
+    isSaving,
+    storyboardId,
   };
 };

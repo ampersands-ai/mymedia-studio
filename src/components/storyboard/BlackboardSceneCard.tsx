@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BlackboardScene } from '@/hooks/storyboard/useBlackboardStoryboard';
 
@@ -17,6 +17,8 @@ interface BlackboardSceneCardProps {
   disabled: boolean;
   previousImageUrl?: string;
   imageCreditCost: number;
+  videoCreditCost: number;
+  nextSceneHasImage: boolean;
   onUpdate: (updates: Partial<BlackboardScene>) => void;
   onRemove: () => void;
   onRegenerateImage: () => void;
@@ -31,16 +33,22 @@ export function BlackboardSceneCard({
   totalScenes,
   disabled,
   imageCreditCost,
+  videoCreditCost,
+  nextSceneHasImage,
   onUpdate,
   onRemove,
   onRegenerateImage,
+  onRegenerateVideo,
   onGenerateImage,
+  onGenerateVideo,
 }: BlackboardSceneCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const isImageGenerating = scene.imageGenerationStatus === 'generating';
+  const isVideoGenerating = scene.videoGenerationStatus === 'generating';
   const hasImage = !!scene.generatedImageUrl;
   const hasVideo = !!scene.generatedVideoUrl;
   const isLastScene = index === totalScenes - 1;
+  const canGenerateVideo = hasImage && nextSceneHasImage && !isLastScene;
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -183,88 +191,159 @@ export function BlackboardSceneCard({
                 )}
               </div>
 
-              {/* RIGHT: Preview Card */}
-              <Card className="p-4 bg-card/95 backdrop-blur-xl border border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" />
-                    Scene {index + 1} Preview
-                  </h4>
-                  {hasImage && (
-                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
-                      Generated
-                    </Badge>
-                  )}
-                </div>
+              {/* RIGHT: Preview Cards */}
+              <div className="space-y-4">
+                {/* Image Preview Card */}
+                <Card className="p-4 bg-card/95 backdrop-blur-xl border border-border/30">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Scene {index + 1} Image
+                    </h4>
+                    {hasImage && (
+                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                        Generated
+                      </Badge>
+                    )}
+                  </div>
 
-                {/* Large Preview Area - 280px */}
-                <div className={cn(
-                  "relative h-[280px] rounded-xl overflow-hidden border-2 transition-all duration-300",
-                  hasImage 
-                    ? "border-primary/40 bg-black/5" 
-                    : "border-dashed border-muted-foreground/30 bg-muted/20"
-                )}>
-                  {isImageGenerating ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
-                      <div className="relative">
-                        <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                        <ImageIcon className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  {/* Image Preview Area */}
+                  <div className={cn(
+                    "relative h-[200px] rounded-xl overflow-hidden border-2 transition-all duration-300",
+                    hasImage 
+                      ? "border-primary/40 bg-black/5" 
+                      : "border-dashed border-muted-foreground/30 bg-muted/20"
+                  )}>
+                    {isImageGenerating ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                          <ImageIcon className="w-5 h-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-foreground">Generating Image...</p>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-foreground">Generating Image...</p>
-                        <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
-                      </div>
-                    </div>
-                  ) : hasImage ? (
-                    <div className="relative w-full h-full group">
+                    ) : hasImage ? (
                       <img
                         src={scene.generatedImageUrl}
                         alt={`Scene ${index + 1} preview`}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <p className="text-sm text-white font-medium">
-                            ✅ Image ready for video generation
-                          </p>
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+                        <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                          <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
                         </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
-                      <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-muted-foreground">No preview generated</p>
-                        <p className="text-xs text-muted-foreground/70 mt-1">
-                          Write a prompt and generate to see what this scene will look like
+                        <p className="text-xs text-muted-foreground text-center">
+                          Write a prompt and generate
                         </p>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Generate/Regenerate Button */}
-                <Button 
-                  className={cn(
-                    "w-full mt-4",
-                    hasImage && "bg-muted hover:bg-muted/80 text-foreground"
-                  )}
-                  variant={hasImage ? "outline" : "default"}
-                  onClick={hasImage ? onRegenerateImage : onGenerateImage}
-                  disabled={disabled || isImageGenerating || (!hasImage && !scene.imagePrompt.trim())}
-                >
-                  {isImageGenerating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : hasImage ? (
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  {hasImage ? 'Regenerate Image' : `Generate Preview (${imageCreditCost} credits)`}
-                </Button>
-              </Card>
+                  {/* Generate/Regenerate Image Button */}
+                  <Button 
+                    className={cn(
+                      "w-full mt-4",
+                      hasImage && "bg-muted hover:bg-muted/80 text-foreground"
+                    )}
+                    variant={hasImage ? "outline" : "default"}
+                    onClick={hasImage ? onRegenerateImage : onGenerateImage}
+                    disabled={disabled || isImageGenerating || (!hasImage && !scene.imagePrompt.trim())}
+                  >
+                    {isImageGenerating ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : hasImage ? (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    )}
+                    {hasImage ? 'Regenerate Image' : `Generate Image (${imageCreditCost} credits)`}
+                  </Button>
+                </Card>
+
+                {/* Video Preview Card - Only for non-last scenes */}
+                {!isLastScene && (
+                  <Card className="p-4 bg-card/95 backdrop-blur-xl border border-border/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                        <Video className="w-4 h-4" />
+                        Video (Scene {index + 1} → {index + 2})
+                      </h4>
+                      {hasVideo && (
+                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/30">
+                          Generated
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Video Preview Area */}
+                    <div className={cn(
+                      "relative h-[200px] rounded-xl overflow-hidden border-2 transition-all duration-300",
+                      hasVideo 
+                        ? "border-blue-500/40 bg-black/5" 
+                        : "border-dashed border-muted-foreground/30 bg-muted/20"
+                    )}>
+                      {isVideoGenerating ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
+                          <div className="relative">
+                            <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
+                            <Video className="w-5 h-5 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-medium text-foreground">Generating Video...</p>
+                            <p className="text-xs text-muted-foreground mt-1">This may take a few minutes</p>
+                          </div>
+                        </div>
+                      ) : hasVideo ? (
+                        <video
+                          src={scene.generatedVideoUrl}
+                          controls
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+                          <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                            <Video className="w-6 h-6 text-muted-foreground/50" />
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center">
+                            {!canGenerateVideo 
+                              ? "Generate images for both scenes first"
+                              : "Write a video prompt and generate"
+                            }
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Generate/Regenerate Video Button */}
+                    <Button 
+                      className={cn(
+                        "w-full mt-4",
+                        hasVideo && "bg-muted hover:bg-muted/80 text-foreground"
+                      )}
+                      variant={hasVideo ? "outline" : "default"}
+                      onClick={hasVideo ? onRegenerateVideo : onGenerateVideo}
+                      disabled={
+                        disabled || 
+                        isVideoGenerating || 
+                        !canGenerateVideo ||
+                        (!hasVideo && !scene.videoPrompt.trim())
+                      }
+                    >
+                      {isVideoGenerating ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : hasVideo ? (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 mr-2" />
+                      )}
+                      {hasVideo ? 'Regenerate Video' : `Generate Video (${videoCreditCost} credits)`}
+                    </Button>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
         </CollapsibleContent>

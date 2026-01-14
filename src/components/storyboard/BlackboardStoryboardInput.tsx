@@ -141,6 +141,8 @@ export function BlackboardStoryboardInput() {
                 disabled={isProcessing}
                 previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
                 imageCreditCost={imageCreditCost}
+                videoCreditCost={videoCreditCost}
+                nextSceneHasImage={index < scenes.length - 1 && !!scenes[index + 1]?.generatedImageUrl}
                 onUpdate={(updates) => updateScene(scene.id, updates)}
                 onRemove={() => removeScene(scene.id)}
                 onGenerateImage={() => generateImage(scene.id)}

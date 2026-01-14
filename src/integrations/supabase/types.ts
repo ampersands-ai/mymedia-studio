@@ -561,6 +561,92 @@ export type Database = {
         }
         Relationships: []
       }
+      blackboard_scenes: {
+        Row: {
+          created_at: string | null
+          generated_image_url: string | null
+          generated_video_url: string | null
+          id: string
+          image_generation_status: string | null
+          image_prompt: string | null
+          order_number: number
+          storyboard_id: string
+          updated_at: string | null
+          use_previous_image_as_seed: boolean | null
+          video_generation_status: string | null
+          video_prompt: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          generated_image_url?: string | null
+          generated_video_url?: string | null
+          id?: string
+          image_generation_status?: string | null
+          image_prompt?: string | null
+          order_number: number
+          storyboard_id: string
+          updated_at?: string | null
+          use_previous_image_as_seed?: boolean | null
+          video_generation_status?: string | null
+          video_prompt?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          generated_image_url?: string | null
+          generated_video_url?: string | null
+          id?: string
+          image_generation_status?: string | null
+          image_prompt?: string | null
+          order_number?: number
+          storyboard_id?: string
+          updated_at?: string | null
+          use_previous_image_as_seed?: boolean | null
+          video_generation_status?: string | null
+          video_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blackboard_scenes_storyboard_id_fkey"
+            columns: ["storyboard_id"]
+            isOneToOne: false
+            referencedRelation: "blackboard_storyboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blackboard_storyboards: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string | null
+          final_video_url: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          video_model_type: string | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          final_video_url?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_model_type?: string | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          final_video_url?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_model_type?: string | null
+        }
+        Relationships: []
+      }
       blog_backlinks: {
         Row: {
           anchor_text: string

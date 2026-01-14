@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -22,6 +21,8 @@ interface BlackboardSceneCardProps {
   imageCreditCost: number;
   videoCreditCost: number;
   nextSceneHasImage: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   onUpdate: (updates: Partial<BlackboardScene>) => void;
   onRemove: () => void;
   onRegenerateImage: () => void;
@@ -40,6 +41,8 @@ export function BlackboardSceneCard({
   imageCreditCost,
   videoCreditCost,
   nextSceneHasImage,
+  isExpanded,
+  onToggleExpand,
   onUpdate,
   onRemove,
   onRegenerateImage,
@@ -48,7 +51,6 @@ export function BlackboardSceneCard({
   onGenerateVideo,
   onCheckStatus,
 }: BlackboardSceneCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const isImageGenerating = scene.imageGenerationStatus === 'generating';
   const isVideoGenerating = scene.videoGenerationStatus === 'generating';
   const hasImage = !!scene.generatedImageUrl;
@@ -69,16 +71,16 @@ export function BlackboardSceneCard({
   const canGenerateImage = !waitingForSeed && scene.imagePrompt.trim();
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+    <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
       <div className="rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm overflow-hidden">
         {/* Collapsible Header */}
-        <div className="flex items-center gap-3 p-4">
+        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
           <CollapsibleTrigger asChild>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-muted/50 rounded-full"
+              className="h-8 w-8 p-0 hover:bg-muted/50 rounded-full flex-shrink-0"
             >
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4" />
@@ -88,44 +90,44 @@ export function BlackboardSceneCard({
             </Button>
           </CollapsibleTrigger>
 
-          <Badge className="bg-amber-600 hover:bg-amber-600 text-white px-4 py-1.5 text-sm font-bold rounded-full">
+          <Badge className="bg-amber-600 hover:bg-amber-600 text-white px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-full flex-shrink-0">
             Scene {index + 1}
           </Badge>
 
-          {/* Collapsed state preview */}
+          {/* Collapsed state preview - improved mobile layout */}
           {!isExpanded && (
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
               {hasImage && (
                 <img
                   src={normalizedImageUrl}
                   alt={`Scene ${index + 1}`}
-                  className="w-12 h-12 rounded-lg object-cover border border-border/30"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover border border-border/30 flex-shrink-0"
                 />
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
                 <Badge variant="outline" className={cn(
-                  "text-xs",
+                  "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 whitespace-nowrap",
                   hasImage 
                     ? "bg-green-500/10 text-green-500 border-green-500/30" 
                     : "bg-muted text-muted-foreground"
                 )}>
-                  {hasImage ? 'Image Ready' : 'No Image'}
+                  {hasImage ? '✓ Image' : 'No Image'}
                 </Badge>
                 {!isLastScene && (
                   <Badge variant="outline" className={cn(
-                    "text-xs",
+                    "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 whitespace-nowrap",
                     hasVideo 
                       ? "bg-blue-500/10 text-blue-500 border-blue-500/30" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    {hasVideo ? 'Video Ready' : 'No Video'}
+                    {hasVideo ? '✓ Video' : 'No Video'}
                   </Badge>
                 )}
               </div>
             </div>
           )}
 
-          <div className="ml-auto">
+          <div className="ml-auto flex-shrink-0">
             {totalScenes > 1 && (
               <Button
                 type="button"

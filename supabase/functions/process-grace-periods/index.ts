@@ -45,6 +45,79 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     let expiredGracePeriods = 0;
     let appliedDowngrades = 0;
+    let expiredActiveSubscriptions = 0;
+
+    // ============================================
+    // STEP 0: Fix Active Subscriptions with Expired Billing Period
+    // ============================================
+    // Find users marked as "active" but whose billing period has ended
+    // This catches subscriptions that weren't properly updated via webhooks
+    const { data: expiredActiveUsers, error: expiredActiveError } = await supabase
+      .from('user_subscriptions')
+      .select('user_id, plan, current_period_end, stripe_subscription_id, dodo_subscription_id')
+      .eq('status', 'active')
+      .lt('current_period_end', now)
+      .not('current_period_end', 'is', null);
+
+    if (expiredActiveError) {
+      logger.error('Error fetching expired active subscriptions', expiredActiveError as unknown as Error);
+    } else if (expiredActiveUsers && expiredActiveUsers.length > 0) {
+      logger.info('Found active subscriptions with expired billing period', { 
+        metadata: { count: expiredActiveUsers.length } 
+      });
+
+      for (const user of expiredActiveUsers) {
+        try {
+          // Set a 30-day grace period from now and mark as cancelled
+          const gracePeriodEnd = new Date();
+          gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 30);
+
+          const { error: updateError } = await supabase
+            .from('user_subscriptions')
+            .update({
+              status: 'cancelled',
+              grace_period_end: gracePeriodEnd.toISOString(),
+              // Freeze current credits
+              frozen_credits: null, // Will be set by trigger if needed
+            })
+            .eq('user_id', user.user_id);
+
+          if (updateError) {
+            logger.error('Failed to process expired active subscription', updateError as unknown as Error, {
+              metadata: { userId: user.user_id }
+            });
+          } else {
+            expiredActiveSubscriptions++;
+            logger.info('Processed expired active subscription - set to grace period', {
+              metadata: { 
+                userId: user.user_id, 
+                previousPlan: user.plan,
+                currentPeriodEnd: user.current_period_end,
+                gracePeriodEnd: gracePeriodEnd.toISOString()
+              }
+            });
+
+            // Audit log
+            await supabase.from('audit_logs').insert({
+              user_id: user.user_id,
+              action: 'system.expired_active_fixed',
+              resource_type: 'subscription',
+              metadata: { 
+                previousPlan: user.plan,
+                currentPeriodEnd: user.current_period_end,
+                newStatus: 'cancelled',
+                gracePeriodEnd: gracePeriodEnd.toISOString(),
+                reason: 'Subscription billing period expired but status was still active',
+              },
+            });
+          }
+        } catch (err) {
+          logger.error('Exception processing expired active subscription', err as Error, {
+            metadata: { userId: user.user_id }
+          });
+        }
+      }
+    }
 
     // ============================================
     // STEP 1: Process Expired Grace Periods
@@ -185,6 +258,7 @@ Deno.serve(async (req) => {
     }
 
     const summary = {
+      expiredActiveSubscriptions,
       expiredGracePeriods,
       appliedDowngrades,
       processedAt: now,

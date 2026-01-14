@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight, Video, Clock } from 'lucide-react';
+import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight, Video, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPublicImageUrl } from '@/lib/supabase-images';
 import type { BlackboardScene } from '@/hooks/storyboard/useBlackboardStoryboard';
@@ -22,6 +22,7 @@ interface BlackboardSceneCardProps {
   videoCreditCost: number;
   nextSceneHasImage: boolean;
   isExpanded: boolean;
+  isStuck?: boolean; // Scene has been generating for >5 minutes
   onToggleExpand: () => void;
   onUpdate: (updates: Partial<BlackboardScene>) => void;
   onRemove: () => void;
@@ -42,6 +43,7 @@ export function BlackboardSceneCard({
   videoCreditCost,
   nextSceneHasImage,
   isExpanded,
+  isStuck = false,
   onToggleExpand,
   onUpdate,
   onRemove,
@@ -239,12 +241,26 @@ export function BlackboardSceneCard({
                     {isVideoGenerating ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-sm">
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
-                          <Video className="w-5 h-5 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          <div className={cn(
+                            "w-12 h-12 rounded-full border-4 border-t-blue-500 animate-spin",
+                            isStuck ? "border-amber-500/20" : "border-blue-500/20"
+                          )} />
+                          {isStuck ? (
+                            <AlertTriangle className="w-5 h-5 text-amber-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          ) : (
+                            <Video className="w-5 h-5 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          )}
                         </div>
                         <div className="text-center">
-                          <p className="text-sm font-medium text-foreground">Generating Video...</p>
-                          <p className="text-xs text-muted-foreground mt-1">This may take a few minutes</p>
+                          <p className={cn(
+                            "text-sm font-medium",
+                            isStuck ? "text-amber-500" : "text-foreground"
+                          )}>
+                            {isStuck ? 'Generation Stuck' : 'Generating Video...'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {isStuck ? 'Click "Regenerate" to retry' : 'This may take a few minutes'}
+                          </p>
                         </div>
                       </div>
                     ) : isImageGenerating ? (
@@ -328,25 +344,32 @@ export function BlackboardSceneCard({
                       <Button 
                         className={cn(
                           "flex-1 w-full sm:w-auto",
-                          hasVideo && "bg-muted hover:bg-muted/80 text-foreground"
+                          hasVideo && "bg-muted hover:bg-muted/80 text-foreground",
+                          isStuck && "border-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
                         )}
-                        variant={hasVideo ? "outline" : "default"}
-                        onClick={hasVideo ? onRegenerateVideo : onGenerateVideo}
+                        variant={hasVideo ? "outline" : isStuck ? "outline" : "default"}
+                        onClick={hasVideo || isStuck ? onRegenerateVideo : onGenerateVideo}
                         disabled={
                           disabled || 
-                          isVideoGenerating || 
+                          (isVideoGenerating && !isStuck) || // Allow regeneration when stuck
                           !canGenerateVideo ||
-                          (!hasVideo && !scene.videoPrompt.trim())
+                          (!hasVideo && !isStuck && !scene.videoPrompt.trim())
                         }
                       >
-                        {isVideoGenerating ? (
+                        {isVideoGenerating && !isStuck ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : isStuck ? (
+                          <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
                         ) : hasVideo ? (
                           <RefreshCw className="w-4 h-4 mr-2" />
                         ) : (
                           <Sparkles className="w-4 h-4 mr-2" />
                         )}
-                        {hasVideo ? 'Regenerate Video' : `Generate Video (${videoCreditCost})`}
+                        {isStuck 
+                          ? 'Retry (Stuck)' 
+                          : hasVideo 
+                            ? 'Regenerate Video' 
+                            : `Generate Video (${videoCreditCost})`}
                       </Button>
                     )}
 

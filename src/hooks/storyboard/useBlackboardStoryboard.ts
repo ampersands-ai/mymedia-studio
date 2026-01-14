@@ -32,6 +32,7 @@ const VIDEO_MODEL_HQ_ID = 'a5c2ec16-6294-4588-86b6-7b4182601cda'; // Google Veo 
 const STORAGE_KEY = 'blackboard_storyboard_id';
 
 // Stuck detection threshold (5 minutes)
+export const STUCK_THRESHOLD_MS = 5 * 60 * 1000;
 
 
 export type VideoModelType = 'lite' | 'hq';
@@ -86,8 +87,17 @@ export const useBlackboardStoryboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [videoGenerationStartTime, setVideoGenerationStartTime] = useState<number | null>(null);
+  // Per-scene generation start times for stuck detection
+  const [sceneGenerationStartTimes, setSceneGenerationStartTimes] = useState<Record<string, number>>({});
   const { refetch: refetchCredits } = useUserCredits();
   const { waitForGeneration, cleanup: cleanupPolling } = useBlackboardPolling();
+
+  // Check if a specific scene is stuck (generating for >5 minutes)
+  const isSceneStuck = useCallback((sceneId: string): boolean => {
+    const startTime = sceneGenerationStartTimes[sceneId];
+    if (!startTime) return false;
+    return Date.now() - startTime > STUCK_THRESHOLD_MS;
+  }, [sceneGenerationStartTimes]);
 
   // Load storyboard from database on mount
   useEffect(() => {
@@ -523,6 +533,9 @@ export const useBlackboardStoryboard = () => {
       for (let idx = 0; idx < videoTasks.length; idx++) {
         const task = videoTasks[idx];
         
+        // Track scene generation start time for stuck detection
+        setSceneGenerationStartTimes(prev => ({ ...prev, [task.scene.id]: Date.now() }));
+        
         // Mark current scene as generating
         updateScene(task.scene.id, { videoGenerationStatus: 'generating' });
 
@@ -540,6 +553,13 @@ export const useBlackboardStoryboard = () => {
             task.endUrl,
             videoModelType
           );
+          
+          // Clear scene start time after completion
+          setSceneGenerationStartTimes(prev => {
+            const updated = { ...prev };
+            delete updated[task.scene.id];
+            return updated;
+          });
           
           if (videoUrl) {
             updateScene(task.scene.id, { 
@@ -816,9 +836,18 @@ export const useBlackboardStoryboard = () => {
       return;
     }
     
+    // Track scene generation start time
+    setSceneGenerationStartTimes(prev => ({ ...prev, [sceneId]: Date.now() }));
     updateScene(sceneId, { videoGenerationStatus: 'generating' });
     
     const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl, videoModelType);
+    
+    // Clear scene start time
+    setSceneGenerationStartTimes(prev => {
+      const updated = { ...prev };
+      delete updated[sceneId];
+      return updated;
+    });
     
     if (videoUrl) {
       updateScene(sceneId, { 
@@ -835,6 +864,7 @@ export const useBlackboardStoryboard = () => {
   }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
   // Regenerate a single video (clears existing, generates fresh)
+  // Also callable when scene is stuck - resets the scene and starts fresh
   const regenerateVideo = useCallback(async (sceneId: string) => {
     const sceneIndex = scenes.findIndex(s => s.id === sceneId);
     const scene = scenes[sceneIndex];
@@ -845,12 +875,29 @@ export const useBlackboardStoryboard = () => {
       return;
     }
     
+    // Clear any existing stuck timer for this scene
+    setSceneGenerationStartTimes(prev => {
+      const updated = { ...prev };
+      delete updated[sceneId];
+      return updated;
+    });
+    
+    // Track new generation start time
+    setSceneGenerationStartTimes(prev => ({ ...prev, [sceneId]: Date.now() }));
+    
     updateScene(sceneId, { 
       generatedVideoUrl: undefined, 
       videoGenerationStatus: 'generating' 
     });
     
     const videoUrl = await generateSingleVideo(scene, scene.generatedImageUrl, nextScene.generatedImageUrl, videoModelType);
+    
+    // Clear scene start time
+    setSceneGenerationStartTimes(prev => {
+      const updated = { ...prev };
+      delete updated[sceneId];
+      return updated;
+    });
     
     if (videoUrl) {
       updateScene(sceneId, { 
@@ -1278,5 +1325,8 @@ export const useBlackboardStoryboard = () => {
     deleteStoryboard,
     videoGenerationStartTime,
     cancelVideoGeneration,
+    // Per-scene stuck detection
+    isSceneStuck,
+    sceneGenerationStartTimes,
   };
 };

@@ -298,8 +298,8 @@ export const useBlackboardStoryboard = () => {
       
       // Check if it's an async generation that needs polling
       if (data?.is_async && data?.generation_id) {
-        // Use hybrid polling (Realtime + fallback) - 90s timeout for images
-        return await waitForGeneration(data.generation_id, 90000);
+        // Use hybrid polling (Realtime + fallback) - 5 min timeout for images
+        return await waitForGeneration(data.generation_id, 5 * 60 * 1000);
       }
       
       return data?.output_url || null;

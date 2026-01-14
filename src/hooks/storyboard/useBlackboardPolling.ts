@@ -4,6 +4,10 @@ import type { GenerationOutput } from '@/hooks/useGenerationState';
 import { logger } from '@/lib/logger';
 import { getPublicImageUrl } from '@/lib/supabase-images';
 
+// Timeout constants aligned with system standards
+export const IMAGE_GENERATION_TIMEOUT_MS = 5 * 60 * 1000;  // 5 minutes
+export const VIDEO_GENERATION_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
 interface PendingResolver {
   resolve: (url: string | null) => void;
   reject: (error: Error) => void;
@@ -78,22 +82,27 @@ export const useBlackboardPolling = () => {
   /**
    * Wait for a generation to complete using the hybrid polling system
    * @param generationId - The generation ID to poll for
-   * @param timeoutMs - Maximum wait time (default: 90s for images, 600s for videos)
+   * @param timeoutMs - Maximum wait time (default: 5 min for images)
    * @returns Promise resolving to the output URL or null
    */
   const waitForGeneration = useCallback((
     generationId: string,
-    timeoutMs: number = 90000
+    timeoutMs: number = IMAGE_GENERATION_TIMEOUT_MS
   ): Promise<string | null> => {
     return new Promise((resolve, reject) => {
+      let isResolved = false;  // Guard flag to prevent double resolution
+
       logger.info('Starting waitForGeneration', { 
         generationId, 
         timeoutMs,
         component: 'useBlackboardPolling'
       });
 
-      // Set up timeout
+      // Set up timeout with guard
       const timeoutId = setTimeout(() => {
+        if (isResolved) return;  // Don't fire if already resolved
+        isResolved = true;
+        
         logger.warn('Generation timed out', { 
           generationId, 
           timeoutMs,
@@ -106,8 +115,23 @@ export const useBlackboardPolling = () => {
         reject(new Error(`Generation timed out after ${timeoutMs / 1000} seconds`));
       }, timeoutMs);
 
-      // Store resolver for this generation
-      resolversRef.current.set(generationId, { resolve, reject, timeoutId });
+      // Store resolver with guarded callbacks
+      resolversRef.current.set(generationId, { 
+        resolve: (url: string | null) => {
+          if (isResolved) return;  // Ignore if already resolved/rejected
+          isResolved = true;
+          clearTimeout(timeoutId);
+          resolve(url);
+        },
+        reject: (error: Error) => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeoutId);
+          reject(error);
+        },
+        timeoutId 
+      });
+      
       activePollingIdRef.current = generationId;
 
       // Start the hybrid polling system (Realtime + fallback)

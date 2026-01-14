@@ -699,7 +699,7 @@ export const useBlackboardStoryboard = () => {
 
       // Rendering is async - start polling for completion
       if (data?.renderId) {
-        toast.info('Video stitching started via Shotstack. This may take a few minutes...');
+        toast.info('Video rendering started. This may take a few minutes...');
         pollForRenderCompletion(storyboardId);
       } else if (data?.video_url || data?.finalVideoUrl) {
         // Immediate completion (unlikely but handle it)

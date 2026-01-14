@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 export const MODEL_CONFIG = { modelId: "V5", recordId: "5c544c90-9344-4acb-9129-0acb9a6a915a", modelName: "Suno", provider: "kie_ai", contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO", baseCreditCost: 6, estimatedTimeSeconds: 180, costMultipliers: {}, apiEndpoint: "/api/v1/generate", payloadStructure: "flat", maxImages: 0, defaultOutputs: 1, 
@@ -47,7 +48,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

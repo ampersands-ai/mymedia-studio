@@ -20,7 +20,7 @@ export interface ActiveGeneration {
   prompt: string;
   status: string;
   created_at: string;
-  updated_at: string;
+  completed_at: string | null;
   model_record_id: string;
 }
 
@@ -47,13 +47,14 @@ export const useActiveGenerations = () => {
       ).toISOString();
 
       // Query active generations OR recently completed/failed ones
+      // Note: generations table has completed_at, not updated_at
       const { data, error } = await supabase
         .from("generations")
-        .select("id, model_id, prompt, status, created_at, updated_at, model_record_id")
+        .select("id, model_id, prompt, status, created_at, completed_at, model_record_id")
         .eq("user_id", user.id)
         .or(
           `status.in.(${ACTIVE_GENERATION_STATUSES.join(',')}),` +
-          `and(status.in.(completed,failed),updated_at.gte.${recentlyCompletedThreshold})`
+          `and(status.in.(completed,failed),completed_at.gte.${recentlyCompletedThreshold})`
         )
         .order("created_at", { ascending: false })
         .limit(20);
@@ -84,7 +85,7 @@ export const useActiveGenerations = () => {
             prompt: gen.prompt as string,
             status: gen.status as string,
             created_at: gen.created_at as string,
-            updated_at: (gen.updated_at as string) || (gen.created_at as string),
+            completed_at: (gen.completed_at as string | null) || null,
             model_record_id: gen.model_record_id as string,
           };
         });

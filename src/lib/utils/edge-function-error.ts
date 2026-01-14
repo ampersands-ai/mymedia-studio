@@ -69,20 +69,36 @@ export async function extractEdgeFunctionError(error: unknown): Promise<string> 
     try {
       const errorBody = await error.context.json();
       // Edge functions typically return { error: "message" } or { error: { message: "..." } }
+      let baseMessage = '';
+      
       if (errorBody?.error) {
         if (typeof errorBody.error === 'string') {
-          return sanitizeErrorForUser(errorBody.error);
+          baseMessage = errorBody.error;
+        } else if (typeof errorBody.error === 'object' && errorBody.error.message) {
+          baseMessage = errorBody.error.message;
         }
-        if (typeof errorBody.error === 'object' && errorBody.error.message) {
-          return sanitizeErrorForUser(errorBody.error.message);
-        }
+      } else if (errorBody?.message) {
+        baseMessage = errorBody.message;
       }
-      // Fallback to message field
-      if (errorBody?.message) {
-        return sanitizeErrorForUser(errorBody.message);
+      
+      if (!baseMessage) {
+        return USER_FRIENDLY_ERROR;
       }
-      // Can't extract meaningful error - use friendly message
-      return USER_FRIENDLY_ERROR;
+      
+      // Enhance rate limit messages with timing info
+      if (errorBody?.reset_in_seconds && typeof errorBody.reset_in_seconds === 'number') {
+        const minutes = Math.floor(errorBody.reset_in_seconds / 60);
+        const seconds = errorBody.reset_in_seconds % 60;
+        const timeStr = minutes > 0 
+          ? `${minutes}m ${seconds}s` 
+          : `${seconds}s`;
+        baseMessage = `${baseMessage}. Try again in ${timeStr}`;
+      } else if (errorBody?.limit !== undefined && errorBody?.current !== undefined) {
+        // Include limit info if available
+        baseMessage = `${baseMessage} (${errorBody.current}/${errorBody.limit})`;
+      }
+      
+      return sanitizeErrorForUser(baseMessage);
     } catch {
       // If we can't parse JSON, use friendly message
       return USER_FRIENDLY_ERROR;

@@ -101,6 +101,9 @@ verify_jwt = true
 [functions.status-video-editor]
 verify_jwt = true
 
+[functions.status-blackboard-video]
+verify_jwt = true
+
 [functions.poll-runware-status]
 verify_jwt = true
 

@@ -285,8 +285,8 @@ export function BlackboardSceneCard({
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 mt-4">
+                  {/* Action Buttons - Stack on mobile, row on desktop */}
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
                     {/* Generate/Regenerate Image Button */}
                     <TooltipProvider>
                       <Tooltip>
@@ -315,7 +315,7 @@ export function BlackboardSceneCard({
                                 ? `Waiting for Scene ${index}...` 
                                 : hasImage 
                                   ? 'Regenerate Image' 
-                                  : `Image (${imageCreditCost})`}
+                                  : `Generate Image (${imageCreditCost})`}
                             </Button>
                           </div>
                         </TooltipTrigger>
@@ -331,7 +331,7 @@ export function BlackboardSceneCard({
                     {!isLastScene && (
                       <Button 
                         className={cn(
-                          "flex-1",
+                          "flex-1 w-full sm:w-auto",
                           hasVideo && "bg-muted hover:bg-muted/80 text-foreground"
                         )}
                         variant={hasVideo ? "outline" : "default"}
@@ -350,7 +350,7 @@ export function BlackboardSceneCard({
                         ) : (
                           <Sparkles className="w-4 h-4 mr-2" />
                         )}
-                        {hasVideo ? 'Regenerate Video' : `Video (${videoCreditCost})`}
+                        {hasVideo ? 'Regenerate Video' : `Generate Video (${videoCreditCost})`}
                       </Button>
                     )}
 
@@ -361,7 +361,7 @@ export function BlackboardSceneCard({
                         size="sm"
                         onClick={onCheckStatus}
                         disabled={disabled}
-                        className="h-9 px-2"
+                        className="h-9 px-2 sm:flex-none"
                         title="Check database for updates"
                       >
                         <RefreshCw className="w-4 h-4" />

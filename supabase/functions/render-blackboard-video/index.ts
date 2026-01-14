@@ -217,17 +217,32 @@ Deno.serve(async (req) => {
     const outputDimensions = getOutputDimensions(storyboard.aspect_ratio);
     console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio} -> Output: ${outputDimensions.width}x${outputDimensions.height}`);
 
+    // Helper to ensure video URLs are complete public URLs
+    const getFullVideoUrl = (url: string): string => {
+      if (!url) return url;
+      // If it's already a full URL, return as-is
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      // Otherwise, it's a storage path - construct the full public URL
+      return `${supabaseUrl}/storage/v1/object/public/generated-content/${url}`;
+    };
+
     // Build Shotstack timeline - concatenate all video clips sequentially
     // Use "auto" length to detect actual video duration (Veo generates 8s videos, not 5s)
-    const clips: any[] = videosToStitch.map((scene, index) => ({
-      asset: {
-        type: "video",
-        src: scene.generated_video_url,
-      },
-      start: index === 0 ? 0 : "auto", // First clip starts at 0, rest auto-sequence
-      length: "auto", // Let Shotstack detect actual video duration
-      fit: "cover",
-    }));
+    const clips: any[] = videosToStitch.map((scene, index) => {
+      const fullVideoUrl = getFullVideoUrl(scene.generated_video_url);
+      console.log(`[${requestId}] Clip ${index}: ${scene.generated_video_url} -> ${fullVideoUrl}`);
+      return {
+        asset: {
+          type: "video",
+          src: fullVideoUrl,
+        },
+        start: index === 0 ? 0 : "auto", // First clip starts at 0, rest auto-sequence
+        length: "auto", // Let Shotstack detect actual video duration
+        fit: "cover",
+      };
+    });
 
     // Add outro clip if provided
     if (outroMediaUrl) {

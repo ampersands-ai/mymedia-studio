@@ -4,6 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins } from 'lucide-react';
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { BlackboardSceneCard } from './BlackboardSceneCard';
@@ -15,6 +25,7 @@ import { useUserCredits } from '@/hooks/useUserCredits';
 
 export function BlackboardStoryboardInput() {
   const [showRenderOptions, setShowRenderOptions] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const {
     scenes,
     aspectRatio,
@@ -101,7 +112,7 @@ export function BlackboardStoryboardInput() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={resetAll}
+              onClick={() => setShowResetConfirmation(true)}
               disabled={isProcessing}
             >
               <RotateCcw className="w-4 h-4 mr-1" />
@@ -185,6 +196,7 @@ export function BlackboardStoryboardInput() {
                 totalScenes={scenes.length}
                 disabled={isProcessing}
                 previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
+                previousSceneIsGenerating={index > 0 && scenes[index - 1]?.imageGenerationStatus === 'generating'}
                 imageCreditCost={imageCreditCost}
                 videoCreditCost={videoCreditCost}
                 nextSceneHasImage={index < scenes.length - 1 && !!scenes[index + 1]?.generatedImageUrl}
@@ -328,6 +340,30 @@ export function BlackboardStoryboardInput() {
             ✨ Processing your blackboard storyboard...
           </p>
         )}
+
+        {/* Reset Confirmation Dialog */}
+        <AlertDialog open={showResetConfirmation} onOpenChange={setShowResetConfirmation}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset Blackboard?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will delete all scenes, generated images, and videos. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  resetAll();
+                  setShowResetConfirmation(false);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

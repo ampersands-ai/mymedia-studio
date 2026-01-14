@@ -6,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight, Video } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Trash2, ImageIcon, Loader2, RefreshCw, Sparkles, Film, ChevronDown, ChevronRight, Video, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getPublicImageUrl } from '@/lib/supabase-images';
 import type { BlackboardScene } from '@/hooks/storyboard/useBlackboardStoryboard';
 
 interface BlackboardSceneCardProps {
@@ -16,6 +18,7 @@ interface BlackboardSceneCardProps {
   totalScenes: number;
   disabled: boolean;
   previousImageUrl?: string;
+  previousSceneIsGenerating?: boolean;
   imageCreditCost: number;
   videoCreditCost: number;
   nextSceneHasImage: boolean;
@@ -33,6 +36,7 @@ export function BlackboardSceneCard({
   index,
   totalScenes,
   disabled,
+  previousSceneIsGenerating = false,
   imageCreditCost,
   videoCreditCost,
   nextSceneHasImage,
@@ -51,6 +55,18 @@ export function BlackboardSceneCard({
   const hasVideo = !!scene.generatedVideoUrl;
   const isLastScene = index === totalScenes - 1;
   const canGenerateVideo = hasImage && nextSceneHasImage && !isLastScene;
+
+  // Normalize URLs to handle both full URLs and storage paths
+  const normalizedImageUrl = scene.generatedImageUrl 
+    ? getPublicImageUrl(scene.generatedImageUrl) 
+    : undefined;
+  const normalizedVideoUrl = scene.generatedVideoUrl 
+    ? getPublicImageUrl(scene.generatedVideoUrl, 'generated-content') 
+    : undefined;
+
+  // Block generation if seed is enabled and previous scene is still generating
+  const waitingForSeed = index > 0 && scene.usePreviousImageAsSeed && previousSceneIsGenerating;
+  const canGenerateImage = !waitingForSeed && scene.imagePrompt.trim();
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -81,7 +97,7 @@ export function BlackboardSceneCard({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {hasImage && (
                 <img
-                  src={scene.generatedImageUrl}
+                  src={normalizedImageUrl}
                   alt={`Scene ${index + 1}`}
                   className="w-12 h-12 rounded-lg object-cover border border-border/30"
                 />
@@ -247,13 +263,13 @@ export function BlackboardSceneCard({
                       </div>
                     ) : hasVideo ? (
                       <video
-                        src={scene.generatedVideoUrl}
+                        src={normalizedVideoUrl}
                         controls
                         className="w-full h-full object-cover"
                       />
                     ) : hasImage ? (
                       <img
-                        src={scene.generatedImageUrl}
+                        src={normalizedImageUrl}
                         alt={`Scene ${index + 1} preview`}
                         className="w-full h-full object-cover"
                       />
@@ -272,24 +288,44 @@ export function BlackboardSceneCard({
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
                     {/* Generate/Regenerate Image Button */}
-                    <Button 
-                      className={cn(
-                        "flex-1",
-                        hasImage && "bg-muted hover:bg-muted/80 text-foreground"
-                      )}
-                      variant={hasImage ? "outline" : "default"}
-                      onClick={hasImage ? onRegenerateImage : onGenerateImage}
-                      disabled={disabled || isImageGenerating || (!hasImage && !scene.imagePrompt.trim())}
-                    >
-                      {isImageGenerating ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : hasImage ? (
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                      ) : (
-                        <Sparkles className="w-4 h-4 mr-2" />
-                      )}
-                      {hasImage ? 'Regenerate Image' : `Image (${imageCreditCost})`}
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex-1">
+                            <Button 
+                              className={cn(
+                                "w-full",
+                                hasImage && "bg-muted hover:bg-muted/80 text-foreground",
+                                waitingForSeed && "opacity-70"
+                              )}
+                              variant={hasImage ? "outline" : "default"}
+                              onClick={hasImage ? onRegenerateImage : onGenerateImage}
+                              disabled={disabled || isImageGenerating || !canGenerateImage}
+                            >
+                              {isImageGenerating ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : waitingForSeed ? (
+                                <Clock className="w-4 h-4 mr-2" />
+                              ) : hasImage ? (
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                              ) : (
+                                <Sparkles className="w-4 h-4 mr-2" />
+                              )}
+                              {waitingForSeed 
+                                ? `Waiting for Scene ${index}...` 
+                                : hasImage 
+                                  ? 'Regenerate Image' 
+                                  : `Image (${imageCreditCost})`}
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        {waitingForSeed && (
+                          <TooltipContent>
+                            <p>Scene {index} image must complete first because "Use as seed" is enabled</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
 
                     {/* Generate/Regenerate Video Button - Only for non-last scenes */}
                     {!isLastScene && (

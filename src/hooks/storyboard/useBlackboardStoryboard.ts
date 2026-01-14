@@ -6,7 +6,7 @@ import { getAllModels } from '@/lib/models/registry';
 import { logger } from '@/lib/logger';
 import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 import { MODEL_CONFIG as NANO_BANANA_CONFIG } from '@/lib/models/locked/prompt_to_image/Nano_Banana_Pro';
-import { useBlackboardPolling } from './useBlackboardPolling';
+import { useBlackboardPolling, VIDEO_GENERATION_TIMEOUT_MS } from './useBlackboardPolling';
 import { getPublicImageUrl } from '@/lib/supabase-images';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -402,8 +402,8 @@ export const useBlackboardStoryboard = () => {
       
       // Check if it's an async generation that needs polling
       if (data?.is_async && data?.generation_id) {
-        // Use hybrid polling (Realtime + fallback) - 10 minute timeout for videos
-        return await waitForGeneration(data.generation_id, 600000);
+        // Use hybrid polling (Realtime + fallback) - 20 minute timeout for videos
+        return await waitForGeneration(data.generation_id, VIDEO_GENERATION_TIMEOUT_MS);
       }
       
       return data?.output_url || null;

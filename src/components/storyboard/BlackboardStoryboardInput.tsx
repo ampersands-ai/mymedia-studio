@@ -6,7 +6,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins } from 'lucide-react';
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { BlackboardSceneCard } from './BlackboardSceneCard';
+import { BlackboardStoryboardSelector } from './BlackboardStoryboardSelector';
 import { useBlackboardStoryboard, VideoModelType } from '@/hooks/storyboard/useBlackboardStoryboard';
+import { useBlackboardStoryboardList } from '@/hooks/storyboard/useBlackboardStoryboardList';
 import { useUserCredits } from '@/hooks/useUserCredits';
 
 export function BlackboardStoryboardInput() {
@@ -35,8 +37,15 @@ export function BlackboardStoryboardInput() {
     totalEstimatedCost,
     imageCreditCost,
     videoCreditCost,
+    isLoading,
+    isSaving,
+    storyboardId,
+    loadStoryboard,
+    createNewStoryboard,
+    deleteStoryboard,
   } = useBlackboardStoryboard();
 
+  const { storyboards, isLoading: isLoadingList, refetch: refetchList } = useBlackboardStoryboardList();
   const { availableCredits } = useUserCredits();
 
   const allImagesGenerated = scenes.every(s => s.generatedImageUrl);
@@ -44,25 +53,57 @@ export function BlackboardStoryboardInput() {
   const hasAnyImagePrompt = scenes.some(s => s.imagePrompt.trim());
   const hasAnyVideoPrompt = scenes.slice(0, -1).some(s => s.videoPrompt.trim());
 
-  const isProcessing = isGeneratingImages || isGeneratingVideos || isRendering;
+  const isProcessing = isGeneratingImages || isGeneratingVideos || isRendering || isLoading;
+
+  const handleSelectStoryboard = async (id: string) => {
+    await loadStoryboard(id);
+    refetchList();
+  };
+
+  const handleCreateNew = async () => {
+    await createNewStoryboard();
+    refetchList();
+  };
+
+  const handleDeleteStoryboard = async (id: string) => {
+    await deleteStoryboard(id);
+    refetchList();
+  };
 
   return (
     <Card className="relative overflow-hidden bg-card border-2">
       <CardHeader className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xl font-black flex items-center gap-2">
             <Palette className="w-5 h-5" />
             BLACKBOARD STORYBOARD
           </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetAll}
-            disabled={isProcessing}
-          >
-            <RotateCcw className="w-4 h-4 mr-1" />
-            Reset
-          </Button>
+          <div className="flex items-center gap-2">
+            <BlackboardStoryboardSelector
+              currentStoryboardId={storyboardId}
+              storyboards={storyboards}
+              isLoading={isLoadingList}
+              disabled={isProcessing}
+              onSelectStoryboard={handleSelectStoryboard}
+              onCreateNew={handleCreateNew}
+              onDeleteStoryboard={handleDeleteStoryboard}
+            />
+            {isSaving && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Saving...
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetAll}
+              disabled={isProcessing}
+            >
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Reset
+            </Button>
+          </div>
         </div>
         <CardDescription className="text-sm">
           Generate images for each scene, then create videos between adjacent scenes, and finally stitch them together.

@@ -1,6 +1,7 @@
 /** runware upscale (image_editing) - Record: e8c4a9f2-6b7d-4e3a-9c1f-5d8b7a3e6f2c */
 import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
@@ -50,7 +51,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

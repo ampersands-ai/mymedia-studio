@@ -1,6 +1,7 @@
 /** Ultra Detail V0 (prompt_to_image) - Record: f8c5a7e9-9d4b-6f2c-8a1e-5d7b3c9f4a6e */
 import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
@@ -50,7 +51,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

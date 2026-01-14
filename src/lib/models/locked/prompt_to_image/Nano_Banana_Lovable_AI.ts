@@ -1,6 +1,7 @@
 /** Nano Banana (Lovable AI) (prompt_to_image) - Record: 4c680009-d3fe-436f-85a7-467c76e85f9e */
 import { getGenerationType } from '@/lib/models/registry';
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
@@ -43,7 +44,10 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
     }
   });
   
-  if (funcError) throw new Error(`Sync generation failed: ${funcError.message}`);
+  if (funcError) {
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
+  }
   
   startPolling(gen.id);
   return gen.id;

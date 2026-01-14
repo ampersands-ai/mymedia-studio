@@ -207,12 +207,15 @@ export async function checkRateLimits(
   const userPlan = userSubscription?.plan || 'freemium';
 
   // Check hourly generation limit
+  // Only count generations that actually started processing (have api_call_started_at or provider_task_id)
+  // This prevents early rejections from spiraling the count
   const hourAgo = new Date(Date.now() - 3600000);
   const { count: hourlyCount } = await supabase
     .from('generations')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .gte('created_at', hourAgo.toISOString());
+    .gte('created_at', hourAgo.toISOString())
+    .or('api_call_started_at.not.is.null,provider_task_id.not.is.null');
 
   const { data: tierLimits } = await supabase
     .from('rate_limit_tiers')

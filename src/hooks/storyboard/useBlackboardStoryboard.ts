@@ -242,9 +242,47 @@ export const useBlackboardStoryboard = () => {
     });
   }, []);
 
-  const updateScene = useCallback((sceneId: string, updates: Partial<BlackboardScene>) => {
+  const updateScene = useCallback(async (sceneId: string, updates: Partial<BlackboardScene>) => {
     setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, ...updates } : s));
-  }, []);
+    
+    // Immediately persist critical generation results to database
+    // This prevents data loss if user navigates away before debounced save
+    if (storyboardId && (updates.generatedImageUrl !== undefined || updates.generatedVideoUrl !== undefined)) {
+      try {
+        const dbUpdates: Record<string, unknown> = {};
+        
+        if (updates.generatedImageUrl !== undefined) {
+          dbUpdates.generated_image_url = updates.generatedImageUrl || null;
+        }
+        if (updates.generatedVideoUrl !== undefined) {
+          dbUpdates.generated_video_url = updates.generatedVideoUrl || null;
+        }
+        if (updates.imageGenerationStatus !== undefined) {
+          dbUpdates.image_generation_status = updates.imageGenerationStatus;
+        }
+        if (updates.videoGenerationStatus !== undefined) {
+          dbUpdates.video_generation_status = updates.videoGenerationStatus;
+        }
+        
+        await supabase
+          .from('blackboard_scenes')
+          .update(dbUpdates)
+          .eq('id', sceneId);
+          
+        logger.debug('Immediately persisted scene generation result', {
+          component: 'useBlackboardStoryboard',
+          sceneId,
+          hasImageUrl: !!updates.generatedImageUrl,
+          hasVideoUrl: !!updates.generatedVideoUrl,
+        });
+      } catch (error) {
+        logger.error('Failed to immediately persist scene update', error instanceof Error ? error : new Error(String(error)), {
+          component: 'useBlackboardStoryboard',
+          sceneId,
+        });
+      }
+    }
+  }, [storyboardId]);
 
 
   const generateSingleImage = useCallback(async (

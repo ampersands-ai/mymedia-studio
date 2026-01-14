@@ -225,9 +225,19 @@ Deno.serve(async (req) => {
       return clip;
     });
 
-    // Build Shotstack payload - only include aspectRatio if we have a valid mapping
+    // Build Shotstack payload with resolution (required by Shotstack API)
+    // Resolution presets based on aspect ratio
+    const resolutionMap: Record<string, string> = {
+      "16:9": "hd",      // 1920x1080
+      "9:16": "mobile",  // 1080x1920
+      "1:1": "sd",       // 1024x1024 (Shotstack uses 1024 for square)
+      "4:5": "sd",       // Will be cropped to 4:5
+      "4:3": "sd",       // Will be cropped to 4:3
+    };
+
     const shotstackOutput: Record<string, string> = {
       format: "mp4",
+      resolution: resolutionMap[mappedAspectRatio || "16:9"] || "hd",
     };
     
     if (mappedAspectRatio) {

@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
       return clip;
     });
 
-    // Build Shotstack payload
+    // Build Shotstack payload (use only size, not resolution - they're mutually exclusive)
     const shotstackPayload = {
       timeline: {
         tracks: [
@@ -211,7 +211,6 @@ Deno.serve(async (req) => {
       },
       output: {
         format: "mp4",
-        resolution: "hd",
         size: {
           width: width,
           height: height,

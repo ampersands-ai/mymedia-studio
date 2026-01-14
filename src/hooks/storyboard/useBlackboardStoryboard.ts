@@ -168,6 +168,57 @@ export const useBlackboardStoryboard = () => {
     loadStoryboard();
   }, [user]);
 
+  // Realtime subscription for scene updates from database trigger
+  // When the sync_generation_to_blackboard_scene trigger updates a scene,
+  // we receive the update here and merge it into local state
+  useEffect(() => {
+    if (!storyboardId) return;
+
+    const channel = supabase
+      .channel(`blackboard_scenes_${storyboardId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'blackboard_scenes',
+          filter: `storyboard_id=eq.${storyboardId}`,
+        },
+        (payload) => {
+          const updatedScene = payload.new as Record<string, unknown>;
+          
+          logger.debug('Realtime scene update received', {
+            component: 'useBlackboardStoryboard',
+            sceneId: updatedScene.id,
+            hasImageUrl: !!updatedScene.generated_image_url,
+            hasVideoUrl: !!updatedScene.generated_video_url,
+          });
+
+          // Merge the database update into local state
+          setScenes(prev => prev.map(scene => {
+            if (scene.id !== updatedScene.id) return scene;
+            
+            return {
+              ...scene,
+              generatedImageUrl: updatedScene.generated_image_url as string | undefined,
+              imageGenerationStatus: (updatedScene.image_generation_status as string) === 'complete' ? 'complete' : 
+                                     (updatedScene.image_generation_status as string) === 'failed' ? 'failed' :
+                                     scene.imageGenerationStatus,
+              generatedVideoUrl: updatedScene.generated_video_url as string | undefined,
+              videoGenerationStatus: (updatedScene.video_generation_status as string) === 'complete' ? 'complete' :
+                                     (updatedScene.video_generation_status as string) === 'failed' ? 'failed' :
+                                     scene.videoGenerationStatus,
+            };
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [storyboardId]);
+
   // Debounced save to database
   const saveToDatabase = useCallback(async (
     currentScenes: BlackboardScene[],
@@ -242,47 +293,11 @@ export const useBlackboardStoryboard = () => {
     });
   }, []);
 
-  const updateScene = useCallback(async (sceneId: string, updates: Partial<BlackboardScene>) => {
+  // Scene updates are now handled by database trigger (sync_generation_to_blackboard_scene)
+  // This function only updates local state - the trigger handles persistence
+  const updateScene = useCallback((sceneId: string, updates: Partial<BlackboardScene>) => {
     setScenes(prev => prev.map(s => s.id === sceneId ? { ...s, ...updates } : s));
-    
-    // Immediately persist critical generation results to database
-    // This prevents data loss if user navigates away before debounced save
-    if (storyboardId && (updates.generatedImageUrl !== undefined || updates.generatedVideoUrl !== undefined)) {
-      try {
-        const dbUpdates: Record<string, unknown> = {};
-        
-        if (updates.generatedImageUrl !== undefined) {
-          dbUpdates.generated_image_url = updates.generatedImageUrl || null;
-        }
-        if (updates.generatedVideoUrl !== undefined) {
-          dbUpdates.generated_video_url = updates.generatedVideoUrl || null;
-        }
-        if (updates.imageGenerationStatus !== undefined) {
-          dbUpdates.image_generation_status = updates.imageGenerationStatus;
-        }
-        if (updates.videoGenerationStatus !== undefined) {
-          dbUpdates.video_generation_status = updates.videoGenerationStatus;
-        }
-        
-        await supabase
-          .from('blackboard_scenes')
-          .update(dbUpdates)
-          .eq('id', sceneId);
-          
-        logger.debug('Immediately persisted scene generation result', {
-          component: 'useBlackboardStoryboard',
-          sceneId,
-          hasImageUrl: !!updates.generatedImageUrl,
-          hasVideoUrl: !!updates.generatedVideoUrl,
-        });
-      } catch (error) {
-        logger.error('Failed to immediately persist scene update', error instanceof Error ? error : new Error(String(error)), {
-          component: 'useBlackboardStoryboard',
-          sceneId,
-        });
-      }
-    }
-  }, [storyboardId]);
+  }, []);
 
 
   const generateSingleImage = useCallback(async (
@@ -328,6 +343,8 @@ export const useBlackboardStoryboard = () => {
           // Add image input for I2I mode - must be INSIDE custom_parameters
           ...(useImageToImage && normalizedPreviousUrl ? { image_input: [normalizedPreviousUrl] } : {}),
         },
+        // Link this generation to the blackboard scene for automatic sync via database trigger
+        blackboard_scene_id: scene.id,
       };
 
       const { data, error } = await supabase.functions.invoke('generate-content', { body });
@@ -433,6 +450,8 @@ export const useBlackboardStoryboard = () => {
           custom_parameters: {
             imageUrls: normalizedImageUrls,
           },
+          // Link this generation to the blackboard scene for automatic sync via database trigger
+          blackboard_scene_id: scene.id,
         },
       });
 

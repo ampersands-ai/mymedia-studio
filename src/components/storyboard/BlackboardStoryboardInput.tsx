@@ -216,7 +216,7 @@ export function BlackboardStoryboardInput() {
             </Button>
           </div>
 
-          <div className="space-y-3 sm:space-y-4 max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
+          <div className="space-y-2 sm:space-y-4 max-h-[500px] overflow-y-auto -mx-1 px-1 sm:mx-0 sm:px-0 sm:pr-2">
             {scenes.map((scene, index) => {
               // On mobile: only one scene expanded at a time (accordion)
               // On desktop: all scenes can be expanded independently (default first one)

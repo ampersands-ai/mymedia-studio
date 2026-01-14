@@ -5,6 +5,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 export const MODEL_CONFIG = { modelId: "jasper/text-to-image", recordId: "d8c5a7f3-9b4e-6f2c-8a1d-5e7b3c9f4a6e", modelName: "Jasper Text to Image", provider: "kie_ai", contentType: "prompt_to_image",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_IMAGE", baseCreditCost: 2, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 0, defaultOutputs: 1, 
@@ -50,7 +51,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

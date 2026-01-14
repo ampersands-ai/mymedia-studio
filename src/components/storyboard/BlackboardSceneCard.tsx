@@ -72,76 +72,70 @@ export function BlackboardSceneCard({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
-      <div className="rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm overflow-hidden w-full">
         {/* Collapsible Header */}
-        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
-          <CollapsibleTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-muted/50 rounded-full flex-shrink-0"
-            >
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center gap-2 p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors w-full">
+            {/* Chevron */}
+            <div className="flex-shrink-0">
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               )}
-            </Button>
-          </CollapsibleTrigger>
-
-          <Badge className="bg-amber-600 hover:bg-amber-600 text-white px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-full flex-shrink-0">
-            Scene {index + 1}
-          </Badge>
-
-          {/* Collapsed state preview - improved mobile layout */}
-          {!isExpanded && (
-            <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
-              {hasImage && (
-                <img
-                  src={normalizedImageUrl}
-                  alt={`Scene ${index + 1}`}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover border border-border/30 flex-shrink-0"
-                />
-              )}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
-                <Badge variant="outline" className={cn(
-                  "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 whitespace-nowrap",
-                  hasImage 
-                    ? "bg-green-500/10 text-green-500 border-green-500/30" 
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {hasImage ? '✓ Image' : 'No Image'}
-                </Badge>
-                {!isLastScene && (
-                  <Badge variant="outline" className={cn(
-                    "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 whitespace-nowrap",
-                    hasVideo 
-                      ? "bg-blue-500/10 text-blue-500 border-blue-500/30" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {hasVideo ? '✓ Video' : 'No Video'}
-                  </Badge>
-                )}
-              </div>
             </div>
-          )}
 
-          <div className="ml-auto flex-shrink-0">
-            {totalScenes > 1 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onRemove}
-                disabled={disabled}
-                className="h-8 w-8 p-0 hover:bg-destructive/10 rounded-full"
-              >
-                <Trash2 className="w-4 h-4 text-destructive" />
-              </Button>
+            {/* Scene Badge */}
+            <Badge className="bg-amber-600 hover:bg-amber-600 text-white px-2 py-0.5 text-xs font-bold rounded-full flex-shrink-0">
+              {index + 1}
+            </Badge>
+
+            {/* Collapsed state preview */}
+            {!isExpanded && (
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {hasImage && (
+                  <img
+                    src={normalizedImageUrl}
+                    alt={`Scene ${index + 1}`}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover border border-border/30 flex-shrink-0"
+                  />
+                )}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {hasImage && (
+                    <ImageIcon className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                  )}
+                  {hasVideo && !isLastScene && (
+                    <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                  )}
+                  {!hasImage && !hasVideo && (
+                    <span className="text-xs text-muted-foreground">Tap to edit</span>
+                  )}
+                </div>
+              </div>
             )}
+
+            {/* Expanded state - just show "Scene X" text */}
+            {isExpanded && (
+              <span className="text-sm font-medium flex-1">Scene {index + 1}</span>
+            )}
+
+            {/* Delete button */}
+            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              {totalScenes > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRemove}
+                  disabled={disabled}
+                  className="h-7 w-7 p-0 hover:bg-destructive/10 rounded-full"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </CollapsibleTrigger>
 
         {/* Collapsible Content */}
         <CollapsibleContent>

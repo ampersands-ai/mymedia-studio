@@ -516,64 +516,60 @@ export const useBlackboardStoryboard = () => {
         return;
       }
 
-      // Mark all as generating upfront
-      for (const task of videoTasks) {
+      // Sequential execution - process one video at a time for reliability
+      let successes = 0;
+      let failures = 0;
+
+      for (let idx = 0; idx < videoTasks.length; idx++) {
+        const task = videoTasks[idx];
+        
+        // Mark current scene as generating
         updateScene(task.scene.id, { videoGenerationStatus: 'generating' });
-      }
 
-      // Stagger delay between API calls (4 seconds)
-      const STAGGER_DELAY_MS = 4000;
+        logger.info('Starting sequential video generation', {
+          sceneId: task.scene.id,
+          index: task.index,
+          progress: `${idx + 1}/${videoTasks.length}`,
+          component: 'useBlackboardStoryboard'
+        });
 
-      // Launch all API calls with staggered starts, track independently
-      const videoPromises = videoTasks.map((task, idx) => 
-        (async () => {
-          // Stagger the start to avoid rate limiting
-          if (idx > 0) {
-            await new Promise(r => setTimeout(r, idx * STAGGER_DELAY_MS));
-          }
-
-          logger.info('Starting parallel video generation', {
-            sceneId: task.scene.id,
-            index: task.index,
-            delayMs: idx * STAGGER_DELAY_MS,
-            component: 'useBlackboardStoryboard'
-          });
-
-          try {
-            const videoUrl = await generateSingleVideo(
-              task.scene,
-              task.startUrl,
-              task.endUrl,
-              videoModelType
-            );
-            
-            if (videoUrl) {
-              updateScene(task.scene.id, { 
-                generatedVideoUrl: videoUrl, 
-                videoGenerationStatus: 'complete' 
-              });
-              return { sceneId: task.scene.id, success: true };
-            } else {
-              updateScene(task.scene.id, { videoGenerationStatus: 'failed' });
-              return { sceneId: task.scene.id, success: false, error: 'No video URL returned' };
-            }
-          } catch (error) {
-            logger.error('Video generation failed for scene', error instanceof Error ? error : new Error(String(error)), {
+        try {
+          const videoUrl = await generateSingleVideo(
+            task.scene,
+            task.startUrl,
+            task.endUrl,
+            videoModelType
+          );
+          
+          if (videoUrl) {
+            updateScene(task.scene.id, { 
+              generatedVideoUrl: videoUrl, 
+              videoGenerationStatus: 'complete' 
+            });
+            successes++;
+            logger.info('Video generation succeeded', {
               sceneId: task.scene.id,
+              progress: `${successes} completed`,
               component: 'useBlackboardStoryboard'
             });
+          } else {
             updateScene(task.scene.id, { videoGenerationStatus: 'failed' });
-            return { sceneId: task.scene.id, success: false, error: error instanceof Error ? error.message : String(error) };
+            failures++;
           }
-        })()
-      );
+        } catch (error) {
+          logger.error('Video generation failed for scene', error instanceof Error ? error : new Error(String(error)), {
+            sceneId: task.scene.id,
+            component: 'useBlackboardStoryboard'
+          });
+          updateScene(task.scene.id, { videoGenerationStatus: 'failed' });
+          failures++;
+        }
 
-      // Wait for all videos to complete (in parallel)
-      const results = await Promise.allSettled(videoPromises);
-      
-      // Count successes and failures
-      const successes = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
-      const failures = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+        // Small delay between requests to avoid rate limiting
+        if (idx < videoTasks.length - 1) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
 
       refetchCredits();
       

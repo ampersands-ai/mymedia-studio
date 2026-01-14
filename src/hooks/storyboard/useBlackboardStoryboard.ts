@@ -922,65 +922,149 @@ export const useBlackboardStoryboard = () => {
     }
   }, [user, storyboardId, createNewStoryboard]);
 
-  // Manual check status for a scene - fetches from database and syncs if data exists
+  // Manual check status for a scene - searches both blackboard_scenes AND generations table
   const checkSceneStatus = useCallback(async (sceneId: string) => {
     if (!storyboardId) return;
     
     try {
-      const { data, error } = await supabase
+      // Phase 1: Check blackboard_scenes table
+      const { data: sceneData, error: sceneError } = await supabase
         .from('blackboard_scenes')
-        .select('generated_image_url, image_generation_status, generated_video_url, video_generation_status')
+        .select('generated_image_url, image_generation_status, generated_video_url, video_generation_status, image_prompt, video_prompt')
         .eq('id', sceneId)
         .single();
       
-      if (error) throw error;
+      if (sceneError) throw sceneError;
       
-      if (data) {
-        let updated = false;
+      let updated = false;
+      let foundImageUrl: string | null = sceneData.generated_image_url || null;
+      let foundVideoUrl: string | null = sceneData.generated_video_url || null;
+      
+      // Phase 2: If no image URL, search generations table for orphaned completions
+      if (!foundImageUrl && sceneData.image_prompt) {
+        const promptSubstring = sceneData.image_prompt.substring(0, 80);
         
-        setScenes(prev => prev.map(scene => {
-          if (scene.id !== sceneId) return scene;
-          
-          const updates: Partial<BlackboardScene> = {};
-          
-          // Check if DB has image but local doesn't
-          if (data.generated_image_url && !scene.generatedImageUrl) {
-            updates.generatedImageUrl = data.generated_image_url;
-            updates.imageGenerationStatus = 'complete';
-            updated = true;
-          }
-          
-          // Check if DB has video but local doesn't
-          if (data.generated_video_url && !scene.generatedVideoUrl) {
-            updates.generatedVideoUrl = data.generated_video_url;
-            updates.videoGenerationStatus = 'complete';
-            updated = true;
-          }
-          
-          // Sync status if stuck on 'generating' but DB shows complete
-          if (scene.imageGenerationStatus === 'generating' && 
-              data.image_generation_status === 'complete') {
-            updates.imageGenerationStatus = 'complete';
-            if (data.generated_image_url) {
-              updates.generatedImageUrl = data.generated_image_url;
-            }
-            updated = true;
-          }
-          
-          if (scene.videoGenerationStatus === 'generating' && 
-              data.video_generation_status === 'complete') {
-            updates.videoGenerationStatus = 'complete';
-            if (data.generated_video_url) {
-              updates.generatedVideoUrl = data.generated_video_url;
-            }
-            updated = true;
-          }
-          
-          return Object.keys(updates).length > 0 ? { ...scene, ...updates } : scene;
-        }));
+        const { data: generations } = await supabase
+          .from('generations')
+          .select('id, output_url, prompt, status, type')
+          .eq('status', 'completed')
+          .eq('type', 'image')
+          .not('output_url', 'is', null)
+          .ilike('prompt', `%${promptSubstring}%`)
+          .order('created_at', { ascending: false })
+          .limit(5);
         
-        if (updated) {
-          toast.success('Scene data refreshed from database');
+        if (generations && generations.length > 0) {
+          const matchingGen = generations[0];
+          foundImageUrl = matchingGen.output_url;
+          
+          // Update blackboard_scenes with the found URL
+          await supabase
+            .from('blackboard_scenes')
+            .update({
+              generated_image_url: foundImageUrl,
+              image_generation_status: 'complete'
+            })
+            .eq('id', sceneId);
+          
+          // Backfill blackboard_scene_id on the generation
+          await supabase
+            .from('generations')
+            .update({ blackboard_scene_id: sceneId })
+            .eq('id', matchingGen.id);
+          
+          updated = true;
+        }
+      }
+      
+      // Phase 2b: Same for video
+      if (!foundVideoUrl && sceneData.video_prompt) {
+        const promptSubstring = sceneData.video_prompt.substring(0, 80);
+        
+        const { data: generations } = await supabase
+          .from('generations')
+          .select('id, output_url, prompt, status, type')
+          .eq('status', 'completed')
+          .eq('type', 'video')
+          .not('output_url', 'is', null)
+          .ilike('prompt', `%${promptSubstring}%`)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (generations && generations.length > 0) {
+          const matchingGen = generations[0];
+          foundVideoUrl = matchingGen.output_url;
+          
+          await supabase
+            .from('blackboard_scenes')
+            .update({
+              generated_video_url: foundVideoUrl,
+              video_generation_status: 'complete'
+            })
+            .eq('id', sceneId);
+          
+          await supabase
+            .from('generations')
+            .update({ blackboard_scene_id: sceneId })
+            .eq('id', matchingGen.id);
+          
+          updated = true;
+        }
+      }
+      
+      // Phase 3: Update local state
+      setScenes(prev => prev.map(scene => {
+        if (scene.id !== sceneId) return scene;
+        
+        const updates: Partial<BlackboardScene> = {};
+        
+        if (foundImageUrl && !scene.generatedImageUrl) {
+          updates.generatedImageUrl = foundImageUrl;
+          updates.imageGenerationStatus = 'complete';
+          updated = true;
+        }
+        
+        if (foundVideoUrl && !scene.generatedVideoUrl) {
+          updates.generatedVideoUrl = foundVideoUrl;
+          updates.videoGenerationStatus = 'complete';
+          updated = true;
+        }
+        
+        // Fix stuck generating status
+        if (scene.imageGenerationStatus === 'generating' && foundImageUrl) {
+          updates.imageGenerationStatus = 'complete';
+          updates.generatedImageUrl = foundImageUrl;
+          updated = true;
+        }
+        
+        if (scene.videoGenerationStatus === 'generating' && foundVideoUrl) {
+          updates.videoGenerationStatus = 'complete';
+          updates.generatedVideoUrl = foundVideoUrl;
+          updated = true;
+        }
+        
+        return Object.keys(updates).length > 0 ? { ...scene, ...updates } : scene;
+      }));
+      
+      if (updated) {
+        toast.success('Found and synced completed generation!');
+      } else {
+        // Check if there's a pending generation
+        const promptToCheck = sceneData.image_prompt?.substring(0, 80) || '';
+        if (promptToCheck) {
+          const { data: pendingGen } = await supabase
+            .from('generations')
+            .select('id, status')
+            .ilike('prompt', `%${promptToCheck}%`)
+            .in('status', ['pending', 'processing'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (pendingGen && pendingGen.length > 0) {
+            toast.info(`Generation still in progress (status: ${pendingGen[0].status})`);
+          } else {
+            toast.info('No completed generation found - try regenerating');
+          }
         } else {
           toast.info('Scene is up to date');
         }

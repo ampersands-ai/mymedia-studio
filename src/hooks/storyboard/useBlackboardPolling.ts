@@ -1,6 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useGenerationPolling } from '@/hooks/useGenerationPolling';
-import type { GenerationOutput } from '@/hooks/useGenerationState';
+import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import { getPublicImageUrl } from '@/lib/supabase-images';
 
@@ -8,154 +7,205 @@ import { getPublicImageUrl } from '@/lib/supabase-images';
 export const IMAGE_GENERATION_TIMEOUT_MS = 5 * 60 * 1000;  // 5 minutes
 export const VIDEO_GENERATION_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 
-interface PendingResolver {
-  resolve: (url: string | null) => void;
-  reject: (error: Error) => void;
-  timeoutId: NodeJS.Timeout;
+// Polling configuration
+const POLL_INTERVAL_MS = 5000; // 5 seconds between polls
+
+interface ActivePoll {
+  generationId: string;
+  abortController: AbortController;
 }
 
 /**
- * Adapter hook that wraps the existing hybrid polling system
- * to provide promise-based results for the Blackboard storyboard.
+ * Direct database polling hook for Blackboard storyboard.
  * 
- * Uses the scalable 3-tier architecture:
- * 1. Supabase Realtime (primary) - WebSocket-based, O(1) connections
- * 2. Exponential backoff polling (fallback) - graceful degradation
- * 3. State sync guards - stall detection and recovery
+ * Key differences from the shared useGenerationPolling:
+ * - Each generation polls independently (no shared state conflicts)
+ * - Uses direct database queries (no Realtime dependency)
+ * - Supports unlimited concurrent generations
+ * - Each poll has its own timeout and cleanup
  * 
- * This approach scales to 10,000s of concurrent generations without
- * overwhelming the database with polling queries.
+ * This fixes the issue where the shared polling hook could only
+ * track one generation at a time, causing orphaned promises.
  */
 export const useBlackboardPolling = () => {
-  const resolversRef = useRef<Map<string, PendingResolver>>(new Map());
-  const activePollingIdRef = useRef<string | null>(null);
+  const activePolls = useRef<Map<string, ActivePoll>>(new Map());
 
-  const { startPolling, stopPolling, isPolling } = useGenerationPolling({
-    onComplete: (outputs: GenerationOutput[], parentId: string) => {
-      const resolver = resolversRef.current.get(parentId);
-      if (resolver) {
-        clearTimeout(resolver.timeoutId);
-        resolversRef.current.delete(parentId);
-        activePollingIdRef.current = null;
+  /**
+   * Poll a single generation directly from the database
+   * Returns the output URL when complete, or null on failure
+   */
+  const pollGenerationDirectly = useCallback(async (
+    generationId: string,
+    timeoutMs: number,
+    abortSignal: AbortSignal
+  ): Promise<string | null> => {
+    const startTime = Date.now();
+    const maxAttempts = Math.ceil(timeoutMs / POLL_INTERVAL_MS);
+    let attempts = 0;
+
+    logger.info('Starting direct poll for generation', {
+      generationId,
+      timeoutMs,
+      maxAttempts,
+      component: 'useBlackboardPolling'
+    });
+
+    while (attempts < maxAttempts && !abortSignal.aborted) {
+      attempts++;
+
+      try {
+        const { data, error } = await supabase
+          .from('generations')
+          .select('id, status, output_url, storage_path')
+          .eq('id', generationId)
+          .single();
+
+        if (abortSignal.aborted) {
+          logger.info('Poll aborted', { generationId, component: 'useBlackboardPolling' });
+          return null;
+        }
+
+        if (error) {
+          logger.warn('Poll query error, will retry', {
+            generationId,
+            error: error.message,
+            attempt: attempts,
+            component: 'useBlackboardPolling'
+          });
+          // Continue polling on transient errors
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+          continue;
+        }
+
+        // Check for completion
+        if (data?.status === 'completed' || data?.status === 'complete') {
+          const outputUrl = data.output_url || 
+            (data.storage_path ? getPublicImageUrl(data.storage_path) : null);
+          
+          logger.info('Generation completed via direct poll', {
+            generationId,
+            outputUrl,
+            attempts,
+            elapsedMs: Date.now() - startTime,
+            component: 'useBlackboardPolling'
+          });
+          
+          return outputUrl;
+        }
+
+        // Check for failure
+        if (data?.status === 'failed' || data?.status === 'error') {
+          logger.error('Generation failed', new Error('Generation status is failed'), {
+            generationId,
+            status: data.status,
+            component: 'useBlackboardPolling'
+          });
+          throw new Error('Generation failed');
+        }
+
+        // Still pending, wait and retry
+        if (attempts < maxAttempts) {
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+        }
+      } catch (error) {
+        if (abortSignal.aborted) return null;
         
-        // Convert storage_path to a full public URL
-        const storagePath = outputs[0]?.storage_path || null;
-        const outputUrl = storagePath ? getPublicImageUrl(storagePath) : null;
+        // If it's our own failure error, rethrow
+        if (error instanceof Error && error.message === 'Generation failed') {
+          throw error;
+        }
         
-        logger.info('Blackboard polling complete', { 
-          parentId, 
-          storagePath,
-          outputUrl,
+        logger.warn('Poll attempt failed', {
+          generationId,
+          error: error instanceof Error ? error.message : String(error),
+          attempt: attempts,
           component: 'useBlackboardPolling'
         });
         
-        resolver.resolve(outputUrl);
+        // Continue polling on other errors
+        if (attempts < maxAttempts) {
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+        }
       }
-    },
-    onError: (error: string) => {
-      logger.error('Blackboard polling error', new Error(error), {
-        component: 'useBlackboardPolling'
-      });
+    }
 
-      // Reject all pending resolvers
-      resolversRef.current.forEach((resolver) => {
-        clearTimeout(resolver.timeoutId);
-        resolver.reject(new Error(error));
-      });
-      resolversRef.current.clear();
-      activePollingIdRef.current = null;
-    },
-    onTimeout: () => {
-      logger.warn('Blackboard polling timeout from hybrid system', {
-        component: 'useBlackboardPolling'
-      });
-
-      resolversRef.current.forEach((resolver) => {
-        clearTimeout(resolver.timeoutId);
-        resolver.reject(new Error('Generation timed out'));
-      });
-      resolversRef.current.clear();
-      activePollingIdRef.current = null;
-    },
-  });
+    // Timeout reached
+    const elapsedMs = Date.now() - startTime;
+    logger.warn('Generation timed out', {
+      generationId,
+      timeoutMs,
+      elapsedMs,
+      attempts,
+      component: 'useBlackboardPolling'
+    });
+    
+    throw new Error(`Generation timed out after ${Math.round(elapsedMs / 1000)} seconds`);
+  }, []);
 
   /**
-   * Wait for a generation to complete using the hybrid polling system
+   * Wait for a generation to complete using direct database polling
+   * Each call is independent - supports unlimited concurrent generations
+   * 
    * @param generationId - The generation ID to poll for
    * @param timeoutMs - Maximum wait time (default: 5 min for images)
    * @returns Promise resolving to the output URL or null
    */
-  const waitForGeneration = useCallback((
+  const waitForGeneration = useCallback(async (
     generationId: string,
     timeoutMs: number = IMAGE_GENERATION_TIMEOUT_MS
   ): Promise<string | null> => {
-    return new Promise((resolve, reject) => {
-      let isResolved = false;  // Guard flag to prevent double resolution
-
-      logger.info('Starting waitForGeneration', { 
-        generationId, 
-        timeoutMs,
-        component: 'useBlackboardPolling'
-      });
-
-      // Set up timeout with guard
-      const timeoutId = setTimeout(() => {
-        if (isResolved) return;  // Don't fire if already resolved
-        isResolved = true;
-        
-        logger.warn('Generation timed out', { 
-          generationId, 
-          timeoutMs,
-          component: 'useBlackboardPolling'
-        });
-        
-        resolversRef.current.delete(generationId);
-        stopPolling();
-        activePollingIdRef.current = null;
-        reject(new Error(`Generation timed out after ${timeoutMs / 1000} seconds`));
-      }, timeoutMs);
-
-      // Store resolver with guarded callbacks
-      resolversRef.current.set(generationId, { 
-        resolve: (url: string | null) => {
-          if (isResolved) return;  // Ignore if already resolved/rejected
-          isResolved = true;
-          clearTimeout(timeoutId);
-          resolve(url);
-        },
-        reject: (error: Error) => {
-          if (isResolved) return;
-          isResolved = true;
-          clearTimeout(timeoutId);
-          reject(error);
-        },
-        timeoutId 
-      });
-      
-      activePollingIdRef.current = generationId;
-
-      // Start the hybrid polling system (Realtime + fallback)
-      startPolling(generationId);
+    // Create abort controller for this specific poll
+    const abortController = new AbortController();
+    
+    // Track active poll
+    activePolls.current.set(generationId, {
+      generationId,
+      abortController
     });
-  }, [startPolling, stopPolling]);
+
+    try {
+      const result = await pollGenerationDirectly(
+        generationId,
+        timeoutMs,
+        abortController.signal
+      );
+      return result;
+    } finally {
+      // Cleanup
+      activePolls.current.delete(generationId);
+    }
+  }, [pollGenerationDirectly]);
 
   /**
-   * Cleanup all pending operations
-   * Call this on component unmount or when cancelling
+   * Cancel a specific generation's polling
+   */
+  const cancelGeneration = useCallback((generationId: string) => {
+    const poll = activePolls.current.get(generationId);
+    if (poll) {
+      logger.info('Cancelling poll for generation', { generationId, component: 'useBlackboardPolling' });
+      poll.abortController.abort();
+      activePolls.current.delete(generationId);
+    }
+  }, []);
+
+  /**
+   * Cleanup all pending polling operations
+   * Call this on component unmount or when cancelling all
    */
   const cleanup = useCallback(() => {
-    logger.info('Cleaning up blackboard polling', {
-      pendingCount: resolversRef.current.size,
-      component: 'useBlackboardPolling'
-    });
+    const count = activePolls.current.size;
+    if (count > 0) {
+      logger.info('Cleaning up all active polls', {
+        count,
+        component: 'useBlackboardPolling'
+      });
+    }
 
-    resolversRef.current.forEach((resolver) => {
-      clearTimeout(resolver.timeoutId);
+    activePolls.current.forEach((poll) => {
+      poll.abortController.abort();
     });
-    resolversRef.current.clear();
-    activePollingIdRef.current = null;
-    stopPolling();
-  }, [stopPolling]);
+    activePolls.current.clear();
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -166,7 +216,9 @@ export const useBlackboardPolling = () => {
 
   return {
     waitForGeneration,
+    cancelGeneration,
     cleanup,
-    isPolling,
+    isPolling: activePolls.current.size > 0,
+    activeCount: activePolls.current.size,
   };
 };

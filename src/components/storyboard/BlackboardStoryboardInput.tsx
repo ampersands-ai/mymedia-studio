@@ -22,6 +22,7 @@ import { BlackboardRenderOptions, RenderOptions } from './BlackboardRenderOption
 import { useBlackboardStoryboard, VideoModelType } from '@/hooks/storyboard/useBlackboardStoryboard';
 import { useBlackboardStoryboardList } from '@/hooks/storyboard/useBlackboardStoryboardList';
 import { useUserCredits } from '@/hooks/useUserCredits';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Stuck threshold: 5 minutes
 const STUCK_THRESHOLD_MS = 5 * 60 * 1000;
@@ -30,6 +31,9 @@ export function BlackboardStoryboardInput() {
   const [showRenderOptions, setShowRenderOptions] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isStuck, setIsStuck] = useState(false);
+  const [expandedSceneId, setExpandedSceneId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  
   const {
     scenes,
     aspectRatio,
@@ -212,28 +216,48 @@ export function BlackboardStoryboardInput() {
             </Button>
           </div>
 
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-            {scenes.map((scene, index) => (
-              <BlackboardSceneCard
-                key={scene.id}
-                scene={scene}
-                index={index}
-                totalScenes={scenes.length}
-                disabled={isProcessing}
-                previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
-                previousSceneIsGenerating={index > 0 && scenes[index - 1]?.imageGenerationStatus === 'generating'}
-                imageCreditCost={imageCreditCost}
-                videoCreditCost={videoCreditCost}
-                nextSceneHasImage={index < scenes.length - 1 && !!scenes[index + 1]?.generatedImageUrl}
-                onUpdate={(updates) => updateScene(scene.id, updates)}
-                onRemove={() => removeScene(scene.id)}
-                onGenerateImage={() => generateImage(scene.id)}
-                onRegenerateImage={() => regenerateImage(scene.id)}
-                onGenerateVideo={() => generateVideo(scene.id)}
-                onRegenerateVideo={() => regenerateVideo(scene.id)}
-                onCheckStatus={() => checkSceneStatus(scene.id)}
-              />
-            ))}
+          <div className="space-y-3 sm:space-y-4 max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
+            {scenes.map((scene, index) => {
+              // On mobile: only one scene expanded at a time (accordion)
+              // On desktop: all scenes can be expanded independently (default first one)
+              const isExpanded = isMobile 
+                ? expandedSceneId === scene.id 
+                : (expandedSceneId === scene.id || (expandedSceneId === null && index === 0));
+              
+              const handleToggleExpand = () => {
+                if (isMobile) {
+                  // Accordion: toggle between this scene and none
+                  setExpandedSceneId(expandedSceneId === scene.id ? null : scene.id);
+                } else {
+                  // Desktop: toggle independently
+                  setExpandedSceneId(expandedSceneId === scene.id ? null : scene.id);
+                }
+              };
+              
+              return (
+                <BlackboardSceneCard
+                  key={scene.id}
+                  scene={scene}
+                  index={index}
+                  totalScenes={scenes.length}
+                  disabled={isProcessing}
+                  previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
+                  previousSceneIsGenerating={index > 0 && scenes[index - 1]?.imageGenerationStatus === 'generating'}
+                  imageCreditCost={imageCreditCost}
+                  videoCreditCost={videoCreditCost}
+                  nextSceneHasImage={index < scenes.length - 1 && !!scenes[index + 1]?.generatedImageUrl}
+                  isExpanded={isExpanded}
+                  onToggleExpand={handleToggleExpand}
+                  onUpdate={(updates) => updateScene(scene.id, updates)}
+                  onRemove={() => removeScene(scene.id)}
+                  onGenerateImage={() => generateImage(scene.id)}
+                  onRegenerateImage={() => regenerateImage(scene.id)}
+                  onGenerateVideo={() => generateVideo(scene.id)}
+                  onRegenerateVideo={() => regenerateVideo(scene.id)}
+                  onCheckStatus={() => checkSceneStatus(scene.id)}
+                />
+              );
+            })}
           </div>
         </div>
 

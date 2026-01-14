@@ -29,6 +29,7 @@ export function BlackboardStoryboardInput() {
     regenerateImage,
     generateVideo,
     regenerateVideo,
+    checkSceneStatus,
     isGeneratingImages,
     isGeneratingVideos,
     isRendering,
@@ -190,6 +191,7 @@ export function BlackboardStoryboardInput() {
                 onRegenerateImage={() => regenerateImage(scene.id)}
                 onGenerateVideo={() => generateVideo(scene.id)}
                 onRegenerateVideo={() => regenerateVideo(scene.id)}
+                onCheckStatus={() => checkSceneStatus(scene.id)}
               />
             ))}
           </div>

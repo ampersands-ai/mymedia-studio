@@ -363,11 +363,22 @@ export function BlackboardStoryboardInput() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => {
-                const a = document.createElement('a');
-                a.href = finalVideoUrl;
-                a.download = 'blackboard-video.mp4';
-                a.click();
+              onClick={async () => {
+                try {
+                  const response = await fetch(finalVideoUrl);
+                  if (!response.ok) throw new Error('Download failed');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'blackboard-video.mp4';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                } catch {
+                  window.open(finalVideoUrl, '_blank');
+                }
               }}
             >
               Download Video

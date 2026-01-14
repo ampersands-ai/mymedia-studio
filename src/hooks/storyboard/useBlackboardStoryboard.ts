@@ -467,6 +467,53 @@ export const useBlackboardStoryboard = () => {
     }
   }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
+  // Poll for render completion
+  const pollForRenderCompletion = useCallback(async (sbId: string) => {
+    const maxAttempts = 120; // 10 minutes at 5-second intervals
+    let attempts = 0;
+    
+    const poll = async (): Promise<void> => {
+      attempts++;
+      
+      try {
+        const { data: storyboard, error } = await supabase
+          .from('blackboard_storyboards')
+          .select('status, final_video_url')
+          .eq('id', sbId)
+          .single();
+        
+        if (error) {
+          logger.error('Failed to poll storyboard status', error);
+          return;
+        }
+        
+        if (storyboard?.status === 'complete' && storyboard.final_video_url) {
+          setFinalVideoUrl(storyboard.final_video_url);
+          setIsRendering(false);
+          toast.success('Video rendered successfully!');
+          return;
+        } else if (storyboard?.status === 'failed') {
+          setIsRendering(false);
+          toast.error('Video rendering failed. Credits have been refunded.');
+          return;
+        } else if (attempts >= maxAttempts) {
+          setIsRendering(false);
+          toast.error('Render timed out. Please check back later.');
+          return;
+        }
+        
+        // Continue polling
+        setTimeout(poll, 5000);
+      } catch (err) {
+        logger.error('Polling error', err instanceof Error ? err : new Error(String(err)));
+        setIsRendering(false);
+      }
+    };
+    
+    // Start polling
+    poll();
+  }, []);
+
   const renderFinalVideo = useCallback(async () => {
     const videosToStitch = scenes
       .filter(s => s.generatedVideoUrl)
@@ -474,6 +521,11 @@ export const useBlackboardStoryboard = () => {
 
     if (videosToStitch.length === 0) {
       toast.error('No videos to stitch. Generate videos first.');
+      return;
+    }
+
+    if (!storyboardId) {
+      toast.error('No storyboard ID found');
       return;
     }
 
@@ -492,8 +544,14 @@ export const useBlackboardStoryboard = () => {
 
       if (error) throw error;
 
-      if (data?.video_url) {
+      // Rendering is async - start polling for completion
+      if (data?.renderJobId) {
+        toast.info('Video stitching started. This may take a few minutes...');
+        pollForRenderCompletion(storyboardId);
+      } else if (data?.video_url) {
+        // Immediate completion (unlikely but handle it)
         setFinalVideoUrl(data.video_url);
+        setIsRendering(false);
         toast.success('Video rendered successfully!');
       }
 
@@ -503,10 +561,9 @@ export const useBlackboardStoryboard = () => {
         component: 'useBlackboardStoryboard',
       });
       toast.error('Failed to render final video');
-    } finally {
       setIsRendering(false);
     }
-  }, [scenes, aspectRatio, refetchCredits]);
+  }, [scenes, storyboardId, refetchCredits, pollForRenderCompletion]);
 
   const resetAll = useCallback(async () => {
     const initialScene = createEmptyScene(true);

@@ -91,7 +91,78 @@ Deno.serve(async (req) => {
       .single();
 
     if (fetchError || !storyboard) {
-      logger.error('Storyboard not found', fetchError || new Error('Not found'), {
+      logger.info('Storyboard not found in main table, trying blackboard_storyboards', {
+        metadata: { renderJobId }
+      });
+      
+      // Try blackboard_storyboards table as fallback
+      const { data: blackboardStoryboard, error: blackboardError } = await supabaseClient
+        .from('blackboard_storyboards')
+        .select('*')
+        .eq('render_job_id', renderJobId)
+        .single();
+      
+      if (!blackboardError && blackboardStoryboard) {
+        logger.info('Found blackboard storyboard', { metadata: { storyboardId: blackboardStoryboard.id } });
+        
+        // Handle blackboard storyboard completion
+        if (isComplete) {
+          const { error: updateError } = await supabaseClient
+            .from('blackboard_storyboards')
+            .update({
+              status: 'complete',
+              final_video_url: url,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', blackboardStoryboard.id);
+          
+          if (updateError) {
+            logger.error('Failed to update blackboard storyboard', updateError);
+          } else {
+            logger.info('Blackboard storyboard updated to complete', { metadata: { url } });
+          }
+        } else if (status === 'error' || status === 'failed') {
+          // Refund credits
+          const tokenCost = blackboardStoryboard.estimated_render_cost || 0;
+          const { error: refundError } = await supabaseClient.rpc('increment_tokens', {
+            user_id_param: blackboardStoryboard.user_id,
+            amount: tokenCost
+          });
+          
+          if (refundError) {
+            logger.error('Credit refund failed for blackboard', refundError);
+          } else {
+            logger.info('Credits refunded for blackboard', { metadata: { tokenCost } });
+          }
+          
+          await supabaseClient
+            .from('blackboard_storyboards')
+            .update({ 
+              status: 'failed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', blackboardStoryboard.id);
+          
+          logger.error('Blackboard video rendering failed', new Error(error || 'Unknown error'));
+        } else if (status === 'rendering') {
+          await supabaseClient
+            .from('blackboard_storyboards')
+            .update({ 
+              status: 'rendering',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', blackboardStoryboard.id);
+        }
+        
+        logger.logDuration('Webhook processing (blackboard)', webhookStartTime);
+        return new Response(
+          JSON.stringify({ success: true, storyboardId: blackboardStoryboard.id, type: 'blackboard' }),
+          { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Neither table has this render job
+      logger.error('Storyboard not found in any table', fetchError || new Error('Not found'), {
         metadata: { renderJobId }
       });
       return new Response(

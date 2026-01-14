@@ -95,6 +95,9 @@ verify_jwt = true
 [functions.render-video-editor]
 verify_jwt = true
 
+[functions.render-blackboard-video]
+verify_jwt = true
+
 [functions.status-video-editor]
 verify_jwt = true
 

@@ -922,6 +922,78 @@ export const useBlackboardStoryboard = () => {
     }
   }, [user, storyboardId, createNewStoryboard]);
 
+  // Manual check status for a scene - fetches from database and syncs if data exists
+  const checkSceneStatus = useCallback(async (sceneId: string) => {
+    if (!storyboardId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('blackboard_scenes')
+        .select('generated_image_url, image_generation_status, generated_video_url, video_generation_status')
+        .eq('id', sceneId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        let updated = false;
+        
+        setScenes(prev => prev.map(scene => {
+          if (scene.id !== sceneId) return scene;
+          
+          const updates: Partial<BlackboardScene> = {};
+          
+          // Check if DB has image but local doesn't
+          if (data.generated_image_url && !scene.generatedImageUrl) {
+            updates.generatedImageUrl = data.generated_image_url;
+            updates.imageGenerationStatus = 'complete';
+            updated = true;
+          }
+          
+          // Check if DB has video but local doesn't
+          if (data.generated_video_url && !scene.generatedVideoUrl) {
+            updates.generatedVideoUrl = data.generated_video_url;
+            updates.videoGenerationStatus = 'complete';
+            updated = true;
+          }
+          
+          // Sync status if stuck on 'generating' but DB shows complete
+          if (scene.imageGenerationStatus === 'generating' && 
+              data.image_generation_status === 'complete') {
+            updates.imageGenerationStatus = 'complete';
+            if (data.generated_image_url) {
+              updates.generatedImageUrl = data.generated_image_url;
+            }
+            updated = true;
+          }
+          
+          if (scene.videoGenerationStatus === 'generating' && 
+              data.video_generation_status === 'complete') {
+            updates.videoGenerationStatus = 'complete';
+            if (data.generated_video_url) {
+              updates.generatedVideoUrl = data.generated_video_url;
+            }
+            updated = true;
+          }
+          
+          return Object.keys(updates).length > 0 ? { ...scene, ...updates } : scene;
+        }));
+        
+        if (updated) {
+          toast.success('Scene data refreshed from database');
+        } else {
+          toast.info('Scene is up to date');
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to check scene status', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useBlackboardStoryboard',
+        sceneId,
+      });
+      toast.error('Failed to check status');
+    }
+  }, [storyboardId]);
+
   return {
     scenes,
     aspectRatio,
@@ -939,6 +1011,7 @@ export const useBlackboardStoryboard = () => {
     regenerateImage,
     generateVideo,
     regenerateVideo,
+    checkSceneStatus,
     isGeneratingImages,
     isGeneratingVideos,
     isRendering,

@@ -25,6 +25,7 @@ interface BlackboardSceneCardProps {
   onRegenerateVideo: () => void;
   onGenerateImage: () => void;
   onGenerateVideo: () => void;
+  onCheckStatus: () => void;
 }
 
 export function BlackboardSceneCard({
@@ -41,6 +42,7 @@ export function BlackboardSceneCard({
   onRegenerateVideo,
   onGenerateImage,
   onGenerateVideo,
+  onCheckStatus,
 }: BlackboardSceneCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const isImageGenerating = scene.imageGenerationStatus === 'generating';
@@ -313,6 +315,20 @@ export function BlackboardSceneCard({
                           <Sparkles className="w-4 h-4 mr-2" />
                         )}
                         {hasVideo ? 'Regenerate Video' : `Video (${videoCreditCost})`}
+                      </Button>
+                    )}
+
+                    {/* Check Status Button - shown when generating or has prompt but no preview */}
+                    {(isImageGenerating || isVideoGenerating || (!hasImage && scene.imagePrompt.trim()) || (!hasVideo && scene.videoPrompt.trim() && !isLastScene)) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onCheckStatus}
+                        disabled={disabled}
+                        className="h-9 px-2"
+                        title="Check database for updates"
+                      >
+                        <RefreshCw className="w-4 h-4" />
                       </Button>
                     )}
                   </div>

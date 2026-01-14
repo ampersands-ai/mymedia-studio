@@ -83,7 +83,16 @@ Deno.serve(async (req) => {
     console.log(`[${requestId}] User ${user.id} starting blackboard render via Shotstack`);
 
     // Parse request body
-    const { storyboardId } = await req.json();
+    const { 
+      storyboardId,
+      backgroundAudioUrl,
+      backgroundAudioVolume,
+      backgroundAudioFadeIn,
+      backgroundAudioFadeOut,
+      outroMediaUrl,
+      outroMediaType,
+      outroDuration,
+    } = await req.json();
 
     if (!storyboardId) {
       return new Response(
@@ -91,6 +100,9 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`[${requestId}] Render options - Audio: ${!!backgroundAudioUrl}, Outro: ${!!outroMediaUrl} (${outroMediaType})`);
+
 
     // Fetch the blackboard storyboard
     const { data: storyboard, error: storyboardError } = await supabase
@@ -207,7 +219,7 @@ Deno.serve(async (req) => {
 
     // Build Shotstack timeline - concatenate all video clips sequentially
     // Use "auto" length to detect actual video duration (Veo generates 8s videos, not 5s)
-    const clips = videosToStitch.map((scene, index) => ({
+    const clips: any[] = videosToStitch.map((scene, index) => ({
       asset: {
         type: "video",
         src: scene.generated_video_url,
@@ -217,8 +229,42 @@ Deno.serve(async (req) => {
       fit: "cover",
     }));
 
+    // Add outro clip if provided
+    if (outroMediaUrl) {
+      console.log(`[${requestId}] Adding outro: ${outroMediaType}, duration: ${outroDuration}s`);
+      clips.push({
+        asset: {
+          type: outroMediaType === 'video' ? 'video' : 'image',
+          src: outroMediaUrl,
+        },
+        start: "auto",
+        length: outroMediaType === 'video' ? "auto" : (outroDuration || 3),
+        fit: "cover",
+      });
+    }
+
+    // Build soundtrack configuration if audio provided
+    let soundtrack: { src: string; volume: number; effect?: string } | undefined;
+    if (backgroundAudioUrl) {
+      let audioEffect: string | undefined;
+      if (backgroundAudioFadeIn && backgroundAudioFadeOut) {
+        audioEffect = "fadeInFadeOut";
+      } else if (backgroundAudioFadeIn) {
+        audioEffect = "fadeIn";
+      } else if (backgroundAudioFadeOut) {
+        audioEffect = "fadeOut";
+      }
+      
+      soundtrack = {
+        src: backgroundAudioUrl,
+        volume: backgroundAudioVolume || 0.5,
+        ...(audioEffect && { effect: audioEffect }),
+      };
+      console.log(`[${requestId}] Adding soundtrack: volume ${soundtrack.volume}, effect: ${audioEffect || 'none'}`);
+    }
+
     // Build Shotstack payload with exact size dimensions
-    const shotstackPayload = {
+    const shotstackPayload: any = {
       timeline: {
         tracks: [
           {
@@ -226,6 +272,7 @@ Deno.serve(async (req) => {
           },
         ],
         background: "#000000",
+        ...(soundtrack && { soundtrack }),
       },
       output: {
         format: "mp4",

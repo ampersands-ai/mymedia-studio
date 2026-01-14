@@ -68,6 +68,7 @@ export function BlackboardStoryboardInput() {
     deleteStoryboard,
     videoGenerationStartTime,
     cancelVideoGeneration,
+    isSceneStuck,
   } = useBlackboardStoryboard();
 
   const { storyboards, isLoading: isLoadingList, refetch: refetchList } = useBlackboardStoryboardList();
@@ -240,13 +241,14 @@ export function BlackboardStoryboardInput() {
                   scene={scene}
                   index={index}
                   totalScenes={scenes.length}
-                  disabled={isProcessing}
+                  disabled={isProcessing && !isSceneStuck(scene.id)}
                   previousImageUrl={index > 0 ? scenes[index - 1].generatedImageUrl : undefined}
                   previousSceneIsGenerating={index > 0 && scenes[index - 1]?.imageGenerationStatus === 'generating'}
                   imageCreditCost={imageCreditCost}
                   videoCreditCost={videoCreditCost}
                   nextSceneHasImage={index < scenes.length - 1 && !!scenes[index + 1]?.generatedImageUrl}
                   isExpanded={isExpanded}
+                  isStuck={isSceneStuck(scene.id)}
                   onToggleExpand={handleToggleExpand}
                   onUpdate={(updates) => updateScene(scene.id, updates)}
                   onRemove={() => removeScene(scene.id)}

@@ -57,11 +57,17 @@ export const RenderButton = ({ onRenderAction }: RenderButtonProps) => {
           <p className="text-green-500 font-medium">Video rendered successfully!</p>
         </div>
         <div className="flex gap-2">
-          <Button asChild className="flex-1">
-            <a href={finalVideoUrl} target="_blank" rel="noopener noreferrer" download>
-              <Download className="h-4 w-4 mr-2" />
-              Download Video
-            </a>
+          <Button 
+            className="flex-1"
+            onClick={() => {
+              const a = document.createElement('a');
+              a.href = finalVideoUrl;
+              a.download = 'rendered-video.mp4';
+              a.click();
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Video
           </Button>
           <Button variant="outline" onClick={() => {
             onRenderAction?.();

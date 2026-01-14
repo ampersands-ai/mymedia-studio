@@ -927,7 +927,7 @@ export const useBlackboardStoryboard = () => {
     if (!storyboardId) return;
     
     try {
-      // Phase 1: Check blackboard_scenes table
+      // Phase 1: Check blackboard_scenes table for existing data
       const { data: sceneData, error: sceneError } = await supabase
         .from('blackboard_scenes')
         .select('generated_image_url, image_generation_status, generated_video_url, video_generation_status, image_prompt, video_prompt')
@@ -940,23 +940,76 @@ export const useBlackboardStoryboard = () => {
       let foundImageUrl: string | null = sceneData.generated_image_url || null;
       let foundVideoUrl: string | null = sceneData.generated_video_url || null;
       
-      // Phase 2: If no image URL, search generations table for orphaned completions
+      // Phase 2: Direct lookup by blackboard_scene_id (most reliable method)
+      // This finds generations that were linked but database trigger didn't sync
+      if (!foundImageUrl || !foundVideoUrl) {
+        const { data: linkedGenerations } = await supabase
+          .from('generations')
+          .select('id, output_url, storage_path, status, type')
+          .eq('blackboard_scene_id', sceneId)
+          .eq('status', 'completed')
+          .not('storage_path', 'is', null);
+        
+        if (linkedGenerations && linkedGenerations.length > 0) {
+          for (const gen of linkedGenerations) {
+            if (gen.type === 'image' && !foundImageUrl) {
+              foundImageUrl = gen.storage_path;
+              
+              // Sync to blackboard_scenes
+              await supabase
+                .from('blackboard_scenes')
+                .update({
+                  generated_image_url: foundImageUrl,
+                  image_generation_status: 'complete'
+                })
+                .eq('id', sceneId);
+              
+              updated = true;
+              logger.debug('Synced linked image generation', {
+                component: 'useBlackboardStoryboard',
+                sceneId,
+                generationId: gen.id
+              });
+            } else if (gen.type === 'video' && !foundVideoUrl) {
+              foundVideoUrl = gen.storage_path;
+              
+              // Sync to blackboard_scenes
+              await supabase
+                .from('blackboard_scenes')
+                .update({
+                  generated_video_url: foundVideoUrl,
+                  video_generation_status: 'complete'
+                })
+                .eq('id', sceneId);
+              
+              updated = true;
+              logger.debug('Synced linked video generation', {
+                component: 'useBlackboardStoryboard',
+                sceneId,
+                generationId: gen.id
+              });
+            }
+          }
+        }
+      }
+      
+      // Phase 3: Fallback - search generations by prompt substring (for orphaned generations)
       if (!foundImageUrl && sceneData.image_prompt) {
         const promptSubstring = sceneData.image_prompt.substring(0, 80);
         
         const { data: generations } = await supabase
           .from('generations')
-          .select('id, output_url, prompt, status, type')
+          .select('id, output_url, storage_path, prompt, status, type')
           .eq('status', 'completed')
           .eq('type', 'image')
-          .not('output_url', 'is', null)
+          .not('storage_path', 'is', null)
           .ilike('prompt', `%${promptSubstring}%`)
           .order('created_at', { ascending: false })
           .limit(5);
         
         if (generations && generations.length > 0) {
           const matchingGen = generations[0];
-          foundImageUrl = matchingGen.output_url;
+          foundImageUrl = matchingGen.storage_path;
           
           // Update blackboard_scenes with the found URL
           await supabase
@@ -977,23 +1030,23 @@ export const useBlackboardStoryboard = () => {
         }
       }
       
-      // Phase 2b: Same for video
+      // Phase 3b: Same for video
       if (!foundVideoUrl && sceneData.video_prompt) {
         const promptSubstring = sceneData.video_prompt.substring(0, 80);
         
         const { data: generations } = await supabase
           .from('generations')
-          .select('id, output_url, prompt, status, type')
+          .select('id, output_url, storage_path, prompt, status, type')
           .eq('status', 'completed')
           .eq('type', 'video')
-          .not('output_url', 'is', null)
+          .not('storage_path', 'is', null)
           .ilike('prompt', `%${promptSubstring}%`)
           .order('created_at', { ascending: false })
           .limit(5);
         
         if (generations && generations.length > 0) {
           const matchingGen = generations[0];
-          foundVideoUrl = matchingGen.output_url;
+          foundVideoUrl = matchingGen.storage_path;
           
           await supabase
             .from('blackboard_scenes')
@@ -1012,7 +1065,7 @@ export const useBlackboardStoryboard = () => {
         }
       }
       
-      // Phase 3: Update local state
+      // Phase 4: Update local state
       setScenes(prev => prev.map(scene => {
         if (scene.id !== sceneId) return scene;
         
@@ -1050,20 +1103,34 @@ export const useBlackboardStoryboard = () => {
         toast.success('Found and synced completed generation!');
       } else {
         // Check if there's a pending generation
-        const promptToCheck = sceneData.image_prompt?.substring(0, 80) || '';
+        const promptToCheck = sceneData.image_prompt?.substring(0, 80) || sceneData.video_prompt?.substring(0, 80) || '';
         if (promptToCheck) {
-          const { data: pendingGen } = await supabase
+          // First check by blackboard_scene_id for pending
+          const { data: pendingBySceneId } = await supabase
             .from('generations')
             .select('id, status')
-            .ilike('prompt', `%${promptToCheck}%`)
+            .eq('blackboard_scene_id', sceneId)
             .in('status', ['pending', 'processing'])
             .order('created_at', { ascending: false })
             .limit(1);
           
-          if (pendingGen && pendingGen.length > 0) {
-            toast.info(`Generation still in progress (status: ${pendingGen[0].status})`);
+          if (pendingBySceneId && pendingBySceneId.length > 0) {
+            toast.info(`Generation still in progress (status: ${pendingBySceneId[0].status})`);
           } else {
-            toast.info('No completed generation found - try regenerating');
+            // Fallback to prompt-based search
+            const { data: pendingGen } = await supabase
+              .from('generations')
+              .select('id, status')
+              .ilike('prompt', `%${promptToCheck}%`)
+              .in('status', ['pending', 'processing'])
+              .order('created_at', { ascending: false })
+              .limit(1);
+            
+            if (pendingGen && pendingGen.length > 0) {
+              toast.info(`Generation still in progress (status: ${pendingGen[0].status})`);
+            } else {
+              toast.info('No completed generation found - try regenerating');
+            }
           }
         } else {
           toast.info('Scene is up to date');

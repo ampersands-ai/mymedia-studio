@@ -384,6 +384,7 @@ export const useBlackboardStoryboard = () => {
       // Normalize image URLs to full public URLs
       const normalizedImageUrls = rawImageUrls.map(url => getPublicImageUrl(url));
 
+      // Note: aspectRatio is intentionally omitted - Veo 3.1 auto-detects from input images
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: modelModule.MODEL_CONFIG.modelId,
@@ -393,7 +394,6 @@ export const useBlackboardStoryboard = () => {
           prompt: scene.videoPrompt,
           custom_parameters: {
             imageUrls: normalizedImageUrls,
-            aspectRatio: aspectRatio === 'hd' ? '16:9' : '9:16',
           },
         },
       });

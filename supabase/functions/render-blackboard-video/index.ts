@@ -5,21 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map blackboard aspect ratios to Shotstack format
-const mapAspectRatioToShotstack = (aspectRatio: string): { width: number; height: number; ratio: string } => {
-  switch (aspectRatio) {
-    case 'portrait':
-    case '9:16':
-      return { width: 1080, height: 1920, ratio: '9:16' };
-    case 'instagram-feed':
-    case '1:1':
-      return { width: 1080, height: 1080, ratio: '1:1' };
-    case 'hd':
-    case '16:9':
-    default:
-      return { width: 1920, height: 1080, ratio: '16:9' };
-  }
-};
+// No longer need aspect ratio mapping - using "auto" to detect from input videos
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -178,8 +164,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get dimensions and aspect ratio for Shotstack
-    const { width, height } = mapAspectRatioToShotstack(storyboard.aspect_ratio || 'hd');
+    // Log aspect ratio for debugging (we'll use "auto" to detect from input videos)
+    console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio}, using auto detection`);
 
     // Build Shotstack timeline - concatenate all video clips sequentially
     const CLIP_DURATION = 5; // Each video clip is assumed to be 5 seconds
@@ -199,7 +185,7 @@ Deno.serve(async (req) => {
       return clip;
     });
 
-    // Build Shotstack payload (use only size, not resolution - they're mutually exclusive)
+    // Build Shotstack payload with auto aspect ratio (detects from input videos)
     const shotstackPayload = {
       timeline: {
         tracks: [
@@ -211,10 +197,7 @@ Deno.serve(async (req) => {
       },
       output: {
         format: "mp4",
-        size: {
-          width: width,
-          height: height,
-        },
+        aspectRatio: "auto",
       },
     };
 

@@ -143,26 +143,26 @@ export function BlackboardStoryboardInput() {
             className="grid grid-cols-1 md:grid-cols-2 gap-3"
           >
             <div className="relative">
-              <RadioGroupItem value="first_last_frames" id="first_last" className="peer sr-only" />
+              <RadioGroupItem value="lite" id="lite" className="peer sr-only" />
               <Label 
-                htmlFor="first_last" 
+                htmlFor="lite" 
                 className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
               >
-                <span className="font-semibold text-sm">Veo3 Image-to-Video</span>
+                <span className="font-semibold text-sm">Veo3.1 Lite</span>
                 <span className="text-xs text-muted-foreground">
-                  First/last frame transition ({videoCreditCost} credits)
+                  Fast video generation (30 credits)
                 </span>
               </Label>
             </div>
             <div className="relative">
-              <RadioGroupItem value="reference" id="reference" className="peer sr-only" />
+              <RadioGroupItem value="hq" id="hq" className="peer sr-only" />
               <Label 
-                htmlFor="reference" 
+                htmlFor="hq" 
                 className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
               >
-                <span className="font-semibold text-sm">Veo3 Reference</span>
+                <span className="font-semibold text-sm">Veo3.1 HQ</span>
                 <span className="text-xs text-muted-foreground">
-                  Style reference material ({videoCreditCost} credits)
+                  Higher quality video (125 credits)
                 </span>
               </Label>
             </div>

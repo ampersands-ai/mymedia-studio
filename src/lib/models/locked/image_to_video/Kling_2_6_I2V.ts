@@ -1,6 +1,7 @@
 /** Kling 2.6 (image_to_video) - Record: b4c8d0e2-5f6a-7b8c-9d0e-1f2a3b4c5d6e */
 import { getGenerationType } from "@/lib/models/registry";
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration";
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
@@ -148,7 +149,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from("generations").update({ status: GENERATION_STATUS.FAILED }).eq("id", gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

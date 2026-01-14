@@ -4819,9 +4819,11 @@ export type Database = {
           source_table: string | null
           status: string | null
           storage_path: string | null
+          storyboard_id: string | null
           tokens_used: number | null
           type: string | null
           user_id: string | null
+          video_editor_job_id: string | null
           video_job_id: string | null
         }
         Relationships: []

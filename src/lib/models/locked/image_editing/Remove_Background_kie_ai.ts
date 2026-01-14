@@ -5,6 +5,7 @@ import type { ExecuteGenerationParams } from "@/lib/generation/executeGeneration
 import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 export const MODEL_CONFIG = { modelId: "recraft/remove-background", recordId: "58b8b09f-57fd-42e3-ae2d-689e9ea3064d", modelName: "Remove Background", provider: "kie_ai", contentType: "image_editing",
   use_api_key: "KIE_AI_API_KEY_IMAGE_EDITING", baseCreditCost: 0.5, estimatedTimeSeconds: 20, costMultipliers: {}, apiEndpoint: "/api/v1/jobs/createTask", payloadStructure: "wrapper", maxImages: 1, defaultOutputs: 1, 
@@ -51,7 +52,8 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
 
   if (funcError) {
     await supabase.from('generations').update({ status: GENERATION_STATUS.FAILED }).eq('id', gen.id);
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   startPolling(gen.id);

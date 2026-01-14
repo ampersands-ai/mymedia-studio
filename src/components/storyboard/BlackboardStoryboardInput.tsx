@@ -375,10 +375,10 @@ export function BlackboardStoryboardInput() {
         {finalVideoUrl && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">Final Video</Label>
-            <div className="rounded-lg overflow-hidden border-2 border-primary">
+            <div className="rounded-lg overflow-hidden border-2 border-primary max-w-md mx-auto">
               <video
                 src={finalVideoUrl}
-                className="w-full"
+                className="w-full max-h-[400px] object-contain"
                 controls
                 autoPlay
                 muted

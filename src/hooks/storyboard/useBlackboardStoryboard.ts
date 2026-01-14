@@ -483,17 +483,10 @@ export const useBlackboardStoryboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Call the video stitching endpoint
-      const { data, error } = await supabase.functions.invoke('render-video-editor', {
+      // Call the blackboard video stitching endpoint
+      const { data, error } = await supabase.functions.invoke('render-blackboard-video', {
         body: {
-          clips: videosToStitch.map((url, index) => ({
-            type: 'video',
-            url,
-            start: index * 5,
-            duration: 5,
-          })),
-          resolution: aspectRatio === 'hd' ? '1920x1080' : '1080x1920',
-          format: 'mp4',
+          storyboardId,
         },
       });
 

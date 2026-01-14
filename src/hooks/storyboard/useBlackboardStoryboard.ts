@@ -678,6 +678,133 @@ export const useBlackboardStoryboard = () => {
 
   const totalEstimatedCost = estimatedCost.images + estimatedCost.videos + estimatedCost.stitching;
 
+  // Load a specific storyboard by ID
+  const loadStoryboard = useCallback(async (targetId: string) => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { data: storyboard, error: storyboardError } = await supabase
+        .from('blackboard_storyboards')
+        .select('*')
+        .eq('id', targetId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (storyboardError || !storyboard) {
+        toast.error('Storyboard not found');
+        setIsLoading(false);
+        return;
+      }
+
+      setStoryboardId(storyboard.id);
+      setAspectRatio(storyboard.aspect_ratio || 'hd');
+      setVideoModelType((storyboard.video_model_type as VideoModelType) || 'first_last_frames');
+      setFinalVideoUrl(storyboard.final_video_url || null);
+      localStorage.setItem(STORAGE_KEY, storyboard.id);
+
+      // Load scenes
+      const { data: dbScenes, error: scenesError } = await supabase
+        .from('blackboard_scenes')
+        .select('*')
+        .eq('storyboard_id', storyboard.id)
+        .order('order_number', { ascending: true });
+
+      if (dbScenes && dbScenes.length > 0 && !scenesError) {
+        setScenes(dbScenes.map(mapDbSceneToLocal));
+      } else {
+        // Create initial scene if none exist
+        const initialScene = createEmptyScene(true);
+        await supabase
+          .from('blackboard_scenes')
+          .insert(mapLocalSceneToDb(initialScene, storyboard.id, 0));
+        setScenes([initialScene]);
+      }
+
+      toast.success('Storyboard loaded');
+    } catch (error) {
+      logger.error('Failed to load storyboard', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useBlackboardStoryboard',
+      });
+      toast.error('Failed to load storyboard');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Create a new storyboard
+  const createNewStoryboard = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data: newStoryboard, error: createError } = await supabase
+        .from('blackboard_storyboards')
+        .insert({
+          user_id: user.id,
+          aspect_ratio: 'hd',
+          video_model_type: 'first_last_frames',
+          status: 'draft',
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      if (newStoryboard) {
+        setStoryboardId(newStoryboard.id);
+        setAspectRatio('hd');
+        setVideoModelType('first_last_frames');
+        setFinalVideoUrl(null);
+        localStorage.setItem(STORAGE_KEY, newStoryboard.id);
+
+        // Create initial scene
+        const initialScene = createEmptyScene(true);
+        await supabase
+          .from('blackboard_scenes')
+          .insert(mapLocalSceneToDb(initialScene, newStoryboard.id, 0));
+
+        setScenes([initialScene]);
+        toast.success('New storyboard created');
+      }
+    } catch (error) {
+      logger.error('Failed to create new storyboard', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useBlackboardStoryboard',
+      });
+      toast.error('Failed to create storyboard');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Delete a storyboard
+  const deleteStoryboard = useCallback(async (targetId: string) => {
+    if (!user) return;
+
+    try {
+      // Delete the storyboard (scenes cascade delete)
+      const { error } = await supabase
+        .from('blackboard_storyboards')
+        .delete()
+        .eq('id', targetId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Storyboard deleted');
+
+      // If we deleted the current storyboard, create a new one
+      if (targetId === storyboardId) {
+        await createNewStoryboard();
+      }
+    } catch (error) {
+      logger.error('Failed to delete storyboard', error instanceof Error ? error : new Error(String(error)), {
+        component: 'useBlackboardStoryboard',
+      });
+      toast.error('Failed to delete storyboard');
+    }
+  }, [user, storyboardId, createNewStoryboard]);
+
   return {
     scenes,
     aspectRatio,
@@ -706,5 +833,8 @@ export const useBlackboardStoryboard = () => {
     isLoading,
     isSaving,
     storyboardId,
+    loadStoryboard,
+    createNewStoryboard,
+    deleteStoryboard,
   };
 };

@@ -143,6 +143,7 @@ serve(async (req) => {
         storage_path: storagePath,
         output_url: urlData.publicUrl,
         file_size_bytes: buffer.length,
+        completed_at: new Date().toISOString(),
       })
       .eq('id', generation_id);
 

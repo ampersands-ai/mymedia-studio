@@ -517,7 +517,7 @@ Deno.serve(async (req) => {
         is_batch_output: boolean;
         storage_path?: string;
         output_url?: string;
-        completed_at?: string;
+        completed_at: string;
       }
 
       const updateData: GenerationUpdate = {
@@ -532,7 +532,8 @@ Deno.serve(async (req) => {
           timestamp: new Date().toISOString()
         },
         output_index: 0,
-        is_batch_output: isMultiOutput
+        is_batch_output: isMultiOutput,
+        completed_at: new Date().toISOString()
       };
       
       if (!isMultiOutput && storagePath) {

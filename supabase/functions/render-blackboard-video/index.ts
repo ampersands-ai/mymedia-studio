@@ -5,7 +5,46 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// No longer need aspect ratio mapping - using "auto" to detect from input videos
+// Map storyboard aspect ratios to Shotstack-supported values
+// Shotstack supports: 16:9, 9:16, 1:1, 4:5, 4:3
+function mapAspectRatio(storyboardAspectRatio: string | null): string | null {
+  const mapping: Record<string, string> = {
+    // Standard ratios (direct match)
+    "16:9": "16:9",
+    "9:16": "9:16",
+    "1:1": "1:1",
+    "4:5": "4:5",
+    "4:3": "4:3",
+    // YouTube format
+    "youtube": "16:9",
+    "youtube-shorts": "9:16",
+    // TikTok format
+    "tiktok": "9:16",
+    // Instagram formats
+    "instagram-feed": "1:1",
+    "instagram-story": "9:16",
+    "instagram-reels": "9:16",
+    // Twitter/X formats
+    "twitter": "16:9",
+    // Facebook formats
+    "facebook": "16:9",
+    "facebook-story": "9:16",
+    // LinkedIn
+    "linkedin": "16:9",
+    // Widescreen/cinematic
+    "widescreen": "16:9",
+    "cinematic": "16:9",
+    // Portrait
+    "portrait": "9:16",
+    // Square
+    "square": "1:1",
+  };
+
+  if (!storyboardAspectRatio) return null;
+  
+  const normalized = storyboardAspectRatio.toLowerCase().trim();
+  return mapping[normalized] || null;
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -164,8 +203,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Log aspect ratio for debugging (we'll use "auto" to detect from input videos)
-    console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio}, using auto detection`);
+    // Map aspect ratio to Shotstack-supported value
+    const mappedAspectRatio = mapAspectRatio(storyboard.aspect_ratio);
+    console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio} -> Shotstack: ${mappedAspectRatio || 'default (no override)'}`);
 
     // Build Shotstack timeline - concatenate all video clips sequentially
     const CLIP_DURATION = 5; // Each video clip is assumed to be 5 seconds
@@ -185,7 +225,15 @@ Deno.serve(async (req) => {
       return clip;
     });
 
-    // Build Shotstack payload with auto aspect ratio (detects from input videos)
+    // Build Shotstack payload - only include aspectRatio if we have a valid mapping
+    const shotstackOutput: Record<string, string> = {
+      format: "mp4",
+    };
+    
+    if (mappedAspectRatio) {
+      shotstackOutput.aspectRatio = mappedAspectRatio;
+    }
+
     const shotstackPayload = {
       timeline: {
         tracks: [
@@ -195,10 +243,7 @@ Deno.serve(async (req) => {
         ],
         background: "#000000",
       },
-      output: {
-        format: "mp4",
-        aspectRatio: "auto",
-      },
+      output: shotstackOutput,
     };
 
     console.log(`[${requestId}] Submitting to Shotstack:`, JSON.stringify(shotstackPayload, null, 2));

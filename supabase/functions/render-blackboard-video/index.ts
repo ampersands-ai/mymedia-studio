@@ -5,45 +5,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map storyboard aspect ratios to Shotstack-supported values
-// Shotstack supports: 16:9, 9:16, 1:1, 4:5, 4:3
-function mapAspectRatio(storyboardAspectRatio: string | null): string | null {
-  const mapping: Record<string, string> = {
-    // Standard ratios (direct match)
-    "16:9": "16:9",
-    "9:16": "9:16",
-    "1:1": "1:1",
-    "4:5": "4:5",
-    "4:3": "4:3",
-    // YouTube format
-    "youtube": "16:9",
-    "youtube-shorts": "9:16",
-    // TikTok format
-    "tiktok": "9:16",
-    // Instagram formats
-    "instagram-feed": "1:1",
-    "instagram-story": "9:16",
-    "instagram-reels": "9:16",
-    // Twitter/X formats
-    "twitter": "16:9",
-    // Facebook formats
-    "facebook": "16:9",
-    "facebook-story": "9:16",
-    // LinkedIn
-    "linkedin": "16:9",
-    // Widescreen/cinematic
-    "widescreen": "16:9",
-    "cinematic": "16:9",
-    // Portrait
-    "portrait": "9:16",
-    // Square
-    "square": "1:1",
+// Map storyboard aspect ratio codes to exact pixel dimensions
+// These match the DIMENSIONS_MAP in src/lib/aspect-ratio-mapper.ts
+function getOutputDimensions(storyboardAspectRatio: string | null): { width: number; height: number } {
+  const dimensionsMap: Record<string, { width: number; height: number }> = {
+    // Storyboard format codes -> exact dimensions
+    'sd': { width: 640, height: 480 },           // 4:3 SD
+    'hd': { width: 1280, height: 720 },          // 16:9 HD (720p)
+    'full-hd': { width: 1920, height: 1080 },    // 16:9 Full HD (1080p)
+    'squared': { width: 1080, height: 1080 },    // 1:1 Square
+    'instagram-story': { width: 1080, height: 1920 },  // 9:16 Portrait
+    'instagram-feed': { width: 1080, height: 1350 },   // 4:5 Portrait
+    'instagram-reels': { width: 1080, height: 1920 },  // 9:16 Portrait
+    'youtube': { width: 1920, height: 1080 },    // 16:9 Full HD
+    'youtube-shorts': { width: 1080, height: 1920 },   // 9:16 Portrait
+    'tiktok': { width: 1080, height: 1920 },     // 9:16 Portrait
+    'twitter': { width: 1920, height: 1080 },    // 16:9 Full HD
+    'facebook': { width: 1920, height: 1080 },   // 16:9 Full HD
+    'facebook-story': { width: 1080, height: 1920 },   // 9:16 Portrait
+    'linkedin': { width: 1920, height: 1080 },   // 16:9 Full HD
+    'widescreen': { width: 1920, height: 1080 }, // 16:9 Full HD
+    'cinematic': { width: 1920, height: 1080 },  // 16:9 Full HD
+    'portrait': { width: 1080, height: 1920 },   // 9:16 Portrait
+    'square': { width: 1080, height: 1080 },     // 1:1 Square
+    // Direct ratio fallbacks
+    '16:9': { width: 1920, height: 1080 },
+    '9:16': { width: 1080, height: 1920 },
+    '1:1': { width: 1080, height: 1080 },
+    '4:5': { width: 1080, height: 1350 },
+    '4:3': { width: 1024, height: 768 },
   };
 
-  if (!storyboardAspectRatio) return null;
-  
+  if (!storyboardAspectRatio) {
+    return { width: 1920, height: 1080 }; // Default to Full HD
+  }
+
   const normalized = storyboardAspectRatio.toLowerCase().trim();
-  return mapping[normalized] || null;
+  return dimensionsMap[normalized] || { width: 1920, height: 1080 };
 }
 
 Deno.serve(async (req) => {
@@ -203,9 +201,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map aspect ratio to Shotstack-supported value
-    const mappedAspectRatio = mapAspectRatio(storyboard.aspect_ratio);
-    console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio} -> Shotstack: ${mappedAspectRatio || 'default (no override)'}`);
+    // Get exact output dimensions from storyboard settings
+    const outputDimensions = getOutputDimensions(storyboard.aspect_ratio);
+    console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio} -> Output: ${outputDimensions.width}x${outputDimensions.height}`);
 
     // Build Shotstack timeline - concatenate all video clips sequentially
     const CLIP_DURATION = 5; // Each video clip is assumed to be 5 seconds
@@ -225,25 +223,7 @@ Deno.serve(async (req) => {
       return clip;
     });
 
-    // Build Shotstack payload with resolution (required by Shotstack API)
-    // Resolution presets based on aspect ratio
-    const resolutionMap: Record<string, string> = {
-      "16:9": "hd",      // 1920x1080
-      "9:16": "mobile",  // 1080x1920
-      "1:1": "sd",       // 1024x1024 (Shotstack uses 1024 for square)
-      "4:5": "sd",       // Will be cropped to 4:5
-      "4:3": "sd",       // Will be cropped to 4:3
-    };
-
-    const shotstackOutput: Record<string, string> = {
-      format: "mp4",
-      resolution: resolutionMap[mappedAspectRatio || "16:9"] || "hd",
-    };
-    
-    if (mappedAspectRatio) {
-      shotstackOutput.aspectRatio = mappedAspectRatio;
-    }
-
+    // Build Shotstack payload with exact size dimensions
     const shotstackPayload = {
       timeline: {
         tracks: [
@@ -253,7 +233,14 @@ Deno.serve(async (req) => {
         ],
         background: "#000000",
       },
-      output: shotstackOutput,
+      output: {
+        format: "mp4",
+        size: {
+          width: outputDimensions.width,
+          height: outputDimensions.height,
+        },
+        fps: 25,
+      },
     };
 
     console.log(`[${requestId}] Submitting to Shotstack:`, JSON.stringify(shotstackPayload, null, 2));

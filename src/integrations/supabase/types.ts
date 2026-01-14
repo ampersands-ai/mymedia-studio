@@ -1653,6 +1653,7 @@ export type Database = {
           ai_hashtags: string[] | null
           api_call_started_at: string | null
           api_duration_ms: number | null
+          blackboard_scene_id: string | null
           caption_generated_at: string | null
           completed_at: string | null
           created_at: string
@@ -1689,6 +1690,7 @@ export type Database = {
           ai_hashtags?: string[] | null
           api_call_started_at?: string | null
           api_duration_ms?: number | null
+          blackboard_scene_id?: string | null
           caption_generated_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1725,6 +1727,7 @@ export type Database = {
           ai_hashtags?: string[] | null
           api_call_started_at?: string | null
           api_duration_ms?: number | null
+          blackboard_scene_id?: string | null
           caption_generated_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1756,6 +1759,13 @@ export type Database = {
           workflow_step_number?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "generations_blackboard_scene_id_fkey"
+            columns: ["blackboard_scene_id"]
+            isOneToOne: false
+            referencedRelation: "blackboard_scenes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "generations_parent_generation_id_fkey"
             columns: ["parent_generation_id"]

@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
       user_id,
       test_mode = false,
       test_run_id,
+      blackboard_scene_id,
     } = validatedRequest;
 
     let { prompt } = validatedRequest;
@@ -279,7 +280,7 @@ Deno.serve(async (req) => {
       }
       if (!existingGenerationId || genError) {
         const { data, error } = await supabase.from('generations')
-          .insert({ user_id: authenticatedUser.id, model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: generationSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending', workflow_execution_id: workflow_execution_id || null, workflow_step_number: workflow_step_number || null })
+          .insert({ user_id: authenticatedUser.id, model_id: model.id, model_record_id: model.record_id, type: normalizeContentType(model.content_type), prompt: finalPrompt, original_prompt: originalPrompt, enhanced_prompt: enhance_prompt ? finalPrompt : null, enhancement_provider: usedEnhancementProvider, settings: generationSettings, tokens_used: tokenCost, actual_token_cost: tokenCost, status: 'pending', workflow_execution_id: workflow_execution_id || null, workflow_step_number: workflow_step_number || null, blackboard_scene_id: blackboard_scene_id || null })
           .select().single();
         gen = data; genError = error;
       }

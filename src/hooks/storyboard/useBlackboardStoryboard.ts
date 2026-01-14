@@ -467,7 +467,7 @@ export const useBlackboardStoryboard = () => {
     }
   }, [scenes, videoModelType, updateScene, generateSingleVideo, refetchCredits]);
 
-  // Poll for render completion
+  // Poll for render completion via status-blackboard-video edge function
   const pollForRenderCompletion = useCallback(async (sbId: string) => {
     const maxAttempts = 120; // 10 minutes at 5-second intervals
     let attempts = 0;
@@ -476,23 +476,29 @@ export const useBlackboardStoryboard = () => {
       attempts++;
       
       try {
-        const { data: storyboard, error } = await supabase
-          .from('blackboard_storyboards')
-          .select('status, final_video_url')
-          .eq('id', sbId)
-          .single();
+        // Call the status endpoint which polls Shotstack and updates the DB
+        const { data: statusData, error } = await supabase.functions.invoke('status-blackboard-video', {
+          body: { storyboardId: sbId },
+        });
         
         if (error) {
           logger.error('Failed to poll storyboard status', error);
+          // Continue polling on transient errors
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 5000);
+          } else {
+            setIsRendering(false);
+            toast.error('Render status check failed. Please refresh the page.');
+          }
           return;
         }
         
-        if (storyboard?.status === 'complete' && storyboard.final_video_url) {
-          setFinalVideoUrl(storyboard.final_video_url);
+        if (statusData?.status === 'complete' && statusData.finalVideoUrl) {
+          setFinalVideoUrl(statusData.finalVideoUrl);
           setIsRendering(false);
           toast.success('Video rendered successfully!');
           return;
-        } else if (storyboard?.status === 'failed') {
+        } else if (statusData?.status === 'failed') {
           setIsRendering(false);
           toast.error('Video rendering failed. Credits have been refunded.');
           return;
@@ -502,11 +508,15 @@ export const useBlackboardStoryboard = () => {
           return;
         }
         
-        // Continue polling
+        // Continue polling every 5 seconds
         setTimeout(poll, 5000);
       } catch (err) {
         logger.error('Polling error', err instanceof Error ? err : new Error(String(err)));
-        setIsRendering(false);
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 5000);
+        } else {
+          setIsRendering(false);
+        }
       }
     };
     
@@ -545,12 +555,12 @@ export const useBlackboardStoryboard = () => {
       if (error) throw error;
 
       // Rendering is async - start polling for completion
-      if (data?.renderJobId) {
-        toast.info('Video stitching started. This may take a few minutes...');
+      if (data?.renderId) {
+        toast.info('Video stitching started via Shotstack. This may take a few minutes...');
         pollForRenderCompletion(storyboardId);
-      } else if (data?.video_url) {
+      } else if (data?.video_url || data?.finalVideoUrl) {
         // Immediate completion (unlikely but handle it)
-        setFinalVideoUrl(data.video_url);
+        setFinalVideoUrl(data.video_url || data.finalVideoUrl);
         setIsRendering(false);
         toast.success('Video rendered successfully!');
       }

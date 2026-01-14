@@ -5,12 +5,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Generate a unique random ID for render job identifier
-const generateUniqueRenderJobId = (): string => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({ length: 8 }, () => 
-    chars[Math.floor(Math.random() * chars.length)]
-  ).join('');
+// Map blackboard aspect ratios to Shotstack format
+const mapAspectRatioToShotstack = (aspectRatio: string): { width: number; height: number; ratio: string } => {
+  switch (aspectRatio) {
+    case 'portrait':
+    case '9:16':
+      return { width: 1080, height: 1920, ratio: '9:16' };
+    case 'instagram-feed':
+    case '1:1':
+      return { width: 1080, height: 1080, ratio: '1:1' };
+    case 'hd':
+    case '16:9':
+    default:
+      return { width: 1920, height: 1080, ratio: '16:9' };
+  }
 };
 
 Deno.serve(async (req) => {
@@ -49,7 +57,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[${requestId}] User ${user.id} starting blackboard render`);
+    console.log(`[${requestId}] User ${user.id} starting blackboard render via Shotstack`);
 
     // Parse request body
     const { storyboardId } = await req.json();
@@ -106,7 +114,7 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Found ${videosToStitch.length} videos to stitch`);
 
-    // Calculate cost: 1 credit per 5 seconds, each clip is ~5 seconds
+    // Calculate cost: 1 credit per 5 seconds, assume each clip is ~5 seconds
     const estimatedCredits = Math.ceil(videosToStitch.length * 1);
 
     // Check user credits
@@ -151,22 +159,10 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Deducted ${estimatedCredits} credits`);
 
-    const uniqueRenderJobId = generateUniqueRenderJobId();
-    
-    // Update storyboard status with render job ID and estimated cost
-    await supabase
-      .from("blackboard_storyboards")
-      .update({ 
-        status: "rendering",
-        render_job_id: uniqueRenderJobId,
-        estimated_render_cost: estimatedCredits,
-      })
-      .eq("id", storyboardId);
-
-    // Build JSON2Video payload for video stitching
-    const json2videoApiKey = Deno.env.get("JSON2VIDEO_API_KEY");
-    if (!json2videoApiKey) {
-      console.error(`[${requestId}] JSON2VIDEO_API_KEY not configured`);
+    // Get Shotstack API key
+    const shotstackApiKey = Deno.env.get("SHOTSTACK_API_KEY");
+    if (!shotstackApiKey) {
+      console.error(`[${requestId}] SHOTSTACK_API_KEY not configured`);
       // Refund credits
       await supabase.rpc("increment_tokens", {
         user_id_param: user.id,
@@ -182,55 +178,63 @@ Deno.serve(async (req) => {
       );
     }
 
-    // uniqueRenderJobId already generated above
-    const webhookUrl = `${supabaseUrl}/functions/v1/json2video-webhook`;
+    // Get dimensions and aspect ratio for Shotstack
+    const { width, height } = mapAspectRatioToShotstack(storyboard.aspect_ratio || 'hd');
 
-    // Determine resolution based on aspect ratio
-    const isPortrait = storyboard.aspect_ratio === "portrait" || storyboard.aspect_ratio === "9:16";
-    const resolution = isPortrait ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 };
+    // Build Shotstack timeline - concatenate all video clips sequentially
+    const CLIP_DURATION = 5; // Each video clip is assumed to be 5 seconds
+    let currentStart = 0;
+    
+    const clips = videosToStitch.map((scene) => {
+      const clip = {
+        asset: {
+          type: "video",
+          src: scene.generated_video_url,
+        },
+        start: currentStart,
+        length: CLIP_DURATION,
+        fit: "cover",
+      };
+      currentStart += CLIP_DURATION;
+      return clip;
+    });
 
-    // Build movie payload (simple video concatenation)
-    const moviePayload = {
-      resolution: [resolution.width, resolution.height],
-      quality: "high",
-      fps: 30,
-      scenes: videosToStitch.map((scene) => ({
-        elements: [
+    // Build Shotstack payload
+    const shotstackPayload = {
+      timeline: {
+        tracks: [
           {
-            type: "video",
-            src: scene.generated_video_url,
+            clips: clips,
           },
         ],
-      })),
-      exports: [
-        {
-          destinations: [
-            {
-              type: "webhook",
-              endpoint: webhookUrl,
-              "content-type": "json",
-            },
-          ],
+        background: "#000000",
+      },
+      output: {
+        format: "mp4",
+        resolution: "hd",
+        size: {
+          width: width,
+          height: height,
         },
-      ],
-      project: uniqueRenderJobId,
+      },
     };
 
-    console.log(`[${requestId}] Submitting to JSON2Video with project ID: ${uniqueRenderJobId}`);
+    console.log(`[${requestId}] Submitting to Shotstack:`, JSON.stringify(shotstackPayload, null, 2));
 
-    const response = await fetch("https://api.json2video.com/v2/movies", {
+    const shotstackUrl = "https://api.shotstack.io/edit/v1/render";
+    const shotstackResponse = await fetch(shotstackUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": json2videoApiKey,
+        "x-api-key": shotstackApiKey,
       },
-      body: JSON.stringify(moviePayload),
+      body: JSON.stringify(shotstackPayload),
     });
 
-    const responseData = await response.json();
+    const shotstackData = await shotstackResponse.json();
 
-    if (!response.ok) {
-      console.error(`[${requestId}] JSON2Video error:`, responseData);
+    if (!shotstackResponse.ok) {
+      console.error(`[${requestId}] Shotstack error:`, shotstackData);
       // Refund credits
       await supabase.rpc("increment_tokens", {
         user_id_param: user.id,
@@ -241,22 +245,29 @@ Deno.serve(async (req) => {
         .update({ status: "failed" })
         .eq("id", storyboardId);
       return new Response(
-        JSON.stringify({ error: responseData.message || "Render failed" }),
+        JSON.stringify({ error: shotstackData.message || "Render failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[${requestId}] JSON2Video response:`, responseData);
+    const renderId = shotstackData.response?.id;
+    console.log(`[${requestId}] Shotstack render ID: ${renderId}`);
 
-    // Store render job reference in storyboard for webhook to find
-    // Note: We're using a custom approach since blackboard_storyboards doesn't have render_job_id
-    // The webhook will need to match via the project ID
+    // Update storyboard with render ID and estimated cost
+    await supabase
+      .from("blackboard_storyboards")
+      .update({ 
+        status: "rendering",
+        shotstack_render_id: renderId,
+        estimated_render_cost: estimatedCredits,
+      })
+      .eq("id", storyboardId);
 
     return new Response(
       JSON.stringify({
         success: true,
         storyboardId,
-        renderJobId: uniqueRenderJobId,
+        renderId,
         estimatedCredits,
         videosCount: videosToStitch.length,
       }),

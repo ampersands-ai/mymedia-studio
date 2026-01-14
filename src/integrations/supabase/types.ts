@@ -622,6 +622,7 @@ export type Database = {
           final_video_url: string | null
           id: string
           render_job_id: string | null
+          shotstack_render_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -634,6 +635,7 @@ export type Database = {
           final_video_url?: string | null
           id?: string
           render_job_id?: string | null
+          shotstack_render_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -646,6 +648,7 @@ export type Database = {
           final_video_url?: string | null
           id?: string
           render_job_id?: string | null
+          shotstack_render_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string

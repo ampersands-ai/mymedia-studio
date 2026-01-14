@@ -99,6 +99,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate estimatedCredits
+    if (typeof estimatedCredits !== 'number' || estimatedCredits <= 0) {
+      console.error("[render-video-editor] Invalid estimatedCredits:", estimatedCredits);
+      return new Response(
+        JSON.stringify({ error: "Invalid credit amount" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Check user credits
     const { data: subscription, error: subError } = await supabase
       .from("user_subscriptions")
@@ -125,10 +134,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Deduct credits
+    // Deduct credits - ensure cost is a valid number for the numeric type
+    const creditCost = Number(estimatedCredits);
+    console.log(`[render-video-editor] Deducting credits: user=${user.id}, cost=${creditCost}`);
+    
     const { error: deductError } = await supabase.rpc("deduct_user_tokens", {
       p_user_id: user.id,
-      p_cost: estimatedCredits,
+      p_cost: creditCost,
     });
 
     if (deductError) {

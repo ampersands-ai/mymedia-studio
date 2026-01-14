@@ -26,12 +26,12 @@ export interface BlackboardScene {
 // Fixed model IDs (not user-selectable)
 const TEXT_TO_IMAGE_MODEL_ID = 'c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f'; // Nano Banana Pro (T2I)
 const IMAGE_TO_IMAGE_MODEL_ID = 'b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e'; // Nano Banana Pro (I2I)
-const VIDEO_MODEL_REFERENCE_ID = '6e8a863e-8630-4eef-bdbb-5b41f4c883f9'; // Google Veo 3.1 Reference
-const VIDEO_MODEL_FIRST_LAST_ID = '8aac94cb-5625-47f4-880c-4f0fd8bd83a1'; // Google Veo 3.1 Fast (Image-to-Video)
+const VIDEO_MODEL_LITE_ID = '8aac94cb-5625-47f4-880c-4f0fd8bd83a1'; // Google Veo 3.1 Fast (30 credits)
+const VIDEO_MODEL_HQ_ID = 'a5c2ec16-6294-4588-86b6-7b4182601cda'; // Google Veo 3.1 HQ (125 credits)
 
 const STORAGE_KEY = 'blackboard_storyboard_id';
 
-export type VideoModelType = 'reference' | 'first_last_frames';
+export type VideoModelType = 'lite' | 'hq';
 
 export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
   id: crypto.randomUUID(),
@@ -75,7 +75,7 @@ export const useBlackboardStoryboard = () => {
   const [storyboardId, setStoryboardId] = useState<string | null>(null);
   const [scenes, setScenes] = useState<BlackboardScene[]>([createEmptyScene(true)]);
   const [aspectRatio, setAspectRatio] = useState('hd');
-  const [videoModelType, setVideoModelType] = useState<VideoModelType>('first_last_frames');
+  const [videoModelType, setVideoModelType] = useState<VideoModelType>('lite');
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -109,7 +109,7 @@ export const useBlackboardStoryboard = () => {
           if (storyboard && !storyboardError) {
             setStoryboardId(storyboard.id);
             setAspectRatio(storyboard.aspect_ratio || 'hd');
-            setVideoModelType((storyboard.video_model_type as VideoModelType) || 'first_last_frames');
+            setVideoModelType((storyboard.video_model_type as VideoModelType) || 'lite');
             setFinalVideoUrl(storyboard.final_video_url || null);
 
             // Load scenes
@@ -134,7 +134,7 @@ export const useBlackboardStoryboard = () => {
           .insert({
             user_id: user.id,
             aspect_ratio: 'hd',
-            video_model_type: 'first_last_frames',
+            video_model_type: 'lite',
             status: 'draft',
           })
           .select()
@@ -421,20 +421,17 @@ export const useBlackboardStoryboard = () => {
 
     try {
       const modules = getAllModels();
-      const modelRecordId = modelType === 'reference' 
-        ? VIDEO_MODEL_REFERENCE_ID 
-        : VIDEO_MODEL_FIRST_LAST_ID;
+      const modelRecordId = modelType === 'hq' 
+        ? VIDEO_MODEL_HQ_ID 
+        : VIDEO_MODEL_LITE_ID;
       const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === modelRecordId);
       
       if (!modelModule) {
         throw new Error('Video generation model not found');
       }
 
-      // For reference mode - use single image as style reference
-      // For first/last frame mode - use both images in order
-      const rawImageUrls = modelType === 'reference' 
-        ? [startImageUrl] 
-        : [startImageUrl, endImageUrl];
+      // Both Lite and HQ use first/last frame transition mode
+      const rawImageUrls = [startImageUrl, endImageUrl];
 
       // Normalize image URLs to full public URLs
       const normalizedImageUrls = rawImageUrls.map(url => getPublicImageUrl(url));
@@ -801,7 +798,7 @@ export const useBlackboardStoryboard = () => {
 
   // Calculate estimated costs using actual model cost
   const imageCreditCost = NANO_BANANA_CONFIG.baseCreditCost;
-  const videoCreditCost = 30; // Both Veo3 models cost 30 credits
+  const videoCreditCost = videoModelType === 'hq' ? 125 : 30; // Veo3.1 HQ: 125, Lite: 30
   const estimatedCost = {
     images: scenes.filter(s => !s.generatedImageUrl && s.imagePrompt.trim()).length * imageCreditCost,
     videos: Math.max(0, scenes.filter(s => s.generatedImageUrl).length - 1) * videoCreditCost,
@@ -831,7 +828,7 @@ export const useBlackboardStoryboard = () => {
 
       setStoryboardId(storyboard.id);
       setAspectRatio(storyboard.aspect_ratio || 'hd');
-      setVideoModelType((storyboard.video_model_type as VideoModelType) || 'first_last_frames');
+      setVideoModelType((storyboard.video_model_type as VideoModelType) || 'lite');
       setFinalVideoUrl(storyboard.final_video_url || null);
       localStorage.setItem(STORAGE_KEY, storyboard.id);
 
@@ -886,7 +883,7 @@ export const useBlackboardStoryboard = () => {
       if (newStoryboard) {
         setStoryboardId(newStoryboard.id);
         setAspectRatio('hd');
-        setVideoModelType('first_last_frames');
+        setVideoModelType('lite');
         setFinalVideoUrl(null);
         localStorage.setItem(STORAGE_KEY, newStoryboard.id);
 

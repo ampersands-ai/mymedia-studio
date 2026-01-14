@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -7,11 +8,13 @@ import { Palette, Plus, ImageIcon, Video, Film, Loader2, RotateCcw, Coins } from
 import { ResolutionSelector } from './sections/ResolutionSelector';
 import { BlackboardSceneCard } from './BlackboardSceneCard';
 import { BlackboardStoryboardSelector } from './BlackboardStoryboardSelector';
+import { BlackboardRenderOptions, RenderOptions } from './BlackboardRenderOptions';
 import { useBlackboardStoryboard, VideoModelType } from '@/hooks/storyboard/useBlackboardStoryboard';
 import { useBlackboardStoryboardList } from '@/hooks/storyboard/useBlackboardStoryboardList';
 import { useUserCredits } from '@/hooks/useUserCredits';
 
 export function BlackboardStoryboardInput() {
+  const [showRenderOptions, setShowRenderOptions] = useState(false);
   const {
     scenes,
     aspectRatio,
@@ -263,7 +266,7 @@ export function BlackboardStoryboardInput() {
 
           {/* Step 3: Render Final Video */}
           <Button
-            onClick={renderFinalVideo}
+            onClick={() => setShowRenderOptions(true)}
             disabled={!allVideosGenerated || isProcessing}
             className="w-full"
           >
@@ -280,6 +283,17 @@ export function BlackboardStoryboardInput() {
             )}
           </Button>
         </div>
+
+        {/* Render Options Dialog */}
+        <BlackboardRenderOptions
+          open={showRenderOptions}
+          onOpenChange={setShowRenderOptions}
+          onRender={(options: RenderOptions) => {
+            setShowRenderOptions(false);
+            renderFinalVideo(options);
+          }}
+          isRendering={isRendering}
+        />
 
         {/* Final Video Preview */}
         {finalVideoUrl && (

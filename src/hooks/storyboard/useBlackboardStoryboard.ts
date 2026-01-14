@@ -581,7 +581,15 @@ export const useBlackboardStoryboard = () => {
     poll();
   }, []);
 
-  const renderFinalVideo = useCallback(async () => {
+  const renderFinalVideo = useCallback(async (renderOptions?: {
+    backgroundAudioUrl?: string;
+    backgroundAudioVolume?: number;
+    backgroundAudioFadeIn?: boolean;
+    backgroundAudioFadeOut?: boolean;
+    outroMediaUrl?: string;
+    outroMediaType?: 'image' | 'video';
+    outroDuration?: number;
+  }) => {
     const videosToStitch = scenes
       .filter(s => s.generatedVideoUrl)
       .map(s => s.generatedVideoUrl as string);
@@ -602,10 +610,17 @@ export const useBlackboardStoryboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Call the blackboard video stitching endpoint
+      // Call the blackboard video stitching endpoint with render options
       const { data, error } = await supabase.functions.invoke('render-blackboard-video', {
         body: {
           storyboardId,
+          backgroundAudioUrl: renderOptions?.backgroundAudioUrl,
+          backgroundAudioVolume: renderOptions?.backgroundAudioVolume,
+          backgroundAudioFadeIn: renderOptions?.backgroundAudioFadeIn,
+          backgroundAudioFadeOut: renderOptions?.backgroundAudioFadeOut,
+          outroMediaUrl: renderOptions?.outroMediaUrl,
+          outroMediaType: renderOptions?.outroMediaType,
+          outroDuration: renderOptions?.outroDuration,
         },
       });
 

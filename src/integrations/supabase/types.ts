@@ -617,10 +617,17 @@ export type Database = {
       blackboard_storyboards: {
         Row: {
           aspect_ratio: string | null
+          background_audio_fade_in: boolean | null
+          background_audio_fade_out: boolean | null
+          background_audio_url: string | null
+          background_audio_volume: number | null
           created_at: string | null
           estimated_render_cost: number | null
           final_video_url: string | null
           id: string
+          outro_duration: number | null
+          outro_media_type: string | null
+          outro_media_url: string | null
           render_job_id: string | null
           shotstack_render_id: string | null
           status: string | null
@@ -630,10 +637,17 @@ export type Database = {
         }
         Insert: {
           aspect_ratio?: string | null
+          background_audio_fade_in?: boolean | null
+          background_audio_fade_out?: boolean | null
+          background_audio_url?: string | null
+          background_audio_volume?: number | null
           created_at?: string | null
           estimated_render_cost?: number | null
           final_video_url?: string | null
           id?: string
+          outro_duration?: number | null
+          outro_media_type?: string | null
+          outro_media_url?: string | null
           render_job_id?: string | null
           shotstack_render_id?: string | null
           status?: string | null
@@ -643,10 +657,17 @@ export type Database = {
         }
         Update: {
           aspect_ratio?: string | null
+          background_audio_fade_in?: boolean | null
+          background_audio_fade_out?: boolean | null
+          background_audio_url?: string | null
+          background_audio_volume?: number | null
           created_at?: string | null
           estimated_render_cost?: number | null
           final_video_url?: string | null
           id?: string
+          outro_duration?: number | null
+          outro_media_type?: string | null
+          outro_media_url?: string | null
           render_job_id?: string | null
           shotstack_render_id?: string | null
           status?: string | null

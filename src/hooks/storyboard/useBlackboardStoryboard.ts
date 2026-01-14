@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 import { MODEL_CONFIG as NANO_BANANA_CONFIG } from '@/lib/models/locked/prompt_to_image/Nano_Banana_Pro';
 import { useBlackboardPolling } from './useBlackboardPolling';
+import { getPublicImageUrl } from '@/lib/supabase-images';
 
 export interface BlackboardScene {
   id: string;
@@ -97,6 +98,11 @@ export const useBlackboardStoryboard = () => {
         ? mapAspectRatioToModelParameters(storyboardAspectRatio, modelModule.SCHEMA)
         : {};
 
+      // Normalize previousImageUrl to full public URL (handles both paths and URLs)
+      const normalizedPreviousUrl = previousImageUrl 
+        ? getPublicImageUrl(previousImageUrl) 
+        : undefined;
+
       const body: Record<string, unknown> = {
         model_id: modelModule.MODEL_CONFIG.modelId,
         model_record_id: modelModule.MODEL_CONFIG.recordId,
@@ -106,7 +112,7 @@ export const useBlackboardStoryboard = () => {
         custom_parameters: {
           ...aspectRatioParams,
           // Add image input for I2I mode - must be INSIDE custom_parameters
-          ...(useImageToImage && previousImageUrl ? { image_input: [previousImageUrl] } : {}),
+          ...(useImageToImage && normalizedPreviousUrl ? { image_input: [normalizedPreviousUrl] } : {}),
         },
       };
 

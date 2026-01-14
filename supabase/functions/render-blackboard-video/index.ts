@@ -206,22 +206,16 @@ Deno.serve(async (req) => {
     console.log(`[${requestId}] Storyboard aspect ratio: ${storyboard.aspect_ratio} -> Output: ${outputDimensions.width}x${outputDimensions.height}`);
 
     // Build Shotstack timeline - concatenate all video clips sequentially
-    const CLIP_DURATION = 5; // Each video clip is assumed to be 5 seconds
-    let currentStart = 0;
-    
-    const clips = videosToStitch.map((scene) => {
-      const clip = {
-        asset: {
-          type: "video",
-          src: scene.generated_video_url,
-        },
-        start: currentStart,
-        length: CLIP_DURATION,
-        fit: "cover",
-      };
-      currentStart += CLIP_DURATION;
-      return clip;
-    });
+    // Use "auto" length to detect actual video duration (Veo generates 8s videos, not 5s)
+    const clips = videosToStitch.map((scene, index) => ({
+      asset: {
+        type: "video",
+        src: scene.generated_video_url,
+      },
+      start: index === 0 ? 0 : "auto", // First clip starts at 0, rest auto-sequence
+      length: "auto", // Let Shotstack detect actual video duration
+      fit: "cover",
+    }));
 
     // Build Shotstack payload with exact size dimensions
     const shotstackPayload = {

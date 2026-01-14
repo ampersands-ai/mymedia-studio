@@ -151,10 +151,16 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Deducted ${estimatedCredits} credits`);
 
-    // Update storyboard status
+    const uniqueRenderJobId = generateUniqueRenderJobId();
+    
+    // Update storyboard status with render job ID and estimated cost
     await supabase
       .from("blackboard_storyboards")
-      .update({ status: "rendering" })
+      .update({ 
+        status: "rendering",
+        render_job_id: uniqueRenderJobId,
+        estimated_render_cost: estimatedCredits,
+      })
       .eq("id", storyboardId);
 
     // Build JSON2Video payload for video stitching
@@ -176,7 +182,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const uniqueRenderJobId = generateUniqueRenderJobId();
+    // uniqueRenderJobId already generated above
     const webhookUrl = `${supabaseUrl}/functions/v1/json2video-webhook`;
 
     // Determine resolution based on aspect ratio

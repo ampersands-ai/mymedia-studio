@@ -618,8 +618,10 @@ export type Database = {
         Row: {
           aspect_ratio: string | null
           created_at: string | null
+          estimated_render_cost: number | null
           final_video_url: string | null
           id: string
+          render_job_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -628,8 +630,10 @@ export type Database = {
         Insert: {
           aspect_ratio?: string | null
           created_at?: string | null
+          estimated_render_cost?: number | null
           final_video_url?: string | null
           id?: string
+          render_job_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -638,8 +642,10 @@ export type Database = {
         Update: {
           aspect_ratio?: string | null
           created_at?: string | null
+          estimated_render_cost?: number | null
           final_video_url?: string | null
           id?: string
+          render_job_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string

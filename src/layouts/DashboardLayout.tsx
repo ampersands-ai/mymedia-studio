@@ -7,6 +7,7 @@ import { MobileMenu } from "@/components/MobileMenu";
 import { NotificationBell } from "@/components/notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ export const DashboardLayout = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    toast.success("Signed out successfully");
     navigate("/");
   };
 

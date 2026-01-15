@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Loader2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
-
+import { PasswordRequirements, validatePasswordRequirements } from "@/components/auth/PasswordRequirements";
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -18,6 +18,8 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,8 +44,8 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+    if (!validatePasswordRequirements(password)) {
+      toast.error("Password does not meet all requirements");
       return;
     }
 
@@ -132,6 +134,8 @@ const ResetPassword = () => {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
               autoComplete="new-password"
               disabled={loading}
               className="pr-10"
@@ -144,24 +148,34 @@ const ResetPassword = () => {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          <PasswordRequirements 
+            password={password} 
+            show={passwordFocused || password.length > 0} 
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm New Password</Label>
-          <Input
-            id="confirmPassword"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            autoComplete="new-password"
-            disabled={loading}
-          />
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              disabled={loading}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
-        
-        <p className="text-xs text-muted-foreground">
-          Password must be at least 8 characters long.
-        </p>
         
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? (

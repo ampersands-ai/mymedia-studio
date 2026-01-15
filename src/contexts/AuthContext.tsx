@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent, identifyUser, resetPostHog, getArtifioDeviceId } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
 import { getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
+import { toast } from "sonner";
 
 const authLogger = logger.child({ component: 'AuthContext' });
 
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Defer signOut to prevent deadlock
           setTimeout(() => {
             supabase.auth.signOut();
+            toast.error("Your session expired. Please log in again.");
           }, 0);
           return;
         }

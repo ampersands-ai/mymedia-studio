@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle, Info, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signupSchema, loginSchema } from "@/lib/validation-schemas";
 import { Footer } from "@/components/Footer";
@@ -16,8 +16,9 @@ import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { isDisposableEmail, getCanonicalEmail } from "@/lib/email-validation";
-import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
+import { TurnstileWidget, TurnstileWidgetRef } from "@/components/auth/TurnstileWidget";
 import { useUtmCapture, getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
+import { PasswordRequirements } from "@/components/auth/PasswordRequirements";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -33,6 +34,10 @@ const Auth = () => {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
   
   // Capture UTM params on page load for acquisition tracking
   useUtmCapture();
@@ -45,10 +50,13 @@ const Auth = () => {
   const handleTurnstileError = useCallback((error: string) => {
     setTurnstileToken(null);
     setTurnstileError(error);
+    // Try to reset the widget for the user
+    turnstileRef.current?.reset();
   }, []);
 
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken(null);
+    setTurnstileError("Security check expired. Please verify again.");
   }, []);
 
   // Redirect if already logged in
@@ -112,7 +120,9 @@ const Auth = () => {
 
       if (turnstileVerifyError || !turnstileData?.success) {
         setTurnstileToken(null); // Reset token to force re-verification
-        throw new Error("Security verification failed. Please try again.");
+        setTurnstileError("Security check expired. We've refreshed it - please try again.");
+        turnstileRef.current?.reset();
+        throw new Error("Security check expired. We've refreshed it - please try again.");
       }
 
       // Check rate limiting
@@ -127,7 +137,8 @@ const Auth = () => {
       );
 
       if (rateLimitError || !rateLimitData?.allowed) {
-        throw new Error(rateLimitData?.error || 'Too many attempts. Please try again later.');
+        const waitTime = rateLimitData?.retryAfter ? Math.ceil(rateLimitData.retryAfter / 60) : 15;
+        throw new Error(`Too many attempts. Please wait ${waitTime} minutes before trying again.`);
       }
 
       if (isLogin) {
@@ -233,12 +244,15 @@ const Auth = () => {
           }
           // Provide helpful error messages for common signup issues
           if (error.message?.includes('already registered') || error.status === 422) {
-            throw new Error("This email is already registered. Please log in instead or use a different email.");
+            throw new Error("This email is already registered. Click 'Already have an account? Sign in' below to log in, or use 'Forgot password?' if needed.");
           }
           if (error.message?.includes('invalid') || error.message?.includes('email')) {
             throw new Error("Please enter a valid email address.");
           }
-          throw new Error("Unable to create account. Please try again or contact support.");
+          if (error.message?.includes('password')) {
+            throw new Error("Password doesn't meet requirements. Please check the password requirements below.");
+          }
+          throw new Error("We couldn't create your account. Please check your information and try again. If the problem persists, contact support@artifio.ai");
         }
         
         // Log successful signup
@@ -509,47 +523,75 @@ const Auth = () => {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, password: "", confirmPassword: "" }));
-                    }}
-                    required
-                    className={cn(
-                      "border-3 border-black brutal-shadow h-12 font-medium",
-                      validationErrors.password && "border-red-500"
-                    )}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, password: "", confirmPassword: "" }));
+                      }}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
+                      required
+                      className={cn(
+                        "border-3 border-black brutal-shadow h-12 font-medium pr-10",
+                        validationErrors.password && "border-red-500"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {validationErrors.password && (
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {validationErrors.password}
                     </p>
                   )}
+                  <PasswordRequirements 
+                    password={password} 
+                    show={passwordFocused || password.length > 0}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="font-bold">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, confirmPassword: "" }));
-                    }}
-                    required
-                    className={cn(
-                      "border-3 border-black brutal-shadow h-12 font-medium",
-                      validationErrors.confirmPassword && "border-red-500"
-                    )}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, confirmPassword: "" }));
+                      }}
+                      required
+                      className={cn(
+                        "border-3 border-black brutal-shadow h-12 font-medium pr-10",
+                        validationErrors.confirmPassword && "border-red-500"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {validationErrors.confirmPassword && (
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -601,22 +643,33 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="font-bold">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setValidationErrors(prev => ({ ...prev, password: "" }));
-                    }}
-                    required
-                    className={cn(
-                      "border-3 border-black brutal-shadow h-12 font-medium",
-                      validationErrors.password && "border-red-500"
-                    )}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setValidationErrors(prev => ({ ...prev, password: "" }));
+                      }}
+                      required
+                      className={cn(
+                        "border-3 border-black brutal-shadow h-12 font-medium pr-10",
+                        validationErrors.password && "border-red-500"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {validationErrors.password && (
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -638,6 +691,7 @@ const Auth = () => {
             {/* Turnstile CAPTCHA */}
             <div className="my-4">
               <TurnstileWidget
+                ref={turnstileRef}
                 onVerify={handleTurnstileVerify}
                 onError={handleTurnstileError}
                 onExpire={handleTurnstileExpire}
@@ -645,7 +699,7 @@ const Auth = () => {
               {turnstileError && (
                 <p className="text-sm text-red-600 flex items-center gap-1 mt-2 justify-center">
                   <AlertCircle className="h-3 w-3" />
-                  Verification failed. Please try again.
+                  {turnstileError}
                 </p>
               )}
             </div>

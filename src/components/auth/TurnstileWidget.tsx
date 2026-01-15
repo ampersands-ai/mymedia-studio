@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useImperativeHandle, forwardRef } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 // so verification works reliably during development.
 const PROD_TURNSTILE_SITE_KEY = "0x4AAAAAACHj1CN28cJMGuIM";
 const DEV_TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
+
+// Token validity period (Turnstile tokens expire after ~5 minutes)
+const TOKEN_REFRESH_INTERVAL = 4 * 60 * 1000; // 4 minutes to be safe
+
+export interface TurnstileWidgetRef {
+  reset: () => void;
+}
 
 interface TurnstileWidgetProps {
   onVerify: (token: string) => void;
@@ -35,13 +42,31 @@ declare global {
   }
 }
 
-export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidgetProps) {
+export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
+  function TurnstileWidget({ onVerify, onError, onExpire }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  const renderWidget = useCallback(() => {
+  const resetWidget = useCallback(() => {
+    if (widgetIdRef.current && window.turnstile) {
+      try {
+        window.turnstile.reset(widgetIdRef.current);
+      } catch (e) {
+        // If reset fails, try to re-render
+        renderWidgetInternal();
+      }
+    }
+  }, []);
+
+  // Expose reset method to parent
+  useImperativeHandle(ref, () => ({
+    reset: resetWidget,
+  }), [resetWidget]);
+
+  const renderWidgetInternal = useCallback(() => {
     if (!containerRef.current || !window.turnstile) return;
 
     // Remove existing widget if any
@@ -51,6 +76,12 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
       } catch (e) {
         // Ignore removal errors
       }
+    }
+
+    // Clear any existing refresh timer
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
     }
 
     setIsLoading(false);
@@ -70,6 +101,12 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
         sitekey,
         callback: (token: string) => {
           onVerify(token);
+          // Set up auto-refresh before token expires
+          refreshTimerRef.current = setTimeout(() => {
+            console.log("[Turnstile] Token expiring soon, resetting widget");
+            resetWidget();
+            onExpire?.();
+          }, TOKEN_REFRESH_INTERVAL);
         },
         "error-callback": (error: string) => {
           console.error("[Turnstile] Error:", error);
@@ -77,7 +114,10 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
           onError?.(error);
         },
         "expired-callback": () => {
+          console.log("[Turnstile] Token expired");
           onExpire?.();
+          // Automatically reset the widget when token expires
+          resetWidget();
         },
         theme: "auto",
         size: "normal",
@@ -87,7 +127,10 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
       setHasError(true);
       onError?.(String(error));
     }
-  }, [onVerify, onError, onExpire]);
+  }, [onVerify, onError, onExpire, resetWidget]);
+
+  // Alias for external use
+  const renderWidget = renderWidgetInternal;
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -155,6 +198,7 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (pollIntervalId) clearInterval(pollIntervalId);
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       if (widgetIdRef.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetIdRef.current);
@@ -202,4 +246,4 @@ export function TurnstileWidget({ onVerify, onError, onExpire }: TurnstileWidget
       <div ref={containerRef} className={isLoading ? "hidden" : ""} />
     </div>
   );
-}
+});

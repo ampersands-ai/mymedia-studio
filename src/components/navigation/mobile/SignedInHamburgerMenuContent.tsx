@@ -1,7 +1,7 @@
 import { 
   Home, Settings, LogOut, Shield, Sparkles, LayoutTemplate, BookOpen, HelpCircle,
   History, Video, Clock, Clapperboard, ChevronDown, Palette, ImagePlus, Music, 
-  CircleUser, Repeat, FolderOpen, Info, Film
+  CircleUser, Repeat, FolderOpen, Info, Film, CreditCard
 } from "lucide-react";
 import {
   Collapsible,
@@ -250,6 +250,11 @@ export const SignedInHamburgerMenuContent = ({
               path="/dashboard/prompts" 
               label="Prompt Library" 
               icon={<BookOpen className="h-4 w-4" />} 
+            />
+            <MenuItem 
+              path="/pricing" 
+              label="Pricing" 
+              icon={<CreditCard className="h-4 w-4" />} 
             />
           </CollapsibleContent>
         </Collapsible>

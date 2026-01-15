@@ -362,13 +362,17 @@ const Pricing = () => {
           </div>
 
           {/* Limited Time Offer Banner */}
-          <div className="flex justify-center mb-12">
+          <div className="flex flex-col items-center gap-4 mb-12">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-primary/10 border-3 border-primary brutal-shadow">
               <span className="text-2xl">🔥</span>
               <span className="font-black text-lg text-primary">LIMITED TIME OFFER</span>
               <span className="inline-flex items-center text-sm px-3 py-1 bg-primary text-black rounded-full font-bold">
                 20% OFF ALL PLANS
               </span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/10 border-2 border-green-500 text-green-600 dark:text-green-400 font-bold text-sm">
+              <Check className="h-4 w-4" />
+              Credits never expire while subscribed
             </div>
           </div>
 

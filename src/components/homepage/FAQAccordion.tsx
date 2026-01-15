@@ -14,7 +14,7 @@ const faqs = [
 • Video (5s): ~1 credit
 • High-quality image: ~0.75 credits
 
-Your plan includes a monthly credit allocation. Unused credits roll over to next month.`,
+Your plan includes a monthly credit allocation. Credits never expire while your subscription is active—they accumulate indefinitely.`,
   },
   {
     question: "Can I cancel anytime?",

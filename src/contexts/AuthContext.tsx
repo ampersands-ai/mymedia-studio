@@ -94,6 +94,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   authLogger.error('Failed to save OAuth attribution', err as Error);
                 });
               }
+              
+              // Send admin notification for new OAuth signup
+              const oauthProvider = session.user.app_metadata?.provider || 'oauth';
+              supabase.functions.invoke('send-new-user-alert', {
+                body: {
+                  email: session.user.email,
+                  display_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
+                  signup_method: oauthProvider,
+                }
+              }).catch((alertError) => {
+                authLogger.error('Failed to send admin alert for OAuth signup', alertError as Error);
+              });
             }
             
             // Migrate anonymous consent records to this user (non-blocking to prevent auth flow stalling)

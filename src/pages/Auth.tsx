@@ -257,6 +257,9 @@ const Auth = () => {
         
         // Log successful signup
         if (data.user) {
+          const userId = data.user.id;
+          const userEmail = data.user.email;
+          
           try {
             await supabase.functions.invoke('audit-log', {
               body: { 
@@ -271,86 +274,64 @@ const Auth = () => {
               component: 'Auth',
               operation: 'signup_success_audit',
               email: email.toLowerCase(),
-              userId: data.user.id
+              userId
             });
           }
 
-          // Send welcome email
-          try {
-            await supabase.functions.invoke('send-welcome-email', {
-              body: {
-                userId: data.user.id,
-                email: data.user.email,
-              }
-            });
-          } catch (emailError) {
+          // Fire-and-forget: Send welcome email (non-blocking)
+          supabase.functions.invoke('send-welcome-email', {
+            body: {
+              userId,
+              email: userEmail,
+            }
+          }).catch((emailError) => {
             logger.error('Failed to send welcome email', emailError instanceof Error ? emailError : new Error(String(emailError)), {
               component: 'Auth',
               operation: 'send_welcome_email',
-              userId: data.user.id,
-              email: data.user.email
+              userId,
+              email: userEmail
             });
-            // Don't block signup if email fails
-          }
+          });
 
-          // Send verification email
-          try {
-            await supabase.functions.invoke('send-verification-email', {
-              body: {
-                userId: data.user.id,
-                email: data.user.email,
-              }
-            });
-          } catch (verifyError) {
+          // Fire-and-forget: Send verification email (non-blocking)
+          supabase.functions.invoke('send-verification-email', {
+            body: {
+              userId,
+              email: userEmail,
+            }
+          }).catch((verifyError) => {
             logger.error('Failed to send verification email', verifyError instanceof Error ? verifyError : new Error(String(verifyError)), {
               component: 'Auth',
               operation: 'send_verification_email',
-              userId: data.user.id,
-              email: data.user.email
+              userId,
+              email: userEmail
             });
-            // Don't block signup if verification email fails
-          }
+          });
 
-          // Save UTM attribution data for acquisition analytics
-          try {
-            const utmParams = getStoredUtmParams();
-            await supabase.functions.invoke('save-signup-attribution', {
-              body: {
-                ...utmParams,
-                signup_method: 'email',
-              }
-            });
-            clearStoredUtmParams(); // Clear after successful save
-          } catch (attrError) {
+          // Fire-and-forget: Save UTM attribution (non-blocking)
+          const utmParams = getStoredUtmParams();
+          supabase.functions.invoke('save-signup-attribution', {
+            body: {
+              ...utmParams,
+              signup_method: 'email',
+            }
+          }).then(() => {
+            clearStoredUtmParams();
+          }).catch((attrError) => {
             logger.error('Failed to save attribution', attrError instanceof Error ? attrError : new Error(String(attrError)), {
               component: 'Auth',
               operation: 'save_attribution',
-              userId: data.user.id
+              userId
             });
-            // Don't block signup if attribution fails
-          }
+          });
 
-          // Send admin notification for new signup
-          try {
-            await supabase.functions.invoke('send-new-user-alert', {
-              body: {
-                email: email.toLowerCase(),
-                display_name: null,
-                signup_method: 'email',
-              }
-            });
-          } catch (alertError) {
-            logger.error('Failed to send admin alert', alertError instanceof Error ? alertError : new Error(String(alertError)), {
-              component: 'Auth',
-              operation: 'send_new_user_alert',
-              userId: data.user.id
-            });
-            // Don't block signup if admin alert fails
-          }
+          // Note: Admin notification is handled by database trigger (handle_new_user)
+          // to avoid duplicate emails
         }
         
         toast.success("Account created! Check your email to verify your account.");
-        navigate("/dashboard/custom-creation");
+        // Don't navigate here - let the auth state change in useEffect handle redirect
+        // This prevents race conditions with session establishment
       }
         },
         {

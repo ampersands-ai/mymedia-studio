@@ -57,11 +57,18 @@ export const GlobalHeader = () => {
 
           {/* Center - Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            {user && (
+            {user ? (
               <NavDropdownProvider>
                 <StudioDropdown align="center" />
                 <LibraryDropdown align="center" />
               </NavDropdownProvider>
+            ) : (
+              <Link 
+                to="/models"
+                className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
+              >
+                Models
+              </Link>
             )}
           </nav>
 

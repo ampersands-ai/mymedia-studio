@@ -205,54 +205,67 @@ export function CookieConsentBanner() {
             {showDetails && (
               <div 
                 id="cookie-preferences"
-                className="space-y-3 py-3 border-t border-border animate-in fade-in duration-200"
+                className="space-y-4 py-4 border-t border-border animate-in fade-in duration-200 bg-muted/30 rounded-lg px-3 mt-2"
               >
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="functional" className="text-sm font-medium">
+                <div className="flex items-center justify-between gap-4 p-2 bg-background rounded-md border border-border">
+                  <div className="space-y-0.5 flex-1 min-w-0">
+                    <Label htmlFor="functional" className="text-sm font-medium text-foreground">
                       Essential Cookies
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       Required for the website to function. Cannot be disabled.
                     </p>
                   </div>
-                  <Switch id="functional" checked disabled />
+                  <div className="shrink-0">
+                    <Switch 
+                      id="functional" 
+                      checked 
+                      disabled 
+                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted border-2 border-border"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="analytics" className="text-sm font-medium">
+                <div className="flex items-center justify-between gap-4 p-2 bg-background rounded-md border border-border">
+                  <div className="space-y-0.5 flex-1 min-w-0">
+                    <Label htmlFor="analytics" className="text-sm font-medium text-foreground">
                       Analytics Cookies
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       Help us understand how visitors interact with our site.
                     </p>
                   </div>
-                  <Switch
-                    id="analytics"
-                    checked={preferences.analytics}
-                    onCheckedChange={(checked) => 
-                      setPreferences((prev) => ({ ...prev, analytics: checked }))
-                    }
-                  />
+                  <div className="shrink-0">
+                    <Switch
+                      id="analytics"
+                      checked={preferences.analytics}
+                      onCheckedChange={(checked) => 
+                        setPreferences((prev) => ({ ...prev, analytics: checked }))
+                      }
+                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted border-2 border-border"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="marketing" className="text-sm font-medium">
+                <div className="flex items-center justify-between gap-4 p-2 bg-background rounded-md border border-border">
+                  <div className="space-y-0.5 flex-1 min-w-0">
+                    <Label htmlFor="marketing" className="text-sm font-medium text-foreground">
                       Marketing Cookies
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       Used to deliver personalized advertisements.
                     </p>
                   </div>
-                  <Switch
-                    id="marketing"
-                    checked={preferences.marketing}
-                    onCheckedChange={(checked) => 
-                      setPreferences((prev) => ({ ...prev, marketing: checked }))
-                    }
-                  />
+                  <div className="shrink-0">
+                    <Switch
+                      id="marketing"
+                      checked={preferences.marketing}
+                      onCheckedChange={(checked) => 
+                        setPreferences((prev) => ({ ...prev, marketing: checked }))
+                      }
+                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted border-2 border-border"
+                    />
+                  </div>
                 </div>
               </div>
             )}

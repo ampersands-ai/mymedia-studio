@@ -315,6 +315,24 @@ const Auth = () => {
             });
             // Don't block signup if attribution fails
           }
+
+          // Send admin notification for new signup
+          try {
+            await supabase.functions.invoke('send-new-user-alert', {
+              body: {
+                email: email.toLowerCase(),
+                display_name: null,
+                signup_method: 'email',
+              }
+            });
+          } catch (alertError) {
+            logger.error('Failed to send admin alert', alertError instanceof Error ? alertError : new Error(String(alertError)), {
+              component: 'Auth',
+              operation: 'send_new_user_alert',
+              userId: data.user.id
+            });
+            // Don't block signup if admin alert fails
+          }
         }
         
         toast.success("Account created! Check your email to verify your account.");

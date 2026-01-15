@@ -362,7 +362,7 @@ const Pricing = () => {
           </div>
 
           {/* Limited Time Offer Banner */}
-          <div className="flex flex-col items-center gap-4 mb-12">
+          <div className="flex flex-col items-center gap-4 mb-8">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-primary/10 border-3 border-primary brutal-shadow">
               <span className="text-2xl">🔥</span>
               <span className="font-black text-lg text-primary">LIMITED TIME OFFER</span>
@@ -374,6 +374,14 @@ const Pricing = () => {
               <Check className="h-4 w-4" />
               Credits never expire while subscribed
             </div>
+          </div>
+
+          {/* Quirky No Annual Plans Message */}
+          <div className="text-center mb-12 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground italic">
+              "We don't offer annual plans. We don't tie you down.{" "}
+              <span className="font-bold text-foreground not-italic">We're confident you won't find better.</span>"
+            </p>
           </div>
 
           {/* All Plans Grid */}

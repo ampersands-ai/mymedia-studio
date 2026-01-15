@@ -11,7 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Menu, Home, Wand2, Shield,
-  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, Video, Clock, Clapperboard, Film
+  Sparkles, LayoutTemplate, DollarSign, Info, BookOpen, HelpCircle, Users, Video, Clock, Clapperboard, Film, Cpu
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -209,6 +209,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 {/* RESOURCES Section */}
                 <SectionHeader>RESOURCES</SectionHeader>
                 <div className="space-y-1 px-4">
+                  <MenuItem path="/models" label="Models" icon={<Cpu className="h-4 w-4" />} />
                   <MenuItem 
                     path="/dashboard/video-editor" 
                     label="Video Editor" 

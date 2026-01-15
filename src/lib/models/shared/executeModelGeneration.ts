@@ -14,6 +14,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
 import { assertNoBase64Images } from "@/lib/validation/imageValidation";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 /**
  * Model configuration for execution
@@ -174,7 +175,9 @@ export async function executeModelGeneration(options: ExecuteOptions): Promise<s
       .update({ status: GENERATION_STATUS.FAILED })
       .eq('id', gen.id);
 
-    throw new Error(`Edge function failed: ${funcError.message}`);
+    // Extract actual error message from edge function response
+    const errorMessage = await extractEdgeFunctionError(funcError);
+    throw new Error(errorMessage);
   }
 
   // 7. Start polling for results

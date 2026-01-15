@@ -12,6 +12,7 @@ import {
   type InsufficientCreditsError,
 } from "@/types/generation";
 import { getModel } from "@/lib/models/registry";
+import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
 
 const generationLogger = logger.child({ component: 'useGeneration' });
 
@@ -135,12 +136,15 @@ export const useGeneration = () => {
       }
 
       if (error) {
+        // Extract actual error message from edge function response body
+        const extractedMessage = await extractEdgeFunctionError(error);
+        
         const handledError = handleError(error, {
           requestId,
-          errorMessage: error.message,
+          errorMessage: extractedMessage, // Use extracted message instead of generic
           component: 'useGeneration'
         });
-        generationLogger.error("Edge function error", handledError, { requestId });
+        generationLogger.error("Edge function error", handledError, { requestId, extractedMessage });
 
         const errorStatus = getErrorStatus(error);
 
@@ -187,7 +191,7 @@ export const useGeneration = () => {
         if (errorStatus === 429) {
           throw new GenerationError(
             GenerationErrorCode.RATE_LIMITED,
-            "Rate limit exceeded. Please try again later.",
+            extractedMessage, // Use backend's actual rate limit message
             { recoverable: true }
           );
         }

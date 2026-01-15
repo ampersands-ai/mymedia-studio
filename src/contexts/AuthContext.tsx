@@ -95,17 +95,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
               }
               
-              // Send admin notification for new OAuth signup
-              const oauthProvider = session.user.app_metadata?.provider || 'oauth';
-              supabase.functions.invoke('send-new-user-alert', {
+              // Send welcome email for OAuth signups (non-blocking)
+              supabase.functions.invoke('send-welcome-email', {
                 body: {
+                  userId: session.user.id,
                   email: session.user.email,
-                  display_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
-                  signup_method: oauthProvider,
+                  fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name
                 }
-              }).catch((alertError) => {
-                authLogger.error('Failed to send admin alert for OAuth signup', alertError as Error);
+              }).catch((err) => {
+                authLogger.error('Failed to send welcome email for OAuth signup', err as Error);
               });
+              
+              // Note: Admin notification is handled by database trigger (handle_new_user)
+              // to avoid duplicate emails
             }
             
             // Migrate anonymous consent records to this user (non-blocking to prevent auth flow stalling)

@@ -3,54 +3,53 @@
  * 
  * Primary: Dodo Payments
  * Failover: Stripe (automatic when Dodo fails)
+ * 
+ * All plans are now monthly-only with limited time 20% discount pricing
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-// Dodo Payments product IDs
+// Dodo Payments product IDs (monthly only)
 const DODO_PLAN_PRODUCTS = {
   explorer: {
     monthly: 'pdt_sWvSDyXU1PVSQRmLMS73c',
-    annual: 'pdt_puVmR1qtPto0GFsEg37X6',
   },
   professional: {
     monthly: 'pdt_SdYFUQLtaFIXIYLZONFDy',
-    annual: 'pdt_37iTzseOiYUKtj01FIk3L',
   },
   ultimate: {
     monthly: 'pdt_9Yeryv7tq4tXneVFJt5my',
-    annual: 'pdt_dgOCQNEbwmqnCcRVCWFms',
+  },
+  studio: {
+    monthly: 'pdt_Hxf2vEkGfRUAL0irgjsDV',
   },
   veo_connoisseur: {
     monthly: 'pdt_Hxf2vEkGfRUAL0irgjsDV',
-    annual: 'pdt_6DvfNg7cAMlACiyJ01dFk',
   },
 } as const;
 
-// Stripe price IDs (backup)
+// Stripe price IDs (backup) - monthly only
 const STRIPE_PLAN_PRICES = {
   explorer: {
     monthly: 'price_1SgW4XPoOsAS6r2g0o1PwDKO',
-    annual: 'price_1SgW4oPoOsAS6r2gbgWJb1tf',
   },
   professional: {
     monthly: 'price_1SgW53PoOsAS6r2guIoU83bt',
-    annual: 'price_1SgW5GPoOsAS6r2gjxjE5ppb',
   },
   ultimate: {
     monthly: 'price_1SgW5WPoOsAS6r2gcuNO6kuU',
-    annual: 'price_1SgW5mPoOsAS6r2gRYDBWtMf',
+  },
+  studio: {
+    monthly: 'price_1SgW6HPoOsAS6r2gaW9gV4so',
   },
   veo_connoisseur: {
     monthly: 'price_1SgW6HPoOsAS6r2gaW9gV4so',
-    annual: 'price_1SgW6WPoOsAS6r2gtXoPfLJi',
   },
 } as const;
 
 type PlanKey = keyof typeof DODO_PLAN_PRODUCTS;
-type BillingPeriod = 'monthly' | 'annual';
 
 // Retry helper with exponential backoff
 async function fetchWithRetry(url: string, options: RequestInit, maxAttempts = 3): Promise<Response> {
@@ -98,18 +97,17 @@ async function tryDodoPayment(
   logger: EdgeLogger,
   dodoApiKey: string,
   planKey: PlanKey,
-  billingPeriod: BillingPeriod,
   userId: string,
   email: string,
   fullName: string,
   successUrl: string,
   cancelUrl: string
 ): Promise<{ checkout_url: string; session_id: string }> {
-  const productId = DODO_PLAN_PRODUCTS[planKey][billingPeriod];
+  const productId = DODO_PLAN_PRODUCTS[planKey].monthly;
   const isTestMode = dodoApiKey.startsWith('test_');
   const dodoBaseUrl = isTestMode ? 'https://test.dodopayments.com' : 'https://live.dodopayments.com';
 
-  logger.info('Attempting Dodo Payments', { metadata: { planKey, billingPeriod, environment: isTestMode ? 'test' : 'live' } });
+  logger.info('Attempting Dodo Payments', { metadata: { planKey, billingPeriod: 'monthly', environment: isTestMode ? 'test' : 'live' } });
 
   const response = await fetchWithRetry(`${dodoBaseUrl}/checkouts`, {
     method: 'POST',
@@ -121,7 +119,7 @@ async function tryDodoPayment(
       product_cart: [{ product_id: productId, quantity: 1 }],
       payment_link_settings: { success_url: successUrl, cancel_url: cancelUrl },
       customer: { email, name: fullName },
-      metadata: { user_id: userId, plan: planKey, billing_period: billingPeriod },
+      metadata: { user_id: userId, plan: planKey, billing_period: 'monthly' },
     }),
   });
 
@@ -139,15 +137,14 @@ async function tryStripePayment(
   logger: EdgeLogger,
   stripeKey: string,
   planKey: PlanKey,
-  billingPeriod: BillingPeriod,
   userId: string,
   email: string,
   successUrl: string,
   cancelUrl: string
 ): Promise<{ checkout_url: string; session_id: string }> {
-  const priceId = STRIPE_PLAN_PRICES[planKey][billingPeriod];
+  const priceId = STRIPE_PLAN_PRICES[planKey].monthly;
 
-  logger.info('Attempting Stripe failover', { metadata: { planKey, billingPeriod, priceId } });
+  logger.info('Attempting Stripe failover', { metadata: { planKey, billingPeriod: 'monthly', priceId } });
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
 
@@ -165,7 +162,7 @@ async function tryStripePayment(
     metadata: {
       user_id: userId,
       plan: planKey,
-      billing_period: billingPeriod,
+      billing_period: 'monthly',
       failover_from: 'dodo',
     },
   });
@@ -203,15 +200,13 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { plan, isAnnual, appOrigin } = await req.json();
+    const { plan, appOrigin } = await req.json();
 
     // Validate plan
     const planKey = plan.toLowerCase().replace(' ', '_') as PlanKey;
     if (!DODO_PLAN_PRODUCTS[planKey]) {
       throw new Error('Invalid plan selected');
     }
-
-    const billingPeriod: BillingPeriod = isAnnual ? 'annual' : 'monthly';
 
     // Check for existing active subscription
     const { data: existingSub } = await supabase
@@ -257,7 +252,7 @@ Deno.serve(async (req) => {
     if (dodoApiKey) {
       try {
         const dodoResult = await tryDodoPayment(
-          logger, dodoApiKey, planKey, billingPeriod,
+          logger, dodoApiKey, planKey,
           user.id, email, profileName, successUrl, cancelUrl
         );
         result = { ...dodoResult, provider: 'dodo' };
@@ -269,7 +264,7 @@ Deno.serve(async (req) => {
         // Failover: Try Stripe
         if (stripeKey) {
           const stripeResult = await tryStripePayment(
-            logger, stripeKey, planKey, billingPeriod,
+            logger, stripeKey, planKey,
             user.id, email, successUrl, cancelUrl
           );
           result = { ...stripeResult, provider: 'stripe' };
@@ -292,7 +287,7 @@ Deno.serve(async (req) => {
     } else if (stripeKey) {
       // No Dodo key, use Stripe directly
       const stripeResult = await tryStripePayment(
-        logger, stripeKey, planKey, billingPeriod,
+        logger, stripeKey, planKey,
         user.id, email, successUrl, cancelUrl
       );
       result = { ...stripeResult, provider: 'stripe' };
@@ -308,7 +303,7 @@ Deno.serve(async (req) => {
       resource_type: 'subscription',
       metadata: {
         plan: planKey,
-        billing_period: billingPeriod,
+        billing_period: 'monthly',
         provider: usedProvider,
         session_id: result.session_id,
       },

@@ -86,23 +86,25 @@ const Terms = () => {
               <h3 className="text-xl font-semibold mb-3 text-white/90">4.1 Subscription Tiers</h3>
               <div className="overflow-x-auto mb-6">
                 <div className="bg-white/5 rounded-lg border border-white/10 p-4">
-                  <div className="grid grid-cols-4 gap-4 text-sm font-semibold text-white border-b border-white/10 pb-2 mb-2">
+                  <div className="grid grid-cols-3 gap-4 text-sm font-semibold text-white border-b border-white/10 pb-2 mb-2">
                     <div>Tier</div>
-                    <div>Monthly</div>
-                    <div>Annual (per mo)</div>
+                    <div>Monthly Price</div>
                     <div>Credits/Month</div>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <div className="grid grid-cols-4 gap-4"><div>Free</div><div>$0</div><div>—</div><div>5 (one-time, never refills)</div></div>
-                    <div className="grid grid-cols-4 gap-4"><div>Explorer</div><div>$9.99</div><div>$7.99</div><div>375</div></div>
-                    <div className="grid grid-cols-4 gap-4"><div>Professional</div><div>$24.99</div><div>$19.99</div><div>1,000</div></div>
-                    <div className="grid grid-cols-4 gap-4"><div>Ultimate</div><div>$49.99</div><div>$39.99</div><div>2,500</div></div>
-                    <div className="grid grid-cols-4 gap-4"><div>Studio</div><div>$94.99</div><div>$74.99</div><div>5,000</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Free</div><div>$0</div><div>5 (one-time, never refills)</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Explorer</div><div>$7.99</div><div>375</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Professional</div><div>$19.99</div><div>1,000</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Ultimate</div><div>$44.99</div><div>2,500</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Studio</div><div>$74.99</div><div>5,000</div></div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <span className="text-primary font-semibold">🔥 Limited Time Offer: 20% off all plans!</span>
                   </div>
                 </div>
               </div>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed mb-6">
-                <li>Annual billing is charged upfront for 12 months at approximately 20% off monthly pricing</li>
+                <li>All plans are billed monthly</li>
                 <li>All prices are in USD</li>
                 <li>Payments are processed by Dodo Payments (primary) or Stripe (backup). By subscribing, you also agree to the applicable payment processor's terms of service</li>
               </ul>

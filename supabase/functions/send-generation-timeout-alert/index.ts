@@ -97,22 +97,48 @@ Recommended Actions:
     });
 
     // Send email
-    const { error: emailError } = await resend.emails.send({
+    const emailResponse = await resend.emails.send({
       from: 'Artifio Alerts <alerts@artifio.ai>',
       to: [adminEmail],
       subject: `⏱️ Generation Timeout: ${elapsed_minutes} minutes - ${generation_id.substring(0, 8)}`,
       html: emailHTML,
     });
 
-    if (emailError) {
-      logger.error('Failed to send timeout alert email', emailError, {
-        metadata: { generation_id, elapsed_minutes, provider, model_name }
+    // Enhanced logging for debugging delivery issues
+    logger.info('Resend API response', {
+      metadata: { 
+        success: !emailResponse.error,
+        emailId: emailResponse.data?.id,
+        errorName: emailResponse.error?.name,
+        errorMessage: emailResponse.error?.message,
+        adminEmail,
+        generation_id
+      }
+    });
+
+    if (emailResponse.error) {
+      logger.error('Failed to send timeout alert email', emailResponse.error, {
+        metadata: { 
+          generation_id, 
+          elapsed_minutes, 
+          provider, 
+          model_name,
+          errorName: emailResponse.error.name,
+          errorMessage: emailResponse.error.message
+        }
       });
-      throw emailError;
+      throw emailResponse.error;
     }
     
     logger.info('Timeout alert email sent successfully', {
-      metadata: { generation_id, elapsed_minutes, provider, model_name, adminEmail }
+      metadata: { 
+        generation_id, 
+        elapsed_minutes, 
+        provider, 
+        model_name, 
+        adminEmail,
+        emailId: emailResponse.data?.id
+      }
     });
 
     // Log to audit_logs

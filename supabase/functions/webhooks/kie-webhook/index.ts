@@ -541,6 +541,26 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Trigger completion notification (email/push/in-app)
+      try {
+        const generationDuration = Math.floor((Date.now() - new Date(generation.created_at).getTime()) / 1000);
+        await supabase.functions.invoke('notify-generation-complete', {
+          body: {
+            generation_id: generationId,
+            user_id: generation.user_id,
+            generation_duration_seconds: generationDuration,
+            type: 'generation'
+          }
+        });
+        webhookLogger.info('Completion notification triggered', { 
+          metadata: { generationId, duration: generationDuration } 
+        });
+      } catch (notifyError) {
+        webhookLogger.warn('Failed to send notification (non-critical)', { 
+          metadata: { error: String(notifyError), generationId } 
+        });
+      }
+
       // Track webhook analytics
       await supabase.from('webhook_analytics').insert({
         provider: 'kie-ai',

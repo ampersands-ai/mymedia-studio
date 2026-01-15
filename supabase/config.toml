@@ -134,3 +134,6 @@ max_duration_seconds = 400
 
 [functions.render-storyboard-video-inline]
 verify_jwt = true
+
+[functions.send-subscription-reminders]
+verify_jwt = false

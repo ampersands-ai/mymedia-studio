@@ -2866,6 +2866,30 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_reminder_logs: {
+        Row: {
+          billing_period_key: string
+          id: string
+          reminder_type: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_period_key: string
+          id?: string
+          reminder_type: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_period_key?: string
+          id?: string
+          reminder_type?: string
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       system_metrics: {
         Row: {
           created_at: string
@@ -4955,6 +4979,7 @@ export type Database = {
           table_name: string
         }[]
       }
+      cleanup_old_reminder_logs: { Args: never; Returns: number }
       cleanup_old_webhook_events: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       decrypt_payment_id: { Args: { ciphertext: string }; Returns: string }

@@ -46,15 +46,11 @@ const faqCategories = [
     faqs: [
       {
         q: "What plans do you offer?",
-        a: "We offer five tiers: Free, Explorer, Professional, Ultimate, and Studio. Each tier provides a monthly credit allocation, with higher tiers offering more credits and better per-credit value. Annual billing saves you approximately 20% (2+ months free)."
+        a: "We offer five tiers: Free, Explorer ($7.99/mo), Professional ($19.99/mo), Ultimate ($44.99/mo), and Studio ($74.99/mo). Each tier provides a monthly credit allocation, with higher tiers offering more credits and better per-credit value. All plans are currently 20% off for a limited time!"
       },
       {
         q: "What's included in the Free plan?",
         a: "5 credits to try the platform. This is a one-time allocation - it does not refill. Free users cannot purchase additional credits."
-      },
-      {
-        q: "What's the difference between monthly and annual billing?",
-        a: "Annual billing saves you approximately 20% (2+ months free). You're billed upfront for 12 months at the discounted rate."
       },
       {
         q: "Which plan should I choose?",
@@ -70,7 +66,7 @@ const faqCategories = [
       },
       {
         q: "Can prices change?",
-        a: "Yes. Our pricing depends on costs charged by third-party AI providers. We may adjust pricing to reflect changes in underlying model costs. Annual subscribers are locked at their rate until renewal."
+        a: "Yes. Our pricing depends on costs charged by third-party AI providers. We may adjust pricing to reflect changes in underlying model costs."
       },
       {
         q: "Do you offer discounts for students or nonprofits?",
@@ -262,7 +258,7 @@ const faqCategories = [
       },
       {
         q: "When am I charged?",
-        a: "Monthly subscribers are charged on the same date each month. Annual subscribers are charged upfront for 12 months."
+        a: "You are charged on the same date each month when your subscription renews."
       },
       {
         q: "How do I update my payment method?",

@@ -51,7 +51,7 @@ Subscribers can purchase additional credits anytime. The more you commit, the be
 Rule of thumb:
 • 1-10 creations/week → Explorer
 • 10-50 creations/week → Professional
-• 50+ creations/week → Ultimate`,
+• 50+ creations/week → Ultimate or Studio`,
   },
   {
     question: "Can I use this for my agency/team?",

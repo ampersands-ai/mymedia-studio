@@ -3,35 +3,20 @@
  * 
  * Creates a Stripe checkout session for credit boost purchases.
  * Only available to paid subscribers at their current plan rate.
+ * All pricing now uses limited time offer rates (formerly annual pricing).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
-// Stripe price IDs for one-time credit boosts
-const STRIPE_BOOST_PRICES: Record<string, Record<string, string>> = {
-  explorer: {
-    monthly: 'price_1SgfHHPoOsAS6r2g1322tXh2', // $9.99
-    annual: 'price_1SgfO5PoOsAS6r2gxPML0cfE',  // $7.99
-  },
-  professional: {
-    monthly: 'price_1SgfOIPoOsAS6r2g49SPcB8m', // $24.99
-    annual: 'price_1SgfQ7PoOsAS6r2gOaeUL5iZ',  // $19.99
-  },
-  ultimate: {
-    monthly: 'price_1SgfT8PoOsAS6r2gJaOCa1Y0', // $49.99
-    annual: 'price_1SgfTcPoOsAS6r2g4jKdNBul',  // $39.99
-  },
-  studio: {
-    monthly: 'price_1SgfTxPoOsAS6r2gk7ZI4tFC', // $94.99
-    annual: 'price_1SgfXhPoOsAS6r2gO8VQvbDA',  // $74.99
-  },
-  // Alias for backward compatibility
-  veo_connoisseur: {
-    monthly: 'price_1SgfTxPoOsAS6r2gk7ZI4tFC',
-    annual: 'price_1SgfXhPoOsAS6r2gO8VQvbDA',
-  },
+// Stripe price IDs for one-time credit boosts (LTO pricing)
+const STRIPE_BOOST_PRICES: Record<string, string> = {
+  explorer: 'price_1SgfO5PoOsAS6r2gxPML0cfE',      // $7.99
+  professional: 'price_1SgfQ7PoOsAS6r2gOaeUL5iZ',  // $19.99
+  ultimate: 'price_1SgfTcPoOsAS6r2g4jKdNBul',      // $44.99 (updated)
+  studio: 'price_1SgfXhPoOsAS6r2gO8VQvbDA',        // $74.99
+  veo_connoisseur: 'price_1SgfXhPoOsAS6r2gO8VQvbDA', // alias
 };
 
 // Credit amounts per plan
@@ -89,7 +74,7 @@ Deno.serve(async (req) => {
     // Get user's current subscription
     const { data: subscription, error: subError } = await supabase
       .from('user_subscriptions')
-      .select('plan, billing_period, stripe_customer_id')
+      .select('plan, stripe_customer_id')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -102,24 +87,18 @@ Deno.serve(async (req) => {
     }
 
     const plan = subscription.plan?.toLowerCase();
-    const billingPeriod = subscription.billing_period || 'monthly';
 
     // Check if user is on freemium (not allowed to buy boosts)
     if (plan === 'freemium' || !plan) {
       throw new Error('Credit boosts are only available to paid subscribers. Please upgrade to a paid plan first.');
     }
 
-    // Get the correct price ID for user's plan and billing period
+    // Get the correct price ID for user's plan
     const normalizedPlan = normalizePlanName(plan);
-    const priceConfig = STRIPE_BOOST_PRICES[normalizedPlan];
+    const priceId = STRIPE_BOOST_PRICES[normalizedPlan];
     
-    if (!priceConfig) {
-      throw new Error(`No boost pricing found for plan: ${plan}`);
-    }
-
-    const priceId = priceConfig[billingPeriod];
     if (!priceId) {
-      throw new Error(`No boost price found for ${plan} ${billingPeriod}`);
+      throw new Error(`No boost pricing found for plan: ${plan}`);
     }
 
     const creditsToAdd = BOOST_CREDITS[normalizedPlan] || BOOST_CREDITS[plan];
@@ -128,7 +107,7 @@ Deno.serve(async (req) => {
     }
 
     logger.info('Creating boost checkout session', { 
-      metadata: { plan: normalizedPlan, billingPeriod, credits: creditsToAdd, priceId } 
+      metadata: { plan: normalizedPlan, credits: creditsToAdd, priceId } 
     });
 
     // Parse request body for optional settings
@@ -167,7 +146,6 @@ Deno.serve(async (req) => {
         boost_type: normalizedPlan,
         credits_to_add: creditsToAdd.toString(),
         plan: normalizedPlan,
-        billing_period: billingPeriod,
       },
     });
 
@@ -181,7 +159,7 @@ Deno.serve(async (req) => {
       action: 'boost.checkout.created',
       resource_type: 'payment',
       resource_id: session.id,
-      metadata: { plan: normalizedPlan, credits: creditsToAdd, billingPeriod },
+      metadata: { plan: normalizedPlan, credits: creditsToAdd },
     });
 
     return new Response(JSON.stringify({ 

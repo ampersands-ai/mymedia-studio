@@ -43,10 +43,13 @@ export const ComparisonTable = () => {
         <div className="border-t-4 border-black dark:border-white pt-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xl font-black text-neutral-900 dark:text-neutral-100">Starting at:</span>
-            <span className="text-3xl font-black text-secondary-600 dark:text-secondary-400">$7.99/month</span>
+            <span className="text-3xl font-black text-secondary-600 dark:text-secondary-400">$7.99/mo</span>
           </div>
           <div className="text-center py-3 bg-primary-500 dark:bg-primary-600 border-4 border-black dark:border-primary-400">
             <span className="text-xl font-black text-neutral-900 dark:text-neutral-100">💰 Save $127/mo</span>
+          </div>
+          <div className="text-center text-sm font-bold text-primary-600 dark:text-primary-400 pt-2">
+            🔥 Limited Time: 20% OFF
           </div>
         </div>
       </div>

@@ -15,12 +15,11 @@ import { logger } from "@/lib/logger";
 const plans = [
   {
     name: "Studio",
-    monthlyPrice: "$94.99",
-    annualPrice: "$74.99",
+    originalPrice: "$94.99",
+    price: "$74.99",
     period: "/mo",
     credits: "5000",
-    monthlyPerCredit: "$0.019",
-    annualPerCredit: "$0.015",
+    perCredit: "$0.015",
     features: [
       "No watermark",
       "Commercial license",
@@ -36,12 +35,11 @@ const plans = [
   },
   {
     name: "Ultimate",
-    monthlyPrice: "$49.99",
-    annualPrice: "$39.99",
+    originalPrice: "$55.99",
+    price: "$44.99",
     period: "/mo",
     credits: "2500",
-    monthlyPerCredit: "$0.020",
-    annualPerCredit: "$0.016",
+    perCredit: "$0.018",
     features: [
       "No watermark",
       "Commercial license",
@@ -50,18 +48,17 @@ const plans = [
     popular: false,
     badge: undefined,
     color: "bg-neon-red",
-    description: "Enterprise power at freelancer prices. 2500 credits for just $39.99/mo—competitors charge $99+ for less.",
+    description: "Enterprise power at freelancer prices. 2500 credits for just $44.99/mo—competitors charge $99+ for less.",
     savings: "Save $60-85/mo vs competitors",
     concurrentGenerations: 5,
   },
   {
     name: "Professional",
-    monthlyPrice: "$24.99",
-    annualPrice: "$19.99",
+    originalPrice: "$24.99",
+    price: "$19.99",
     period: "/mo",
     credits: "1000",
-    monthlyPerCredit: "$0.025",
-    annualPerCredit: "$0.020",
+    perCredit: "$0.020",
     features: [
       "No watermark",
       "Unlimited image & text gens",
@@ -76,12 +73,11 @@ const plans = [
   },
   {
     name: "Explorer",
-    monthlyPrice: "$9.99",
-    annualPrice: "$7.99",
+    originalPrice: "$9.99",
+    price: "$7.99",
     period: "/mo",
     credits: "375",
-    monthlyPerCredit: "$0.027",
-    annualPerCredit: "$0.021",
+    perCredit: "$0.021",
     features: [
       "No watermark",
       "Global availability",
@@ -97,11 +93,9 @@ const plans = [
   {
     name: "Freemium",
     price: "FREE",
-    monthlyPrice: "FREE",
-    annualPrice: "FREE",
+    originalPrice: undefined,
     credits: "5",
-    monthlyPerCredit: "Free",
-    annualPerCredit: "Free",
+    perCredit: "Free",
     features: [
       "Watermark on videos",
       "Limited access",
@@ -116,7 +110,6 @@ const plans = [
 const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isAnnual, setIsAnnual] = useState(true);
   const [isCreatingPayment, setIsCreatingPayment] = useState<string | null>(null);
 
   const handleSubscribe = async (planName: string) => {
@@ -133,7 +126,7 @@ const Pricing = () => {
     // Track upgrade click
     trackEvent('upgrade_clicked', {
       plan_name: planName,
-      billing_period: isAnnual ? 'annual' : 'monthly',
+      billing_period: 'monthly',
     });
 
     setIsCreatingPayment(planName);
@@ -143,7 +136,7 @@ const Pricing = () => {
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           plan: planName,
-          isAnnual,
+          isAnnual: false,
           appOrigin: window.location.origin,
         },
       });
@@ -153,7 +146,6 @@ const Pricing = () => {
           component: 'Pricing',
           operation: 'handlePayment',
           planName,
-          isAnnual
         });
         
         // Check for duplicate subscription error
@@ -185,7 +177,7 @@ const Pricing = () => {
         // Track payment initiation
         trackEvent('payment_initiated', {
           plan_name: planName,
-          billing_period: isAnnual ? 'annual' : 'monthly',
+          billing_period: 'monthly',
           provider: data.provider || 'dodo',
         });
         window.location.href = data.checkout_url;
@@ -197,7 +189,6 @@ const Pricing = () => {
         component: 'Pricing',
         operation: 'handlePayment',
         planName,
-        isAnnual
       });
       toast.error('Failed to create payment session. Please try again.');
       setIsCreatingPayment(null);
@@ -219,7 +210,7 @@ const Pricing = () => {
       "offers": plans.map(plan => ({
         "@type": "Offer",
         "name": plan.name,
-        "price": plan.annualPrice === "FREE" ? "0" : plan.annualPrice.replace('$', ''),
+        "price": plan.price === "FREE" ? "0" : plan.price.replace('$', ''),
         "priceCurrency": "USD",
         "description": plan.description,
         "priceValidUntil": "2025-12-31",
@@ -251,7 +242,7 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo (annual billing) with 375 credits, perfect for APAC and LATAM creators."
+            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo with 375 credits, perfect for APAC and LATAM creators."
           }
         },
         {
@@ -300,7 +291,7 @@ const Pricing = () => {
     document.title = "Pricing - Artifio.ai | AI Content Creation from $7.99/mo";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 5 credits. Compare and save today.');
+      metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 5 credits. Limited time 20% off all plans.');
     }
 
     return () => {
@@ -370,32 +361,14 @@ const Pricing = () => {
             </p>
           </div>
 
-          {/* Billing Toggle */}
+          {/* Limited Time Offer Banner */}
           <div className="flex justify-center mb-12">
-            <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-card border-3 border-black brutal-shadow">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
-                  !isAnnual
-                    ? "bg-primary text-black"
-                    : "text-foreground/60 hover:text-foreground"
-                }`}
-              >
-                MONTHLY
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`inline-flex items-center px-4 py-2 rounded-full font-black transition-all ${
-                  isAnnual
-                    ? "bg-primary text-black"
-                    : "text-foreground/60 hover:text-foreground"
-                }`}
-              >
-                ANNUAL
-                <span className="ml-2 inline-flex items-center leading-none h-6 text-xs px-2 py-0.5 bg-secondary text-white rounded-full">
-                  SAVE 20%
-                </span>
-              </button>
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-primary/10 border-3 border-primary brutal-shadow">
+              <span className="text-2xl">🔥</span>
+              <span className="font-black text-lg text-primary">LIMITED TIME OFFER</span>
+              <span className="inline-flex items-center text-sm px-3 py-1 bg-primary text-black rounded-full font-bold">
+                20% OFF ALL PLANS
+              </span>
             </div>
           </div>
 
@@ -414,22 +387,22 @@ const Pricing = () => {
               <CardHeader>
                 <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
                   <div className="pt-3">
-                    {isAnnual && plan.monthlyPrice !== "FREE" ? (
+                    {plan.originalPrice && plan.price !== "FREE" ? (
                       <div className="space-y-1">
                         <div className="text-xl font-bold line-through text-muted-foreground">
-                          {plan.monthlyPrice}
+                          {plan.originalPrice}
                         </div>
                         <div>
-                          <span className="text-4xl font-black">{plan.annualPrice}</span>
+                          <span className="text-4xl font-black">{plan.price}</span>
                           <span className="text-muted-foreground font-bold">/mo</span>
                         </div>
                       </div>
                     ) : (
                       <div>
                         <span className="text-4xl font-black">
-                          {plan.monthlyPrice === "FREE" ? "FREE" : isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                          {plan.price}
                         </span>
-                        {plan.monthlyPrice !== "FREE" && (
+                        {plan.price !== "FREE" && (
                           <span className="text-muted-foreground font-bold">/mo</span>
                         )}
                       </div>
@@ -440,7 +413,7 @@ const Pricing = () => {
                       {plan.credits} credits
                     </div>
                     <div className="text-sm font-bold text-primary">
-                      {isAnnual ? plan.annualPerCredit : plan.monthlyPerCredit} per credit
+                      {plan.perCredit} per credit
                     </div>
                     {plan.concurrentGenerations && (
                       <div className="text-xs text-muted-foreground">
@@ -466,7 +439,7 @@ const Pricing = () => {
                   >
                     {isCreatingPayment === plan.name
                       ? "Loading..."
-                      : plan.monthlyPrice === "FREE"
+                      : plan.price === "FREE"
                       ? "START FREE"
                       : "GET STARTED"}
                   </Button>
@@ -496,7 +469,7 @@ const Pricing = () => {
                               )}
                               <div className="font-black text-lg">{plan.name}</div>
                               <div className="text-2xl font-black text-primary">
-                                {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                                {plan.price}
                                 <span className="text-sm text-muted-foreground font-normal">/mo</span>
                               </div>
                             </div>
@@ -520,7 +493,7 @@ const Pricing = () => {
                         <td className="py-4 px-6 font-semibold">Price per credit</td>
                         {plans.filter(p => p.name !== "Freemium").map((plan) => (
                           <td key={plan.name} className="py-4 px-4 text-center text-sm text-muted-foreground">
-                            {isAnnual ? plan.annualPerCredit : plan.monthlyPerCredit}
+                            {plan.perCredit}
                           </td>
                         ))}
                       </tr>
@@ -550,7 +523,7 @@ const Pricing = () => {
                         <td className="py-4 px-6 font-semibold">Commercial license</td>
                         {plans.filter(p => p.name !== "Freemium").map((plan) => (
                           <td key={plan.name} className="py-4 px-4 text-center">
-                            {plan.name === "Veo Connoisseur" || plan.name === "Ultimate" ? (
+                            {plan.name === "Studio" || plan.name === "Ultimate" ? (
                               <Check className="h-5 w-5 text-primary mx-auto" />
                             ) : (
                               <span className="text-muted-foreground">—</span>
@@ -564,7 +537,7 @@ const Pricing = () => {
                         <td className="py-4 px-6 font-semibold">Support level</td>
                         {plans.filter(p => p.name !== "Freemium").map((plan) => (
                           <td key={plan.name} className="py-4 px-4 text-center text-sm">
-                            {plan.name === "Veo Connoisseur" || plan.name === "Ultimate" ? (
+                            {plan.name === "Studio" || plan.name === "Ultimate" ? (
                               <span className="font-bold text-primary">24/7 Premium</span>
                             ) : plan.name === "Professional" ? (
                               <span>Dedicated</span>
@@ -580,7 +553,7 @@ const Pricing = () => {
                         <td className="py-4 px-6 font-semibold">Early access to features</td>
                         {plans.filter(p => p.name !== "Freemium").map((plan) => (
                           <td key={plan.name} className="py-4 px-4 text-center">
-                            {plan.name === "Veo Connoisseur" ? (
+                            {plan.name === "Studio" ? (
                               <Check className="h-5 w-5 text-primary mx-auto" />
                             ) : (
                               <span className="text-muted-foreground">—</span>

@@ -10,15 +10,13 @@ import {
   normalizePlanName, 
   getPlanDisplayName,
   getPerCreditCost,
-  type BillingPeriod 
 } from "@/lib/config/payment-providers";
 
 interface CreditBoostSectionProps {
   plan: string;
-  billingPeriod: BillingPeriod;
 }
 
-export function CreditBoostSection({ plan, billingPeriod }: CreditBoostSectionProps) {
+export function CreditBoostSection({ plan }: CreditBoostSectionProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const normalizedPlan = normalizePlanName(plan);
@@ -35,8 +33,8 @@ export function CreditBoostSection({ plan, billingPeriod }: CreditBoostSectionPr
     return null;
   }
 
-  const price = billingPeriod === 'annual' ? pricing.annual : pricing.monthly;
-  const perCreditCost = getPerCreditCost(normalizedPlan, billingPeriod);
+  const price = pricing.monthly;
+  const perCreditCost = getPerCreditCost(normalizedPlan);
   const displayName = getPlanDisplayName(normalizedPlan);
 
   const handlePurchaseBoost = async () => {
@@ -87,7 +85,7 @@ export function CreditBoostSection({ plan, billingPeriod }: CreditBoostSectionPr
               <span className="font-bold">{credits.toLocaleString()} Credits</span>
             </div>
             <div className="text-xs text-muted-foreground">
-              {displayName} {billingPeriod === 'annual' ? 'Annual' : 'Monthly'} Rate
+              {displayName} Rate
             </div>
             <div className="text-xs text-primary font-medium">
               {perCreditCost} per credit

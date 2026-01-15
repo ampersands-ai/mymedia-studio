@@ -144,7 +144,6 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
         {isPaidPlan && subscription && (
           <CreditBoostSection 
             plan={normalizePlanName(subscription.plan)} 
-            billingPeriod={subscription.billing_period || 'monthly'} 
           />
         )}
 

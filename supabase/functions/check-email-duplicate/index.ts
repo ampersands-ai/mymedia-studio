@@ -14,8 +14,7 @@ interface CheckEmailRequest {
 
 /**
  * Check if an email address (or its Gmail canonical form) already exists
- * This prevents users from creating duplicate accounts using Gmail's dot-ignoring feature
- * e.g., john.doe@gmail.com and johndoe@gmail.com are the same mailbox
+ * Uses indexed queries on profiles table for O(1) performance
  */
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -42,19 +41,24 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const isGmail = normalizedEmail.endsWith('@gmail.com') || normalizedEmail.endsWith('@googlemail.com');
     const canonical = canonicalEmail || normalizeGmailDots(normalizedEmail);
 
-    console.log("[check-email-duplicate] Checking email:", {
-      inputEmail: normalizedEmail,
-      canonicalForm: canonical,
-      isGmail: normalizedEmail.endsWith('@gmail.com') || normalizedEmail.endsWith('@googlemail.com')
+    console.log("[check-email-duplicate] Checking:", { 
+      normalizedEmail, 
+      isGmail,
+      canonical: isGmail ? canonical : 'N/A'
     });
 
-    // Get all users and check for duplicates
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (userError) {
-      console.error("[check-email-duplicate] User lookup error:", userError);
+    // Efficient indexed query on profiles table for exact email match
+    const { data: exactMatch, error: exactError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email')
+      .eq('email', normalizedEmail)
+      .limit(1);
+
+    if (exactError) {
+      console.error("[check-email-duplicate] Exact match query error:", exactError);
       // Return false on error to not block signup
       return new Response(
         JSON.stringify({ isDuplicate: false, reason: "lookup_error" }),
@@ -62,69 +66,55 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("[check-email-duplicate] Total users in system:", userData.users.length);
+    if (exactMatch && exactMatch.length > 0) {
+      console.log("[check-email-duplicate] Found EXACT match in profiles");
+      return new Response(
+        JSON.stringify({ isDuplicate: true, matchType: "exact" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Check if any existing user matches either:
-    // 1. Exact email match
-    // 2. Canonical email match (for Gmail accounts)
-    let isDuplicate = false;
-    let matchType = "";
-    let matchedEmail = "";
-    
-    for (const u of userData.users) {
-      if (!u.email) continue;
-      const existingEmail = u.email.toLowerCase();
-      const existingCanonical = normalizeGmailDots(existingEmail);
-      
-      // Exact match
-      if (existingEmail === normalizedEmail) {
-        isDuplicate = true;
-        matchType = "exact";
-        matchedEmail = existingEmail;
-        console.log("[check-email-duplicate] Found EXACT match:", existingEmail);
-        break;
+    // For Gmail addresses, check canonical form (without dots)
+    // This prevents users from creating duplicate accounts using Gmail's dot-ignoring feature
+    if (isGmail) {
+      // Query only Gmail users from profiles for canonical comparison
+      const { data: gmailProfiles, error: gmailError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email')
+        .or('email.ilike.%@gmail.com,email.ilike.%@googlemail.com');
+
+      if (gmailError) {
+        console.error("[check-email-duplicate] Gmail query error:", gmailError);
+        // Return false on error to not block signup
+        return new Response(
+          JSON.stringify({ isDuplicate: false, reason: "gmail_lookup_error" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-      
-      // Canonical match (Gmail dot trick)
-      if (existingCanonical === canonical) {
-        isDuplicate = true;
-        matchType = "canonical_gmail";
-        matchedEmail = existingEmail;
-        console.log("[check-email-duplicate] Found CANONICAL match:", {
-          existingEmail,
-          existingCanonical,
-          inputCanonical: canonical
-        });
-        break;
-      }
-      
-      // Also check stored canonical_email in user metadata
-      const storedCanonical = u.user_metadata?.canonical_email;
-      if (storedCanonical && storedCanonical === canonical) {
-        isDuplicate = true;
-        matchType = "metadata_canonical";
-        matchedEmail = existingEmail;
-        console.log("[check-email-duplicate] Found METADATA CANONICAL match:", {
-          existingEmail,
-          storedCanonical,
-          inputCanonical: canonical
-        });
-        break;
+
+      if (gmailProfiles) {
+        for (const profile of gmailProfiles) {
+          if (!profile.email) continue;
+          const existingCanonical = normalizeGmailDots(profile.email.toLowerCase());
+          
+          if (existingCanonical === canonical) {
+            console.log("[check-email-duplicate] Found CANONICAL Gmail match:", {
+              existingEmail: profile.email,
+              existingCanonical,
+              inputCanonical: canonical
+            });
+            return new Response(
+              JSON.stringify({ isDuplicate: true, matchType: "canonical_gmail" }),
+              { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
       }
     }
 
-    console.log("[check-email-duplicate] Result:", {
-      inputEmail: normalizedEmail,
-      isDuplicate,
-      matchedEmail: matchedEmail || "none",
-      matchType: matchType || "none"
-    });
-
+    console.log("[check-email-duplicate] No duplicate found for:", normalizedEmail);
     return new Response(
-      JSON.stringify({ 
-        isDuplicate,
-        ...(isDuplicate ? { matchType } : {})
-      }),
+      JSON.stringify({ isDuplicate: false }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

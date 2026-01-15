@@ -168,7 +168,7 @@ const IndexV2 = () => {
                 description="No per-minute charges. No surprise bills. Just tokens you can use anytime."
                 benefits={[
                   "Know exactly what you're spending",
-                  "Unused tokens roll over",
+                  "Credits never expire while subscribed",
                   "Top up anytime you need",
                 ]}
                 ctaText="See Pricing →"

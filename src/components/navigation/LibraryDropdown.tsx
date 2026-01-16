@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { History, ChevronDown, MessageSquare, LayoutTemplate, CreditCard, Cpu } from "lucide-react";
+import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -87,19 +87,6 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
             </div>
           </Link>
         )}
-        <Link
-          to="/pricing"
-          onClick={() => setOpenDropdown(null)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
-        >
-          <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-            <CreditCard className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-bold text-foreground">Pricing</p>
-            <p className="text-sm text-muted-foreground">Plans & credits</p>
-          </div>
-        </Link>
         <Link
           to="/models"
           onClick={() => setOpenDropdown(null)}

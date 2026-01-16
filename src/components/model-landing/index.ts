@@ -11,6 +11,7 @@ export { ModelComparisonBanner } from "./ModelComparisonBanner";
 export { ModelRelatedModels } from "./ModelRelatedModels";
 export { ModelFAQ } from "./ModelFAQ";
 export { ModelBottomCTA } from "./ModelBottomCTA";
+export { ModelContentTypeGroups } from "./ModelContentTypeGroups";
 
 // Model Directory Components
 export { ModelDirectoryHero } from "./ModelDirectoryHero";

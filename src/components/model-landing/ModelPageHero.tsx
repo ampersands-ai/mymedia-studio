@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Zap } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
+import { getDisplayProvider } from "@/lib/utils/provider-display";
 
 interface ModelPageHeroProps {
   modelPage: ModelPage;
@@ -40,7 +41,7 @@ export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
                 {getCategoryIcon(modelPage.category)} {modelPage.category.charAt(0).toUpperCase() + modelPage.category.slice(1)}
               </Badge>
               <Badge variant="outline" className="text-sm">
-                by {modelPage.provider}
+                by {getDisplayProvider(modelPage.provider)}
               </Badge>
               {modelPage.is_featured && (
                 <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">

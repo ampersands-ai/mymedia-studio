@@ -77,6 +77,12 @@ interface SubscriptionEmailPayload {
   previous_plan?: string;
   tokens_added?: number;
   grace_period_end?: string;
+  // Payment receipt fields
+  amount_paid?: number;
+  currency?: string;
+  invoice_id?: string;
+  next_billing_date?: string;
+  payment_method_last4?: string;
 }
 
 async function sendSubscriptionEmail(
@@ -102,6 +108,20 @@ async function sendSubscriptionEmail(
   }
   
   logger.info('Subscription email sent', { metadata: { event_type: payload.event_type, plan: payload.plan_name } });
+}
+
+// Helper to get last 4 digits of payment method
+async function getPaymentMethodLast4(stripe: Stripe, customerId: string): Promise<string | undefined> {
+  try {
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+      limit: 1,
+    });
+    return paymentMethods.data[0]?.card?.last4;
+  } catch {
+    return undefined;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -324,7 +344,15 @@ async function handleCheckoutCompleted(
     .eq('id', userId)
     .maybeSingle();
 
-  // Send appropriate email
+  // Get payment method last 4 for receipt
+  const paymentMethodLast4 = await getPaymentMethodLast4(stripe, session.customer as string);
+  
+  // Calculate next billing date
+  const nextBillingDate = subscription.current_period_end 
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : undefined;
+
+  // Send appropriate email with receipt info
   if (profile?.email) {
     try {
       if (restoredCredits > 0) {
@@ -335,15 +363,25 @@ async function handleCheckoutCompleted(
           event_type: 'resubscribed',
           plan_name: planKey,
           tokens_added: restoredCredits,
+          amount_paid: session.amount_total || undefined,
+          currency: session.currency?.toUpperCase() || 'USD',
+          invoice_id: session.invoice as string || session.id,
+          next_billing_date: nextBillingDate,
+          payment_method_last4: paymentMethodLast4,
         }, logger);
       } else {
-        // New subscription email
+        // New subscription email with receipt
         await sendSubscriptionEmail(supabase, {
           user_id: userId,
           email: profile.email,
           event_type: 'activated',
           plan_name: planKey,
           tokens_added: tokens,
+          amount_paid: session.amount_total || undefined,
+          currency: session.currency?.toUpperCase() || 'USD',
+          invoice_id: session.invoice as string || session.id,
+          next_billing_date: nextBillingDate,
+          payment_method_last4: paymentMethodLast4,
         }, logger);
       }
     } catch (emailError) {
@@ -500,12 +538,26 @@ async function handleInvoicePaymentSucceeded(
       })
       .eq('user_id', subscription.user_id);
 
-    // Get user email and send renewal notification
+    // Get user email and send renewal notification with receipt
     const { data: profile } = await supabase
       .from('profiles')
       .select('email')
       .eq('id', subscription.user_id)
       .maybeSingle();
+
+    // Calculate next billing date from invoice
+    const invoiceLines = invoice.lines?.data || [];
+    const subscriptionPeriodEnd = invoiceLines[0]?.period?.end;
+    const nextBillingDate = subscriptionPeriodEnd 
+      ? new Date(subscriptionPeriodEnd * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Get payment method last 4 if available
+    let paymentMethodLast4: string | undefined;
+    if (invoice.charge && typeof invoice.charge === 'object') {
+      const charge = invoice.charge as Stripe.Charge;
+      paymentMethodLast4 = charge.payment_method_details?.card?.last4;
+    }
 
     if (profile?.email) {
       try {
@@ -515,6 +567,11 @@ async function handleInvoicePaymentSucceeded(
           event_type: 'renewed',
           plan_name: normalizedPlan,
           tokens_added: tokens,
+          amount_paid: invoice.amount_paid,
+          currency: invoice.currency?.toUpperCase() || 'USD',
+          invoice_id: invoice.id,
+          next_billing_date: nextBillingDate,
+          payment_method_last4: paymentMethodLast4,
         }, logger);
       } catch (emailError) {
         logger.warn('Failed to send renewal email', { metadata: { errorMessage: (emailError as Error).message } });

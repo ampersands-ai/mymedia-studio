@@ -368,6 +368,9 @@ async function handlePaymentSucceeded(
     newTokensTotal = (currentSub?.tokens_total || 0) + tokens;
   }
 
+  // Calculate next billing date
+  const nextBillingDate = data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
   // Update subscription with added tokens, clear grace period
   const { error } = await supabase
     .from('user_subscriptions')
@@ -379,7 +382,7 @@ async function handlePaymentSucceeded(
       dodo_subscription_id: data.subscription_id,
       dodo_customer_id: data.customer_id,
       current_period_start: data.current_period_start || new Date().toISOString(),
-      current_period_end: data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      current_period_end: nextBillingDate,
       // Clear grace period fields
       grace_period_end: null,
       frozen_credits: null,
@@ -391,6 +394,48 @@ async function handlePaymentSucceeded(
   if (error) {
     logger.error('Error updating subscription', error as Error);
     throw error;
+  }
+
+  // Get user email for notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  // Send appropriate email with receipt info
+  if (profile?.email) {
+    try {
+      if (restoredCredits > 0) {
+        // Resubscription email
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'resubscribed',
+          plan_name: planKey,
+          tokens_added: restoredCredits,
+          amount_paid: data.amount,
+          currency: data.currency?.toUpperCase() || 'USD',
+          invoice_id: data.payment_id,
+          next_billing_date: nextBillingDate,
+        }, logger);
+      } else {
+        // New subscription email with receipt
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'activated',
+          plan_name: planKey,
+          tokens_added: tokens,
+          amount_paid: data.amount,
+          currency: data.currency?.toUpperCase() || 'USD',
+          invoice_id: data.payment_id,
+          next_billing_date: nextBillingDate,
+        }, logger);
+      }
+    } catch (emailError) {
+      logger.warn('Failed to send subscription email', { metadata: { errorMessage: (emailError as Error).message } });
+    }
   }
 
   if (restoredCredits > 0) {
@@ -503,6 +548,42 @@ async function handleSubscriptionExpired(
     .eq('user_id', userId);
 }
 
+// Helper to send subscription emails
+async function sendSubscriptionEmail(
+  supabase: SupabaseClient,
+  payload: {
+    user_id: string;
+    email: string;
+    event_type: string;
+    plan_name: string;
+    tokens_added?: number;
+    amount_paid?: number;
+    currency?: string;
+    invoice_id?: string;
+    next_billing_date?: string;
+  },
+  logger: EdgeLogger
+): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-subscription-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseServiceKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Email send failed: ${errorText}`);
+  }
+  
+  logger.info('Subscription email sent', { metadata: { event_type: payload.event_type, plan: payload.plan_name } });
+}
+
 async function handleSubscriptionRenewed(
   supabase: SupabaseClient, 
   data: WebhookEventData, 
@@ -527,6 +608,9 @@ async function handleSubscriptionRenewed(
     throw new Error('Subscription not found');
   }
 
+  // Calculate next billing date
+  const nextBillingDate = data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
   // Add new tokens
   await supabase
     .from('user_subscriptions')
@@ -534,9 +618,35 @@ async function handleSubscriptionRenewed(
       tokens_remaining: currentSub.tokens_remaining + tokens,
       tokens_total: (currentSub.tokens_total || 0) + tokens,
       status: 'active',
-      current_period_end: data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      current_period_end: nextBillingDate,
     })
     .eq('user_id', userId);
+
+  // Get user email for notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  // Send renewal email with receipt
+  if (profile?.email && userId) {
+    try {
+      await sendSubscriptionEmail(supabase, {
+        user_id: userId,
+        email: profile.email,
+        event_type: 'renewed',
+        plan_name: planKey,
+        tokens_added: tokens,
+        amount_paid: data.amount,
+        currency: data.currency?.toUpperCase() || 'USD',
+        invoice_id: data.payment_id,
+        next_billing_date: nextBillingDate,
+      }, logger);
+    } catch (emailError) {
+      logger.warn('Failed to send renewal email', { metadata: { errorMessage: (emailError as Error).message } });
+    }
+  }
 }
 
 /**

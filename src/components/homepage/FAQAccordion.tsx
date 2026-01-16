@@ -57,6 +57,34 @@ Rule of thumb:
     question: "Can I use this for my agency/team?",
     answer: "Yes! Team plans coming soon (5 users, shared credits). For now, you can create separate accounts or contact us for custom enterprise pricing.",
   },
+  {
+    question: "What are the rate limits and API restrictions?",
+    answer: `We apply fair-use limits to ensure quality service for everyone. Here's how it works:
+
+**Generation Limits:**
+• AI Generation: 50 requests/minute (2-min block if exceeded)
+• Payments: 30 requests/minute (5-min block)
+• Authentication: 10 requests/minute (15-min block)
+• Standard API: 200 requests/minute (1-min block)
+
+**Concurrent Generations by Plan:**
+• Free: 2 simultaneous generations
+• Explorer: 3 simultaneous generations
+• Professional: 5 simultaneous generations
+• Ultimate: 8 simultaneous generations
+• Studio: 10 simultaneous generations
+
+**Free Tier Limits:**
+• 10 generations per day
+• 5-second max video duration
+• 1024px max image resolution
+
+**Global Protection:**
+All endpoints are protected by Cloudflare at 10 requests/10 seconds per IP address.
+
+**When You Hit a Limit:**
+You'll see a countdown timer showing when you can retry. Limits reset automatically—just wait and try again. Higher plans get higher limits and priority processing.`,
+  },
 ];
 
 export const FAQAccordion = () => {

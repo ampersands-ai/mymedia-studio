@@ -1886,9 +1886,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           display_order: number | null
+          display_provider: string | null
           faqs: Json | null
           hero_image_url: string | null
           hero_video_url: string | null
+          hidden_content_types: string[] | null
           highlights: Json | null
           id: string
           is_featured: boolean | null
@@ -1915,9 +1917,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          display_provider?: string | null
           faqs?: Json | null
           hero_image_url?: string | null
           hero_video_url?: string | null
+          hidden_content_types?: string[] | null
           highlights?: Json | null
           id?: string
           is_featured?: boolean | null
@@ -1944,9 +1948,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          display_provider?: string | null
           faqs?: Json | null
           hero_image_url?: string | null
           hero_video_url?: string | null
+          hidden_content_types?: string[] | null
           highlights?: Json | null
           id?: string
           is_featured?: boolean | null

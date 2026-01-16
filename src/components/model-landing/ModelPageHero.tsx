@@ -41,7 +41,7 @@ export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
                 {getCategoryIcon(modelPage.category)} {modelPage.category.charAt(0).toUpperCase() + modelPage.category.slice(1)}
               </Badge>
               <Badge variant="outline" className="text-sm">
-                by {getDisplayProvider(modelPage.provider)}
+                by {modelPage.display_provider || getDisplayProvider(modelPage.provider)}
               </Badge>
               {modelPage.is_featured && (
                 <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">

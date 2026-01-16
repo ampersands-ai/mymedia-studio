@@ -3,12 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePostHog } from "./usePostHog";
 
 // Types
+export interface ContentTypeGroup {
+  content_type: string;
+  record_id: string;
+  model_name?: string;
+}
+
 export interface ModelPage {
   id: string;
   slug: string;
   model_record_id: string;
+  model_record_ids: string[] | null;
   model_name: string;
   provider: string;
+  display_provider: string | null;
   category: string;
   tagline: string | null;
   description: string | null;
@@ -27,6 +35,8 @@ export interface ModelPage {
   is_published: boolean;
   display_order: number;
   view_count: number;
+  content_type_groups: ContentTypeGroup[] | null;
+  hidden_content_types: string[] | null;
   created_at: string;
   updated_at: string;
 }

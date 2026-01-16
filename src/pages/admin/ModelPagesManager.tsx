@@ -67,7 +67,8 @@ const categories = [
   { value: "lip-sync", label: "Lip Sync" },
 ];
 
-const providerOptions = [
+// Base provider options - will be merged with dynamic ones from database
+const baseProviderOptions = [
   { value: "__auto__", label: "Auto (from provider)" },
   { value: "ARTIFIO", label: "ARTIFIO" },
   { value: "OpenAI", label: "OpenAI" },
@@ -75,7 +76,6 @@ const providerOptions = [
   { value: "Stability AI", label: "Stability AI" },
   { value: "Black Forest Labs", label: "Black Forest Labs" },
   { value: "Runway", label: "Runway" },
-  { value: "__custom__", label: "Custom..." },
 ];
 
 export default function ModelPagesManager() {
@@ -117,6 +117,37 @@ export default function ModelPagesManager() {
       m.contentType.toLowerCase().includes(query)
     ).slice(0, 30);
   };
+
+  // Build dynamic provider options from existing model pages + base options
+  const providerOptions = useMemo(() => {
+    const baseValues = new Set(baseProviderOptions.map(o => o.value));
+    const dynamicProviders: { value: string; label: string }[] = [];
+    
+    if (modelPages) {
+      // Get unique display_provider and provider values from existing pages
+      const existingProviders = new Set<string>();
+      modelPages.forEach(page => {
+        if (page.display_provider && !baseValues.has(page.display_provider)) {
+          existingProviders.add(page.display_provider);
+        }
+        if (page.provider && !baseValues.has(page.provider)) {
+          existingProviders.add(page.provider);
+        }
+      });
+      
+      // Convert to options and sort
+      existingProviders.forEach(provider => {
+        dynamicProviders.push({ value: provider, label: provider });
+      });
+      dynamicProviders.sort((a, b) => a.label.localeCompare(b.label));
+    }
+    
+    return [
+      ...baseProviderOptions,
+      ...dynamicProviders,
+      { value: "__custom__", label: "Custom..." },
+    ];
+  }, [modelPages]);
 
   const filteredPages = useMemo(() => {
     if (!modelPages) return [];

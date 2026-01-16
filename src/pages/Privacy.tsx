@@ -58,9 +58,9 @@ const Privacy = () => {
                     <div>Required</div>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <div className="grid grid-cols-3 gap-4"><div>Email address</div><div>Account registration, verification, communications</div><div>Yes</div></div>
-                    <div className="grid grid-cols-3 gap-4"><div>Name</div><div>Account profile (if using Google OAuth)</div><div>Optional</div></div>
-                    <div className="grid grid-cols-3 gap-4"><div>Password</div><div>Account authentication (encrypted/hashed)</div><div>Yes (unless OAuth)</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Email address</div><div>Account registration, communications</div><div>Yes (from Google)</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Name</div><div>Account profile display</div><div>Yes (from Google)</div></div>
+                    <div className="grid grid-cols-3 gap-4"><div>Password</div><div>Not collected (Google OAuth only)</div><div>No</div></div>
                     <div className="grid grid-cols-3 gap-4"><div>Payment information</div><div>Subscription and purchase processing</div><div>For paid plans</div></div>
                   </div>
                 </div>

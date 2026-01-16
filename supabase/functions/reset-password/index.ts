@@ -12,6 +12,10 @@ interface ResetPasswordRequest {
   newPassword: string;
 }
 
+// Rate limiting constants
+const MAX_RESET_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,6 +30,86 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
+
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    const rateLimitKey = `password_reset:${clientIp}`;
+
+    // Check rate limit
+    const { data: rateLimit } = await supabaseAdmin
+      .from('rate_limits')
+      .select('*')
+      .eq('identifier', rateLimitKey)
+      .maybeSingle();
+
+    if (rateLimit) {
+      // Check if blocked
+      if (rateLimit.blocked_until && new Date(rateLimit.blocked_until) > new Date()) {
+        const retryAfter = Math.ceil((new Date(rateLimit.blocked_until).getTime() - Date.now()) / 1000);
+        console.log(`[reset-password] Rate limited IP: ${clientIp}`);
+        return new Response(
+          JSON.stringify({ error: "Too many reset attempts. Please try again later." }),
+          { 
+            status: 429, 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json",
+              "Retry-After": String(retryAfter)
+            } 
+          }
+        );
+      }
+
+      // Check if window expired
+      const windowStart = new Date(rateLimit.window_start);
+      const windowEnd = new Date(windowStart.getTime() + RATE_LIMIT_WINDOW_MINUTES * 60 * 1000);
+      
+      if (new Date() > windowEnd) {
+        // Reset window
+        await supabaseAdmin
+          .from('rate_limits')
+          .update({
+            attempts: 1,
+            window_start: new Date().toISOString(),
+            blocked_until: null
+          })
+          .eq('identifier', rateLimitKey);
+      } else if (rateLimit.attempts >= MAX_RESET_ATTEMPTS) {
+        // Block for the remainder of the window
+        const blockedUntil = windowEnd.toISOString();
+        await supabaseAdmin
+          .from('rate_limits')
+          .update({ blocked_until: blockedUntil })
+          .eq('identifier', rateLimitKey);
+        
+        console.log(`[reset-password] Blocking IP ${clientIp} until ${blockedUntil}`);
+        return new Response(
+          JSON.stringify({ error: "Too many reset attempts. Please try again later." }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      } else {
+        // Increment attempts
+        await supabaseAdmin
+          .from('rate_limits')
+          .update({ attempts: rateLimit.attempts + 1 })
+          .eq('identifier', rateLimitKey);
+      }
+    } else {
+      // Create new rate limit record
+      await supabaseAdmin
+        .from('rate_limits')
+        .insert({
+          identifier: rateLimitKey,
+          action: 'password_reset',
+          attempts: 1,
+          window_start: new Date().toISOString()
+        });
+    }
 
     const body: ResetPasswordRequest = await req.json();
     const { token, newPassword } = body;

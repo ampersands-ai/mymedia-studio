@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
+import { logger } from "@/lib/logger";
+
+const forgotPasswordLogger = logger.child({ component: 'ForgotPassword' });
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -54,7 +57,9 @@ const ForgotPassword = () => {
       setSent(true);
       toast.success("If an account exists with this email, we've sent reset instructions");
     } catch (error) {
-      console.error("Password reset error:", error);
+      forgotPasswordLogger.error("Password reset request failed", error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handleSubmit'
+      });
       toast.error("Failed to send reset email. Please try again.");
     } finally {
       setLoading(false);

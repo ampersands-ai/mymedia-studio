@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const dashboardLogger = logger.child({ component: 'DashboardLayout' });
 
 /**
  * DashboardLayout - Layout component for authenticated dashboard pages.
@@ -26,9 +29,16 @@ export const DashboardLayout = () => {
   const { data: tokenData } = useUserTokens();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-    navigate("/");
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/");
+    } catch (error) {
+      dashboardLogger.error('Sign out failed', error as Error, {
+        operation: 'handleLogout'
+      });
+      toast.error("Error signing out. Please try again.");
+    }
   };
 
 

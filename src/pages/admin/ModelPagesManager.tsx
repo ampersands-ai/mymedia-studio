@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users, FolderPlus } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users, FolderPlus, Ban, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +94,41 @@ export default function ModelPagesManager() {
   const updateDisplayProviderMutation = useUpdateDisplayProvider();
   const updateHiddenContentTypesMutation = useUpdateHiddenContentTypes();
   const updateModelRecordIdsMutation = useUpdateModelRecordIds();
+
+  // Model visibility settings from admin models dashboard
+  const [modelVisibilitySettings, setModelVisibilitySettings] = useState<{
+    visible: Record<string, boolean>;
+    deactivated: Record<string, boolean>;
+  }>({ visible: {}, deactivated: {} });
+
+  // Fetch model visibility settings from database
+  useEffect(() => {
+    const fetchVisibilitySettings = async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "model_visibility")
+        .single();
+
+      if (data?.setting_value && typeof data.setting_value === 'object') {
+        const val = data.setting_value as Record<string, unknown>;
+        setModelVisibilitySettings({
+          visible: (val.visible as Record<string, boolean>) || {},
+          deactivated: (val.deactivated as Record<string, boolean>) || {},
+        });
+      }
+    };
+    fetchVisibilitySettings();
+  }, []);
+
+  // Check if a model is active (visible to users)
+  const isModelActive = (recordId: string) => {
+    if (modelVisibilitySettings.deactivated[recordId]) return false;
+    if (recordId in modelVisibilitySettings.visible) return modelVisibilitySettings.visible[recordId];
+    // Check registry is_active status
+    const model = allRegistryModels.find(m => m.recordId === recordId);
+    return model ? true : true; // Default to active if in registry
+  };
 
   // Get all available models from registry for family selection
   const allRegistryModels = useMemo(() => {
@@ -324,6 +360,7 @@ export default function ModelPagesManager() {
               <TableHead className="min-w-[120px]">Family Models</TableHead>
               <TableHead className="min-w-[200px]">Content Types</TableHead>
               <TableHead>Creation Group</TableHead>
+              <TableHead>Model Active</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Views</TableHead>
               <TableHead className="w-12"></TableHead>
@@ -332,7 +369,7 @@ export default function ModelPagesManager() {
           <TableBody>
             {filteredPages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   <p className="text-muted-foreground">No model pages found</p>
                 </TableCell>
               </TableRow>
@@ -503,6 +540,19 @@ export default function ModelPagesManager() {
                       <Badge variant="outline" className="capitalize">
                         {page.category}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {isModelActive(page.model_record_id) ? (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">
+                          <Ban className="mr-1 h-3 w-3" />
+                          Deactivated
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {page.is_published ? (

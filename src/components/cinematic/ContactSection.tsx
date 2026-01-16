@@ -26,7 +26,7 @@ const footerLinks = {
   support: [
     { label: "FAQ", href: "/faq" },
     { label: "Community", href: "/community" },
-    { label: "Contact Us", href: "mailto:hello@artifio.ai" },
+    { label: "Contact Us", href: "mailto:support@artifio.ai" },
     { label: "Help Center", href: "/help" },
   ],
 };
@@ -100,7 +100,7 @@ export const ContactSection = () => {
                 Start Creating Free
               </Link>
               <a
-                href="mailto:hello@artifio.ai"
+                href="mailto:support@artifio.ai"
                 className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors rounded-2xl"
               >
                 <Mail className="w-5 h-5" />

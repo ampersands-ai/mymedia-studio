@@ -112,6 +112,10 @@ const handler = async (req: Request): Promise<Response> => {
                   <a href="https://artifio.ai" style="color: #667eea; text-decoration: none;">Visit Artifio</a> | 
                   <a href="https://artifio.ai/pricing" style="color: #667eea; text-decoration: none;">View Plans</a>
                 </p>
+                <p style="margin-top: 15px; font-size: 11px; color: #9ca3af;">
+                  This is an automated message. Please do not reply to this email.<br>
+                  For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+                </p>
               </div>
             </div>
           </body>

@@ -299,7 +299,10 @@ function getEmailContent(params: EmailContentParams) {
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Questions? Contact us at support@artifio.ai</p>
+                  <p style="margin: 0;">Questions? Contact us at <a href="mailto:support@artifio.ai" style="color: #f97316;">support@artifio.ai</a></p>
+                  <p style="margin: 10px 0 0 0; font-size: 11px; color: #9ca3af;">
+                    This is an automated message. Please do not reply to this email.
+                  </p>
                 </div>
                 ${unsubscribeFooter}
               </div>

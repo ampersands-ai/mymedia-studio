@@ -125,7 +125,7 @@ serve(async (req) => {
                 ]
               }
             ],
-            footer: 'If you have any questions, contact support@artifio.ai'
+            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
           });
 
           const { error: emailError } = await resend.emails.send({
@@ -244,7 +244,7 @@ serve(async (req) => {
                 ]
               }
             ],
-            footer: 'Questions? Contact support@artifio.ai'
+            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
           });
 
           const { error: emailError } = await resend.emails.send({
@@ -355,7 +355,7 @@ serve(async (req) => {
                 ]
               }
             ],
-            footer: 'This is an automated reminder. Contact support@artifio.ai for help.'
+            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
           });
 
           const { error: emailError } = await resend.emails.send({
@@ -468,9 +468,9 @@ serve(async (req) => {
                     { label: 'Upgrade Plan', url: 'https://artifio.ai/pricing' },
                     { label: 'View Usage', url: 'https://artifio.ai/dashboard/subscription' }
                   ]
-                }
-              ],
-              footer: 'Manage your notification preferences in Settings'
+              }
+            ],
+            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
             });
 
             const { error: emailError } = await resend.emails.send({

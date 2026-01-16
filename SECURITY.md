@@ -18,7 +18,7 @@ Please do **not** create a public GitHub issue for security vulnerabilities. Thi
 
 Send details of the vulnerability to our security team:
 
-- **Email**: security@artifio.ai
+- **Email**: support@artifio.ai (subject line: [SECURITY])
 - **Subject**: [SECURITY] Brief description of the issue
 
 ### 3. Include Details

@@ -37,7 +37,7 @@ serve(async (req: Request): Promise<Response> => {
                      'unknown';
     const rateLimitKey = `password_reset:${clientIp}`;
 
-    // Check rate limit
+    // Check rate limit using correct column names from rate_limits table
     const { data: rateLimit } = await supabaseAdmin
       .from('rate_limits')
       .select('*')
@@ -62,8 +62,8 @@ serve(async (req: Request): Promise<Response> => {
         );
       }
 
-      // Check if window expired
-      const windowStart = new Date(rateLimit.window_start);
+      // Check if window expired (using first_attempt_at as window start)
+      const windowStart = new Date(rateLimit.first_attempt_at);
       const windowEnd = new Date(windowStart.getTime() + RATE_LIMIT_WINDOW_MINUTES * 60 * 1000);
       
       if (new Date() > windowEnd) {
@@ -71,12 +71,13 @@ serve(async (req: Request): Promise<Response> => {
         await supabaseAdmin
           .from('rate_limits')
           .update({
-            attempts: 1,
-            window_start: new Date().toISOString(),
+            attempt_count: 1,
+            first_attempt_at: new Date().toISOString(),
+            last_attempt_at: new Date().toISOString(),
             blocked_until: null
           })
           .eq('identifier', rateLimitKey);
-      } else if (rateLimit.attempts >= MAX_RESET_ATTEMPTS) {
+      } else if (rateLimit.attempt_count >= MAX_RESET_ATTEMPTS) {
         // Block for the remainder of the window
         const blockedUntil = windowEnd.toISOString();
         await supabaseAdmin
@@ -96,18 +97,22 @@ serve(async (req: Request): Promise<Response> => {
         // Increment attempts
         await supabaseAdmin
           .from('rate_limits')
-          .update({ attempts: rateLimit.attempts + 1 })
+          .update({ 
+            attempt_count: rateLimit.attempt_count + 1,
+            last_attempt_at: new Date().toISOString()
+          })
           .eq('identifier', rateLimitKey);
       }
     } else {
-      // Create new rate limit record
+      // Create new rate limit record using correct column names
       await supabaseAdmin
         .from('rate_limits')
         .insert({
           identifier: rateLimitKey,
           action: 'password_reset',
-          attempts: 1,
-          window_start: new Date().toISOString()
+          attempt_count: 1,
+          first_attempt_at: new Date().toISOString(),
+          last_attempt_at: new Date().toISOString()
         });
     }
 

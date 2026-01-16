@@ -58,8 +58,8 @@ import { getAllModels } from "@/lib/models/registry";
 import { formatContentType } from "@/lib/utils/provider-display";
 import type { ContentTypeGroup } from "@/hooks/useModelPages";
 
-const categories = [
-  { value: "all", label: "All Categories" },
+const creationGroups = [
+  { value: "all", label: "All Groups" },
   { value: "image", label: "Image" },
   { value: "video", label: "Video" },
   { value: "audio", label: "Audio" },
@@ -276,10 +276,10 @@ export default function ModelPagesManager() {
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder="Creation Group" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((cat) => (
+            {creationGroups.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.label}
               </SelectItem>
@@ -323,7 +323,7 @@ export default function ModelPagesManager() {
               <TableHead className="min-w-[150px]">Display Provider</TableHead>
               <TableHead className="min-w-[120px]">Family Models</TableHead>
               <TableHead className="min-w-[200px]">Content Types</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>Creation Group</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Views</TableHead>
               <TableHead className="w-12"></TableHead>

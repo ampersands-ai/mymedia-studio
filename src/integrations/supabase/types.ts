@@ -3256,6 +3256,75 @@ export type Database = {
         }
         Relationships: []
       }
+      test_runs: {
+        Row: {
+          author: string | null
+          branch: string
+          commit_sha: string | null
+          coverage_branches: number | null
+          coverage_functions: number | null
+          coverage_lines: number | null
+          coverage_statements: number | null
+          created_at: string | null
+          duration_ms: number | null
+          failed: number
+          failed_tests: Json | null
+          id: string
+          logs_url: string | null
+          passed: number
+          run_id: string
+          run_type: string
+          skipped: number
+          status: string
+          total_tests: number
+          trigger: string
+        }
+        Insert: {
+          author?: string | null
+          branch: string
+          commit_sha?: string | null
+          coverage_branches?: number | null
+          coverage_functions?: number | null
+          coverage_lines?: number | null
+          coverage_statements?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          failed?: number
+          failed_tests?: Json | null
+          id?: string
+          logs_url?: string | null
+          passed?: number
+          run_id: string
+          run_type: string
+          skipped?: number
+          status: string
+          total_tests?: number
+          trigger: string
+        }
+        Update: {
+          author?: string | null
+          branch?: string
+          commit_sha?: string | null
+          coverage_branches?: number | null
+          coverage_functions?: number | null
+          coverage_lines?: number | null
+          coverage_statements?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          failed?: number
+          failed_tests?: Json | null
+          id?: string
+          logs_url?: string | null
+          passed?: number
+          run_id?: string
+          run_type?: string
+          skipped?: number
+          status?: string
+          total_tests?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
       token_dispute_history: {
         Row: {
           admin_notes: string | null

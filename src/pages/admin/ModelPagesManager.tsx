@@ -144,14 +144,32 @@ export default function ModelPagesManager() {
     }
   }, []);
 
-  // Filter models for family popover search
-  const getFilteredModelsForFamily = (pageId: string) => {
+  // Filter models for family popover search with selected models at top
+  const getFilteredModelsForFamily = (pageId: string, selectedRecordIds: string[]) => {
     const query = (familySearchQuery[pageId] || "").toLowerCase();
-    if (!query) return allRegistryModels.slice(0, 20); // Show first 20 by default
-    return allRegistryModels.filter(m => 
-      m.modelName.toLowerCase().includes(query) ||
-      m.contentType.toLowerCase().includes(query)
-    ).slice(0, 30);
+    
+    // Filter based on search query
+    let filtered = allRegistryModels;
+    if (query) {
+      filtered = allRegistryModels.filter(m => 
+        m.modelName.toLowerCase().includes(query) ||
+        m.contentType.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort: selected models first, then unselected
+    const sorted = [...filtered].sort((a, b) => {
+      const aSelected = selectedRecordIds.includes(a.recordId);
+      const bSelected = selectedRecordIds.includes(b.recordId);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+    
+    // Limit results but always show all selected + some unselected
+    const selectedCount = sorted.filter(m => selectedRecordIds.includes(m.recordId)).length;
+    const limit = Math.max(20, selectedCount + 10);
+    return sorted.slice(0, limit);
   };
 
   // Build dynamic provider options from existing model pages + base options
@@ -380,7 +398,7 @@ export default function ModelPagesManager() {
                 const modelRecordIds = (page as unknown as { model_record_ids?: string[] }).model_record_ids || [];
                 const displayProvider = (page as unknown as { display_provider?: string | null }).display_provider;
                 const isEditingCustomProvider = customProviderInputs.hasOwnProperty(page.id);
-                const filteredFamilyModels = getFilteredModelsForFamily(page.id);
+                const filteredFamilyModels = getFilteredModelsForFamily(page.id, modelRecordIds);
 
                 return (
                   <TableRow key={page.id}>

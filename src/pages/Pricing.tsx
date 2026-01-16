@@ -169,11 +169,6 @@ const Pricing = () => {
       }
 
       if (data.checkout_url) {
-        // Show info toast if using backup provider
-        if (data.provider === 'stripe') {
-          toast.info('Processing with backup payment provider');
-        }
-        
         // Track payment initiation
         trackEvent('payment_initiated', {
           plan_name: planName,

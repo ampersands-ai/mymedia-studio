@@ -8,20 +8,20 @@
 // Stripe price IDs for subscription plans (monthly only)
 export const STRIPE_PLAN_PRICES = {
   explorer: {
-    monthly: 'price_1SgW4XPoOsAS6r2g0o1PwDKO',
+    monthly: 'price_1Sq18tPoOsAS6r2gZh5IRI51',
   },
   professional: {
-    monthly: 'price_1SgW53PoOsAS6r2guIoU83bt',
+    monthly: 'price_1Sq19BPoOsAS6r2ghuY7S2RQ',
   },
   ultimate: {
-    monthly: 'price_1SgW5WPoOsAS6r2gcuNO6kuU',
+    monthly: 'price_1Sq19XPoOsAS6r2gNXVvXlY2',
   },
   studio: {
-    monthly: 'price_1SgW6HPoOsAS6r2gaW9gV4so',
+    monthly: 'price_1Sq19pPoOsAS6r2gFZCB2LPM',
   },
   // Keep veo_connoisseur as alias for backward compatibility
   veo_connoisseur: {
-    monthly: 'price_1SgW6HPoOsAS6r2gaW9gV4so',
+    monthly: 'price_1Sq19pPoOsAS6r2gFZCB2LPM',
   },
 } as const;
 

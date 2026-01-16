@@ -43,6 +43,11 @@ export default function ModelLanding() {
     }
   };
 
+  // Navigate to custom creation with specific variant record ID
+  const handleTryVariant = (recordId: string) => {
+    navigate(`/dashboard/custom-creation?model=${encodeURIComponent(recordId)}`);
+  };
+
   const handleTryPrompt = (prompt: string) => {
     if (modelPage?.slug) {
       const encodedPrompt = encodeURIComponent(prompt);
@@ -103,7 +108,8 @@ export default function ModelLanding() {
           {/* Hero Section */}
           <ModelPageHero 
             modelPage={modelPage} 
-            onTryModel={handleTryModel} 
+            onTryModel={handleTryModel}
+            onTryVariant={handleTryVariant}
           />
           
           {/* Sample Gallery */}

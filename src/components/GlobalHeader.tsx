@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Shield } from "lucide-react";
+import { Coins, Shield, Cpu } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserCredits } from "@/hooks/useUserCredits";
@@ -61,6 +61,13 @@ export const GlobalHeader = () => {
               <NavDropdownProvider>
                 <StudioDropdown align="center" />
                 <LibraryDropdown align="center" />
+                <Link 
+                  to="/models"
+                  className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold flex items-center gap-2"
+                >
+                  <Cpu className="h-4 w-4" />
+                  Models
+                </Link>
               </NavDropdownProvider>
             ) : (
               <Link 

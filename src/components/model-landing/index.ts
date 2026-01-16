@@ -17,3 +17,4 @@ export { ModelVariantSelector } from "./ModelVariantSelector";
 // Model Directory Components
 export { ModelDirectoryHero } from "./ModelDirectoryHero";
 export { ModelDirectoryGrid } from "./ModelDirectoryGrid";
+export { ModelDirectoryFilters } from "./ModelDirectoryFilters";

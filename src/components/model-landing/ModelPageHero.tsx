@@ -1,15 +1,34 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowRight, Zap } from "lucide-react";
+import { Sparkles, ArrowRight, Zap, ChevronDown } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
 import { getDisplayProvider } from "@/lib/utils/provider-display";
+import { ModelVariantSelector } from "./ModelVariantSelector";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ModelPageHeroProps {
   modelPage: ModelPage;
   onTryModel: () => void;
+  onTryVariant?: (recordId: string) => void;
 }
 
-export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  prompt_to_image: "Text to Image",
+  image_editing: "Image Editing",
+  image_to_image: "Image to Image",
+  image_to_video: "Image to Video",
+  prompt_to_video: "Text to Video",
+  video_to_video: "Video to Video",
+  lip_sync: "Lip Sync",
+  prompt_to_audio: "Audio",
+};
+
+export function ModelPageHero({ modelPage, onTryModel, onTryVariant }: ModelPageHeroProps) {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "image":
@@ -24,6 +43,15 @@ export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
         return "✨";
     }
   };
+
+  // Get visible content type groups (filter out hidden ones)
+  const contentTypeGroups = modelPage.content_type_groups || [];
+  const hiddenContentTypes = modelPage.hidden_content_types || [];
+  const visibleGroups = contentTypeGroups.filter(
+    (group) => !hiddenContentTypes.includes(group.content_type)
+  );
+
+  const hasMultipleVariants = visibleGroups.length > 1;
 
   return (
     <section className="relative py-16 md:py-24 overflow-hidden">
@@ -73,14 +101,43 @@ export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4 pt-4">
-              <Button 
-                size="lg" 
-                onClick={onTryModel}
-                className="gap-2 text-lg px-8"
-              >
-                Generate with {modelPage.model_name}
-                <ArrowRight className="w-5 h-5" />
-              </Button>
+              {hasMultipleVariants && onTryVariant ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="lg" className="gap-2 text-lg px-8">
+                      Generate with {modelPage.model_name}
+                      <ChevronDown className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {visibleGroups.map((group) => (
+                      <DropdownMenuItem
+                        key={group.record_id}
+                        onClick={() => onTryVariant(group.record_id)}
+                        className="cursor-pointer"
+                      >
+                        <span className="font-medium">
+                          {CONTENT_TYPE_LABELS[group.content_type] || group.content_type}
+                        </span>
+                        {group.model_name && (
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            {group.model_name}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button 
+                  size="lg" 
+                  onClick={onTryModel}
+                  className="gap-2 text-lg px-8"
+                >
+                  Generate with {modelPage.model_name}
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              )}
               <Button 
                 size="lg" 
                 variant="outline"
@@ -130,6 +187,16 @@ export function ModelPageHero({ modelPage, onTryModel }: ModelPageHeroProps) {
             <div className="absolute -z-10 -bottom-4 -left-4 w-48 h-48 bg-secondary/20 rounded-full blur-3xl" />
           </div>
         </div>
+
+        {/* Variant Selector */}
+        {onTryVariant && (
+          <ModelVariantSelector
+            contentTypeGroups={contentTypeGroups}
+            hiddenContentTypes={hiddenContentTypes}
+            onTryVariant={onTryVariant}
+            modelName={modelPage.model_name}
+          />
+        )}
       </div>
     </section>
   );

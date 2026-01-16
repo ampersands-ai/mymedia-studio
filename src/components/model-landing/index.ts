@@ -12,6 +12,7 @@ export { ModelRelatedModels } from "./ModelRelatedModels";
 export { ModelFAQ } from "./ModelFAQ";
 export { ModelBottomCTA } from "./ModelBottomCTA";
 export { ModelContentTypeGroups } from "./ModelContentTypeGroups";
+export { ModelVariantSelector } from "./ModelVariantSelector";
 
 // Model Directory Components
 export { ModelDirectoryHero } from "./ModelDirectoryHero";

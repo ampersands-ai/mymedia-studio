@@ -83,6 +83,8 @@ export default function ModelPagesManager() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("published"); // Default to published
+  const [activeFilter, setActiveFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [customProviderInputs, setCustomProviderInputs] = useState<Record<string, string>>({});
   const [familySearchQuery, setFamilySearchQuery] = useState<Record<string, string>>({});
@@ -216,9 +218,19 @@ export default function ModelPagesManager() {
       const matchesCategory =
         categoryFilter === "all" || page.category === categoryFilter;
 
-      return matchesSearch && matchesCategory;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "published" && page.is_published) ||
+        (statusFilter === "draft" && !page.is_published);
+
+      const matchesActive =
+        activeFilter === "all" ||
+        (activeFilter === "active" && isModelActive(page.model_record_id)) ||
+        (activeFilter === "deactivated" && !isModelActive(page.model_record_id));
+
+      return matchesSearch && matchesCategory && matchesStatus && matchesActive;
     });
-  }, [modelPages, searchQuery, categoryFilter]);
+  }, [modelPages, searchQuery, categoryFilter, statusFilter, activeFilter, modelVisibilitySettings, allRegistryModels]);
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -328,6 +340,26 @@ export default function ModelPagesManager() {
             className="pl-9"
           />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full md:w-36">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={activeFilter} onValueChange={setActiveFilter}>
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="Model Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Models</SelectItem>
+            <SelectItem value="active">Active Models</SelectItem>
+            <SelectItem value="deactivated">Deactivated</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-full md:w-48">
             <SelectValue placeholder="Creation Group" />

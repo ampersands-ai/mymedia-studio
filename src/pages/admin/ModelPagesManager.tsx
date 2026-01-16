@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -50,7 +51,9 @@ import {
   useAutoGenerateModelPages,
   useUpdateDisplayProvider,
   useUpdateHiddenContentTypes,
+  useUpdateModelRecordIds,
 } from "@/hooks/useAdminModelPages";
+import { getAllModels } from "@/lib/models/registry";
 import { formatContentType } from "@/lib/utils/provider-display";
 import type { ContentTypeGroup } from "@/hooks/useModelPages";
 
@@ -80,6 +83,7 @@ export default function ModelPagesManager() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [customProviderInputs, setCustomProviderInputs] = useState<Record<string, string>>({});
+  const [familySearchQuery, setFamilySearchQuery] = useState<Record<string, string>>({});
 
   const { data: modelPages, isLoading } = useAdminModelPages();
   const deleteMutation = useDeleteModelPage();
@@ -87,6 +91,31 @@ export default function ModelPagesManager() {
   const autoGenerateMutation = useAutoGenerateModelPages();
   const updateDisplayProviderMutation = useUpdateDisplayProvider();
   const updateHiddenContentTypesMutation = useUpdateHiddenContentTypes();
+  const updateModelRecordIdsMutation = useUpdateModelRecordIds();
+
+  // Get all available models from registry for family selection
+  const allRegistryModels = useMemo(() => {
+    try {
+      return getAllModels().map(m => ({
+        recordId: m.MODEL_CONFIG.recordId,
+        modelName: m.MODEL_CONFIG.modelName,
+        contentType: m.MODEL_CONFIG.contentType,
+        provider: m.MODEL_CONFIG.provider,
+      }));
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // Filter models for family popover search
+  const getFilteredModelsForFamily = (pageId: string) => {
+    const query = (familySearchQuery[pageId] || "").toLowerCase();
+    if (!query) return allRegistryModels.slice(0, 20); // Show first 20 by default
+    return allRegistryModels.filter(m => 
+      m.modelName.toLowerCase().includes(query) ||
+      m.contentType.toLowerCase().includes(query)
+    ).slice(0, 30);
+  };
 
   const filteredPages = useMemo(() => {
     if (!modelPages) return [];
@@ -153,6 +182,15 @@ export default function ModelPagesManager() {
       : [...currentHidden, contentType];
     
     updateHiddenContentTypesMutation.mutate({ id: pageId, hidden_content_types: newHidden });
+  };
+
+  const handleToggleFamilyModel = (pageId: string, recordId: string, currentRecordIds: string[]) => {
+    const isIncluded = currentRecordIds.includes(recordId);
+    const newRecordIds = isIncluded
+      ? currentRecordIds.filter(id => id !== recordId)
+      : [...currentRecordIds, recordId];
+    
+    updateModelRecordIdsMutation.mutate({ id: pageId, model_record_ids: newRecordIds });
   };
 
   if (isLoading) {
@@ -243,6 +281,7 @@ export default function ModelPagesManager() {
             <TableRow>
               <TableHead className="min-w-[200px]">Model</TableHead>
               <TableHead className="min-w-[150px]">Display Provider</TableHead>
+              <TableHead className="min-w-[120px]">Family Models</TableHead>
               <TableHead className="min-w-[200px]">Content Types</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
@@ -253,7 +292,7 @@ export default function ModelPagesManager() {
           <TableBody>
             {filteredPages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <p className="text-muted-foreground">No model pages found</p>
                 </TableCell>
               </TableRow>
@@ -261,8 +300,10 @@ export default function ModelPagesManager() {
               filteredPages.map((page) => {
                 const contentTypeGroups = (page as unknown as { content_type_groups?: ContentTypeGroup[] }).content_type_groups || [];
                 const hiddenContentTypes = (page as unknown as { hidden_content_types?: string[] }).hidden_content_types || [];
+                const modelRecordIds = (page as unknown as { model_record_ids?: string[] }).model_record_ids || [];
                 const displayProvider = (page as unknown as { display_provider?: string | null }).display_provider;
                 const isEditingCustomProvider = customProviderInputs.hasOwnProperty(page.id);
+                const filteredFamilyModels = getFilteredModelsForFamily(page.id);
 
                 return (
                   <TableRow key={page.id}>
@@ -322,6 +363,65 @@ export default function ModelPagesManager() {
                           </SelectContent>
                         </Select>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8">
+                            <Users className="h-3 w-3 mr-1" />
+                            {modelRecordIds.length} model{modelRecordIds.length !== 1 ? 's' : ''}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="start">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium mb-2">Family Models</p>
+                              <p className="text-xs text-muted-foreground mb-3">
+                                Select models to group under this page
+                              </p>
+                            </div>
+                            <Input
+                              placeholder="Search models..."
+                              value={familySearchQuery[page.id] || ""}
+                              onChange={(e) => setFamilySearchQuery(prev => ({ ...prev, [page.id]: e.target.value }))}
+                              className="h-8"
+                            />
+                            <ScrollArea className="h-64">
+                              <div className="space-y-1 pr-3">
+                                {filteredFamilyModels.map((model) => {
+                                  const isIncluded = modelRecordIds.includes(model.recordId);
+                                  return (
+                                    <div key={model.recordId} className="flex items-center gap-2 py-1">
+                                      <Checkbox
+                                        id={`${page.id}-family-${model.recordId}`}
+                                        checked={isIncluded}
+                                        onCheckedChange={() => handleToggleFamilyModel(page.id, model.recordId, modelRecordIds)}
+                                      />
+                                      <label
+                                        htmlFor={`${page.id}-family-${model.recordId}`}
+                                        className="text-xs cursor-pointer flex-1 leading-tight"
+                                      >
+                                        <span className="font-medium block">{model.modelName}</span>
+                                        <span className="text-muted-foreground">{formatContentType(model.contentType)}</span>
+                                      </label>
+                                    </div>
+                                  );
+                                })}
+                                {filteredFamilyModels.length === 0 && (
+                                  <p className="text-xs text-muted-foreground py-2">No models found</p>
+                                )}
+                              </div>
+                            </ScrollArea>
+                            {modelRecordIds.length > 0 && (
+                              <div className="pt-2 border-t">
+                                <p className="text-xs text-muted-foreground">
+                                  {modelRecordIds.length} model{modelRecordIds.length !== 1 ? 's' : ''} selected
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </TableCell>
                     <TableCell>
                       {contentTypeGroups.length > 0 ? (

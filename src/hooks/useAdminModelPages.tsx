@@ -264,6 +264,34 @@ export function useUpdateHiddenContentTypes() {
   });
 }
 
+// Update family model record IDs
+export function useUpdateModelRecordIds() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, model_record_ids }: { id: string; model_record_ids: string[] }) => {
+      const { data, error } = await supabase
+        .from("model_pages")
+        .update({ model_record_ids })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-model-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-model-page", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["model-directory"] });
+      toast.success("Family models updated");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update family models: ${error.message}`);
+    },
+  });
+}
+
 // ==================== Sample Management ====================
 
 export function useAdminModelSamples(modelPageId: string | undefined) {

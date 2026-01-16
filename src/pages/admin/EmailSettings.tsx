@@ -37,6 +37,15 @@ export default function EmailSettings() {
     loadSettings();
   }, []);
 
+  const defaultSettings: AdminNotificationSettings = {
+    enabled: false,
+    recipient_email: '',
+    error_alerts: { enabled: false, min_severity: 'medium' },
+    daily_summary: { enabled: false, time: '08:00' },
+    user_registration: { enabled: false },
+    generation_errors: { enabled: false, threshold: 10 },
+  };
+
   const loadSettings = async () => {
     await execute(
       async () => {
@@ -48,7 +57,32 @@ export default function EmailSettings() {
 
         if (error) throw error;
         if (data?.setting_value) {
-          setSettings({ admin_notifications: data.setting_value as AdminNotificationSettings });
+          const dbValue = data.setting_value as Record<string, unknown>;
+          
+          // Deep merge with defaults to handle missing fields
+          // Also handle legacy field name migration (admin_email -> recipient_email)
+          const mergedSettings: AdminNotificationSettings = {
+            enabled: typeof dbValue.enabled === 'boolean' ? dbValue.enabled : defaultSettings.enabled,
+            recipient_email: (dbValue.recipient_email as string) || (dbValue.admin_email as string) || defaultSettings.recipient_email,
+            error_alerts: {
+              ...defaultSettings.error_alerts,
+              ...(dbValue.error_alerts as Record<string, unknown> || {}),
+            },
+            daily_summary: {
+              ...defaultSettings.daily_summary,
+              ...(dbValue.daily_summary as Record<string, unknown> || {}),
+            },
+            user_registration: {
+              ...defaultSettings.user_registration,
+              ...(dbValue.user_registration as Record<string, unknown> || {}),
+            },
+            generation_errors: {
+              ...defaultSettings.generation_errors,
+              ...(dbValue.generation_errors as Record<string, unknown> || {}),
+            },
+          };
+          
+          setSettings({ admin_notifications: mergedSettings });
         }
       },
       {

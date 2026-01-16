@@ -456,6 +456,12 @@ const Pricing = () => {
           ))}
           </div>
 
+          {/* Auto-Renewal Disclosure */}
+          <p className="text-xs text-muted-foreground text-center mt-6 max-w-lg mx-auto">
+            All paid plans auto-renew monthly. Cancel anytime from your account settings. 
+            No long-term contracts or hidden fees.
+          </p>
+
           {/* Feature Comparison Chart */}
           <div className="max-w-7xl mx-auto mb-16">
             <h3 className="text-3xl md:text-4xl font-black text-center mb-12">Compare Plans</h3>

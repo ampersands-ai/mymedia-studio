@@ -2,10 +2,13 @@
  * Send Subscription Email Edge Function
  * 
  * Sends branded emails for subscription events:
- * - activated: New subscription
+ * - activated: New subscription (with payment receipt)
  * - upgraded: Plan upgrade
  * - downgraded: Plan downgrade
  * - cancelled: Subscription cancelled
+ * - renewed: Subscription renewed (with payment receipt)
+ * - boost_purchased: Credit boost purchase
+ * - resubscribed: Resubscription during grace period
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
@@ -21,10 +24,16 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 interface SubscriptionEmailRequest {
   user_id: string;
   email: string;
-  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed';
+  event_type: 'activated' | 'upgraded' | 'downgraded' | 'cancelled' | 'renewed' | 'boost_purchased' | 'resubscribed';
   plan_name: string;
   previous_plan?: string;
   tokens_added?: number;
+  // Payment receipt fields
+  amount_paid?: number;  // in cents (e.g., 1999 for $19.99)
+  currency?: string;     // e.g., 'USD'
+  invoice_id?: string;   // Payment/invoice ID
+  next_billing_date?: string; // ISO date string
+  payment_method_last4?: string; // Last 4 digits of card
 }
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
@@ -32,7 +41,16 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
   explorer: 'Explorer',
   professional: 'Professional',
   ultimate: 'Ultimate',
-  veo_connoisseur: 'Veo Connoisseur',
+  studio: 'Studio',
+  veo_connoisseur: 'Studio',
+};
+
+const PLAN_PRICES: Record<string, number> = {
+  explorer: 799,       // $7.99
+  professional: 1999,  // $19.99
+  ultimate: 4499,      // $44.99
+  studio: 7499,        // $74.99
+  veo_connoisseur: 7499,
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -44,7 +62,118 @@ function generateUnsubscribeUrl(token: string): string {
   return `${baseUrl}/functions/v1/handle-unsubscribe?token=${token}&type=subscription`;
 }
 
-function getEmailContent(eventType: string, planName: string, previousPlan?: string, tokensAdded?: number, unsubscribeUrl?: string) {
+function formatCurrency(amountInCents: number, currency: string = 'USD'): string {
+  const amount = amountInCents / 100;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+
+function generateReceiptSection(
+  amountPaid: number | undefined, 
+  currency: string = 'USD',
+  invoiceId: string | undefined,
+  nextBillingDate: string | undefined,
+  paymentMethodLast4: string | undefined,
+  planName: string
+): string {
+  // Use provided amount or fall back to plan default price
+  const amount = amountPaid || PLAN_PRICES[planName] || 0;
+  
+  if (!amount) return '';
+
+  const paymentDate = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  return `
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <div style="font-weight: bold; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+        📧 Payment Receipt
+      </div>
+      <table style="width: 100%; font-size: 14px;">
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Amount Charged</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">${formatCurrency(amount, currency)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Payment Date</td>
+          <td style="padding: 8px 0; text-align: right;">${paymentDate}</td>
+        </tr>
+        ${invoiceId ? `
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Transaction ID</td>
+          <td style="padding: 8px 0; text-align: right; font-family: monospace; font-size: 12px;">${invoiceId.slice(0, 20)}${invoiceId.length > 20 ? '...' : ''}</td>
+        </tr>
+        ` : ''}
+        ${paymentMethodLast4 ? `
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Payment Method</td>
+          <td style="padding: 8px 0; text-align: right;">•••• ${paymentMethodLast4}</td>
+        </tr>
+        ` : ''}
+        ${nextBillingDate ? `
+        <tr>
+          <td style="padding: 8px 0; color: #64748b;">Next Billing Date</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold;">${formatDate(nextBillingDate)}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+  `;
+}
+
+function generateAutoRenewalNotice(nextBillingDate: string | undefined): string {
+  const nextDate = nextBillingDate ? formatDate(nextBillingDate) : 'your next billing cycle';
+  return `
+    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-size: 13px;">
+      <p style="margin: 0; color: #92400e;">
+        <strong>Auto-Renewal Notice:</strong> Your subscription will automatically renew on ${nextDate} unless you cancel. 
+        You can manage or cancel your subscription anytime from your <a href="https://artifio.ai/dashboard/settings" style="color: #f97316; text-decoration: underline;">account settings</a>.
+      </p>
+    </div>
+  `;
+}
+
+interface EmailContentParams {
+  eventType: string;
+  planName: string;
+  previousPlan?: string;
+  tokensAdded?: number;
+  unsubscribeUrl?: string;
+  amountPaid?: number;
+  currency?: string;
+  invoiceId?: string;
+  nextBillingDate?: string;
+  paymentMethodLast4?: string;
+}
+
+function getEmailContent(params: EmailContentParams) {
+  const { 
+    eventType, 
+    planName, 
+    previousPlan, 
+    tokensAdded, 
+    unsubscribeUrl,
+    amountPaid,
+    currency = 'USD',
+    invoiceId,
+    nextBillingDate,
+    paymentMethodLast4
+  } = params;
+
   const displayPlan = PLAN_DISPLAY_NAMES[planName] || planName;
   const displayPreviousPlan = previousPlan ? (PLAN_DISPLAY_NAMES[previousPlan] || previousPlan) : '';
   
@@ -56,6 +185,9 @@ function getEmailContent(eventType: string, planName: string, previousPlan?: str
       </p>
     </div>
   ` : '';
+
+  const receiptSection = generateReceiptSection(amountPaid, currency, invoiceId, nextBillingDate, paymentMethodLast4, planName);
+  const autoRenewalNotice = generateAutoRenewalNotice(nextBillingDate);
 
   switch (eventType) {
     case 'activated':
@@ -77,6 +209,10 @@ function getEmailContent(eventType: string, planName: string, previousPlan?: str
                 <div style="padding: 30px;">
                   <p style="font-size: 16px;">Your <strong>${displayPlan}</strong> subscription has been successfully activated!</p>
                   ${tokensAdded ? `<p style="font-size: 16px;">You've received <strong>${tokensAdded.toLocaleString()} credits</strong> to start creating amazing content.</p>` : ''}
+                  
+                  ${receiptSection}
+                  ${autoRenewalNotice}
+                  
                   <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 15px; margin: 20px 0;">
                     <p style="margin: 0; color: #c2410c;"><strong>What's next?</strong></p>
                     <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #7c2d12;">
@@ -118,6 +254,10 @@ function getEmailContent(eventType: string, planName: string, previousPlan?: str
                 <div style="padding: 30px;">
                   <p style="font-size: 16px;">Great news! You've successfully upgraded from <strong>${displayPreviousPlan}</strong> to <strong>${displayPlan}</strong>.</p>
                   <p style="font-size: 16px;">You now have access to more features and credits to power your creative projects.</p>
+                  
+                  ${receiptSection}
+                  ${autoRenewalNotice}
+                  
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Explore New Features</a>
                   </div>
@@ -186,9 +326,9 @@ function getEmailContent(eventType: string, planName: string, previousPlan?: str
                 </div>
                 <div style="padding: 30px;">
                   <p style="font-size: 16px;">Your <strong>${displayPlan}</strong> subscription has been cancelled.</p>
-                  <p style="font-size: 16px;">You've been moved to our free plan with 5 credits. Your account and all your creations are still accessible.</p>
+                  <p style="font-size: 16px;">Your credits have been frozen for 30 days. If you resubscribe within this period, your credits will be restored.</p>
                   <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-                    <p style="margin: 0; color: #b45309;"><strong>Changed your mind?</strong> You can resubscribe anytime to unlock premium features and get more credits.</p>
+                    <p style="margin: 0; color: #b45309;"><strong>Changed your mind?</strong> You can resubscribe within 30 days to restore your frozen credits and continue where you left off.</p>
                   </div>
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://artifio.ai/pricing" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Resubscribe</a>
@@ -223,12 +363,99 @@ function getEmailContent(eventType: string, planName: string, previousPlan?: str
                 <div style="padding: 30px;">
                   <p style="font-size: 16px;">Your <strong>${displayPlan}</strong> subscription has been successfully renewed!</p>
                   ${tokensAdded ? `<p style="font-size: 16px;">You've received <strong>${tokensAdded.toLocaleString()} fresh credits</strong> to continue creating amazing content.</p>` : ''}
+                  
+                  ${receiptSection}
+                  
+                  <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; font-size: 13px;">
+                    <p style="margin: 0; color: #065f46;">
+                      <strong>This was an automatic renewal.</strong> Your subscription will continue to renew${nextBillingDate ? ` on ${formatDate(nextBillingDate)}` : ' each billing cycle'} unless you cancel. 
+                      <a href="https://artifio.ai/dashboard/settings" style="color: #f97316; text-decoration: underline;">Manage subscription</a>
+                    </p>
+                  </div>
+                  
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Continue Creating</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
                   <p style="margin: 0;">Thank you for being a valued Artifio subscriber!</p>
+                </div>
+                ${unsubscribeFooter}
+              </div>
+            </body>
+          </html>
+        `,
+      };
+
+    case 'boost_purchased':
+      return {
+        subject: `⚡ Credit Boost Purchased - ${tokensAdded?.toLocaleString()} credits added!`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+              <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 40px 30px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 28px;">⚡ Credit Boost Added!</h1>
+                  <p style="margin: 15px 0 0 0; opacity: 0.9; font-size: 16px;">${tokensAdded?.toLocaleString()} credits have been added to your account</p>
+                </div>
+                <div style="padding: 30px;">
+                  <p style="font-size: 16px;">Your credit boost purchase has been completed successfully!</p>
+                  <p style="font-size: 16px;">You now have <strong>${tokensAdded?.toLocaleString()} additional credits</strong> to use for your creative projects.</p>
+                  
+                  ${receiptSection}
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Use Your Credits</a>
+                  </div>
+                </div>
+                <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0;">Thank you for your purchase!</p>
+                </div>
+                ${unsubscribeFooter}
+              </div>
+            </body>
+          </html>
+        `,
+      };
+
+    case 'resubscribed':
+      return {
+        subject: `🎉 Welcome back! Your ${displayPlan} subscription is active`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+              <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 30px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 28px;">🎉 Welcome Back!</h1>
+                  <p style="margin: 15px 0 0 0; opacity: 0.9; font-size: 16px;">Your ${displayPlan} subscription is now active</p>
+                </div>
+                <div style="padding: 30px;">
+                  <p style="font-size: 16px;">Great to have you back! Your <strong>${displayPlan}</strong> subscription has been reactivated.</p>
+                  ${tokensAdded ? `
+                  <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+                    <p style="margin: 0; color: #065f46;"><strong>Good news!</strong> Your ${tokensAdded.toLocaleString()} frozen credits have been restored to your account.</p>
+                  </div>
+                  ` : ''}
+                  
+                  ${receiptSection}
+                  ${autoRenewalNotice}
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Creating Again</a>
+                  </div>
+                </div>
+                <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0;">Thank you for coming back to Artifio!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -256,8 +483,22 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { user_id, email, event_type, plan_name, previous_plan, tokens_added }: SubscriptionEmailRequest = await req.json();
-    logStep("Request received", { user_id, event_type, plan_name });
+    const requestBody: SubscriptionEmailRequest = await req.json();
+    const { 
+      user_id, 
+      email, 
+      event_type, 
+      plan_name, 
+      previous_plan, 
+      tokens_added,
+      amount_paid,
+      currency,
+      invoice_id,
+      next_billing_date,
+      payment_method_last4
+    } = requestBody;
+    
+    logStep("Request received", { user_id, event_type, plan_name, amount_paid });
 
     if (!user_id || !email || !event_type || !plan_name) {
       throw new Error("Missing required fields: user_id, email, event_type, plan_name");
@@ -284,8 +525,19 @@ serve(async (req) => {
     // Generate unsubscribe URL
     const unsubscribeUrl = prefs?.unsubscribe_token ? generateUnsubscribeUrl(prefs.unsubscribe_token) : undefined;
 
-    // Get email content
-    const { subject, html } = getEmailContent(event_type, plan_name, previous_plan, tokens_added, unsubscribeUrl);
+    // Get email content with receipt info
+    const { subject, html } = getEmailContent({
+      eventType: event_type,
+      planName: plan_name,
+      previousPlan: previous_plan,
+      tokensAdded: tokens_added,
+      unsubscribeUrl,
+      amountPaid: amount_paid,
+      currency,
+      invoiceId: invoice_id,
+      nextBillingDate: next_billing_date,
+      paymentMethodLast4: payment_method_last4,
+    });
 
     // Send email
     const emailResponse = await resend.emails.send({
@@ -305,7 +557,15 @@ serve(async (req) => {
       subject,
       delivery_status: 'sent',
       resend_email_id: emailResponse.data?.id,
-      metadata: { plan_name, previous_plan, tokens_added },
+      metadata: { 
+        plan_name, 
+        previous_plan, 
+        tokens_added,
+        amount_paid,
+        currency,
+        invoice_id,
+        next_billing_date,
+      },
     });
 
     return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {

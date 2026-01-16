@@ -138,3 +138,49 @@ export function getContentTypeIcon(contentType: string): string {
   
   return iconMap[contentType] || 'Sparkles';
 }
+
+/**
+ * Get provider logo path
+ * Maps provider names to their logo files in /logos/
+ * 
+ * @param provider - The provider name
+ * @returns Path to the provider logo
+ */
+export function getProviderLogo(provider: string): string {
+  const logoMap: Record<string, string> = {
+    'openai': '/logos/openai.png',
+    'google': '/logos/google.png',
+    'flux': '/logos/flux.png',
+    'kling': '/logos/kling.png',
+    'minimax': '/logos/minimax.png',
+    'elevenlabs': '/logos/elevenlabs.png',
+    'suno': '/logos/suno.png',
+    'runway': '/logos/runway.png',
+    'midjourney': '/logos/midjourney.png',
+    'anthropic': '/logos/anthropic.png',
+    'hailuo': '/logos/hailuo.png',
+    'recraft': '/logos/recraft.png',
+    'seedream': '/logos/seedream.png',
+    'sora': '/logos/sora.png',
+    'wan': '/logos/wan.png',
+    'xai': '/logos/xai.png',
+    'hidream': '/logos/hidream.png',
+    'ideogram': '/logos/ideogram.png',
+    'topaz': '/logos/topaz.png',
+    'qwen': '/logos/qwen.png',
+    'plum': '/logos/plum.png',
+    'grok': '/logos/grok.png',
+  };
+  
+  if (!provider) return '/logos/artifio.png';
+  
+  const normalizedProvider = provider.toLowerCase().replace(/[.\s_-]/g, '');
+  
+  for (const [key, path] of Object.entries(logoMap)) {
+    if (normalizedProvider.includes(key)) {
+      return path;
+    }
+  }
+  
+  return '/logos/artifio.png';
+}

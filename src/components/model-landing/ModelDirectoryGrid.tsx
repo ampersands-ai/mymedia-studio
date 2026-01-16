@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
-import { getDisplayProvider } from "@/lib/utils/provider-display";
+import { getDisplayProvider, getProviderLogo } from "@/lib/utils/provider-display";
 
 interface ModelDirectoryGridProps {
   models: ModelPage[];
@@ -26,14 +26,13 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
 
   if (isLoading) {
     return (
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {Array.from({ length: 10 }).map((_, i) => (
           <Card key={i} className="overflow-hidden animate-pulse">
-            <div className="aspect-video bg-muted" />
-            <CardContent className="p-4 space-y-3">
-              <div className="h-6 bg-muted rounded w-3/4" />
-              <div className="h-4 bg-muted rounded w-1/2" />
-              <div className="h-4 bg-muted rounded w-full" />
+            <div className="aspect-[4/3] bg-muted" />
+            <CardContent className="p-3 space-y-2">
+              <div className="h-4 bg-muted rounded w-3/4" />
+              <div className="h-3 bg-muted rounded w-1/2" />
             </CardContent>
           </Card>
         ))}
@@ -55,81 +54,97 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
   }
 
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {models.map((model) => (
-        <Card
-          key={model.id}
-          className="group overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30"
-          onClick={() => navigate(`/models/${model.slug}`)}
-        >
-          {/* Image */}
-          <div className="aspect-video relative overflow-hidden bg-muted">
-            {model.hero_image_url ? (
-              <img
-                src={model.hero_image_url}
-                alt={model.model_name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-                <span className="text-5xl">{getCategoryIcon(model.category)}</span>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {models.map((model) => {
+        const displayProvider = model.display_provider || getDisplayProvider(model.provider);
+        const logoPath = getProviderLogo(displayProvider);
+        
+        return (
+          <Card
+            key={model.id}
+            className="group overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border hover:border-primary/30"
+            onClick={() => navigate(`/models/${model.slug}`)}
+          >
+            {/* Image */}
+            <div className="aspect-[4/3] relative overflow-hidden bg-muted">
+              {model.hero_image_url ? (
+                <img
+                  src={model.hero_image_url}
+                  alt={model.model_name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+                  <span className="text-3xl">{getCategoryIcon(model.category)}</span>
+                </div>
+              )}
+
+              {/* Badges */}
+              <div className="absolute top-1.5 left-1.5">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                  {getCategoryIcon(model.category)} {model.category}
+                </Badge>
               </div>
-            )}
 
-            {/* Badges */}
-            <div className="absolute top-2 left-2 flex gap-2">
-              <Badge variant="secondary">
-                {getCategoryIcon(model.category)} {model.category}
-              </Badge>
+              {model.is_featured && (
+                <Badge className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 gap-0.5">
+                  <Star className="w-2.5 h-2.5" />
+                  Featured
+                </Badge>
+              )}
+
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button variant="secondary" size="sm" className="gap-1.5 text-xs">
+                  Learn More
+                  <ArrowRight className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
 
-            {model.is_featured && (
-              <Badge className="absolute top-2 right-2 bg-amber-500 text-white gap-1">
-                <Star className="w-3 h-3" />
-                Featured
-              </Badge>
-            )}
-
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Button variant="secondary" className="gap-2">
-                Learn More
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
+            <CardContent className="p-3 space-y-1.5">
+              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors line-clamp-1">
                 {model.model_name}
               </h3>
-            </div>
 
-            <p className="text-sm text-muted-foreground">
-              by {model.display_provider || getDisplayProvider(model.provider)}
-            </p>
-
-            {model.tagline && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {model.tagline}
-              </p>
-            )}
-
-            {/* Highlights preview */}
-            {model.highlights && model.highlights.length > 0 && (
-              <div className="flex flex-wrap gap-1 pt-2">
-                {model.highlights.slice(0, 3).map((highlight, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {highlight.title}
-                  </Badge>
-                ))}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <img
+                  src={logoPath}
+                  alt=""
+                  className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.src = '/logos/artifio.png';
+                  }}
+                />
+                <span className="truncate">by {displayProvider}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+
+              {model.tagline && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {model.tagline}
+                </p>
+              )}
+
+              {/* Highlights preview - smaller */}
+              {model.highlights && model.highlights.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {model.highlights.slice(0, 2).map((highlight, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[10px] px-1.5 py-0">
+                      {highlight.title}
+                    </Badge>
+                  ))}
+                  {model.highlights.length > 2 && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      +{model.highlights.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

@@ -8,6 +8,7 @@ export interface ModelPageInput {
   slug: string;
   model_name: string;
   model_record_id: string;
+  model_record_ids?: string[];
   provider: string;
   category: string;
   tagline?: string;

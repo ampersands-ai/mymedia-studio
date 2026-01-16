@@ -93,6 +93,12 @@ export const DashboardLayout = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/pricing" className="flex items-center cursor-pointer">
+                      <Coins className="mr-2 h-4 w-4" />
+                      <span>Pricing</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/about" className="flex items-center cursor-pointer">
                       <Info className="mr-2 h-4 w-4" />
                       <span>About</span>

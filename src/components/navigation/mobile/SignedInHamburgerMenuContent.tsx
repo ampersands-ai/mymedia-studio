@@ -252,11 +252,6 @@ export const SignedInHamburgerMenuContent = ({
               icon={<BookOpen className="h-4 w-4" />} 
             />
             <MenuItem 
-              path="/pricing" 
-              label="Pricing" 
-              icon={<CreditCard className="h-4 w-4" />} 
-            />
-            <MenuItem 
               path="/models" 
               label="Models" 
               icon={<Cpu className="h-4 w-4" />} 
@@ -276,6 +271,11 @@ export const SignedInHamburgerMenuContent = ({
               path="/dashboard/settings" 
               label="Settings" 
               icon={<Settings className="h-4 w-4" />} 
+            />
+            <MenuItem 
+              path="/pricing" 
+              label="Pricing" 
+              icon={<CreditCard className="h-4 w-4" />} 
             />
             <MenuItem path="/about" label="About" icon={<Info className="h-4 w-4" />} />
             <MenuItem path="/faq" label="FAQ" icon={<HelpCircle className="h-4 w-4" />} />

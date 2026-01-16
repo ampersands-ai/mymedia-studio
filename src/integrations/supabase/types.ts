@@ -1882,6 +1882,7 @@ export type Database = {
       model_pages: {
         Row: {
           category: string
+          content_type_groups: Json | null
           created_at: string | null
           description: string | null
           display_order: number | null
@@ -1897,6 +1898,7 @@ export type Database = {
           meta_title: string
           model_name: string
           model_record_id: string
+          model_record_ids: string[] | null
           og_image_url: string | null
           pricing_note: string | null
           provider: string
@@ -1909,6 +1911,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          content_type_groups?: Json | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
@@ -1924,6 +1927,7 @@ export type Database = {
           meta_title: string
           model_name: string
           model_record_id: string
+          model_record_ids?: string[] | null
           og_image_url?: string | null
           pricing_note?: string | null
           provider: string
@@ -1936,6 +1940,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          content_type_groups?: Json | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
@@ -1951,6 +1956,7 @@ export type Database = {
           meta_title?: string
           model_name?: string
           model_record_id?: string
+          model_record_ids?: string[] | null
           og_image_url?: string | null
           pricing_note?: string | null
           provider?: string

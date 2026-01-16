@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.send-test-report]
 verify_jwt = false
+
+[functions.seed-model-pages]
+verify_jwt = true

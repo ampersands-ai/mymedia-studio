@@ -142,4 +142,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.seed-model-pages]
-verify_jwt = true
+verify_jwt = false
+
+[functions.sync-model-pages]
+verify_jwt = false

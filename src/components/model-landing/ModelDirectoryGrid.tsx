@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
+import { getDisplayProvider } from "@/lib/utils/provider-display";
 
 interface ModelDirectoryGridProps {
   models: ModelPage[];
@@ -107,7 +108,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
             </div>
 
             <p className="text-sm text-muted-foreground">
-              by {model.provider}
+              by {getDisplayProvider(model.provider)}
             </p>
 
             {model.tagline && (

@@ -200,6 +200,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
               </div>
               <div class="footer">
                 <p>© ${new Date().getFullYear()} Artifio. All rights reserved.</p>
+                <p style="margin-top: 10px; font-size: 11px; color: #9ca3af;">
+                  This is an automated message. Please do not reply to this email.<br>
+                  For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+                </p>
               </div>
             </div>
           </body>

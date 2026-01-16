@@ -188,12 +188,7 @@ export const Footer = () => {
               )}
               <li>
                 <a href="mailto:support@artifio.ai" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Contact Us
-                </a>
-              </li>
-              <li>
-                <a href="mailto:help@artifio.ai" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
-                  Help Center
+                  Contact Support
                 </a>
               </li>
             </ul>

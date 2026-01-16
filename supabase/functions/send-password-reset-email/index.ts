@@ -200,6 +200,10 @@ serve(async (req: Request): Promise<Response> => {
                       <p style="margin: 10px 0 0 0; font-size: 12px; color: #555555;">
                         © ${new Date().getFullYear()} Artifio. All rights reserved.
                       </p>
+                      <p style="margin: 10px 0 0 0; font-size: 11px; color: #444444;">
+                        This is an automated message. Please do not reply to this email.<br>
+                        For assistance, contact <a href="mailto:support@artifio.ai" style="color: #f97316;">support@artifio.ai</a>
+                      </p>
                     </td>
                   </tr>
                 </table>

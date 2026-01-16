@@ -108,7 +108,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
             </div>
 
             <p className="text-sm text-muted-foreground">
-              by {getDisplayProvider(model.provider)}
+              by {model.display_provider || getDisplayProvider(model.provider)}
             </p>
 
             {model.tagline && (

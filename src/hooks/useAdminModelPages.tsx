@@ -208,6 +208,62 @@ export function useToggleModelPagePublish() {
   });
 }
 
+// Update display provider
+export function useUpdateDisplayProvider() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, display_provider }: { id: string; display_provider: string | null }) => {
+      const { data, error } = await supabase
+        .from("model_pages")
+        .update({ display_provider })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-model-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-model-page", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["model-directory"] });
+      toast.success("Display provider updated");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update display provider: ${error.message}`);
+    },
+  });
+}
+
+// Update hidden content types
+export function useUpdateHiddenContentTypes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, hidden_content_types }: { id: string; hidden_content_types: string[] }) => {
+      const { data, error } = await supabase
+        .from("model_pages")
+        .update({ hidden_content_types })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-model-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-model-page", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["model-directory"] });
+      toast.success("Content type visibility updated");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update content type visibility: ${error.message}`);
+    },
+  });
+}
+
 // ==================== Sample Management ====================
 
 export function useAdminModelSamples(modelPageId: string | undefined) {

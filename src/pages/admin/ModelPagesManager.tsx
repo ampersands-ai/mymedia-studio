@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreateFamilyDialog } from "@/components/admin/CreateFamilyDialog";
 import {
   Table,
   TableBody,
@@ -216,6 +217,14 @@ export default function ModelPagesManager() {
             <Wand2 className="mr-2 h-4 w-4" />
             Auto-Generate
           </Button>
+          <CreateFamilyDialog 
+            trigger={
+              <Button variant="outline">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Create Family
+              </Button>
+            }
+          />
           <Button onClick={() => navigate("/admin/model-pages/new")}>
             <Plus className="mr-2 h-4 w-4" />
             Create Page

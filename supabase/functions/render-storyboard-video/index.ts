@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 
 
@@ -27,6 +28,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - generation tier (50 req/min, 2-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'generation', 'render-storyboard-video');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const requestId = crypto.randomUUID();
   const supabaseClient = createClient(

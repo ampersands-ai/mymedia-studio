@@ -281,12 +281,26 @@ export function createRateLimitHeaders(info: RateLimitInfo): Record<string, stri
 }
 
 /**
- * Create rate limit error response
+ * Create rate limit error response with countdown data for frontend
  */
 export function createRateLimitErrorResponse(
   info: RateLimitInfo,
   additionalHeaders?: Record<string, string>
 ): Response {
+  const retryAfterSeconds = info.retryAfterMs ? Math.ceil(info.retryAfterMs / 1000) : 60;
+  const minutes = Math.floor(retryAfterSeconds / 60);
+  const seconds = retryAfterSeconds % 60;
+  
+  // Build human-readable time message
+  let displayText: string;
+  if (minutes > 0 && seconds > 0) {
+    displayText = `${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
+  } else if (minutes > 0) {
+    displayText = `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  } else {
+    displayText = `${seconds} second${seconds !== 1 ? 's' : ''}`;
+  }
+
   const headers = {
     ...createRateLimitHeaders(info),
     'Content-Type': 'application/json',
@@ -296,9 +310,16 @@ export function createRateLimitErrorResponse(
   return new Response(
     JSON.stringify({
       error: 'Rate limit exceeded',
-      message: 'Too many requests. Please try again later.',
-      retryAfter: info.retryAfterMs ? Math.ceil(info.retryAfterMs / 1000) : 60,
+      message: `Too many requests. Please try again in ${displayText}.`,
+      retryAfter: retryAfterSeconds,
+      retryAfterMs: info.retryAfterMs,
       resetAt: info.resetAt.toISOString(),
+      // Frontend countdown data
+      countdown: {
+        seconds: retryAfterSeconds,
+        displayText,
+        resetAtTimestamp: info.resetAt.getTime(),
+      },
     }),
     {
       status: 429,

@@ -93,6 +93,7 @@ const PLAN_PRODUCT_IDS = {
 
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -103,6 +104,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - strict tier (30 req/min, 5-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'strict', 'create-dodo-payment');
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

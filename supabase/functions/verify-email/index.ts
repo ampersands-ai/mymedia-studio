@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { hashToken } from "../_shared/token-hashing.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,10 @@ serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Rate limiting - auth tier (10 req/min, 15-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'auth', 'verify-email');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const startTime = Date.now();
 

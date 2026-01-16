@@ -4,6 +4,7 @@ import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-schemas.ts";
 import { STORYBOARD_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -11,6 +12,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - generation tier (50 req/min, 2-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'generation', 'generate-storyboard');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();

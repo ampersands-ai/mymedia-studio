@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 const tokenManagementSchema = z.object({
   user_id: z.string().uuid(),
@@ -21,6 +22,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - strict tier (30 req/min, 5-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'strict', 'manage-user-tokens');
+  if (rateLimitResponse) return rateLimitResponse;
 
   interface RequestBody {
     user_id?: string;

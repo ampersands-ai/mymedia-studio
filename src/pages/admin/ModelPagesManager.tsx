@@ -64,14 +64,14 @@ const categories = [
 ];
 
 const providerOptions = [
-  { value: "", label: "Auto (from provider)" },
+  { value: "__auto__", label: "Auto (from provider)" },
   { value: "ARTIFIO", label: "ARTIFIO" },
   { value: "OpenAI", label: "OpenAI" },
   { value: "Google", label: "Google" },
   { value: "Stability AI", label: "Stability AI" },
   { value: "Black Forest Labs", label: "Black Forest Labs" },
   { value: "Runway", label: "Runway" },
-  { value: "custom", label: "Custom..." },
+  { value: "__custom__", label: "Custom..." },
 ];
 
 export default function ModelPagesManager() {
@@ -124,9 +124,9 @@ export default function ModelPagesManager() {
   };
 
   const handleProviderChange = (pageId: string, value: string) => {
-    if (value === "custom") {
+    if (value === "__custom__") {
       setCustomProviderInputs(prev => ({ ...prev, [pageId]: "" }));
-    } else if (value === "") {
+    } else if (value === "__auto__") {
       // Auto - clear display_provider
       updateDisplayProviderMutation.mutate({ id: pageId, display_provider: null });
     } else {
@@ -307,7 +307,7 @@ export default function ModelPagesManager() {
                         </div>
                       ) : (
                         <Select
-                          value={displayProvider || ""}
+                          value={displayProvider || "__auto__"}
                           onValueChange={(value) => handleProviderChange(page.id, value)}
                         >
                           <SelectTrigger className="h-8 w-36">

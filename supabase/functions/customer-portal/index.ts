@@ -47,6 +47,24 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Check if user has a Dodo subscription (can't use Stripe portal for that)
+    const { data: userSub } = await supabaseClient
+      .from('user_subscriptions')
+      .select('payment_provider, dodo_subscription_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (userSub?.payment_provider === 'dodo') {
+      logStep("User has Dodo subscription, Stripe portal not available");
+      return new Response(
+        JSON.stringify({ 
+          error: "Your subscription is managed through Dodo Payments. To manage your subscription, please contact support@artifio.ai or visit the Dodo Payments customer portal.",
+          provider: 'dodo'
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Find customer by email

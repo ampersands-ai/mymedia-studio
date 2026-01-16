@@ -10,6 +10,10 @@ import { ArrowLeft, KeyRound, Loader2, CheckCircle, XCircle, Eye, EyeOff } from 
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { PasswordRequirements, validatePasswordRequirements } from "@/components/auth/PasswordRequirements";
+import { logger } from "@/lib/logger";
+
+const resetPasswordLogger = logger.child({ component: 'ResetPassword' });
+
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,7 +78,9 @@ const ResetPassword = () => {
         navigate("/auth");
       }, 3000);
     } catch (error) {
-      console.error("Password reset error:", error);
+      resetPasswordLogger.error("Password reset failed", error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handleSubmit'
+      });
       setStatus("error");
       setErrorMessage("Failed to reset password. Please try again.");
     } finally {

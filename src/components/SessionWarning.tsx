@@ -10,7 +10,7 @@ const sessionLogger = logger.child({ component: 'SessionWarning' });
 
 export const SessionWarning = () => {
   const [showWarning, setShowWarning] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(0);
   const [extending, setExtending] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export const SessionWarning = () => {
         window.location.href = '/auth';
       } else if (remaining < WARNING_THRESHOLD) {
         setShowWarning(true);
-        setTimeRemaining(Math.floor(remaining / 1000 / 60)); // Minutes
+        setTimeRemainingSeconds(Math.floor(remaining / 1000)); // Store in seconds for accurate countdown
       } else {
         setShowWarning(false);
       }
@@ -74,8 +74,8 @@ export const SessionWarning = () => {
 
   if (!showWarning) return null;
 
-  const minutes = Math.floor(timeRemaining);
-  const seconds = Math.round((timeRemaining - minutes) * 60);
+  const minutes = Math.floor(timeRemainingSeconds / 60);
+  const seconds = timeRemainingSeconds % 60;
 
   return (
     <Alert className="mb-4 border-orange-500/50 bg-orange-500/10">

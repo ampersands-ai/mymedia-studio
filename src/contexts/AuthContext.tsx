@@ -141,10 +141,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (hasCode && !hasError) {
       // Perform the OAuth code exchange once, then auth listener will update state
       (async () => {
-        try {
+      try {
           await supabase.auth.exchangeCodeForSession(window.location.href);
         } catch (e) {
           authLogger.error("OAuth exchange failed", e as Error);
+          // Notify user about auth failure - deferred to prevent React state issues
+          setTimeout(() => {
+            toast.error("Authentication failed. Please try again.");
+          }, 0);
         } finally {
           // Clean the URL so we don't keep re-exchanging the code on refresh
           const cleanUrl = `${url.origin}${url.pathname}${url.hash}`;

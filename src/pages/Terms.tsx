@@ -71,9 +71,9 @@ const Terms = () => {
               </p>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
                 <li>You must provide accurate, current, and complete information during registration</li>
-                <li>You may register using your email address or through Google OAuth authentication</li>
-                <li>Email verification is required before accessing content generation features</li>
-                <li>You are responsible for maintaining the confidentiality of your account credentials</li>
+                <li>Registration is exclusively through Google OAuth authentication for enhanced security and convenience</li>
+                <li>Your Google account email is automatically verified upon registration</li>
+                <li>Your account is secured through Google's authentication system</li>
                 <li>You are responsible for all activities that occur under your account</li>
                 <li>You must notify us immediately of any unauthorized access to your account</li>
               </ul>

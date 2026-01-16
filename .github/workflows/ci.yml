@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
 
 jobs:
   quality:
@@ -30,37 +33,43 @@ jobs:
       - name: Lint
         run: npm run lint --if-present
 
-      - name: Unit Tests
-        run: npm test
+      - name: Create test results directory
+        run: mkdir -p test-results
 
-      - name: Test Coverage
-        run: npm run test:coverage
+      - name: Unit Tests with JSON output
+        run: npm test -- --reporter=json --outputFile=test-results/unit-results.json
+        continue-on-error: true
+
+      - name: Test Coverage with JSON output
+        run: npm run test:coverage -- --coverage.reporter=json-summary --coverage.reportsDirectory=test-results
         continue-on-error: true
 
       - name: Build Check
         run: npm run build
         env:
-          # Provide dummy env vars for build
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
 
-      # Email notification via Supabase edge function (optional - uncomment to enable)
-      # Uses existing Resend setup in Lovable/Supabase - no extra secrets needed!
-      # Just add SUPABASE_URL and SUPABASE_ANON_KEY to repository secrets
-      # - name: Send CI Notification Email
-      #   if: failure()
-      #   run: |
-      #     curl -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/send-ci-notification' \
-      #       -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
-      #       -H 'Content-Type: application/json' \
-      #       -d '{
-      #         "repository": "${{ github.repository }}",
-      #         "branch": "${{ github.ref_name }}",
-      #         "commit": "${{ github.sha }}",
-      #         "author": "${{ github.actor }}",
-      #         "logsUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-      #         "status": "failed"
-      #       }'
+      - name: Send Test Report Email
+        if: always()
+        run: node scripts/send-test-report.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
 
   # Optional: Add security scanning
   security:

@@ -137,3 +137,6 @@ verify_jwt = true
 
 [functions.send-subscription-reminders]
 verify_jwt = false
+
+[functions.send-test-report]
+verify_jwt = false

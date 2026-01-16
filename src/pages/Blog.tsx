@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { BookOpen, Calendar } from "lucide-react";
-import { toast } from "sonner";
-import { logger } from "@/lib/logger";
+import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 
 const Blog = () => {
   const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { subscribe, isLoading } = useNewsletterSubscribe();
 
   useEffect(() => {
     document.title = "Blog - Artifio.ai";
@@ -22,19 +21,10 @@ const Blog = () => {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    logger.info("Newsletter signup submitted", { 
-      component: 'Blog',
-      operation: 'handleSubscribe',
-      email
-    });
-    toast.success("Thanks for subscribing! We'll notify you when we publish.");
-    setEmail("");
-    setIsSubmitting(false);
+    const success = await subscribe(email, "blog");
+    if (success) {
+      setEmail("");
+    }
   };
 
   const placeholderPosts = [
@@ -113,9 +103,9 @@ const Blog = () => {
                   type="submit" 
                   className="w-full h-12" 
                   variant="neon"
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                 >
-                  {isSubmitting ? "Subscribing..." : "Get Notified When We Publish"}
+                  {isLoading ? "Subscribing..." : "Get Notified When We Publish"}
                 </Button>
                 <p className="text-sm text-center text-muted-foreground">
                   We'll only send you the good stuff. No spam, unsubscribe anytime.

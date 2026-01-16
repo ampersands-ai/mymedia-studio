@@ -4,6 +4,7 @@ import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-s
 import { VIDEO_JOB_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { checkEmailVerified, createEmailNotVerifiedResponse } from "../_shared/email-verification.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 Deno.serve(async (req) => {
   // Get response headers (includes CORS + security headers)
@@ -13,6 +14,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - generation tier (50 req/min, 2-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'generation', 'create-video-job');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();

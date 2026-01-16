@@ -1,6 +1,7 @@
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -11,6 +12,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return handleCorsPreflight(req);
   }
+
+  // Rate limiting - standard tier (200 req/min, 1-min block)
+  const rateLimitResponse = await applyRateLimit(req, 'standard', 'get-voices');
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');

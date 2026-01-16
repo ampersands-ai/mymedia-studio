@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, Home, Coins, Shield } from "lucide-react";
+import { Menu, Home, Coins, Shield, Cpu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -15,6 +15,7 @@ import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/componen
 import { SignedInHamburgerMenuContent } from "@/components/navigation/mobile/SignedInHamburgerMenuContent";
 
 const navItems = [
+  { id: "models", label: "Models", href: "/models" },
   { id: "features", label: "Features", href: "/features" },
   { id: "pricing", label: "Pricing", href: "/pricing" },
   { id: "blog", label: "Blog", href: "/blog" },
@@ -33,6 +34,7 @@ export const CinematicNav = () => {
   const creditBalance = creditsLoading ? null : availableCredits;
 
   const visibleNavItems = navItems.filter((item) => {
+    if (item.id === "models") return true;
     if (item.id === "pricing") return true;
     if (item.id === "features") return isPageEnabled("features");
     if (item.id === "blog") return isPageEnabled("blog");
@@ -92,6 +94,13 @@ export const CinematicNav = () => {
             <NavDropdownProvider>
               <StudioDropdown align="center" />
               <LibraryDropdown align="center" />
+              <Link
+                to="/models"
+                className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
+              >
+                <Cpu className="h-4 w-4" />
+                Models
+              </Link>
             </NavDropdownProvider>
           ) : (
             visibleNavItems.map((item) => (
@@ -214,7 +223,19 @@ export const CinematicNav = () => {
                         </div>
                         <div className="text-sm font-black text-muted-foreground uppercase tracking-wide mb-2 px-4 pt-6">PAGES</div>
                         <div className="space-y-1 px-4">
-                          {visibleNavItems.map((item) => (
+                          <button
+                            onClick={() => handleNavigation("/models")}
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm w-full text-left",
+                              isActive("/models")
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                          >
+                            <Cpu className="h-4 w-4" />
+                            <span>Models</span>
+                          </button>
+                          {visibleNavItems.filter(item => item.id !== "models").map((item) => (
                             <button
                               key={item.id}
                               onClick={() => handleNavigation(item.href)}

@@ -521,18 +521,23 @@ export const useBlackboardStoryboard = () => {
         index: number;
       }> = [];
 
-      for (let i = 0; i < scenes.length - 1; i++) {
+      for (let i = 0; i < scenes.length; i++) {
         const currentScene = scenes[i];
+        const isLastScene = i === scenes.length - 1;
         const nextScene = scenes[i + 1];
 
-        if (!currentScene.generatedImageUrl || !nextScene.generatedImageUrl) continue;
+        if (!currentScene.generatedImageUrl) continue;
         if (currentScene.generatedVideoUrl) continue; // Skip already generated
         if (!currentScene.videoPrompt.trim()) continue;
+
+        // For non-last scenes, require next scene to have image
+        // For last scene, use its own image as both start and end (optional outro transition)
+        if (!isLastScene && !nextScene?.generatedImageUrl) continue;
 
         videoTasks.push({
           scene: currentScene,
           startUrl: currentScene.generatedImageUrl,
-          endUrl: nextScene.generatedImageUrl,
+          endUrl: isLastScene ? currentScene.generatedImageUrl : nextScene.generatedImageUrl!,
           index: i
         });
       }

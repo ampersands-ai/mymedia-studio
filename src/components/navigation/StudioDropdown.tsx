@@ -139,7 +139,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Audio</p>
             <Link
-              to="/dashboard/custom-creation?group=prompt_to_audio"
+              to="/dashboard/audio-studio"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
             >

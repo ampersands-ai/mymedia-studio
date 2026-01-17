@@ -1,16 +1,14 @@
+import { useState } from 'react';
 import { X, Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle, Volume2, VolumeX, ListMusic, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { WaveformVisualizer } from '../shared/WaveformVisualizer';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
+import { AudioQueueSheet } from './AudioQueueSheet';
 import { cn } from '@/lib/utils';
 
-interface FullScreenPlayerProps {
-  onClose: () => void;
-  onOpenQueue: () => void;
-}
-
-export function FullScreenPlayer({ onClose, onOpenQueue }: FullScreenPlayerProps) {
+export function FullScreenPlayer() {
+  const [isQueueOpen, setQueueOpen] = useState(false);
   const {
     currentTrack,
     isPlaying,
@@ -28,6 +26,7 @@ export function FullScreenPlayer({ onClose, onOpenQueue }: FullScreenPlayerProps
     toggleMute,
     setRepeatMode,
     toggleShuffle,
+    toggleFullScreen,
   } = useAudioPlayer();
 
   const formatTime = (seconds: number) => {
@@ -52,14 +51,17 @@ export function FullScreenPlayer({ onClose, onOpenQueue }: FullScreenPlayerProps
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={toggleFullScreen}>
           <X className="h-5 w-5" />
         </Button>
         <span className="text-sm font-medium text-muted-foreground">Now Playing</span>
-        <Button variant="ghost" size="icon" onClick={onOpenQueue}>
+        <Button variant="ghost" size="icon" onClick={() => setQueueOpen(true)}>
           <ListMusic className="h-5 w-5" />
         </Button>
       </div>
+
+      {/* Queue Sheet for FullScreen mode */}
+      <AudioQueueSheet open={isQueueOpen} onOpenChange={setQueueOpen} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 gap-8">

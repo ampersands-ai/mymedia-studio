@@ -192,7 +192,7 @@ export const SignedInHamburgerMenuContent = ({
             <div className="bg-muted/30 rounded-lg p-2 space-y-1">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Audio</p>
               <MenuItem 
-                path="/dashboard/custom-creation?group=prompt_to_audio" 
+                path="/dashboard/audio-studio"
                 label="Audio Studio" 
                 icon={<Music className="h-4 w-4" />} 
               />

@@ -48,6 +48,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const PromptLibrary = lazy(() => import("./pages/PromptLibrary"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const VideoStudio = lazy(() => import("./pages/VideoStudio"));
+const AudioStudioPage = lazy(() => import("./pages/AudioStudioPage"));
 const StoryboardPage = lazy(() => import("./pages/StoryboardPage"));
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout").then(m => ({ default: m.AdminLayout })));
@@ -180,6 +181,7 @@ const AppContent = () => {
               <Route path="templates" element={<RouteErrorBoundary routeName="Dashboard > Templates"><Templates /></RouteErrorBoundary>} />
               <Route path="history" element={<RouteErrorBoundary routeName="Dashboard > History"><History /></RouteErrorBoundary>} />
               <Route path="video-studio" element={<RouteErrorBoundary routeName="Dashboard > Video Studio"><VideoStudio /></RouteErrorBoundary>} />
+              <Route path="audio-studio" element={<RouteErrorBoundary routeName="Dashboard > Audio Studio"><AudioStudioPage /></RouteErrorBoundary>} />
               <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
               <Route path="prompts" element={<RouteErrorBoundary routeName="Dashboard > Prompt Library"><PromptLibrary /></RouteErrorBoundary>} />

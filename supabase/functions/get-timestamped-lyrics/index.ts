@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // Fetch the generation to verify ownership and get provider info
     const { data: generation, error: genError } = await supabase
       .from('generations')
-      .select('id, user_id, provider_task_id, parent_generation_id, provider_response, content_type')
+      .select('id, user_id, provider_task_id, parent_generation_id, provider_response, type')
       .eq('id', generation_id)
       .single();
 

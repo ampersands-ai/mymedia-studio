@@ -219,7 +219,8 @@ export const OutputPanel = memo(OutputPanelComponent, (prevProps, nextProps) => 
     prevProps.captionData === nextProps.captionData &&
     
     prevProps.failedGenerationError === nextProps.failedGenerationError &&
-    prevProps.connectionTier === nextProps.connectionTier
+    prevProps.connectionTier === nextProps.connectionTier &&
+    prevProps.userCredits === nextProps.userCredits
   );
 });
 

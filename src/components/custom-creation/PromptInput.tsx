@@ -28,6 +28,8 @@ interface PromptInputProps {
   generateCaption: boolean;
   onGenerateCaptionChange: (enabled: boolean) => void;
   generatingSurprise: boolean;
+  label?: string;
+  placeholder?: string;
 }
 
 /**
@@ -43,6 +45,8 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   generateCaption,
   onGenerateCaptionChange,
   generatingSurprise,
+  label = "Prompt",
+  placeholder = "Describe what you want to create...",
 }) => {
   const isOverLimit = value.length > maxLength;
   const { enhancePrompt, isEnhancing } = usePromptEnhancement();
@@ -73,7 +77,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-foreground">
-          Prompt {isRequired && <span className="text-destructive">*</span>}
+          {label} {isRequired && <span className="text-destructive">*</span>}
         </label>
         <div className="flex items-center gap-2">
           <Button
@@ -110,7 +114,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Describe what you want to create..."
+        placeholder={placeholder}
         className={`min-h-[120px] bg-background border-border focus:border-primary transition-colors ${
           isOverLimit ? 'border-destructive focus:border-destructive' : ''
         }`}

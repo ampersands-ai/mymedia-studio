@@ -189,6 +189,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   
   // Get selected model details for duration display
   const selectedModelData = filteredModels.find(m => m.record_id === selectedModel);
+  
+  // Determine prompt label and placeholder based on content type
+  const isAudioModel = selectedGroup === 'prompt_to_audio';
+  const promptLabel = isAudioModel ? 'Lyrics' : 'Prompt';
+  const promptPlaceholder = isAudioModel 
+    ? 'Enter your lyrics here...' 
+    : 'Describe what you want to create...';
 
   // Read explicit renderer toggles from schema (with backward-compatible defaults)
   const usePromptRenderer = modelSchema?.usePromptRenderer ?? true;
@@ -299,6 +306,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             generateCaption={generateCaption}
             onGenerateCaptionChange={onGenerateCaptionChange}
             generatingSurprise={generatingSurprise}
+            label={promptLabel}
+            placeholder={promptPlaceholder}
           />
         )}
 

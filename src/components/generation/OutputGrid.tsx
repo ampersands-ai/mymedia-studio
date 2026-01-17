@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { OptimizedGenerationPreview } from "./OptimizedGenerationPreview";
 import { downloadSingleOutput } from "@/lib/download-utils";
+import { GetLyricsButton } from "./GetLyricsButton";
 
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,6 +18,8 @@ interface OutputGridProps {
   onSelectOutput: (index: number) => void;
   onDownloadAll?: () => void;
   onDownloadSuccess?: () => void;
+  userCredits?: number;
+  parentGenerationId?: string;
 }
 
 export const OutputGrid = ({ 
@@ -24,10 +27,13 @@ export const OutputGrid = ({
   contentType, 
   onSelectOutput, 
   onDownloadAll,
-  onDownloadSuccess
+  onDownloadSuccess,
+  userCredits,
+  parentGenerationId,
 }: OutputGridProps) => {
   const isMobile = useIsMobile();
   const isAudio = contentType === 'audio';
+  
   // Single output - show full size
   if (outputs.length === 1) {
     return (
@@ -60,6 +66,16 @@ export const OutputGrid = ({
           />
         </div>
         
+        {/* Get Lyrics button for audio */}
+        {isAudio && parentGenerationId && (
+          <div className="flex justify-center">
+            <GetLyricsButton
+              generationId={parentGenerationId}
+              outputIndex={outputs[0].output_index}
+              userCredits={userCredits}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -133,6 +149,17 @@ export const OutputGrid = ({
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none" />
             </div>
 
+            {/* Get Lyrics button for audio (below each output) */}
+            {isAudio && parentGenerationId && (
+              <div className="flex justify-center mt-2">
+                <GetLyricsButton
+                  generationId={parentGenerationId}
+                  outputIndex={output.output_index}
+                  userCredits={userCredits}
+                  size="sm"
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>

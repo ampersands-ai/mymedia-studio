@@ -32,6 +32,7 @@ interface GenerationConsoleProps {
     generationCompleteTime: number | null;
     generatedOutput: string | null;
     isBackgroundProcessing?: boolean;
+    parentGenerationId?: string | null;
   };
   contentType: string;
   estimatedTimeSeconds: number | null;
@@ -48,6 +49,7 @@ interface GenerationConsoleProps {
   onCopyCaption: () => void;
   onCopyHashtags: () => void;
   onDownloadSuccess: () => void;
+  userCredits?: number;
   failedGenerationError?: {
     message: string;
     generationId: string;
@@ -76,6 +78,7 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
   onCopyCaption,
   onCopyHashtags,
   onDownloadSuccess,
+  userCredits,
   failedGenerationError,
   onClearError,
 }) => {
@@ -193,6 +196,8 @@ export const GenerationConsole: React.FC<GenerationConsoleProps> = ({
                 onSelectOutput={onOpenLightbox}
                 onDownloadAll={onDownloadAll}
                 onDownloadSuccess={onDownloadSuccess}
+                userCredits={userCredits}
+                parentGenerationId={generationState.parentGenerationId || undefined}
               />
 
 

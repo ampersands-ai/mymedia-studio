@@ -19,6 +19,7 @@ interface OutputPanelProps {
     generationCompleteTime: number | null;
     generatedOutput: string | null;
     isBackgroundProcessing?: boolean;
+    parentGenerationId?: string | null;
   };
   contentType: string;
   estimatedTimeSeconds: number | null;
@@ -43,6 +44,7 @@ interface OutputPanelProps {
   modelName?: string;
   connectionTier?: 'realtime' | 'polling' | 'disconnected';
   realtimeConnected?: boolean;
+  userCredits?: number;
   failedGenerationError?: {
     message: string;
     generationId: string;
@@ -82,6 +84,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
       modelName: _modelName,
       connectionTier: _connectionTier = 'disconnected',
       realtimeConnected: _realtimeConnected = false,
+      userCredits,
       failedGenerationError,
       onClearError,
     },
@@ -149,6 +152,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
               onCopyCaption={onCopyCaption}
               onCopyHashtags={onCopyHashtags}
               onDownloadSuccess={onDownloadSuccess}
+              userCredits={userCredits}
               failedGenerationError={failedGenerationError}
               onClearError={onClearError}
             />

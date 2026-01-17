@@ -54,6 +54,9 @@ export const FEATURE_COSTS = {
 
   /** Cost to generate audio/voiceover */
   AUDIO_GENERATION: 0.5,
+
+  /** Cost to fetch timestamped lyrics for audio */
+  LYRICS_FETCH: 0.5,
 } as const;
 
 /**

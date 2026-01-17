@@ -109,14 +109,16 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
               </h3>
 
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <img
-                  src={logoPath}
-                  alt=""
-                  className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.src = '/logos/artifio.png';
-                  }}
-                />
+                <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <img
+                    src={logoPath}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = '/logos/artifio.png';
+                    }}
+                  />
+                </div>
                 <span className="truncate">by {displayProvider}</span>
               </div>
 

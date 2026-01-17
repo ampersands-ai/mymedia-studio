@@ -163,61 +163,74 @@ export function BlackboardStoryboardInput() {
           disabled={isProcessing}
         />
 
-        {/* Video Model Selector */}
+        {/* Video Model Selector - sorted by credit cost */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Video Generation Model</Label>
           <RadioGroup 
             value={videoModelType} 
             onValueChange={(value) => setVideoModelType(value as VideoModelType)}
             disabled={isProcessing}
-            className="grid grid-cols-2 md:grid-cols-4 gap-3"
+            className="grid grid-cols-2 md:grid-cols-3 gap-2"
           >
+            {/* Sorted by credit cost: 21, 25, 30, 42, 50, 125 */}
+            <div className="relative">
+              <RadioGroupItem value="kling25turbo_5s" id="kling25turbo_5s" className="peer sr-only" />
+              <Label 
+                htmlFor="kling25turbo_5s" 
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
+                <span className="text-xs text-muted-foreground">5s • Fast (21 cr)</span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="kling21pro_5s" id="kling21pro_5s" className="peer sr-only" />
+              <Label 
+                htmlFor="kling21pro_5s" 
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.1 Pro</span>
+                <span className="text-xs text-muted-foreground">5s • Cinematic (25 cr)</span>
+              </Label>
+            </div>
             <div className="relative">
               <RadioGroupItem value="lite" id="lite" className="peer sr-only" />
               <Label 
                 htmlFor="lite" 
-                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
               >
                 <span className="font-semibold text-sm">Veo3.1 Lite</span>
-                <span className="text-xs text-muted-foreground">
-                  Fast (30 credits)
-                </span>
+                <span className="text-xs text-muted-foreground">8s • Fast (30 cr)</span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="kling25turbo_10s" id="kling25turbo_10s" className="peer sr-only" />
+              <Label 
+                htmlFor="kling25turbo_10s" 
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
+                <span className="text-xs text-muted-foreground">10s • Fast (42 cr)</span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="kling21pro_10s" id="kling21pro_10s" className="peer sr-only" />
+              <Label 
+                htmlFor="kling21pro_10s" 
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.1 Pro</span>
+                <span className="text-xs text-muted-foreground">10s • Cinematic (50 cr)</span>
               </Label>
             </div>
             <div className="relative">
               <RadioGroupItem value="hq" id="hq" className="peer sr-only" />
               <Label 
                 htmlFor="hq" 
-                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+                className="flex flex-col gap-0.5 p-3 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
               >
                 <span className="font-semibold text-sm">Veo3.1 HQ</span>
-                <span className="text-xs text-muted-foreground">
-                  High quality (125 credits)
-                </span>
-              </Label>
-            </div>
-            <div className="relative">
-              <RadioGroupItem value="kling21pro" id="kling21pro" className="peer sr-only" />
-              <Label 
-                htmlFor="kling21pro" 
-                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
-              >
-                <span className="font-semibold text-sm">Kling 2.1 Pro</span>
-                <span className="text-xs text-muted-foreground">
-                  Cinematic (25 credits)
-                </span>
-              </Label>
-            </div>
-            <div className="relative">
-              <RadioGroupItem value="kling25turbo" id="kling25turbo" className="peer sr-only" />
-              <Label 
-                htmlFor="kling25turbo" 
-                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
-              >
-                <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
-                <span className="text-xs text-muted-foreground">
-                  Fast + quality (21 credits)
-                </span>
+                <span className="text-xs text-muted-foreground">8s • Premium (125 cr)</span>
               </Label>
             </div>
           </RadioGroup>

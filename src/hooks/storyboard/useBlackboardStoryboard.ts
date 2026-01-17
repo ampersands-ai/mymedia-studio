@@ -28,16 +28,26 @@ const TEXT_TO_IMAGE_MODEL_ID = 'c5d6e7f8-9a0b-1c2d-3e4f-5a6b7c8d9e0f'; // Nano B
 const IMAGE_TO_IMAGE_MODEL_ID = 'b4c5d6e7-8f9a-0b1c-2d3e-4f5a6b7c8d9e'; // Nano Banana Pro (I2I)
 const VIDEO_MODEL_LITE_ID = '8aac94cb-5625-47f4-880c-4f0fd8bd83a1'; // Google Veo 3.1 Fast (30 credits)
 const VIDEO_MODEL_HQ_ID = 'a5c2ec16-6294-4588-86b6-7b4182601cda'; // Google Veo 3.1 HQ (125 credits)
-const VIDEO_MODEL_KLING_21_PRO_ID = '84084ca4-4153-46bc-8d01-cd4e37d1da68'; // Kling V2.1 Pro (25 credits)
-const VIDEO_MODEL_KLING_25_TURBO_PRO_ID = 'a3b7c9d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d'; // Kling V2.5 Turbo Pro (21 credits)
+const VIDEO_MODEL_KLING_21_PRO_ID = '84084ca4-4153-46bc-8d01-cd4e37d1da68'; // Kling V2.1 Pro
+const VIDEO_MODEL_KLING_25_TURBO_PRO_ID = 'a3b7c9d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d'; // Kling V2.5 Turbo Pro
 
 const STORAGE_KEY = 'blackboard_storyboard_id';
 
 // Stuck detection threshold (5 minutes)
 export const STUCK_THRESHOLD_MS = 5 * 60 * 1000;
 
+// Video model types sorted by credit cost (lowest first)
+export type VideoModelType = 'kling25turbo_5s' | 'kling21pro_5s' | 'lite' | 'kling25turbo_10s' | 'kling21pro_10s' | 'hq';
 
-export type VideoModelType = 'lite' | 'hq' | 'kling21pro' | 'kling25turbo';
+// Model configuration with duration parameter
+export const VIDEO_MODEL_CONFIG: Record<VideoModelType, { recordId: string; duration?: string; credits: number; label: string; description: string }> = {
+  'kling25turbo_5s': { recordId: VIDEO_MODEL_KLING_25_TURBO_PRO_ID, duration: '5', credits: 21, label: 'Kling 2.5 Turbo', description: '5s • Fast + quality (21 cr)' },
+  'kling21pro_5s': { recordId: VIDEO_MODEL_KLING_21_PRO_ID, duration: '5', credits: 25, label: 'Kling 2.1 Pro', description: '5s • Cinematic (25 cr)' },
+  'lite': { recordId: VIDEO_MODEL_LITE_ID, credits: 30, label: 'Veo3.1 Lite', description: '8s • Fast (30 cr)' },
+  'kling25turbo_10s': { recordId: VIDEO_MODEL_KLING_25_TURBO_PRO_ID, duration: '10', credits: 42, label: 'Kling 2.5 Turbo', description: '10s • Fast + quality (42 cr)' },
+  'kling21pro_10s': { recordId: VIDEO_MODEL_KLING_21_PRO_ID, duration: '10', credits: 50, label: 'Kling 2.1 Pro', description: '10s • Cinematic (50 cr)' },
+  'hq': { recordId: VIDEO_MODEL_HQ_ID, credits: 125, label: 'Veo3.1 HQ', description: '8s • High quality (125 cr)' },
+};
 
 export const createEmptyScene = (isFirst: boolean = false): BlackboardScene => ({
   id: crypto.randomUUID(),
@@ -437,13 +447,8 @@ export const useBlackboardStoryboard = () => {
 
     try {
       const modules = getAllModels();
-      const modelRecordIdMap: Record<VideoModelType, string> = {
-        lite: VIDEO_MODEL_LITE_ID,
-        hq: VIDEO_MODEL_HQ_ID,
-        kling21pro: VIDEO_MODEL_KLING_21_PRO_ID,
-        kling25turbo: VIDEO_MODEL_KLING_25_TURBO_PRO_ID,
-      };
-      const modelRecordId = modelRecordIdMap[modelType];
+      const modelConfig = VIDEO_MODEL_CONFIG[modelType];
+      const modelRecordId = modelConfig.recordId;
       const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === modelRecordId);
       
       if (!modelModule) {
@@ -456,6 +461,15 @@ export const useBlackboardStoryboard = () => {
       // Normalize image URLs to full public URLs
       const normalizedImageUrls = rawImageUrls.map(url => getPublicImageUrl(url));
 
+      // Build custom parameters, including duration for Kling models
+      const customParams: Record<string, any> = {
+        imageUrls: normalizedImageUrls,
+        aspectRatio: "Auto",
+      };
+      if (modelConfig.duration) {
+        customParams.duration = modelConfig.duration;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
           model_id: modelModule.MODEL_CONFIG.modelId,
@@ -463,10 +477,7 @@ export const useBlackboardStoryboard = () => {
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
           prompt: scene.videoPrompt,
-          custom_parameters: {
-            imageUrls: normalizedImageUrls,
-            aspectRatio: "Auto", // Let Veo 3.1 auto-detect from input images
-          },
+          custom_parameters: customParams,
           // Link this generation to the blackboard scene for automatic sync via database trigger
           blackboard_scene_id: scene.id,
         },
@@ -921,13 +932,7 @@ export const useBlackboardStoryboard = () => {
 
   // Calculate estimated costs using actual model cost
   const imageCreditCost = NANO_BANANA_CONFIG.baseCreditCost;
-  const videoCreditCostMap: Record<VideoModelType, number> = {
-    lite: 30,      // Veo3.1 Lite
-    hq: 125,       // Veo3.1 HQ
-    kling21pro: 25,     // Kling V2.1 Pro
-    kling25turbo: 21,   // Kling V2.5 Turbo Pro
-  };
-  const videoCreditCost = videoCreditCostMap[videoModelType];
+  const videoCreditCost = VIDEO_MODEL_CONFIG[videoModelType].credits;
   const estimatedCost = {
     images: scenes.filter(s => !s.generatedImageUrl && s.imagePrompt.trim()).length * imageCreditCost,
     videos: Math.max(0, scenes.filter(s => s.generatedImageUrl).length - 1) * videoCreditCost,

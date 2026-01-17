@@ -176,14 +176,16 @@ export function ModelDirectoryFilters({
                             : "bg-background text-foreground border-transparent hover:border-border hover:bg-muted/50"
                         )}
                       >
-                        <img
-                          src={getProviderLogo(provider.name)}
-                          alt=""
-                          className="w-5 h-5 rounded object-contain"
-                          onError={(e) => {
-                            e.currentTarget.src = '/logos/artifio.png';
-                          }}
-                        />
+                        <div className="w-6 h-6 rounded bg-white p-0.5 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <img
+                            src={getProviderLogo(provider.name)}
+                            alt=""
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = '/logos/artifio.png';
+                            }}
+                          />
+                        </div>
                         <span className="flex-1 text-left truncate">{provider.name}</span>
                         <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                           {provider.count}

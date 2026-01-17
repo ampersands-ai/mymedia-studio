@@ -4,6 +4,8 @@ import { AudioPlayerProvider, useAudioPlayer } from '../hooks/useAudioStudioPlay
 import { AudioStudioSidebar } from './AudioStudioSidebar';
 import { AudioStudioMobileNav } from './AudioStudioMobileNav';
 import { PersistentAudioPlayer, MiniAudioPlayer } from './PersistentAudioPlayer';
+import { FullScreenPlayer } from './FullScreenPlayer';
+import { AudioQueueSheet } from './AudioQueueSheet';
 import type { AudioStudioView } from '../types/audio-studio.types';
 
 interface AudioStudioLayoutProps {
@@ -14,7 +16,8 @@ interface AudioStudioLayoutProps {
 
 function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayoutProps) {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { currentTrack } = useAudioPlayer();
+  const [isQueueOpen, setQueueOpen] = useState(false);
+  const { currentTrack, isFullScreen } = useAudioPlayer();
   const hasActiveTrack = !!currentTrack;
 
   return (
@@ -33,9 +36,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
       <main
         className={cn(
           'transition-all duration-300 pb-24 md:pb-24',
-          // Desktop: account for sidebar
           isSidebarCollapsed ? 'md:ml-16' : 'md:ml-60',
-          // Mobile: full width with bottom padding for nav
           'ml-0'
         )}
       >
@@ -45,7 +46,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
       </main>
 
       {/* Desktop Player */}
-      <PersistentAudioPlayer />
+      <PersistentAudioPlayer onOpenQueue={() => setQueueOpen(true)} />
 
       {/* Mobile Player + Nav */}
       <MiniAudioPlayer />
@@ -54,6 +55,12 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
         onViewChange={onViewChange}
         hasActiveTrack={hasActiveTrack}
       />
+
+      {/* Full Screen Player */}
+      {isFullScreen && <FullScreenPlayer />}
+
+      {/* Queue Sheet */}
+      <AudioQueueSheet open={isQueueOpen} onOpenChange={setQueueOpen} />
     </div>
   );
 }

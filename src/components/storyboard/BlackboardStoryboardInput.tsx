@@ -170,7 +170,7 @@ export function BlackboardStoryboardInput() {
             value={videoModelType} 
             onValueChange={(value) => setVideoModelType(value as VideoModelType)}
             disabled={isProcessing}
-            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3"
           >
             <div className="relative">
               <RadioGroupItem value="lite" id="lite" className="peer sr-only" />
@@ -180,7 +180,7 @@ export function BlackboardStoryboardInput() {
               >
                 <span className="font-semibold text-sm">Veo3.1 Lite</span>
                 <span className="text-xs text-muted-foreground">
-                  Fast video generation (30 credits)
+                  Fast (30 credits)
                 </span>
               </Label>
             </div>
@@ -192,7 +192,31 @@ export function BlackboardStoryboardInput() {
               >
                 <span className="font-semibold text-sm">Veo3.1 HQ</span>
                 <span className="text-xs text-muted-foreground">
-                  Higher quality video (125 credits)
+                  High quality (125 credits)
+                </span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="kling21pro" id="kling21pro" className="peer sr-only" />
+              <Label 
+                htmlFor="kling21pro" 
+                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.1 Pro</span>
+                <span className="text-xs text-muted-foreground">
+                  Cinematic (25 credits)
+                </span>
+              </Label>
+            </div>
+            <div className="relative">
+              <RadioGroupItem value="kling25turbo" id="kling25turbo" className="peer sr-only" />
+              <Label 
+                htmlFor="kling25turbo" 
+                className="flex flex-col gap-1 p-4 rounded-xl border-2 border-border/40 bg-muted/20 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/40"
+              >
+                <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
+                <span className="text-xs text-muted-foreground">
+                  Fast + quality (21 credits)
                 </span>
               </Label>
             </div>

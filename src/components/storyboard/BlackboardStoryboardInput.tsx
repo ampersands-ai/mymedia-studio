@@ -184,7 +184,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
-                  <span className="text-xs text-muted-foreground">5s • Fast (21 cr)</span>
+                  <span className="text-xs text-muted-foreground">5s • Fast (21 ✦)</span>
                 </div>
               </Label>
             </div>
@@ -199,7 +199,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Kling 2.1 Pro</span>
-                  <span className="text-xs text-muted-foreground">5s • Cinematic (25 cr)</span>
+                  <span className="text-xs text-muted-foreground">5s • Cinematic (25 ✦)</span>
                 </div>
               </Label>
             </div>
@@ -214,7 +214,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Veo3.1 Lite</span>
-                  <span className="text-xs text-muted-foreground">8s • Fast (30 cr)</span>
+                  <span className="text-xs text-muted-foreground">8s • Fast (30 ✦)</span>
                 </div>
               </Label>
             </div>
@@ -229,7 +229,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Kling 2.5 Turbo</span>
-                  <span className="text-xs text-muted-foreground">10s • Fast (42 cr)</span>
+                  <span className="text-xs text-muted-foreground">10s • Fast (42 ✦)</span>
                 </div>
               </Label>
             </div>
@@ -244,7 +244,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Kling 2.1 Pro</span>
-                  <span className="text-xs text-muted-foreground">10s • Cinematic (50 cr)</span>
+                  <span className="text-xs text-muted-foreground">10s • Cinematic (50 ✦)</span>
                 </div>
               </Label>
             </div>
@@ -259,7 +259,7 @@ export function BlackboardStoryboardInput() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-sm">Veo3.1 HQ</span>
-                  <span className="text-xs text-muted-foreground">8s • Premium (125 cr)</span>
+                  <span className="text-xs text-muted-foreground">8s • Premium (125 ✦)</span>
                 </div>
               </Label>
             </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AudioStudioLayout } from '@/components/audio-studio/layout/AudioStudioLayout';
 import { HomeView } from '@/components/audio-studio/views/HomeView';
 import { CreateView } from '@/components/audio-studio/views/CreateView';
+import { LibraryView } from '@/components/audio-studio/views/LibraryView';
 import { EmptyState } from '@/components/audio-studio/shared/EmptyState';
 import type { AudioStudioView, CreateTab } from '@/components/audio-studio/types/audio-studio.types';
 
@@ -21,7 +22,7 @@ export default function AudioStudioPage() {
       case 'create':
         return <CreateView initialTab={createTab} />;
       case 'library':
-        return <EmptyState type="library" onAction={() => setActiveView('create')} />;
+        return <LibraryView />;
       case 'favorites':
         return <EmptyState type="favorites" />;
       case 'discover':

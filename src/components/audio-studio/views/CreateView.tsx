@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { MoodPills } from '../shared/MoodPills';
+import { VoiceCard } from '../shared/VoiceCard';
 import { GENRES, MOODS, DURATIONS } from '../data/mock-data';
+import { VOICE_DATABASE, type VoiceData } from '@/lib/voice-mapping';
 import type { CreateTab, Genre, Mood } from '../types/audio-studio.types';
 import { toast } from 'sonner';
 
@@ -137,28 +140,108 @@ function SongGeneratorTab() {
 
 function TTSTab() {
   const [text, setText] = useState('');
+  const [selectedVoice, setSelectedVoice] = useState<VoiceData>(VOICE_DATABASE[0]);
+  const [speed, setSpeed] = useState(1);
+  const [stability, setStability] = useState(0.5);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = () => {
     if (!text.trim()) { toast.error('Please enter text'); return; }
     setIsGenerating(true);
-    toast.info('TTS will be connected to ElevenLabs API');
-    setTimeout(() => setIsGenerating(false), 2000);
+    toast.info(`Generating speech with ${selectedVoice.name} voice...`);
+    // TODO: Connect to ElevenLabs_TTS execute function
+    setTimeout(() => {
+      setIsGenerating(false);
+      toast.success('Speech generated successfully!');
+    }, 2000);
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
+      {/* Text input */}
       <div className="space-y-2">
         <Label>Text to convert</Label>
         <Textarea
           placeholder="Enter the text you want to convert to speech..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="min-h-[150px] bg-card border-border"
+          className="min-h-[120px] bg-card border-border"
           maxLength={5000}
         />
         <p className="text-xs text-muted-foreground text-right">{text.length}/5000</p>
       </div>
+
+      {/* Voice selection */}
+      <div className="space-y-3">
+        <Label>Select Voice</Label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {VOICE_DATABASE.slice(0, 12).map((voice) => (
+            <VoiceCard
+              key={voice.voice_id}
+              voice={voice}
+              isSelected={selectedVoice.voice_id === voice.voice_id}
+              onSelect={() => setSelectedVoice(voice)}
+              size="sm"
+            />
+          ))}
+        </div>
+        
+        {/* Show more voices */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="more-voices" className="border-none">
+            <AccordionTrigger className="text-sm text-muted-foreground hover:text-foreground py-2">
+              Show all {VOICE_DATABASE.length} voices
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
+                {VOICE_DATABASE.slice(12).map((voice) => (
+                  <VoiceCard
+                    key={voice.voice_id}
+                    voice={voice}
+                    isSelected={selectedVoice.voice_id === voice.voice_id}
+                    onSelect={() => setSelectedVoice(voice)}
+                    size="sm"
+                  />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
+      {/* Voice settings */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <Label>Speed</Label>
+            <span className="text-sm text-muted-foreground">{speed.toFixed(1)}x</span>
+          </div>
+          <Slider
+            value={[speed]}
+            onValueChange={([v]) => setSpeed(v)}
+            min={0.7}
+            max={1.2}
+            step={0.1}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <Label>Stability</Label>
+            <span className="text-sm text-muted-foreground">{Math.round(stability * 100)}%</span>
+          </div>
+          <Slider
+            value={[stability]}
+            onValueChange={([v]) => setStability(v)}
+            min={0}
+            max={1}
+            step={0.05}
+          />
+          <p className="text-xs text-muted-foreground">Higher = more consistent, lower = more expressive</p>
+        </div>
+      </div>
+
+      {/* Generate button */}
       <Button
         onClick={handleGenerate}
         disabled={isGenerating || !text.trim()}

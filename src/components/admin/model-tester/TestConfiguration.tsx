@@ -63,14 +63,14 @@ export function TestConfiguration({
 
               {prop.enum ? (
                 <Select
-                  value={value}
+                  value={value || prop.default || prop.enum[0] || undefined}
                   onValueChange={(val) => onParameterChange(key, val)}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder={`Select ${prop.title || key}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    {prop.enum.map((option: string) => (
+                    {prop.enum.filter((option: string) => option !== '').map((option: string) => (
                       <SelectItem key={option} value={option}>
                         {option}
                       </SelectItem>

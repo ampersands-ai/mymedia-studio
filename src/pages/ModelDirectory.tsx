@@ -26,13 +26,14 @@ export default function ModelDirectory() {
     const providerCounts = new Map<string, number>();
     
     models.forEach(model => {
-      // Count content types from content_type_groups
-      if (model.content_type_groups) {
-        model.content_type_groups.forEach(group => {
+      // Count content types from content_type_groups (safely handle null/undefined/non-array)
+      const groups = Array.isArray(model.content_type_groups) ? model.content_type_groups : [];
+      groups.forEach(group => {
+        if (group?.content_type) {
           const current = contentTypeCounts.get(group.content_type) || 0;
           contentTypeCounts.set(group.content_type, current + 1);
-        });
-      }
+        }
+      });
       
       // Count providers
       const displayProvider = model.display_provider || getDisplayProvider(model.provider);

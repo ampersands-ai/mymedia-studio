@@ -159,11 +159,18 @@ export default function EmailSettings() {
 
   const updateSetting = (path: string[], value: unknown) => {
     setSettings((prev) => {
-      const newSettings = { ...prev };
+      // Deep clone to avoid mutation issues
+      const newSettings = JSON.parse(JSON.stringify(prev)) as typeof prev;
       let current: Record<string, unknown> = newSettings.admin_notifications as unknown as Record<string, unknown>;
+      
+      // Safely traverse the path, creating objects if they don't exist
       for (let i = 0; i < path.length - 1; i++) {
+        if (!current[path[i]] || typeof current[path[i]] !== 'object') {
+          current[path[i]] = {};
+        }
         current = current[path[i]] as Record<string, unknown>;
       }
+      
       current[path[path.length - 1]] = value;
       return newSettings;
     });

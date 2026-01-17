@@ -860,6 +860,7 @@ const CustomCreation = () => {
               realtimeConnected={realtimeConnected}
               failedGenerationError={state.failedGenerationError}
               onClearError={handleClearError}
+              userCredits={userTokens?.tokens}
             />
           </div>
         </div>

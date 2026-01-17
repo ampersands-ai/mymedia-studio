@@ -3,7 +3,10 @@ import { AudioStudioLayout } from '@/components/audio-studio/layout/AudioStudioL
 import { HomeView } from '@/components/audio-studio/views/HomeView';
 import { CreateView } from '@/components/audio-studio/views/CreateView';
 import { LibraryView } from '@/components/audio-studio/views/LibraryView';
-import { EmptyState } from '@/components/audio-studio/shared/EmptyState';
+import { DiscoverView } from '@/components/audio-studio/views/DiscoverView';
+import { ChartsView } from '@/components/audio-studio/views/ChartsView';
+import { FavoritesView } from '@/components/audio-studio/views/FavoritesView';
+import { SettingsView } from '@/components/audio-studio/views/SettingsView';
 import type { AudioStudioView, CreateTab } from '@/components/audio-studio/types/audio-studio.types';
 
 export default function AudioStudioPage() {
@@ -23,17 +26,14 @@ export default function AudioStudioPage() {
         return <CreateView initialTab={createTab} />;
       case 'library':
         return <LibraryView />;
-      case 'favorites':
-        return <EmptyState type="favorites" />;
       case 'discover':
+        return <DiscoverView />;
       case 'charts':
+        return <ChartsView />;
+      case 'favorites':
+        return <FavoritesView />;
       case 'settings':
-        return (
-          <div className="text-center py-16">
-            <h2 className="text-xl font-bold text-foreground mb-2 capitalize">{activeView}</h2>
-            <p className="text-muted-foreground">Coming soon</p>
-          </div>
-        );
+        return <SettingsView />;
       default:
         return <HomeView onNavigateToCreate={handleNavigateToCreate} />;
     }

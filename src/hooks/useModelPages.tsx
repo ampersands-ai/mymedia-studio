@@ -105,13 +105,47 @@ export function useModelDirectory(category?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      return (data || []).map((page: Record<string, unknown>) => ({
-        ...page,
-        highlights: (page.highlights as unknown as HighlightItem[]) || [],
-        use_cases: (page.use_cases as unknown as UseCaseItem[]) || [],
-        faqs: (page.faqs as unknown as FAQItem[]) || [],
-        specifications: (page.specifications as Record<string, unknown>) || {},
-      })) as ModelPage[];
+      return (data || []).map((page: Record<string, unknown>) => {
+        const highlights = Array.isArray(page.highlights)
+          ? (page.highlights as unknown as HighlightItem[])
+          : [];
+
+        const use_cases = Array.isArray(page.use_cases)
+          ? (page.use_cases as unknown as UseCaseItem[])
+          : [];
+
+        const faqs = Array.isArray(page.faqs)
+          ? (page.faqs as unknown as FAQItem[])
+          : [];
+
+        const specifications =
+          (page.specifications as Record<string, unknown>) || {};
+
+        const content_type_groups = Array.isArray(page.content_type_groups)
+          ? (page.content_type_groups as unknown as ContentTypeGroup[])
+          : [];
+
+        const hidden_content_types = Array.isArray(page.hidden_content_types)
+          ? (page.hidden_content_types as unknown as string[])
+          : [];
+
+        const model_record_ids = Array.isArray(page.model_record_ids)
+          ? (page.model_record_ids as unknown as string[])
+          : null;
+
+        return {
+          ...page,
+          highlights,
+          use_cases,
+          faqs,
+          specifications,
+          content_type_groups,
+          hidden_content_types,
+          model_record_ids,
+          is_featured: Boolean(page.is_featured),
+          is_published: Boolean(page.is_published),
+        };
+      }) as ModelPage[];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

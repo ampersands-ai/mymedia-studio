@@ -94,13 +94,6 @@ export const CinematicNav = () => {
             <NavDropdownProvider>
               <StudioDropdown align="center" />
               <LibraryDropdown align="center" />
-              <Link
-                to="/models"
-                className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
-              >
-                <Cpu className="h-4 w-4" />
-                Models
-              </Link>
             </NavDropdownProvider>
           ) : (
             visibleNavItems.map((item) => (

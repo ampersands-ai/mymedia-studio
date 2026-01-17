@@ -829,6 +829,7 @@ const CustomCreation = () => {
                 generationCompleteTime: state.generationCompleteTime,
                 generatedOutput: state.generatedOutput,
                 isBackgroundProcessing: state.isBackgroundProcessing,
+                parentGenerationId: state.parentGenerationId,
               }}
               contentType={contentType}
               estimatedTimeSeconds={currentModel?.estimated_time_seconds || null}

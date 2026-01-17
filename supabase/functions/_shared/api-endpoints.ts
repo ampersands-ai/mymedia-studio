@@ -27,6 +27,7 @@ export const KIE_AI_ENDPOINTS = {
   CREATE_TASK: '/api/v1/jobs/createTask',
   MP4_GENERATE: '/api/v1/mp4/generate',
   MP4_RECORD_INFO: '/api/v1/mp4/record-info',
+  GET_TIMESTAMPED_LYRICS: '/api/v1/generate/get-timestamped-lyrics',
 
   // Helper to build full URLs
   getFullUrl(path: string): string {
@@ -42,6 +43,9 @@ export const KIE_AI_ENDPOINTS = {
   },
   get mp4GenerateUrl(): string {
     return this.getFullUrl(this.MP4_GENERATE);
+  },
+  get timestampedLyricsUrl(): string {
+    return this.getFullUrl(this.GET_TIMESTAMPED_LYRICS);
   },
 } as const;
 

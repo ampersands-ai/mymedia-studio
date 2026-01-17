@@ -8,6 +8,7 @@ import { VideoPlayer } from "./VideoPlayer";
 import { AudioPlayer } from "./AudioPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionSelector } from "@/components/collections";
+import { GetLyricsButton } from "@/components/generation/GetLyricsButton";
 import type { Generation } from "../hooks/useGenerationHistory";
 import { formatGenerationTime } from "../utils/formatGenerationTime";
 
@@ -19,6 +20,7 @@ interface GenerationDetailsModalProps {
   onDownload: (storagePath: string | null, type: string, outputUrl?: string | null) => void;
   onDelete: (id: string) => void;
   onReport: (generation: Generation) => void;
+  userCredits?: number;
 }
 
 const getTypeIcon = (type: string) => {
@@ -75,6 +77,7 @@ export const GenerationDetailsModal = ({
   onDownload,
   onDelete,
   onReport,
+  userCredits = 0,
 }: GenerationDetailsModalProps) => {
   if (!generation) return null;
 
@@ -154,11 +157,20 @@ export const GenerationDetailsModal = ({
                   className="max-w-full max-h-[60vh] w-auto h-auto object-contain"
                 />
               ) : generation.type === "audio" ? (
-                <AudioPlayer
-                  generation={generation}
-                  className="w-full h-full"
-                  showControls={true}
-                />
+                <div className="w-full space-y-4 p-4">
+                  <AudioPlayer
+                    generation={generation}
+                    className="w-full"
+                    showControls={true}
+                  />
+                  <div className="flex justify-center">
+                    <GetLyricsButton
+                      generationId={generation.parent_generation_id || generation.id}
+                      outputIndex={generation.output_index ?? 0}
+                      userCredits={userCredits}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   {getTypeIcon(generation.type)}

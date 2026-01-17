@@ -11,6 +11,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { GallerySkeleton } from "@/components/ui/skeletons/GallerySkeleton";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
+import { useUserTokens } from "@/hooks/useUserTokens";
 import { useGenerationHistory } from "./hooks/useGenerationHistory";
 import { useGenerationFilters } from "./hooks/useGenerationFilters";
 import { useGenerationActions } from "./hooks/useGenerationActions";
@@ -53,6 +54,9 @@ const History = () => {
 
   // Fetch available models for filter dropdown
   const { data: availableModels = [] } = useAvailableModels();
+  
+  // Fetch user tokens for lyrics button
+  const { data: userTokens } = useUserTokens();
 
   // Fetch data
   const {
@@ -269,6 +273,7 @@ const History = () => {
         onDownload={handleDownloadWithOnboarding}
         onDelete={handleDelete}
         onReport={handleReportTokenIssue}
+        userCredits={userTokens?.tokens_remaining}
       />
 
       {/* Report Token Issue Dialog */}

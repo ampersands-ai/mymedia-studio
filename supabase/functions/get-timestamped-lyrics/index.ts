@@ -215,23 +215,79 @@ Deno.serve(async (req) => {
     }
 
     const lyricsData = await lyricsResponse.json();
-    
-    logger.logDuration('Lyrics fetch completed', startTime, {
-      metadata: { 
-        generation_id,
-        has_lyrics: Boolean(lyricsData?.data?.lyrics || lyricsData?.lyrics)
+
+    // Normalize provider payload into a stable shape for the client.
+    // Kie may return either { lyrics: [...] } OR { alignedWords: [...] }.
+    const providerPayload = (lyricsData?.data ?? lyricsData) as Record<string, unknown>;
+
+    let normalizedPayload: Record<string, unknown> = providerPayload;
+
+    const alignedWords = (providerPayload as { alignedWords?: Array<Record<string, unknown>> })?.alignedWords;
+    if (Array.isArray(alignedWords) && alignedWords.length > 0) {
+      const lines: LyricsLine[] = [];
+      let currentParts: Array<{ text: string; startS: number; endS: number }> = [];
+
+      const pushLine = () => {
+        if (currentParts.length === 0) return;
+        const lineText = currentParts.map(p => p.text).join('').trim();
+        if (!lineText) {
+          currentParts = [];
+          return;
+        }
+        lines.push({
+          text: lineText,
+          start_time: currentParts[0].startS,
+          end_time: currentParts[currentParts.length - 1].endS,
+        });
+        currentParts = [];
+      };
+
+      for (const w of alignedWords) {
+        const word = String((w as { word?: unknown }).word ?? '');
+        const startS = Number((w as { startS?: unknown }).startS ?? 0);
+        const endS = Number((w as { endS?: unknown }).endS ?? startS);
+
+        // Newlines in the word indicate line breaks / section breaks.
+        const parts = word.split('\n');
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (part) currentParts.push({ text: part, startS, endS });
+          if (i < parts.length - 1) pushLine();
+        }
       }
+      pushLine();
+
+      const rawText = alignedWords
+        .map(w => String((w as { word?: unknown }).word ?? ''))
+        .join('')
+        .trim();
+
+      normalizedPayload = {
+        lyrics: lines,
+        raw_text: rawText,
+      };
+    }
+
+    logger.logDuration('Lyrics fetch completed', startTime, {
+      metadata: {
+        generation_id,
+        has_lyrics: Boolean(
+          (providerPayload as { lyrics?: unknown }).lyrics ||
+            (providerPayload as { raw_text?: unknown }).raw_text ||
+            (providerPayload as { alignedWords?: unknown }).alignedWords,
+        ),
+      },
     });
 
     // Return the lyrics data
     return new Response(
       JSON.stringify({
         success: true,
-        data: lyricsData?.data || lyricsData,
+        data: normalizedPayload,
         credits_used: LYRICS_FETCH_COST,
         credits_remaining: deductResultData?.tokens_remaining,
       }),
-      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...responseHeaders, 'Content-Type': 'application/json' } },
     );
 
   } catch (error) {

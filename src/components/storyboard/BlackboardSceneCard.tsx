@@ -58,7 +58,8 @@ export function BlackboardSceneCard({
   const hasImage = !!scene.generatedImageUrl;
   const hasVideo = !!scene.generatedVideoUrl;
   const isLastScene = index === totalScenes - 1;
-  const canGenerateVideo = hasImage && nextSceneHasImage && !isLastScene;
+  // Last scene can generate an outro video using its own image as both start/end
+  const canGenerateVideo = hasImage && (nextSceneHasImage || isLastScene);
 
   // Normalize URLs to handle both full URLs and storage paths
   const normalizedImageUrl = scene.generatedImageUrl 
@@ -166,28 +167,25 @@ export function BlackboardSceneCard({
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Film className="w-4 h-4 text-primary" />
                     Video Prompt
-                    {!isLastScene && (
-                      <span className="text-xs text-muted-foreground font-normal">
-                        (Scene {index + 1} → {index + 2})
-                      </span>
-                    )}
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {isLastScene 
+                        ? "(Outro - optional)" 
+                        : `(Scene ${index + 1} → ${index + 2})`}
+                    </span>
                   </Label>
                   <Textarea
                     value={scene.videoPrompt}
                     onChange={(e) => onUpdate({ videoPrompt: e.target.value })}
                     placeholder={isLastScene 
-                      ? "Add another scene to enable video generation between scenes..."
+                      ? "Optional: Describe motion for an outro effect using this image..."
                       : "Describe the motion/transition between this scene and the next..."
                     }
-                    disabled={disabled || isLastScene}
-                    className={cn(
-                      "min-h-[100px] resize-none bg-muted/30 border-border/40 focus:border-primary/50",
-                      isLastScene && "opacity-50"
-                    )}
+                    disabled={disabled}
+                    className="min-h-[100px] resize-none bg-muted/30 border-border/40 focus:border-primary/50"
                   />
                   {isLastScene && (
                     <p className="text-xs text-muted-foreground italic">
-                      This is the last scene. Add another scene to create a video transition.
+                      Optional outro: Leave empty to skip, or add a prompt to animate this scene.
                     </p>
                   )}
                 </div>
@@ -339,39 +337,39 @@ export function BlackboardSceneCard({
                       </Tooltip>
                     </TooltipProvider>
 
-                    {/* Generate/Regenerate Video Button - Only for non-last scenes */}
-                    {!isLastScene && (
-                      <Button 
-                        className={cn(
-                          "flex-1 w-full sm:w-auto",
-                          hasVideo && "bg-muted hover:bg-muted/80 text-foreground",
-                          isStuck && "border-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
-                        )}
-                        variant={hasVideo ? "outline" : isStuck ? "outline" : "default"}
-                        onClick={hasVideo || isStuck ? onRegenerateVideo : onGenerateVideo}
-                        disabled={
-                          disabled || 
-                          (isVideoGenerating && !isStuck) || // Allow regeneration when stuck
-                          !canGenerateVideo ||
-                          (!hasVideo && !isStuck && !scene.videoPrompt.trim())
-                        }
-                      >
-                        {isVideoGenerating && !isStuck ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : isStuck ? (
-                          <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
-                        ) : hasVideo ? (
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                        ) : (
-                          <Sparkles className="w-4 h-4 mr-2" />
-                        )}
-                        {isStuck 
-                          ? 'Retry (Stuck)' 
-                          : hasVideo 
-                            ? 'Regenerate Video' 
+                    {/* Generate/Regenerate Video Button - Available for all scenes (last scene = optional outro) */}
+                    <Button 
+                      className={cn(
+                        "flex-1 w-full sm:w-auto",
+                        hasVideo && "bg-muted hover:bg-muted/80 text-foreground",
+                        isStuck && "border-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
+                      )}
+                      variant={hasVideo ? "outline" : isStuck ? "outline" : "default"}
+                      onClick={hasVideo || isStuck ? onRegenerateVideo : onGenerateVideo}
+                      disabled={
+                        disabled || 
+                        (isVideoGenerating && !isStuck) || // Allow regeneration when stuck
+                        !canGenerateVideo ||
+                        (!hasVideo && !isStuck && !scene.videoPrompt.trim())
+                      }
+                    >
+                      {isVideoGenerating && !isStuck ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : isStuck ? (
+                        <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
+                      ) : hasVideo ? (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 mr-2" />
+                      )}
+                      {isStuck 
+                        ? 'Retry (Stuck)' 
+                        : hasVideo 
+                          ? 'Regenerate Video' 
+                          : isLastScene 
+                            ? `Outro Video (${videoCreditCost})` 
                             : `Generate Video (${videoCreditCost})`}
-                      </Button>
-                    )}
+                    </Button>
 
                     {/* Check Status Button - shown when generating or has prompt but no preview */}
                     {(isImageGenerating || isVideoGenerating || (!hasImage && scene.imagePrompt.trim()) || (!hasVideo && scene.videoPrompt.trim() && !isLastScene)) && (

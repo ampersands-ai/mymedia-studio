@@ -45,10 +45,11 @@ export function ModelPageHero({ modelPage, onTryModel, onTryVariant }: ModelPage
   };
 
   // Get visible content type groups (filter out hidden ones)
-  const contentTypeGroups = modelPage.content_type_groups || [];
+  const rawContentTypeGroups = modelPage.content_type_groups;
+  const contentTypeGroups = Array.isArray(rawContentTypeGroups) ? rawContentTypeGroups : [];
   const hiddenContentTypes = modelPage.hidden_content_types || [];
   const visibleGroups = contentTypeGroups.filter(
-    (group) => !hiddenContentTypes.includes(group.content_type)
+    (group: { content_type: string }) => !hiddenContentTypes.includes(group.content_type)
   );
 
   const hasMultipleVariants = visibleGroups.length > 1;

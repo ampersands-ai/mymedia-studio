@@ -35,6 +35,7 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
     'lip_sync': 'video',
     'video_to_video': 'video',
     'prompt_to_audio': 'audio',
+    'text_to_speech': 'audio',
   };
 
   const type = typeMap[contentType];
@@ -115,6 +116,9 @@ import * as SunoV4_5 from "./prompt_to_audio/Suno_V4_5";
 import * as SunoV4_5_Plus from "./prompt_to_audio/Suno_V4_5_Plus";
 import * as SunoV4_5_All from "./prompt_to_audio/Suno_V4_5_All";
 import * as SunoV5 from "./prompt_to_audio/Suno_V5";
+
+// Text to Speech Models (1)
+import * as ElevenLabsDialogueV3 from "./text_to_speech/ElevenLabs_Dialogue_V3";
 
 // Prompt to Image Models (32)
 import * as ChatGPT4oImage_PromptToImage from "./prompt_to_image/ChatGPT_4o_Image";
@@ -307,6 +311,11 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   "8c9d0e1f-2a3b-4c5d-6e7f-7a8b9c0d1e2f": SunoV4_5_Plus as ModelModule,                     // Suno V4.5+
   "9d0e1f2a-3b4c-5d6e-7f8a-8b9c0d1e2f3a": SunoV4_5_All as ModelModule,                      // Suno V4.5ALL
   "0e1f2a3b-4c5d-6e7f-8a9b-9c0d1e2f3a4b": SunoV5 as ModelModule,                            // Suno V5
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEXT TO SPEECH MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d": ElevenLabsDialogueV3 as ModelModule,              // ElevenLabs Dialogue V3
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE EDITING MODELS (20 total)

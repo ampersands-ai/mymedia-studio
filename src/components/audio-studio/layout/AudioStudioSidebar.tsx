@@ -76,7 +76,7 @@ export function AudioStudioSidebar({
       {!isCollapsed && (
         <div className="absolute bottom-4 left-0 right-0 px-4">
           <div className="rounded-lg bg-gradient-to-r from-primary-orange/10 to-accent-purple/10 p-3 border border-primary-orange/20">
-            <p className="text-xs font-semibold text-foreground">Audio Studio</p>
+            <p className="text-xs font-semibold text-foreground">Music Studio</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">Powered by AI</p>
           </div>
         </div>

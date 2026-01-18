@@ -195,7 +195,7 @@ export const SignedInHamburgerMenuContent = ({
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Audio</p>
               <MenuItem 
                 path="/dashboard/audio-studio"
-                label="Audio Studio" 
+                label="Music Studio" 
                 icon={<Music className="h-4 w-4" />} 
               />
             </div>

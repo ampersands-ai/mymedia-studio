@@ -1478,6 +1478,48 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 60,
     isActive: true,
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEXT TO AUDIO MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "a1b2c3d4-5e6f-0a1b-2c3d-e4f5a6b7c8d9": {
+    recordId: "a1b2c3d4-5e6f-0a1b-2c3d-e4f5a6b7c8d9",
+    modelId: "elevenlabs/sound-effect-v2",
+    modelName: "ElevenLabs Sound Effect V2",
+    provider: "kie_ai",
+    contentType: "text_to_audio",
+    baseCreditCost: 1,
+    estimatedTimeSeconds: 15,
+    isActive: true,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPEECH TO TEXT MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "b2c3d4e5-6f0a-1b2c-3d4e-f5a6b7c8d9e0": {
+    recordId: "b2c3d4e5-6f0a-1b2c-3d4e-f5a6b7c8d9e0",
+    modelId: "elevenlabs/speech-to-text",
+    modelName: "ElevenLabs Speech-to-Text",
+    provider: "kie_ai",
+    contentType: "speech_to_text",
+    baseCreditCost: 2,
+    estimatedTimeSeconds: 60,
+    isActive: true,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AUDIO TO AUDIO MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "c3d4e5f6-0a1b-2c3d-4e5f-a6b7c8d9e0f1": {
+    recordId: "c3d4e5f6-0a1b-2c3d-4e5f-a6b7c8d9e0f1",
+    modelId: "elevenlabs/audio-isolation",
+    modelName: "ElevenLabs Audio Isolation",
+    provider: "kie_ai",
+    contentType: "audio_to_audio",
+    baseCreditCost: 1,
+    estimatedTimeSeconds: 30,
+    isActive: true,
+  },
 };
 
 /**

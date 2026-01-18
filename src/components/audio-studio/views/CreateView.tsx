@@ -349,6 +349,7 @@ function VoiceChangerTab() {
   const [file, setFile] = useState<File | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<VoiceData>(VOICE_DATABASE[0]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -363,26 +364,52 @@ function VoiceChangerTab() {
         return;
       }
       setFile(selectedFile);
+      setResult(null);
       toast.success(`Selected: ${selectedFile.name}`);
     }
   };
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (!file) {
       toast.error('Please upload an audio file');
       return;
     }
     setIsProcessing(true);
     toast.info(`Converting voice to ${selectedVoice.name}...`);
-    setTimeout(() => {
-      setIsProcessing(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('voice_id', selectedVoice.voice_id);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-voice-changer`,
+        {
+          method: 'POST',
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
+      setResult(audioUrl);
       toast.success('Voice conversion complete!');
-    }, 3000);
+    } catch (error) {
+      console.error('Voice changer error:', error);
+      toast.error(error instanceof Error ? error.message : 'Voice conversion failed');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* File Upload */}
       <Card
         className={cn(
           'border-2 border-dashed p-8 cursor-pointer transition-colors hover:border-primary-orange/50',
@@ -390,22 +417,14 @@ function VoiceChangerTab() {
         )}
         onClick={() => fileInputRef.current?.click()}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileSelect} className="hidden" />
         <div className="flex flex-col items-center gap-3 text-center">
           {file ? (
             <>
               <FileAudio className="h-12 w-12 text-primary-orange" />
               <div>
                 <p className="font-medium text-foreground">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
+                <p className="text-sm text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
               </div>
               <Button variant="outline" size="sm">Change File</Button>
             </>
@@ -414,36 +433,30 @@ function VoiceChangerTab() {
               <Upload className="h-12 w-12 text-muted-foreground" />
               <div>
                 <p className="font-medium text-foreground">Upload Audio File</p>
-                <p className="text-sm text-muted-foreground">
-                  Drag & drop or click to select (MP3, WAV, M4A up to 50MB)
-                </p>
+                <p className="text-sm text-muted-foreground">MP3, WAV, M4A up to 50MB</p>
               </div>
             </>
           )}
         </div>
       </Card>
 
-      {/* Target Voice Selection */}
       <div className="space-y-3">
         <Label>Target Voice</Label>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {VOICE_DATABASE.slice(0, 8).map((voice) => (
-            <VoiceCard
-              key={voice.voice_id}
-              voice={voice}
-              isSelected={selectedVoice.voice_id === voice.voice_id}
-              onSelect={() => setSelectedVoice(voice)}
-              size="sm"
-            />
+            <VoiceCard key={voice.voice_id} voice={voice} isSelected={selectedVoice.voice_id === voice.voice_id} onSelect={() => setSelectedVoice(voice)} size="sm" />
           ))}
         </div>
       </div>
 
-      <Button
-        onClick={handleProcess}
-        disabled={isProcessing || !file}
-        className="w-full h-12 bg-gradient-to-r from-accent-purple to-primary-orange hover:opacity-90 text-black font-bold"
-      >
+      {result && (
+        <Card className="p-4 border-primary-orange/50 bg-primary-orange/5">
+          <Label className="mb-2 block">Result</Label>
+          <audio src={result} controls className="w-full" />
+        </Card>
+      )}
+
+      <Button onClick={handleProcess} disabled={isProcessing || !file} className="w-full h-12 bg-gradient-to-r from-accent-purple to-primary-orange hover:opacity-90 text-black font-bold">
         {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Mic className="h-5 w-5 mr-2" />}
         {isProcessing ? 'Processing...' : 'Convert Voice'}
       </Button>
@@ -550,6 +563,7 @@ function StemSeparationTab() {
   const [file, setFile] = useState<File | null>(null);
   const [stems, setStems] = useState({ vocals: true, drums: true, bass: true, other: true });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [result, setResult] = useState<{ vocals?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -564,11 +578,12 @@ function StemSeparationTab() {
         return;
       }
       setFile(selectedFile);
+      setResult(null);
       toast.success(`Selected: ${selectedFile.name}`);
     }
   };
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (!file) {
       toast.error('Please upload an audio file');
       return;
@@ -580,15 +595,42 @@ function StemSeparationTab() {
     }
     setIsProcessing(true);
     toast.info(`Separating ${selectedStems.join(', ')}...`);
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('stems', JSON.stringify(stems));
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stem-separation`,
+        {
+          method: 'POST',
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      if (data.stems?.vocals) {
+        setResult({ vocals: `data:audio/mpeg;base64,${data.stems.vocals}` });
+      }
+      toast.success('Stem separation complete! (Vocals extracted)');
+      if (data.note) toast.info(data.note);
+    } catch (error) {
+      console.error('Stem separation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Stem separation failed');
+    } finally {
       setIsProcessing(false);
-      toast.success('Stem separation complete!');
-    }, 4000);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* File Upload */}
       <Card
         className={cn(
           'border-2 border-dashed p-8 cursor-pointer transition-colors hover:border-accent-purple/50',
@@ -596,22 +638,14 @@ function StemSeparationTab() {
         )}
         onClick={() => fileInputRef.current?.click()}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileSelect} className="hidden" />
         <div className="flex flex-col items-center gap-3 text-center">
           {file ? (
             <>
               <FileAudio className="h-12 w-12 text-accent-purple" />
               <div>
                 <p className="font-medium text-foreground">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
+                <p className="text-sm text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
               </div>
               <Button variant="outline" size="sm">Change File</Button>
             </>
@@ -620,33 +654,24 @@ function StemSeparationTab() {
               <Upload className="h-12 w-12 text-muted-foreground" />
               <div>
                 <p className="font-medium text-foreground">Upload Audio File</p>
-                <p className="text-sm text-muted-foreground">
-                  Upload a song to separate into stems (up to 100MB)
-                </p>
+                <p className="text-sm text-muted-foreground">Upload a song to separate (up to 100MB)</p>
               </div>
             </>
           )}
         </div>
       </Card>
 
-      {/* Stem Selection */}
       <div className="space-y-3">
         <Label>Select Stems to Extract</Label>
         <div className="grid grid-cols-2 gap-3">
           {Object.entries(stems).map(([stem, enabled]) => (
             <Card
               key={stem}
-              className={cn(
-                'p-4 cursor-pointer transition-colors',
-                enabled ? 'border-accent-purple bg-accent-purple/10' : 'border-border hover:border-muted-foreground'
-              )}
+              className={cn('p-4 cursor-pointer transition-colors', enabled ? 'border-accent-purple bg-accent-purple/10' : 'border-border hover:border-muted-foreground')}
               onClick={() => setStems(prev => ({ ...prev, [stem]: !prev[stem as keyof typeof stems] }))}
             >
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  'h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold',
-                  enabled ? 'bg-accent-purple text-white' : 'bg-muted text-muted-foreground'
-                )}>
+                <div className={cn('h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold', enabled ? 'bg-accent-purple text-white' : 'bg-muted text-muted-foreground')}>
                   {stem[0].toUpperCase()}
                 </div>
                 <span className="font-medium capitalize">{stem}</span>
@@ -654,13 +679,17 @@ function StemSeparationTab() {
             </Card>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground">Note: Currently vocal extraction is supported. Full stem separation coming soon.</p>
       </div>
 
-      <Button
-        onClick={handleProcess}
-        disabled={isProcessing || !file}
-        className="w-full h-12 bg-gradient-to-r from-accent-purple to-accent-pink hover:opacity-90 text-white font-bold"
-      >
+      {result?.vocals && (
+        <Card className="p-4 border-accent-purple/50 bg-accent-purple/5">
+          <Label className="mb-2 block">Extracted Vocals</Label>
+          <audio src={result.vocals} controls className="w-full" />
+        </Card>
+      )}
+
+      <Button onClick={handleProcess} disabled={isProcessing || !file} className="w-full h-12 bg-gradient-to-r from-accent-purple to-accent-pink hover:opacity-90 text-white font-bold">
         {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Scissors className="h-5 w-5 mr-2" />}
         {isProcessing ? 'Separating...' : 'Separate Stems'}
       </Button>

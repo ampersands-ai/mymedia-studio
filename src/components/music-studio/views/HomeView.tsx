@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Music, Mic, Volume2, Zap, Sparkles } from 'lucide-react';
+import { Music, Mic, Volume2, Zap, Sparkles, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { CreateTab } from '../types/music-studio.types';
@@ -9,6 +9,7 @@ const CREATION_MODES = [
   { id: 'voice', tab: 'voice' as CreateTab, icon: Mic, title: 'Voice Changer', color: 'accent-purple' },
   { id: 'tts', tab: 'tts' as CreateTab, icon: Volume2, title: 'Text to Speech', color: 'accent-pink' },
   { id: 'sfx', tab: 'sfx' as CreateTab, icon: Zap, title: 'Sound Effects', color: 'primary-orange' },
+  { id: 'dialogue', tab: 'dialogue' as CreateTab, icon: MessageSquare, title: 'AI Dialogue', color: 'accent-purple' },
 ];
 
 interface HomeViewProps {

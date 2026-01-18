@@ -14,7 +14,8 @@ export type CreateTab =
   | 'voice' 
   | 'tts' 
   | 'sfx' 
-  | 'stems';
+  | 'stems'
+  | 'dialogue';
 
 export type Genre = 
   | 'pop' 

@@ -258,8 +258,8 @@ export function calculateCost(inputs: Record<string, unknown>): number {
   if (totalChars === 0) {
     return MODEL_CONFIG.minCreditCost;
   }
-  
-  const cost = Math.ceil((totalChars / 1000) * MODEL_CONFIG.creditsPerThousandChars);
+  // Round up character blocks, then multiply by rate
+  const cost = Math.ceil(totalChars / 1000) * MODEL_CONFIG.creditsPerThousandChars;
   return Math.max(cost, MODEL_CONFIG.minCreditCost);
 }
 

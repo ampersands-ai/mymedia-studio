@@ -51,7 +51,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
           <Link
             to="/dashboard/history"
             onClick={() => setOpenDropdown(null)}
-            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px]"
           >
             <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
               <History className="h-4 w-4" />
@@ -65,7 +65,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
           <Link
             to="/dashboard/prompts"
             onClick={() => setOpenDropdown(null)}
-            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px]"
           >
             <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
               <MessageSquare className="h-4 w-4" />
@@ -80,7 +80,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
             <Link
               to="/dashboard/templates"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
                 <LayoutTemplate className="h-4 w-4" />
@@ -95,7 +95,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
           <Link
             to="/models"
             onClick={() => setOpenDropdown(null)}
-            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px]"
           >
             <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
               <Cpu className="h-4 w-4" />
@@ -110,7 +110,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
             <Link
               to="/features"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
                 <Sparkles className="h-4 w-4" />

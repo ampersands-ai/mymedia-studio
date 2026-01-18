@@ -53,7 +53,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=image_editing"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Palette className="h-4 w-4" />
@@ -65,7 +65,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=prompt_to_image"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <ImagePlus className="h-4 w-4" />
@@ -82,7 +82,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=prompt_to_video"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Video className="h-4 w-4" />
@@ -94,7 +94,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=image_to_video"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Film className="h-4 w-4" />
@@ -111,7 +111,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=video_to_video"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Repeat className="h-4 w-4" />
@@ -123,13 +123,13 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=lip_sync"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <CircleUser className="h-4 w-4" />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-xs text-foreground text-[10px]">Custom Avatar</p>
+                <p className="font-semibold text-xs text-foreground">Custom Avatar</p>
                 <p className="text-[8px] text-muted-foreground">(Lip Sync)</p>
               </div>
             </Link>
@@ -141,7 +141,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/custom-creation?group=prompt_to_audio"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Mic className="h-4 w-4" />
@@ -153,7 +153,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/music-studio"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Music className="h-4 w-4" />
@@ -170,7 +170,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <Link
               to="/dashboard/video-editor"
               onClick={() => setOpenDropdown(null)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
             >
               <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                 <Scissors className="h-4 w-4" />
@@ -188,7 +188,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               <Link
                 to="/dashboard/video-studio"
                 onClick={() => setOpenDropdown(null)}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
               >
                 <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                   <Video className="h-4 w-4" />
@@ -202,7 +202,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               <Link
                 to="/dashboard/storyboard"
                 onClick={() => setOpenDropdown(null)}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[76px]"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px]"
               >
                 <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
                   <BookOpen className="h-4 w-4" />

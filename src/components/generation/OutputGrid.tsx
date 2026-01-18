@@ -13,6 +13,7 @@ interface OutputGridProps {
     id: string;
     storage_path: string;
     output_index: number;
+    provider?: string | null;
   }>;
   contentType: string;
   onSelectOutput: (index: number) => void;
@@ -66,8 +67,8 @@ export const OutputGrid = ({
           />
         </div>
         
-        {/* Get Lyrics button for audio */}
-        {isAudio && parentGenerationId && (
+        {/* Get Lyrics button for Suno audio only */}
+        {isAudio && parentGenerationId && outputs[0].provider === 'kie_ai' && (
           <div className="flex justify-center">
             <GetLyricsButton
               generationId={parentGenerationId}
@@ -149,8 +150,8 @@ export const OutputGrid = ({
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none" />
             </div>
 
-            {/* Get Lyrics button for audio (below each output) */}
-            {isAudio && parentGenerationId && (
+            {/* Get Lyrics button for Suno audio only */}
+            {isAudio && parentGenerationId && output.provider === 'kie_ai' && (
               <div className="flex justify-center mt-2">
                 <GetLyricsButton
                   generationId={parentGenerationId}

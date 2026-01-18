@@ -65,10 +65,10 @@ export const SCHEMA = Object.freeze({
   properties: {
     prompt: {
       type: "string",
-      title: "Prompt / Lyrics",
+      title: "Prompt",
       default: "",
       description: "Give an idea for auto-generated lyrics. Max 500 chars.",
-      maxLength: 5000,
+      maxLength: 500,
       renderer: "prompt",
     },
     customMode: {

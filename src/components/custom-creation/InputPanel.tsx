@@ -193,7 +193,22 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   // Determine prompt label and placeholder based on content type and model family
   const isAudioModel = selectedGroup === 'prompt_to_audio';
   const isSunoModel = selectedModelData?.model_family === 'Suno';
-  const promptLabel = isAudioModel ? (isSunoModel ? 'Lyrics' : 'Text') : 'Prompt';
+  
+  // Read label from schema's title property if available, otherwise use fallback
+  const promptLabel = (() => {
+    if (modelSchema?.properties) {
+      const promptKey = Object.keys(modelSchema.properties).find(key => {
+        const prop = modelSchema.properties![key];
+        return prop.renderer === 'prompt';
+      });
+      if (promptKey) {
+        const promptProp = modelSchema.properties[promptKey];
+        if (promptProp.title) return promptProp.title;
+      }
+    }
+    // Fallback to existing logic
+    return isAudioModel ? (isSunoModel ? 'Prompt' : 'Text') : 'Prompt';
+  })();
   const promptPlaceholder = isAudioModel 
     ? (isSunoModel ? 'Enter your lyrics here...' : 'Enter your text here...') 
     : 'Describe what you want to create...';

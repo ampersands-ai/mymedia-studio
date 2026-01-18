@@ -213,7 +213,7 @@ export const platformBenefits = [
   {
     id: "commercial",
     title: "Commercial Rights",
-    description: "Full ownership of everything you create",
+    description: "Use your creations commercially, subject to model provider terms",
     icon: Shield,
   },
   {
@@ -231,7 +231,7 @@ export const platformBenefits = [
   {
     id: "history",
     title: "Generation History",
-    description: "Access and re-download all your creations anytime",
+    description: "Access your creations for up to 14 days after generation",
     icon: History,
   },
 ];

@@ -126,8 +126,8 @@ const Privacy = () => {
                     <div>Providers</div>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <div className="grid grid-cols-2 gap-4"><div>Video Generation</div><div>Google (Veo), OpenAI (Sora), Runway, Kling AI, Minimax, Luma</div></div>
-                    <div className="grid grid-cols-2 gap-4"><div>Image Generation</div><div>Midjourney, FLUX (Black Forest Labs), Ideogram, OpenAI (DALL-E), Stability AI, Google (Imagen), Seedream</div></div>
+                    <div className="grid grid-cols-2 gap-4"><div>Video Generation</div><div>Google (Veo), OpenAI (Sora), Runway, Kling AI, MiniMax (Hailuo), Alibaba (Wan), ByteDance (Seedance)</div></div>
+                    <div className="grid grid-cols-2 gap-4"><div>Image Generation</div><div>Midjourney, FLUX (Black Forest Labs), Ideogram, OpenAI (DALL-E), Google (Imagen), Seedream, xAI (Grok Imagine), HiDream, Alibaba (Qwen), Recraft</div></div>
                     <div className="grid grid-cols-2 gap-4"><div>Audio/Voice</div><div>ElevenLabs, Suno</div></div>
                     <div className="grid grid-cols-2 gap-4"><div>Text/Scripts</div><div>Anthropic (Claude), OpenAI (GPT)</div></div>
                     <div className="grid grid-cols-2 gap-4"><div>Stock Media</div><div>Pixabay</div></div>

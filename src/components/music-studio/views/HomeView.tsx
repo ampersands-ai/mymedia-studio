@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Music, Mic, Volume2, Zap, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { CreateTab } from '../types/audio-studio.types';
+import type { CreateTab } from '../types/music-studio.types';
 
 const CREATION_MODES = [
   { id: 'song', tab: 'song' as CreateTab, icon: Music, title: 'Create Song', color: 'primary-orange' },

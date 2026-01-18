@@ -9,7 +9,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 import { useAudioLibrary } from '../hooks/useAudioLibrary';
 import { cn } from '@/lib/utils';
-import type { LibraryTab, AudioTrack } from '../types/audio-studio.types';
+import type { LibraryTab, AudioTrack } from '../types/music-studio.types';
 import { toast } from 'sonner';
 
 export function LibraryView() {

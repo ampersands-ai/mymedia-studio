@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import type { AudioTrack, PlayerState, RepeatMode } from '../types/audio-studio.types';
+import type { AudioTrack, PlayerState, RepeatMode } from '../types/music-studio.types';
 
 interface AudioPlayerContextType extends PlayerState {
   // Playback controls

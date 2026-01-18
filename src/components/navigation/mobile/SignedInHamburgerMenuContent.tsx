@@ -199,7 +199,7 @@ export const SignedInHamburgerMenuContent = ({
                 icon={<Mic className="h-4 w-4" />} 
               />
               <MenuItem 
-                path="/dashboard/audio-studio"
+                path="/dashboard/music-studio"
                 label="Music Studio" 
                 icon={<Music className="h-4 w-4" />} 
               />

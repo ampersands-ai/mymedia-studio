@@ -30,8 +30,8 @@ export const DashboardLayout = () => {
   const location = useLocation();
   const { data: tokenData } = useUserTokens();
 
-  // Hide global mobile nav on Audio Studio (it has its own nav)
-  const isAudioStudio = location.pathname.includes('/audio-studio');
+  // Hide global mobile nav on Music Studio (it has its own nav)
+  const isMusicStudio = location.pathname.includes('/music-studio');
 
   const handleLogout = async () => {
     try {
@@ -134,11 +134,11 @@ export const DashboardLayout = () => {
         <Outlet />
       </main>
 
-      {/* Global Mobile Navigation - Hidden on Audio Studio (has its own nav) */}
-      {!isAudioStudio && <GlobalMobileNav />}
+      {/* Global Mobile Navigation - Hidden on Music Studio (has its own nav) */}
+      {!isMusicStudio && <GlobalMobileNav />}
 
-      {/* Footer - Add spacing on Audio Studio so it isn't covered by the fixed player */}
-      <div className={isAudioStudio ? 'pb-20' : ''}>
+      {/* Footer - Add spacing on Music Studio so it isn't covered by the fixed player */}
+      <div className={isMusicStudio ? 'pb-20' : ''}>
         <Footer />
       </div>
     </div>

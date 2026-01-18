@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { Mood, MoodOption } from '../types/audio-studio.types';
+import type { Mood, MoodOption } from '../types/music-studio.types';
 
 interface MoodPillsProps {
   moods: MoodOption[];

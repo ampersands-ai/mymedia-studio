@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { AudioTrack, Genre, Mood } from '../types/audio-studio.types';
+import type { AudioTrack, Genre, Mood } from '../types/music-studio.types';
 
 // Import existing Kie.ai model configs - Pro and Fast TTS models
 import { MODEL_CONFIG as TTS_PRO_CONFIG, SCHEMA as TTS_PRO_SCHEMA, preparePayload as prepareTTSProPayload, calculateCost as calculateTTSProCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_TTS';

@@ -1,9 +1,9 @@
 import { Home, Sparkles, Music, Search, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AudioStudioView } from '../types/audio-studio.types';
+import type { MusicStudioView } from '../types/music-studio.types';
 
 interface MobileNavItem {
-  id: AudioStudioView;
+  id: MusicStudioView;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }
@@ -16,17 +16,17 @@ const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { id: 'favorites', label: 'Favorites', icon: Heart },
 ];
 
-interface AudioStudioMobileNavProps {
-  activeView: AudioStudioView;
-  onViewChange: (view: AudioStudioView) => void;
+interface MusicStudioMobileNavProps {
+  activeView: MusicStudioView;
+  onViewChange: (view: MusicStudioView) => void;
   hasActiveTrack: boolean;
 }
 
-export function AudioStudioMobileNav({
+export function MusicStudioMobileNav({
   activeView,
   onViewChange,
   hasActiveTrack,
-}: AudioStudioMobileNavProps) {
+}: MusicStudioMobileNavProps) {
   return (
     <nav
       className={cn(

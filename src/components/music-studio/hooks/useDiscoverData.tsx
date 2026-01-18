@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { AudioTrack, TrendingTrack, FeaturedPlaylist } from '../types/audio-studio.types';
+import type { AudioTrack, TrendingTrack, FeaturedPlaylist } from '../types/music-studio.types';
 
 interface CommunityTrack {
   id: string;

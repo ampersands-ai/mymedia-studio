@@ -36,7 +36,7 @@ export const FeaturesShowcase = ({
       </div>
 
       {/* Scroll Progress Indicator */}
-      <ScrollProgress />
+      <ScrollProgress showHero={showHero} showCTA={showCTA} />
 
       {/* Chapters */}
       <div className="relative z-10">

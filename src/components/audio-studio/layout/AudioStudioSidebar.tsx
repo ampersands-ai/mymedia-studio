@@ -45,7 +45,7 @@ export function AudioStudioSidebar({
       </button>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1 p-3">
+      <nav className="flex flex-col gap-1 p-3 overflow-y-auto flex-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;

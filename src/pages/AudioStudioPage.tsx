@@ -12,9 +12,11 @@ import type { AudioStudioView, CreateTab } from '@/components/audio-studio/types
 export default function AudioStudioPage() {
   const [activeView, setActiveView] = useState<AudioStudioView>('home');
   const [createTab, setCreateTab] = useState<CreateTab>('song');
+  const [initialPrompt, setInitialPrompt] = useState('');
 
-  const handleNavigateToCreate = (tab?: CreateTab) => {
+  const handleNavigateToCreate = (tab?: CreateTab, prompt?: string) => {
     if (tab) setCreateTab(tab);
+    if (prompt !== undefined) setInitialPrompt(prompt);
     setActiveView('create');
   };
 
@@ -23,7 +25,7 @@ export default function AudioStudioPage() {
       case 'home':
         return <HomeView onNavigateToCreate={handleNavigateToCreate} />;
       case 'create':
-        return <CreateView initialTab={createTab} />;
+        return <CreateView initialTab={createTab} initialPrompt={initialPrompt} />;
       case 'library':
         return <LibraryView />;
       case 'discover':

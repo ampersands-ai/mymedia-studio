@@ -33,7 +33,7 @@ export const MODEL_CONFIG = {
   recordId: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", // Valid hex UUID
   modelName: "ElevenLabs Dialogue V3",
   provider: "kie_ai",
-  contentType: "text_to_speech",
+  contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_TEXT_TO_SPEECH",
   baseCreditCost: 7, // Per 1000 characters
   creditsPerThousandChars: 7,

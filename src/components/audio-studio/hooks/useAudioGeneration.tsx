@@ -3,14 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AudioTrack, Genre, Mood } from '../types/audio-studio.types';
 
-// Import existing Kie.ai model configs
-import { MODEL_CONFIG as TTS_CONFIG, SCHEMA as TTS_SCHEMA, preparePayload as prepareTTSPayload, calculateCost as calculateTTSCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_TTS';
+// Import existing Kie.ai model configs - Pro and Fast TTS models
+import { MODEL_CONFIG as TTS_PRO_CONFIG, SCHEMA as TTS_PRO_SCHEMA, preparePayload as prepareTTSProPayload, calculateCost as calculateTTSProCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_TTS';
+import { MODEL_CONFIG as TTS_FAST_CONFIG, SCHEMA as TTS_FAST_SCHEMA, preparePayload as prepareTTSFastPayload, calculateCost as calculateTTSFastCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_Fast';
 import { MODEL_CONFIG as SUNO_CONFIG, SCHEMA as SUNO_SCHEMA, preparePayload as prepareSunoPayload, calculateCost as calculateSunoCost } from '@/lib/models/locked/prompt_to_audio/Suno';
 
 import { GENERATION_STATUS } from '@/constants/generation-status';
 import { sanitizeForStorage } from '@/lib/database/sanitization';
 import { getGenerationType } from '@/lib/models/registry';
 import { reserveCredits } from '@/lib/models/creditDeduction';
+
+// TTS Quality tiers
+export type TTSQuality = 'fast' | 'pro';
 
 interface GenerationState {
   isGenerating: boolean;
@@ -21,6 +25,8 @@ interface GenerationState {
 interface TTSOptions {
   text: string;
   voice?: string;
+  quality?: TTSQuality; // 'fast' = Turbo V2.5 (3 credits), 'pro' = Multilingual V2 (6 credits)
+  languageCode?: string; // Only supported by 'fast' model
   speed?: number;
   stability?: number;
   similarityBoost?: number;
@@ -125,9 +131,16 @@ export function useAudioGeneration() {
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
+      // Select model based on quality tier (default to fast for cost efficiency)
+      const useFast = options.quality !== 'pro';
+      const modelConfig = useFast ? TTS_FAST_CONFIG : TTS_PRO_CONFIG;
+      const modelSchema = useFast ? TTS_FAST_SCHEMA : TTS_PRO_SCHEMA;
+      const preparePayload = useFast ? prepareTTSFastPayload : prepareTTSProPayload;
+      const calculateCost = useFast ? calculateTTSFastCost : calculateTTSProCost;
+
       updateProgress(5, 'Reserving credits...');
       
-      const inputs = {
+      const inputs: Record<string, unknown> = {
         text: options.text,
         voice: options.voice ?? 'Brian',
         speed: options.speed ?? 1.0,
@@ -135,7 +148,12 @@ export function useAudioGeneration() {
         similarity_boost: options.similarityBoost ?? 0.75,
       };
 
-      const cost = calculateTTSCost(inputs);
+      // Language code only supported by Fast model (Turbo V2.5)
+      if (useFast && options.languageCode) {
+        inputs.language_code = options.languageCode;
+      }
+
+      const cost = calculateCost(inputs);
       await reserveCredits(userId, cost);
 
       updateProgress(10, 'Creating generation...');
@@ -146,9 +164,9 @@ export function useAudioGeneration() {
         .insert({
           user_id: userId,
           prompt: options.text,
-          model_id: TTS_CONFIG.modelId,
-          model_record_id: TTS_CONFIG.recordId,
-          type: getGenerationType(TTS_CONFIG.contentType),
+          model_id: modelConfig.modelId,
+          model_record_id: modelConfig.recordId,
+          type: getGenerationType(modelConfig.contentType),
           status: GENERATION_STATUS.PROCESSING,
           tokens_used: cost,
           settings: sanitizeForStorage(inputs),
@@ -167,9 +185,9 @@ export function useAudioGeneration() {
         body: {
           generationId: generation.id,
           prompt: options.text,
-          custom_parameters: prepareTTSPayload(inputs),
-          model_config: TTS_CONFIG,
-          model_schema: TTS_SCHEMA,
+          custom_parameters: preparePayload(inputs),
+          model_config: modelConfig,
+          model_schema: modelSchema,
         },
       });
 
@@ -184,7 +202,7 @@ export function useAudioGeneration() {
       
       if (track) {
         track.type = 'voiceover';
-        track.artist = 'AI Voice';
+        track.artist = useFast ? 'AI Voice (Turbo)' : 'AI Voice (Pro)';
         toast.success('Voice generated successfully!');
       }
 
@@ -200,13 +218,13 @@ export function useAudioGeneration() {
   }, [updateProgress, pollGeneration]);
 
   const generateSFX = useCallback(async (options: SFXOptions, userId: string): Promise<AudioTrack | null> => {
-    // SFX uses TTS model with sound effect prompts
+    // SFX uses Fast TTS model (cost-effective) with sound effect prompts
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
       updateProgress(5, 'Reserving credits...');
       
-      // For SFX, we use the TTS model with descriptive text
+      // For SFX, we use the Fast TTS model with descriptive text
       const sfxPrompt = `[Sound effect: ${options.prompt}]`;
       const inputs = {
         text: sfxPrompt,
@@ -215,7 +233,7 @@ export function useAudioGeneration() {
         similarity_boost: 0.5,
       };
 
-      const cost = calculateTTSCost(inputs);
+      const cost = calculateTTSFastCost(inputs);
       await reserveCredits(userId, cost);
 
       updateProgress(10, 'Creating generation...');
@@ -225,8 +243,8 @@ export function useAudioGeneration() {
         .insert({
           user_id: userId,
           prompt: options.prompt,
-          model_id: TTS_CONFIG.modelId,
-          model_record_id: TTS_CONFIG.recordId,
+          model_id: TTS_FAST_CONFIG.modelId,
+          model_record_id: TTS_FAST_CONFIG.recordId,
           type: 'audio',
           status: GENERATION_STATUS.PROCESSING,
           tokens_used: cost,
@@ -245,9 +263,9 @@ export function useAudioGeneration() {
         body: {
           generationId: generation.id,
           prompt: sfxPrompt,
-          custom_parameters: prepareTTSPayload(inputs),
-          model_config: TTS_CONFIG,
-          model_schema: TTS_SCHEMA,
+          custom_parameters: prepareTTSFastPayload(inputs),
+          model_config: TTS_FAST_CONFIG,
+          model_schema: TTS_FAST_SCHEMA,
         },
       });
 

@@ -1,9 +1,9 @@
 import { CinematicNav } from "@/components/cinematic/CinematicNav";
 import { CinematicHeroOptimized } from "@/components/cinematic/CinematicHeroOptimized";
-import { YouTubePortfolio } from "@/components/cinematic/YouTubePortfolio";
 import { AboutSection } from "@/components/cinematic/AboutSection";
 import { CarouselSection } from "@/components/cinematic/CarouselSection";
 import { ContactSection } from "@/components/cinematic/ContactSection";
+import { FeaturesShowcase } from "@/components/features-showcase";
 
 const CinematicTest = () => {
   return (
@@ -20,8 +20,8 @@ const CinematicTest = () => {
       {/* About Section */}
       <AboutSection />
 
-      {/* Features Section */}
-      <YouTubePortfolio />
+      {/* Cinematic Features Showcase */}
+      <FeaturesShowcase showHero={false} showCTA={true} />
 
       {/* Contact Section */}
       <ContactSection />

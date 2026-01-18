@@ -22,6 +22,7 @@ import type {
   ModelParameterValue
 } from "@/types/model-schema";
 import { StoryboardShotsInput, Shot, DurationOption } from "./StoryboardShotsInput";
+import { DialogueInput, DialogueEntry } from "./DialogueInput";
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -145,6 +146,30 @@ export const SchemaInput = ({ name, schema, value, onChange, required, filteredE
         totalDuration={totalDuration}
         onDurationChange={handleDurationChange}
         durationOptions={durationOptions}
+        required={isRequired}
+      />
+    );
+  }
+
+  // Handle dialogue array with custom component (for ElevenLabs Dialogue V3)
+  const isDialogueRenderer = 
+    schema.type === "array" &&
+    schema.renderer === "dialogue" &&
+    schema.items?.type === "object" &&
+    schema.items?.properties?.text &&
+    schema.items?.properties?.voice;
+
+  if (isDialogueRenderer) {
+    const dialogueValue = Array.isArray(value) ? (value as unknown as DialogueEntry[]) : [];
+    const voices = schema.items?.properties?.voice?.enum || [];
+    const maxCharacters = 5000; // From model config
+    
+    return (
+      <DialogueInput
+        value={dialogueValue}
+        onChange={(entries) => onChange(entries as unknown as ModelParameterValue)}
+        voices={voices as string[]}
+        maxCharacters={maxCharacters}
         required={isRequired}
       />
     );

@@ -61,7 +61,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   faceless_videos: { enabled: true, coming_soon: true },
   storyboard: { enabled: true, coming_soon: true },
   pages: {
-    features: { enabled: false },
+    features: { enabled: true },
     blog: { enabled: false },
     community: { enabled: false },
     templateLandings: { enabled: false },

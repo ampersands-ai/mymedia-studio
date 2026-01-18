@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { Loader2, Clock, Coins, Images, ChevronDown, Search, X } from "lucide-react";
+import { Loader2, Clock, Coins, Images, ChevronDown, Search, X, Info } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useModelDirectory } from "@/hooks/useModelPages";
 import type { CreationGroup } from "@/constants/creation-groups";
 import type { ModelRecord } from "@/types/custom-creation";
 
@@ -32,6 +34,25 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const currentModel = models.find(m => String(m.record_id) === String(selectedModel));
+  
+  // Fetch model pages to get slugs for navigation
+  const { data: modelPages } = useModelDirectory();
+  
+  // Create a map of model_record_id to slug for quick lookup
+  const modelSlugMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (modelPages) {
+      modelPages.forEach(page => {
+        // Map the primary record ID
+        map.set(page.model_record_id, page.slug);
+        // Also map any additional record IDs
+        if (page.model_record_ids) {
+          page.model_record_ids.forEach(id => map.set(id, page.slug));
+        }
+      });
+    }
+    return map;
+  }, [modelPages]);
 
   // Filter models based on search query
   const filteredModels = useMemo(() => {
@@ -65,6 +86,9 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
     const modelGroups = Array.isArray(model.groups) ? model.groups : 
       (model.groups && typeof model.groups === 'object' ? Object.keys(model.groups) : []);
     const otherGroups = modelGroups.filter((g: string | number) => g !== selectedGroup);
+    
+    // Get the slug for this model's landing page
+    const modelSlug = modelSlugMap.get(model.id) || modelSlugMap.get(model.record_id);
 
     return (
       <div className={cn(
@@ -126,6 +150,26 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
             </div>
           )}
         </div>
+        
+        {/* Info button to navigate to model landing page */}
+        {modelSlug && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to={`/models/${modelSlug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                >
+                  <Info className="h-4 w-4" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>View model details</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     );
   };

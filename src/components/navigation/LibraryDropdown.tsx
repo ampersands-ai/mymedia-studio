@@ -44,77 +44,83 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align={align} 
-        className="w-72 p-4 bg-card/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 z-[100]"
+        className="w-[340px] p-5 bg-card/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 z-[100]"
       >
-        <Link
-          to="/dashboard/history"
-          onClick={() => setOpenDropdown(null)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
-        >
-          <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-            <History className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-bold text-foreground">History</p>
-            <p className="text-sm text-muted-foreground">View your creations</p>
-          </div>
-        </Link>
-        <Link
-          to="/dashboard/prompts"
-          onClick={() => setOpenDropdown(null)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
-        >
-          <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-            <MessageSquare className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-bold text-foreground">Prompts</p>
-            <p className="text-sm text-muted-foreground">Saved prompt library</p>
-          </div>
-        </Link>
-        {(isFeatureEnabled('templates') || isAdmin) && (
+        <div className="grid grid-cols-3 gap-3">
+          {/* History */}
           <Link
-            to="/dashboard/templates"
+            to="/dashboard/history"
             onClick={() => setOpenDropdown(null)}
-            className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
+            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
           >
-            <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-              <LayoutTemplate className="h-5 w-5" />
+            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <History className="h-4 w-4" />
             </div>
-            <div>
-              <p className="font-bold text-foreground">Templates</p>
-              <p className="text-sm text-muted-foreground">Pre-built workflows</p>
+            <div className="text-center">
+              <p className="font-semibold text-xs text-foreground">History</p>
             </div>
           </Link>
-        )}
-        <Link
-          to="/models"
-          onClick={() => setOpenDropdown(null)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
-        >
-          <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-            <Cpu className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-bold text-foreground">Models</p>
-            <p className="text-sm text-muted-foreground">AI model directory</p>
-          </div>
-        </Link>
-        {isPageEnabled('features') && (
+
+          {/* Prompts */}
           <Link
-            to="/features"
+            to="/dashboard/prompts"
             onClick={() => setOpenDropdown(null)}
-            className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
           >
-            <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-              <Sparkles className="h-5 w-5" />
+            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <MessageSquare className="h-4 w-4" />
             </div>
-            <div>
-              <p className="font-bold text-foreground">Features</p>
-              <p className="text-sm text-muted-foreground">Explore capabilities</p>
+            <div className="text-center">
+              <p className="font-semibold text-xs text-foreground">Prompts</p>
             </div>
           </Link>
-        )}
+
+          {/* Templates */}
+          {(isFeatureEnabled('templates') || isAdmin) && (
+            <Link
+              to="/dashboard/templates"
+              onClick={() => setOpenDropdown(null)}
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                <LayoutTemplate className="h-4 w-4" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xs text-foreground">Templates</p>
+              </div>
+            </Link>
+          )}
+
+          {/* Models */}
+          <Link
+            to="/models"
+            onClick={() => setOpenDropdown(null)}
+            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+          >
+            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <Cpu className="h-4 w-4" />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-xs text-foreground">Models</p>
+            </div>
+          </Link>
+
+          {/* Features */}
+          {isPageEnabled('features') && (
+            <Link
+              to="/features"
+              onClick={() => setOpenDropdown(null)}
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xs text-foreground">Features</p>
+              </div>
+            </Link>
+          )}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

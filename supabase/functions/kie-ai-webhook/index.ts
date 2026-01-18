@@ -14,7 +14,8 @@ import { validateIdempotency } from "./security/idempotency-validator.ts";
 // Provider handlers
 import { isMidjourneyModel, hasMidjourneyResults, extractMidjourneyUrls } from "./providers/midjourney-handler.ts";
 import { normalizeResultUrls, mapUrlsToItems } from "./providers/url-normalizer.ts";
-import { hasImageResults, hasAudioResults, hasVideoResults } from "./providers/result-validator.ts";
+import { hasImageResults, hasAudioResults, hasVideoResults, hasTextResults } from "./providers/result-validator.ts";
+import { isSpeechToTextModel, extractTranscription, formatTranscriptionForStorage } from "./providers/elevenlabs-stt-handler.ts";
 
 // Storage operations
 import { downloadContent } from "./storage/content-downloader.ts";
@@ -267,6 +268,21 @@ Deno.serve(async (req) => {
           { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else if (generation.type === 'text') {
+      // === TEXT TYPE: Handle transcription/STT results ===
+      if (hasTextResults(payload, resultJson)) {
+        logger.info('Text/STT has complete results');
+      } else if (callbackType && callbackType.toLowerCase() !== 'complete') {
+        logger.info('Partial text/STT callback', { metadata: { callbackType } });
+        await supabase.from('generations').update({ 
+          status: GENERATION_STATUS.PROCESSING, 
+          provider_response: payload 
+        }).eq('id', generation.id);
+        return new Response(
+          JSON.stringify({ success: true, message: 'Partial webhook acknowledged' }),
+          { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // === HANDLE SUCCESS ===
@@ -303,6 +319,115 @@ Deno.serve(async (req) => {
         }
       } else {
         logger.info('Reusing normalized URLs', { metadata: { count: resultUrls.length } });
+      }
+
+      // === TEXT TYPE: Handle transcription/STT results (no file download needed) ===
+      if (generation.type === 'text' && resultUrls.length === 0) {
+        const isSTT = isSpeechToTextModel(generation.modelMetadata?.id);
+        
+        if (isSTT) {
+          const transcription = extractTranscription(payload, resultJson);
+          
+          if (!transcription) {
+            logger.error('STT webhook received but no transcription found', undefined, {
+              metadata: { generationId: generation.id, modelId: generation.modelMetadata?.id }
+            });
+            throw new Error('No transcription found in STT response');
+          }
+          
+          logger.info('Processing STT transcription result', { 
+            metadata: { textLength: transcription.text.length, hasWords: !!transcription.words?.length } 
+          });
+          
+          // Format transcription data for storage
+          const transcriptionData = formatTranscriptionForStorage(
+            transcription, 
+            payload, 
+            { consumed: consumeCredits, remaining: remainedCredits }
+          );
+          
+          // Store as JSON file in storage for persistence
+          const jsonBlob = new TextEncoder().encode(JSON.stringify(transcriptionData, null, 2));
+          
+          const uploadResult = await uploadToStorage(
+            supabase,
+            generation.user_id,
+            generation.id,
+            jsonBlob,
+            'json',
+            'text'
+          );
+          
+          // Update generation with transcription in provider_response (primary source for frontend)
+          const updateData = {
+            status: GENERATION_STATUS.COMPLETED,
+            output_url: uploadResult.success ? uploadResult.publicUrl : null,
+            storage_path: uploadResult.success ? uploadResult.storagePath : null,
+            file_size_bytes: jsonBlob.length,
+            completed_at: new Date().toISOString(),
+            provider_response: transcriptionData
+          };
+          
+          await supabase.from('generations').update(updateData).eq('id', generation.id);
+          
+          // Settle credits
+          await supabase.functions.invoke('settle-generation-credits', {
+            body: { generationId: generation.id, status: GENERATION_STATUS.COMPLETED }
+          });
+          
+          // KIE Credit Audit log
+          await supabase.from('kie_credit_audits').insert({
+            generation_id: generation.id,
+            api_request_payload: generation.provider_request || {},
+            api_request_sent_at: generation.created_at,
+            api_callback_payload: payload,
+            api_callback_received_at: new Date().toISOString(),
+            kie_credits_consumed: consumeCredits || 0,
+            kie_credits_remaining: remainedCredits,
+            our_tokens_charged: generation.tokens_used,
+            model_id: generation.model_id || 'unknown',
+            task_status: WEBHOOK_CALLBACK_STATES.SUCCESS,
+            processing_time_seconds: costTime
+          });
+          
+          // General audit log for completion
+          await supabase.from('audit_logs').insert({
+            user_id: generation.user_id,
+            action: 'generation_completed',
+            resource_type: 'generation',
+            resource_id: generation.id,
+            metadata: {
+              model_id: generation.model_id,
+              tokens_used: generation.tokens_used,
+              content_type: 'text',
+              text_length: transcription.text.length,
+              webhook_callback: true
+            }
+          });
+          
+          logger.info('STT generation completed successfully', {
+            userId: generation.user_id,
+            metadata: { 
+              generationId: generation.id, 
+              textLength: transcription.text.length,
+              hasWords: !!transcription.words?.length
+            }
+          });
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Transcription completed',
+              text_length: transcription.text.length
+            }),
+            { status: 200, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // For non-STT text types that might have results in other formats, fall through
+        // But if truly no results, throw error
+        logger.error('No result URLs found for text type');
+        throw new Error('No result URLs found in response');
       }
 
       if (resultUrls.length === 0) {

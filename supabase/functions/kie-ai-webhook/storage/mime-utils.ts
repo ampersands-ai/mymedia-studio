@@ -4,18 +4,23 @@
 
 export function getMimeType(extension: string, contentType: string): string {
   const extToMime: Record<string, string> = {
+    // Images
     'png': 'image/png',
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'webp': 'image/webp',
     'gif': 'image/gif',
+    // Video
     'mp4': 'video/mp4',
     'webm': 'video/webm',
     'mov': 'video/quicktime',
+    // Audio
     'mp3': 'audio/mpeg',
     'wav': 'audio/wav',
     'ogg': 'audio/ogg',
-    'txt': 'text/plain'
+    // Text/Data
+    'txt': 'text/plain',
+    'json': 'application/json'
   };
 
   const mimeFromExt = extToMime[extension.toLowerCase()];
@@ -24,7 +29,7 @@ export function getMimeType(extension: string, contentType: string): string {
   if (contentType === 'image') return 'image/png';
   if (contentType === 'video') return 'video/mp4';
   if (contentType === 'audio') return 'audio/mpeg';
-  if (contentType === 'text') return 'text/plain';
+  if (contentType === 'text') return 'application/json';
 
   return 'application/octet-stream';
 }

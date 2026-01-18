@@ -67,7 +67,7 @@ export const SCHEMA = Object.freeze({
   properties: {
     prompt: {
       type: "string",
-      title: "Prompt / Lyrics",
+      title: "Prompt",
       default: "",
       description:
         "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 5000 chars (Custom) or 500 chars (Non-custom).",
@@ -77,19 +77,21 @@ export const SCHEMA = Object.freeze({
     customMode: {
       type: "boolean",
       title: "Custom Mode",
-      default: true,
+      default: false,
       showToUser: false,
       description: "Enable detailed control with style and title fields.",
     },
     instrumental: {
       type: "boolean",
       title: "Instrumental",
+      showToUser: true,
       default: false,
       description: "Generate music without vocals/lyrics.",
     },
     style: {
       type: "string",
       title: "Style",
+      showToUser: false,
       default: "",
       maxLength: 1000,
       description: "Music style (e.g., Jazz, Classical, Pop). Required in Custom Mode. Max 1000 chars.",
@@ -98,10 +100,12 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Title",
       default: "",
+      showToUser: false,
       maxLength: 80,
       description: "Track title. Required in Custom Mode. Max 80 chars.",
     },
     negativeTags: {
+      showToUser: false,
       type: "string",
       title: "Negative Tags",
       default: "",
@@ -111,6 +115,7 @@ export const SCHEMA = Object.freeze({
     vocalGender: {
       type: "string",
       title: "Vocal Gender",
+      showToUser: false,
       default: "",
       enum: ["", "m", "f"],
       enumLabels: { "": "Auto", m: "Male", f: "Female" },
@@ -118,6 +123,7 @@ export const SCHEMA = Object.freeze({
       isAdvanced: true,
     },
     styleWeight: {
+      showToUser: false,
       type: "number",
       title: "Style Weight",
       default: 0.5,
@@ -130,6 +136,7 @@ export const SCHEMA = Object.freeze({
     weirdnessConstraint: {
       type: "number",
       title: "Weirdness",
+      showToUser: false,
       default: 0.5,
       minimum: 0,
       maximum: 1,
@@ -140,6 +147,7 @@ export const SCHEMA = Object.freeze({
     audioWeight: {
       type: "number",
       title: "Audio Weight",
+      showToUser: false,
       default: 0.5,
       minimum: 0,
       maximum: 1,
@@ -148,6 +156,7 @@ export const SCHEMA = Object.freeze({
       isAdvanced: true,
     },
     personaId: {
+      showToUser: false,
       type: "string",
       title: "Persona ID",
       default: "",

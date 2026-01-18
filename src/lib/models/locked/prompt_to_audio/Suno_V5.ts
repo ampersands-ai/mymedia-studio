@@ -75,7 +75,7 @@ export const SCHEMA = Object.freeze({
     customMode: {
       type: "boolean",
       title: "Custom Mode",
-      default: true,
+      default: false,
       showToUser: false,
       description: "Enable detailed control with style and title fields. Disable for simplified mode.",
     },
@@ -87,6 +87,7 @@ export const SCHEMA = Object.freeze({
     },
     style: {
       type: "string",
+      showToUser: false,
       title: "Style",
       default: "",
       maxLength: 1000,
@@ -95,6 +96,7 @@ export const SCHEMA = Object.freeze({
     title: {
       type: "string",
       title: "Title",
+      showToUser: false,
       default: "",
       maxLength: 80,
       description: "Track title. Required in Custom Mode. Max 80 chars.",
@@ -102,6 +104,7 @@ export const SCHEMA = Object.freeze({
     negativeTags: {
       type: "string",
       title: "Negative Tags",
+      showToUser: false,
       default: "",
       description: "Styles to exclude (e.g., 'Heavy Metal, Upbeat Drums')",
       isAdvanced: true,
@@ -110,6 +113,7 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Vocal Gender",
       default: "",
+      showToUser: false,
       enum: ["", "m", "f"],
       enumLabels: {
         "": "Auto",
@@ -121,6 +125,7 @@ export const SCHEMA = Object.freeze({
     },
     styleWeight: {
       type: "number",
+      showToUser: false,
       title: "Style Weight",
       default: 0.5,
       minimum: 0,
@@ -131,6 +136,7 @@ export const SCHEMA = Object.freeze({
     },
     weirdnessConstraint: {
       type: "number",
+      showToUser: false,
       title: "Weirdness",
       default: 0.5,
       minimum: 0,
@@ -142,6 +148,7 @@ export const SCHEMA = Object.freeze({
     audioWeight: {
       type: "number",
       title: "Audio Weight",
+      showToUser: false,
       default: 0.5,
       minimum: 0,
       maximum: 1,
@@ -151,6 +158,7 @@ export const SCHEMA = Object.freeze({
     },
     personaId: {
       type: "string",
+      showToUser: false,
       title: "Persona ID",
       default: "",
       description: "Apply a specific persona style. Only in Custom Mode.",

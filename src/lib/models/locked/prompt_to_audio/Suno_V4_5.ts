@@ -77,7 +77,7 @@ export const SCHEMA = Object.freeze({
     customMode: {
       type: "boolean",
       title: "Custom Mode",
-      default: true,
+      default: false,
       showToUser: false,
       description: "Enable detailed control with style and title fields.",
     },

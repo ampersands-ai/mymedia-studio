@@ -32,7 +32,7 @@ export const MODEL_CONFIG = {
   modelName: "ElevenLabs Speech-to-Text",
   provider: "kie_ai",
   contentType: "speech_to_text",
-  use_api_key: "KIE_AI_API_KEY_SPEECH_TO_TEXT",
+  use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
   baseCreditCost: 2, // Minimum ~1 minute
   creditsPerMinute: 1.75,
   estimatedTimeSeconds: 60,

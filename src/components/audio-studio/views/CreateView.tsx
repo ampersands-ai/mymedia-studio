@@ -50,28 +50,23 @@ export function CreateView({ initialTab = 'song' }: CreateViewProps) {
         <TabsList className="bg-card border border-border p-1 h-auto flex-wrap gap-1 w-full overflow-x-auto">
           <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Music className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden xs:inline">Song</span>
-            <span className="xs:hidden">🎵</span>
+            <span className="hidden sm:inline">Song</span>
           </TabsTrigger>
           <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden xs:inline">TTS</span>
-            <span className="xs:hidden">🗣️</span>
+            <span className="hidden sm:inline">TTS</span>
           </TabsTrigger>
           <TabsTrigger value="voice" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden xs:inline">Voice</span>
-            <span className="xs:hidden">🎤</span>
+            <span className="hidden sm:inline">Voice</span>
           </TabsTrigger>
           <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden xs:inline">SFX</span>
-            <span className="xs:hidden">⚡</span>
+            <span className="hidden sm:inline">SFX</span>
           </TabsTrigger>
           <TabsTrigger value="stems" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden xs:inline">Stems</span>
-            <span className="xs:hidden">✂️</span>
+            <span className="hidden sm:inline">Stems</span>
           </TabsTrigger>
         </TabsList>
 

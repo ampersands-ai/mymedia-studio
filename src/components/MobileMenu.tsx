@@ -164,6 +164,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
                 isAdmin={isAdmin}
                 isFeatureEnabled={isFeatureEnabled}
                 isFeatureComingSoon={isFeatureComingSoon}
+                isPageEnabled={isPageEnabled}
                 showHomeLink={!isDashboard}
               />
             ) : (

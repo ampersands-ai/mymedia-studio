@@ -195,6 +195,7 @@ export const CinematicNav = () => {
                         isAdmin={isAdmin}
                         isFeatureEnabled={isFeatureEnabled}
                         isFeatureComingSoon={isFeatureComingSoon}
+                        isPageEnabled={isPageEnabled}
                         showHomeLink={true}
                       />
                     ) : (

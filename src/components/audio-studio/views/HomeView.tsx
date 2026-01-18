@@ -15,23 +15,23 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Hero Section */}
-      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary-orange/20 via-accent-purple/20 to-accent-pink/20 border border-border p-8 md:p-12">
+      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary-orange/20 via-accent-purple/20 to-accent-pink/20 border border-border p-4 sm:p-8 md:p-12">
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent" />
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-3xl md:text-4xl font-black text-foreground mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2 sm:mb-4">
             What will you create today?
           </h1>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
             Generate music, transform voices, and create sound effects with AI
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Input
               placeholder="Describe your music idea..."
-              className="flex-1 h-12 bg-card/80 border-border"
+              className="flex-1 h-10 sm:h-12 bg-card/80 border-border text-sm sm:text-base"
             />
             <Button
               onClick={() => onNavigateToCreate('song')}
-              className="h-12 px-6 bg-primary-orange hover:bg-primary-orange/90 text-black font-semibold"
+              className="h-10 sm:h-12 px-4 sm:px-6 bg-primary-orange hover:bg-primary-orange/90 text-black font-semibold w-full sm:w-auto"
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Generate

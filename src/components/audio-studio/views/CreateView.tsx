@@ -47,21 +47,31 @@ export function CreateView({ initialTab = 'song' }: CreateViewProps) {
       )}
       
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CreateTab)} className="space-y-6">
-        <TabsList className="bg-card border border-border p-1 h-auto flex-wrap">
-          <TabsTrigger value="song" className="gap-2 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-            <Music className="h-4 w-4" /> Song Generator
+        <TabsList className="bg-card border border-border p-1 h-auto flex-wrap gap-1 w-full overflow-x-auto">
+          <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Music className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden xs:inline">Song</span>
+            <span className="xs:hidden">🎵</span>
           </TabsTrigger>
-          <TabsTrigger value="tts" className="gap-2 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-            <Volume2 className="h-4 w-4" /> Text to Speech
+          <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden xs:inline">TTS</span>
+            <span className="xs:hidden">🗣️</span>
           </TabsTrigger>
-          <TabsTrigger value="voice" className="gap-2 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-            <Mic className="h-4 w-4" /> Voice Changer
+          <TabsTrigger value="voice" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden xs:inline">Voice</span>
+            <span className="xs:hidden">🎤</span>
           </TabsTrigger>
-          <TabsTrigger value="sfx" className="gap-2 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-            <Zap className="h-4 w-4" /> Sound Effects
+          <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden xs:inline">SFX</span>
+            <span className="xs:hidden">⚡</span>
           </TabsTrigger>
-          <TabsTrigger value="stems" className="gap-2 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-            <Scissors className="h-4 w-4" /> Stem Separation
+          <TabsTrigger value="stems" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden xs:inline">Stems</span>
+            <span className="xs:hidden">✂️</span>
           </TabsTrigger>
         </TabsList>
 

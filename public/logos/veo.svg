@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Google-style multicolor -->
   <circle cx="24" cy="24" r="22" fill="#4285F4"/>
-  <path d="M16 18L24 30L32 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="24" cy="24" r="4" fill="white"/>
+  <path d="M24 12v24" stroke="#EA4335" stroke-width="3" stroke-linecap="round"/>
+  <path d="M12 24h24" stroke="#FBBC05" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="24,14 32,28 16,28" fill="white" stroke="#34A853" stroke-width="2"/>
+  <circle cx="24" cy="23" r="4" fill="#4285F4"/>
 </svg>

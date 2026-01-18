@@ -213,7 +213,7 @@ export const platformBenefits = [
   {
     id: "commercial",
     title: "Commercial Rights",
-    description: "Use your creations commercially, subject to model provider terms",
+    description: "Full ownership of everything you create",
     icon: Shield,
   },
   {

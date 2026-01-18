@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Music, Mic, Volume2, Zap, Sparkles, ArrowRight } from 'lucide-react';
+import { Music, Mic, Volume2, Zap, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TrackCard } from '../shared/TrackCard';
-import { MOCK_TRACKS } from '../data/mock-data';
 import type { CreateTab } from '../types/audio-studio.types';
 
 const CREATION_MODES = [
@@ -93,20 +91,6 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
         </div>
       </section>
 
-      {/* Recent Tracks */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">Recent Creations</h2>
-          <Button variant="ghost" size="sm" className="text-primary-orange">
-            View All <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {MOCK_TRACKS.map((track) => (
-            <TrackCard key={track.id} track={track} />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

@@ -11,11 +11,10 @@ export type MusicStudioView =
 
 export type CreateTab = 
   | 'song' 
-  | 'voice' 
   | 'tts' 
   | 'sfx' 
-  | 'stems'
-  | 'dialogue';
+  | 'dialogue'
+  | 'stt';
 
 export type Genre = 
   | 'pop' 

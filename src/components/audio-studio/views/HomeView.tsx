@@ -3,10 +3,15 @@ import { Music, Mic, Volume2, Zap, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TrackCard } from '../shared/TrackCard';
-import { MOCK_TRACKS, QUICK_ACTIONS } from '../data/mock-data';
+import { MOCK_TRACKS } from '../data/mock-data';
 import type { CreateTab } from '../types/audio-studio.types';
 
-const ICONS = { Music, Mic, Volume2, Zap };
+const CREATION_MODES = [
+  { id: 'song', tab: 'song' as CreateTab, icon: Music, title: 'Create Song', color: 'primary-orange' },
+  { id: 'voice', tab: 'voice' as CreateTab, icon: Mic, title: 'Voice Changer', color: 'accent-purple' },
+  { id: 'tts', tab: 'tts' as CreateTab, icon: Volume2, title: 'Text to Speech', color: 'accent-pink' },
+  { id: 'sfx', tab: 'sfx' as CreateTab, icon: Zap, title: 'Sound Effects', color: 'primary-orange' },
+];
 
 interface HomeViewProps {
   onNavigateToCreate: (tab?: CreateTab, prompt?: string) => void;
@@ -14,61 +19,77 @@ interface HomeViewProps {
 
 export function HomeView({ onNavigateToCreate }: HomeViewProps) {
   const [prompt, setPrompt] = useState('');
+  const [selectedMode, setSelectedMode] = useState<CreateTab>('song');
 
   const handleGenerate = () => {
-    onNavigateToCreate('song', prompt);
+    onNavigateToCreate(selectedMode, prompt);
   };
+
+  const handleModeClick = (tab: CreateTab) => {
+    setSelectedMode(tab);
+    // If there's already a prompt, navigate directly
+    if (prompt.trim()) {
+      onNavigateToCreate(tab, prompt);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Hero Section */}
-      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary-orange/20 via-accent-purple/20 to-accent-pink/20 border border-border p-4 sm:p-8 md:p-12">
+      {/* Unified Hero Section */}
+      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary-orange/20 via-accent-purple/20 to-accent-pink/20 border border-border p-6 sm:p-8 md:p-10">
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent" />
-        <div className="relative z-10 max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2 sm:mb-4">
-            What will you create today?
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
-            Generate music, transform voices, and create sound effects with AI
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="relative z-10 space-y-6">
+          {/* Header */}
+          <div className="max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2">
+              What will you create today?
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Generate music, transform voices, and create sound effects with AI
+            </p>
+          </div>
+
+          {/* Input + Generate */}
+          <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
             <Input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               placeholder="Describe your music idea..."
-              className="flex-1 h-10 sm:h-12 bg-card/80 border-border text-sm sm:text-base"
+              className="flex-1 h-11 sm:h-12 bg-card/80 border-border text-sm sm:text-base"
             />
             <Button
               onClick={handleGenerate}
-              className="h-10 sm:h-12 px-4 sm:px-6 bg-primary-orange hover:bg-primary-orange/90 text-black font-semibold w-full sm:w-auto"
+              className="h-11 sm:h-12 px-5 sm:px-6 bg-primary-orange hover:bg-primary-orange/90 text-black font-semibold w-full sm:w-auto"
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Generate
             </Button>
           </div>
-        </div>
-      </section>
 
-      {/* Quick Actions */}
-      <section>
-        <h2 className="text-lg font-bold text-foreground mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {QUICK_ACTIONS.map((action) => {
-            const Icon = ICONS[action.icon as keyof typeof ICONS];
-            return (
-              <button
-                key={action.id}
-                onClick={() => onNavigateToCreate(action.tab)}
-                className="group p-4 rounded-xl bg-card border border-border hover:border-primary-orange/50 hover:bg-muted/50 transition-all duration-200"
-              >
-                <div className={`h-10 w-10 rounded-lg bg-${action.color}/20 flex items-center justify-center mb-3`}>
-                  <Icon className={`h-5 w-5 text-${action.color}`} />
-                </div>
-                <p className="font-semibold text-sm text-foreground text-left">{action.title}</p>
-                <p className="text-xs text-muted-foreground text-left mt-1">{action.description}</p>
-              </button>
-            );
-          })}
+          {/* Creation Mode Buttons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {CREATION_MODES.map((mode) => {
+              const Icon = mode.icon;
+              const isSelected = selectedMode === mode.tab;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => handleModeClick(mode.tab)}
+                  className={`group p-4 rounded-xl bg-card/60 border transition-all duration-200 text-left ${
+                    isSelected 
+                      ? 'border-primary-orange bg-card/80' 
+                      : 'border-border hover:border-primary-orange/50 hover:bg-card/80'
+                  }`}
+                >
+                  <div className={`h-9 w-9 rounded-lg bg-${mode.color}/20 flex items-center justify-center mb-2`}>
+                    <Icon className={`h-4 w-4 text-${mode.color}`} />
+                  </div>
+                  <p className="font-semibold text-sm text-foreground">{mode.title}</p>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 

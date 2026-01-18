@@ -652,14 +652,23 @@ async function getBackgroundVideos(
     logger?.info("Using style-based search", { metadata: { searchQuery: searchQueries[0], style } });
   }
 
-  // Add fallback search queries for more variety
-  const fallbackQueries = [
-    'abstract motion background',
-    'cinematic background loop',
-    `${style} visual aesthetic`,
-    'smooth gradient animation'
+  // Add loop-focused fallback search queries for more variety
+  const loopFallbackQueries = [
+    'tunnel loop',
+    'abstract loop',
+    'underground loops',
+    'rave loops',
+    '90s loops',
+    'glitter loop',
+    'music loops',
+    'disco loop',
+    'fire loop',
+    'money loop',
+    'abstract neon light loops',
+    'neon loop',
+    'particles loop',
   ];
-  searchQueries.push(...fallbackQueries);
+  searchQueries.push(...loopFallbackQueries);
 
   // Fetch videos from multiple queries, deduplicate by Pixabay ID
   const uniqueVideosMap = new Map<number, PixabayVideo>();

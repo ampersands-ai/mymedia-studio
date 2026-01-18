@@ -53,8 +53,8 @@ const Terms = () => {
               </p>
               <p className="leading-relaxed mb-3">Our Service integrates AI providers including but not limited to:</p>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
-                <li><strong className="text-white">Video:</strong> Google Veo, OpenAI Sora, Runway, Kling AI, Minimax, Luma</li>
-                <li><strong className="text-white">Image:</strong> Midjourney, FLUX, Ideogram, DALL-E, Stable Diffusion, Google Imagen, Seedream</li>
+                <li><strong className="text-white">Video:</strong> Google Veo, OpenAI Sora, Runway, Kling AI, MiniMax (Hailuo), Alibaba (Wan), ByteDance (Seedance)</li>
+                <li><strong className="text-white">Image:</strong> Midjourney, FLUX (Black Forest Labs), Ideogram, DALL-E, Google Imagen, Seedream, xAI (Grok Imagine), HiDream, Alibaba (Qwen), Recraft</li>
                 <li><strong className="text-white">Audio/Voice:</strong> ElevenLabs, Suno</li>
                 <li><strong className="text-white">Text:</strong> Anthropic Claude, OpenAI GPT</li>
               </ul>

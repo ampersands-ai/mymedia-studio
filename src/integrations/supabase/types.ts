@@ -3497,6 +3497,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_audio_library: {
+        Row: {
+          artist: string | null
+          artwork_url: string | null
+          audio_url: string | null
+          created_at: string
+          duration: number
+          file_size_bytes: number | null
+          genre: string | null
+          id: string
+          is_liked: boolean | null
+          is_public: boolean | null
+          mood: string | null
+          play_count: number | null
+          prompt: string | null
+          settings: Json | null
+          storage_path: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artist?: string | null
+          artwork_url?: string | null
+          audio_url?: string | null
+          created_at?: string
+          duration?: number
+          file_size_bytes?: number | null
+          genre?: string | null
+          id?: string
+          is_liked?: boolean | null
+          is_public?: boolean | null
+          mood?: string | null
+          play_count?: number | null
+          prompt?: string | null
+          settings?: Json | null
+          storage_path?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artist?: string | null
+          artwork_url?: string | null
+          audio_url?: string | null
+          created_at?: string
+          duration?: number
+          file_size_bytes?: number | null
+          genre?: string | null
+          id?: string
+          is_liked?: boolean | null
+          is_public?: boolean | null
+          mood?: string | null
+          play_count?: number | null
+          prompt?: string | null
+          settings?: Json | null
+          storage_path?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_consent_records: {
         Row: {
           consent_type: string

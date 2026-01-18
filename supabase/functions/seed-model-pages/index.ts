@@ -259,6 +259,7 @@ function getUniqueModelPages(): Map<string, ModelMetadata[]> {
     if (model.modelName === 'Suno') pageKey = 'Suno';
     if (model.modelName.includes('ElevenLabs Turbo')) pageKey = 'ElevenLabs Turbo V2.5';
     if (model.modelName.includes('ElevenLabs Multilingual')) pageKey = 'ElevenLabs Multilingual V2';
+    if (model.modelName.includes('ElevenLabs Dialogue')) pageKey = 'ElevenLabs Dialogue V3';
     if (model.modelName.includes('Remove Background')) pageKey = 'Remove Background';
     if (model.modelName.includes('Crisp Image Upscale')) pageKey = 'Crisp Image Upscale';
     if (model.modelName.includes('Topaz')) pageKey = 'Topaz Image Upscale';

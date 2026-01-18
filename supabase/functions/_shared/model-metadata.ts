@@ -112,6 +112,16 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 90,
     isActive: true,
   },
+  "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d": {
+    recordId: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    modelId: "elevenlabs/text-to-dialogue-v3",
+    modelName: "ElevenLabs Dialogue V3",
+    provider: "kie_ai",
+    contentType: "prompt_to_audio",
+    baseCreditCost: 7,
+    estimatedTimeSeconds: 30,
+    isActive: true,
+  },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE EDITING MODELS (19 total)

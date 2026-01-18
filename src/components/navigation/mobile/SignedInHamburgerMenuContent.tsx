@@ -18,6 +18,7 @@ interface SignedInHamburgerMenuContentProps {
   isAdmin: boolean;
   isFeatureEnabled: (featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard') => boolean;
   isFeatureComingSoon: (featureId: 'templates' | 'custom_creation' | 'faceless_videos' | 'storyboard') => boolean;
+  isPageEnabled: (pageId: 'features' | 'blog' | 'community' | 'templateLandings') => boolean;
   showHomeLink?: boolean;
 }
 
@@ -28,6 +29,7 @@ export const SignedInHamburgerMenuContent = ({
   isAdmin,
   isFeatureEnabled,
   isFeatureComingSoon,
+  isPageEnabled,
   showHomeLink = true,
 }: SignedInHamburgerMenuContentProps) => {
   const [studioOpen, setStudioOpen] = useState(false);
@@ -256,6 +258,13 @@ export const SignedInHamburgerMenuContent = ({
               label="Models" 
               icon={<Cpu className="h-4 w-4" />} 
             />
+            {isPageEnabled('features') && (
+              <MenuItem 
+                path="/features" 
+                label="Features" 
+                icon={<Sparkles className="h-4 w-4" />} 
+              />
+            )}
           </CollapsibleContent>
         </Collapsible>
       </div>

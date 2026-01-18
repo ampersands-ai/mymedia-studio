@@ -87,7 +87,7 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
           <TTSTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
         <TabsContent value="stt">
-          <SpeechToTextTab />
+          <SpeechToTextTab userId={user?.id} audioGeneration={audioGeneration} />
         </TabsContent>
       </Tabs>
     </div>
@@ -359,13 +359,19 @@ function TTSTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
   );
 }
 
-function SpeechToTextTab() {
+interface STTTabProps {
+  userId?: string;
+  audioGeneration: ReturnType<typeof useAudioGeneration>;
+}
+
+function SpeechToTextTab({ userId, audioGeneration }: STTTabProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [diarize, setDiarize] = useState(true);
   const [tagAudioEvents, setTagAudioEvents] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isProcessing = audioGeneration.isGenerating;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -389,37 +395,19 @@ function SpeechToTextTab() {
       toast.error('Please upload an audio file');
       return;
     }
-    setIsProcessing(true);
-    toast.info('Transcribing audio...');
+    if (!userId) {
+      toast.error('Please sign in to transcribe audio');
+      return;
+    }
 
-    try {
-      const formData = new FormData();
-      formData.append('audio', file);
-      formData.append('diarize', String(diarize));
-      formData.append('tag_audio_events', String(tagAudioEvents));
+    const result = await audioGeneration.generateSTT({
+      audioFile: file,
+      diarize,
+      tagAudioEvents,
+    }, userId);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-transcribe`,
-        {
-          method: 'POST',
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      setTranscription(data.text || 'No transcription available');
-      toast.success('Transcription complete!');
-    } catch (error) {
-      console.error('Transcription error:', error);
-      toast.error(error instanceof Error ? error.message : 'Transcription failed');
-    } finally {
-      setIsProcessing(false);
+    if (result) {
+      setTranscription(result.text || 'No transcription available');
     }
   };
 

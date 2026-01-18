@@ -10,7 +10,7 @@ import { AdvancedOptionsPanel } from "./AdvancedOptionsPanel";
 import { SchemaInput } from "@/components/generation/SchemaInput";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Sparkles, RotateCcw, Coins, Clock, ArrowUp, Timer } from "lucide-react";
+import { Sparkles, RotateCcw, Coins, Clock, ArrowUp, Timer, Info } from "lucide-react";
 import { NotifyOnCompletionToggle } from "@/components/shared/NotifyOnCompletionToggle";
 import type { CreationGroup } from "@/constants/creation-groups";
 import type { 
@@ -297,19 +297,32 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         />
 
         {hasPromptField && (
-          <PromptInput
-            value={prompt}
-            onChange={onPromptChange}
-            isRequired={isPromptRequired}
-            maxLength={maxPromptLength}
-            onSurpriseMe={onSurpriseMe}
-            disabled={isDisabled}
-            generateCaption={generateCaption}
-            onGenerateCaptionChange={onGenerateCaptionChange}
-            generatingSurprise={generatingSurprise}
-            label={promptLabel}
-            placeholder={promptPlaceholder}
-          />
+          <div className="space-y-2">
+            <PromptInput
+              value={prompt}
+              onChange={onPromptChange}
+              isRequired={isPromptRequired}
+              maxLength={maxPromptLength}
+              onSurpriseMe={onSurpriseMe}
+              disabled={isDisabled}
+              generateCaption={generateCaption}
+              onGenerateCaptionChange={onGenerateCaptionChange}
+              generatingSurprise={generatingSurprise}
+              label={promptLabel}
+              placeholder={promptPlaceholder}
+            />
+            
+            {/* Pricing note for ElevenLabs models */}
+            {selectedModelData?.model_family === 'ElevenLabs' && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+                <Info className="h-3 w-3 flex-shrink-0" />
+                <span>
+                  Cost: {selectedModelData.variant_name === 'Turbo V2.5' ? '3' : 
+                         selectedModelData.variant_name === 'Multilingual V2' ? '6' : '7'} credits per 1,000 characters
+                </span>
+              </div>
+            )}
+          </div>
         )}
 
         {imageFieldName && shouldUseSpecializedImageRenderer && (

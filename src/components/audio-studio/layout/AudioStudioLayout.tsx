@@ -22,28 +22,22 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <AudioStudioSidebar
-          activeView={activeView}
-          onViewChange={onViewChange}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!isSidebarCollapsed)}
-        />
-      </div>
-
-      {/* Main Content - scrollable area that stops before player */}
-      <main
-        className={cn(
-          'transition-all duration-300 h-[calc(100vh-64px-80px)] overflow-y-auto',
-          isSidebarCollapsed ? 'md:ml-16' : 'md:ml-60',
-          'ml-0 pb-4'
-        )}
-      >
-        <div className="p-4 md:p-6">
-          {children}
+      <div className="md:flex">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <AudioStudioSidebar
+            activeView={activeView}
+            onViewChange={onViewChange}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!isSidebarCollapsed)}
+          />
         </div>
-      </main>
+
+        {/* Main Content (page scrolls so footer is reachable) */}
+        <main className={cn('flex-1 transition-all duration-300')}>
+          <div className="p-4 md:p-6 pb-32 md:pb-24">{children}</div>
+        </main>
+      </div>
 
       {/* Desktop Player */}
       <PersistentAudioPlayer onOpenQueue={() => setQueueOpen(true)} />

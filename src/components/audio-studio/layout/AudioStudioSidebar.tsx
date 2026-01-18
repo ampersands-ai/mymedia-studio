@@ -28,7 +28,7 @@ export function AudioStudioSidebar({
   return (
     <aside
       className={cn(
-        'fixed left-0 top-16 h-[calc(100vh-64px-80px)] bg-card border-r border-border transition-all duration-300 z-40',
+        'sticky top-16 h-[calc(100vh-64px-80px)] bg-card border-r border-border transition-all duration-300 z-40 shrink-0',
         isCollapsed ? 'w-16' : 'w-60'
       )}
     >

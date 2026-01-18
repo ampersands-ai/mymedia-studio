@@ -21,7 +21,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
   const hasActiveTrack = !!currentTrack;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-background">
+    <div className="h-[calc(100vh-64px)] bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <AudioStudioSidebar
@@ -32,12 +32,12 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
         />
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - scrollable area that stops before player */}
       <main
         className={cn(
-          'transition-all duration-300 pb-24 md:pb-24',
+          'transition-all duration-300 h-[calc(100vh-64px-80px)] overflow-y-auto',
           isSidebarCollapsed ? 'md:ml-16' : 'md:ml-60',
-          'ml-0'
+          'ml-0 pb-4'
         )}
       >
         <div className="p-4 md:p-6">

@@ -237,7 +237,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+        <DialogContent className="max-w-7xl max-h-[90vh] w-[95vw]">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <DialogDescription className="sr-only">
@@ -363,7 +363,7 @@ export function BackgroundMediaSelector({
               )}
 
             {/* Media Grid */}
-            <ScrollArea className="h-[calc(95vh-280px)] rounded-md border p-4">
+            <ScrollArea className="h-[calc(90vh-240px)] rounded-md border p-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -375,7 +375,7 @@ export function BackgroundMediaSelector({
                   <p className="text-sm text-muted-foreground">Try a different search term</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2">
                   {mediaItems.map((media) => (
                     <div
                       key={media.id}
@@ -392,7 +392,7 @@ export function BackgroundMediaSelector({
                         <img
                           src={media.preview}
                           alt={`${media.type} ${media.id}`}
-                          className="w-full h-24 object-cover"
+                          className="w-full h-32 object-cover"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                           {media.type === 'video' ? (

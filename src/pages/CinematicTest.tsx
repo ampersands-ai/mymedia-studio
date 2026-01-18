@@ -21,7 +21,7 @@ const CinematicTest = () => {
       <AboutSection />
 
       {/* Cinematic Features Showcase */}
-      <FeaturesShowcase showHero={false} showCTA={true} />
+      <FeaturesShowcase showHero={false} showCTA={false} />
 
       {/* Contact Section */}
       <ContactSection />

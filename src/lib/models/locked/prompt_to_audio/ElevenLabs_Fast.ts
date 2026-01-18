@@ -34,9 +34,9 @@ export const MODEL_CONFIG = {
   provider: "kie_ai",
   contentType: "prompt_to_audio",
   use_api_key: "KIE_AI_API_KEY_PROMPT_TO_AUDIO",
-  baseCreditCost: 7, // Per 1000 characters - shown as base in UI
-  creditsPerThousandChars: 7,
-  minCreditCost: 7, // Minimum cost for any generation
+  baseCreditCost: 3, // Per 1000 characters - shown as base in UI
+  creditsPerThousandChars: 3,
+  minCreditCost: 3, // Minimum cost for any generation
   estimatedTimeSeconds: 15,
   costMultipliers: {},
   apiEndpoint: "/api/v1/jobs/createTask",
@@ -333,11 +333,12 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
 // ============================================================================
 
 export function calculateCost(inputs: Record<string, unknown>): number {
-  const text = (inputs.text as string) || '';
+  // Use 'prompt' as that's what the hook passes, fallback to 'text'
+  const text = (inputs.prompt as string) || (inputs.text as string) || '';
   const totalChars = text.length;
 
-  // 7 credits per 1000 characters
-  // Minimum 7 credits for any generation (covers up to first 1000 chars)
+  // 3 credits per 1000 characters
+  // Minimum 3 credits for any generation (covers up to first 1000 chars)
   if (totalChars === 0) {
     return MODEL_CONFIG.minCreditCost;
   }

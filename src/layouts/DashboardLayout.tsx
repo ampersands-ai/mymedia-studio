@@ -137,8 +137,10 @@ export const DashboardLayout = () => {
       {/* Global Mobile Navigation - Hidden on Audio Studio (has its own nav) */}
       {!isAudioStudio && <GlobalMobileNav />}
 
-      {/* Footer - Hidden on Audio Studio (uses full-height layout) */}
-      {!isAudioStudio && <Footer />}
+      {/* Footer - Higher z-index on Audio Studio to appear above sidebar */}
+      <div className={isAudioStudio ? 'relative z-50' : ''}>
+        <Footer />
+      </div>
     </div>
   );
 };

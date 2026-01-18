@@ -3,11 +3,23 @@ import { chapters } from "@/data/features-showcase";
 import { useChapterProgress } from "@/hooks/useChapterProgress";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
-export const ScrollProgress = () => {
+interface ScrollProgressProps {
+  showHero?: boolean;
+  showCTA?: boolean;
+}
+
+export const ScrollProgress = ({ showHero = true, showCTA = true }: ScrollProgressProps) => {
   const { activeChapter, scrollToChapter } = useChapterProgress();
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const activeIndex = chapters.findIndex((c) => c.id === activeChapter);
+  // Filter chapters based on what's actually shown
+  const visibleChapters = chapters.filter((chapter) => {
+    if (chapter.id === "intro" && !showHero) return false;
+    if (chapter.id === "cta" && !showCTA) return false;
+    return true;
+  });
+
+  const activeIndex = visibleChapters.findIndex((c) => c.id === activeChapter);
   const isOnCTA = activeChapter === "cta";
 
   return (
@@ -18,10 +30,10 @@ export const ScrollProgress = () => {
       transition={{ duration: 0.5, delay: 1 }}
     >
       <div className="relative flex flex-col items-center gap-0">
-        {chapters.map((chapter, index) => {
+        {visibleChapters.map((chapter, index) => {
           const isActive = activeChapter === chapter.id;
           const isPast = activeIndex > index;
-          const isLast = index === chapters.length - 1;
+          const isLast = index === visibleChapters.length - 1;
 
           return (
             <div key={chapter.id} className="flex flex-col items-center">
@@ -43,7 +55,7 @@ export const ScrollProgress = () => {
                 />
 
                 {/* Label for last item (CTA) */}
-                {isLast && (
+                {isLast && showCTA && (
                   <span
                     className={`text-xs font-medium whitespace-nowrap transition-all duration-300 ${
                       isOnCTA

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Grid3X3, List, Search, Music, Volume2, Zap, FileAudio, Trash2 } from 'lucide-react';
+import { Grid3X3, List, Search, Music, Volume2, Zap, FileAudio, Trash2, Loader2, RefreshCw, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,34 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TrackCard } from '../shared/TrackCard';
 import { EmptyState } from '../shared/EmptyState';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
+import { useAudioLibrary } from '../hooks/useAudioLibrary';
 import { cn } from '@/lib/utils';
 import type { LibraryTab, AudioTrack } from '../types/audio-studio.types';
-
-// Mock data for demo - will be replaced with real data from generations table
-const MOCK_LIBRARY: AudioTrack[] = [
-  {
-    id: '1',
-    title: 'Summer Vibes',
-    artist: 'AI Studio',
-    duration: 180,
-    audioUrl: '',
-    type: 'song',
-    genre: 'pop',
-    mood: 'happy',
-    createdAt: new Date().toISOString(),
-    isLiked: true,
-  },
-  {
-    id: '2',
-    title: 'Welcome Message',
-    artist: 'AI Studio',
-    duration: 15,
-    audioUrl: '',
-    type: 'voiceover',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    isLiked: false,
-  },
-];
+import { toast } from 'sonner';
 
 export function LibraryView() {
   const [activeTab, setActiveTab] = useState<LibraryTab>('all');
@@ -43,29 +19,72 @@ export function LibraryView() {
   const [searchQuery, setSearchQuery] = useState('');
   const { play, currentTrack, isPlaying } = useAudioPlayer();
 
-  // Filter tracks based on tab and search
-  const filteredTracks = MOCK_LIBRARY.filter(track => {
-    const matchesTab = activeTab === 'all' || 
-      (activeTab === 'songs' && track.type === 'song') ||
-      (activeTab === 'voiceovers' && track.type === 'voiceover') ||
-      (activeTab === 'sfx' && track.type === 'sfx') ||
-      (activeTab === 'stems' && track.type === 'stem');
-    
-    const matchesSearch = !searchQuery || 
-      track.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesTab && matchesSearch;
+  // Map tab to filter
+  const getFilterFromTab = (tab: LibraryTab): 'all' | 'songs' | 'voiceovers' | 'sfx' | 'stems' | 'favorites' => {
+    if (tab === 'all') return 'all';
+    if (tab === 'songs') return 'songs';
+    if (tab === 'voiceovers') return 'voiceovers';
+    if (tab === 'sfx') return 'sfx';
+    if (tab === 'stems') return 'stems';
+    return 'all';
+  };
+
+  const {
+    tracks,
+    isLoading,
+    error,
+    refresh,
+    toggleLike,
+    deleteTrack,
+    incrementPlayCount,
+  } = useAudioLibrary({
+    filter: getFilterFromTab(activeTab),
+    searchQuery,
+  });
+
+  // Sort tracks
+  const sortedTracks = [...tracks].sort((a, b) => {
+    if (sortBy === 'name') return a.title.localeCompare(b.title);
+    if (sortBy === 'duration') return b.duration - a.duration;
+    // Default: recent
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   const handlePlay = (track: AudioTrack) => {
     play(track);
+    incrementPlayCount(track.id);
+  };
+
+  const handleDelete = async (track: AudioTrack) => {
+    const success = await deleteTrack(track.id);
+    if (success) {
+      toast.success('Track deleted');
+    } else {
+      toast.error('Failed to delete track');
+    }
   };
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-foreground">My Library</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refresh}
+          disabled={isLoading}
+          className="gap-2"
+        >
+          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+          {error}
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LibraryTab)}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -135,7 +154,11 @@ export function LibraryView() {
         </div>
 
         <TabsContent value={activeTab} className="mt-6">
-          {filteredTracks.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : sortedTracks.length === 0 ? (
             <EmptyState 
               type="library"
               onAction={() => {}}
@@ -146,14 +169,19 @@ export function LibraryView() {
                 ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
                 : "flex flex-col gap-2"
             )}>
-              {filteredTracks.map((track) => (
+              {sortedTracks.map((track) => (
                 viewMode === 'grid' ? (
-                  <TrackCard key={track.id} track={track} />
+                  <TrackCard 
+                    key={track.id} 
+                    track={track}
+                  />
                 ) : (
                   <TrackListItem
                     key={track.id}
                     track={track}
                     onPlay={() => handlePlay(track)}
+                    onLike={() => toggleLike(track.id)}
+                    onDelete={() => handleDelete(track)}
                     isPlaying={currentTrack?.id === track.id && isPlaying}
                   />
                 )
@@ -169,10 +197,12 @@ export function LibraryView() {
 interface TrackListItemProps {
   track: AudioTrack;
   onPlay: () => void;
+  onLike: () => void;
+  onDelete: () => void;
   isPlaying: boolean;
 }
 
-function TrackListItem({ track, onPlay, isPlaying }: TrackListItemProps) {
+function TrackListItem({ track, onPlay, onLike, onDelete, isPlaying }: TrackListItemProps) {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -221,7 +251,20 @@ function TrackListItem({ track, onPlay, isPlaying }: TrackListItemProps) {
       </span>
 
       {/* Actions */}
-      <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className={cn("shrink-0 h-8 w-8", track.isLiked ? "text-accent-pink" : "text-muted-foreground hover:text-accent-pink")}
+        onClick={(e) => { e.stopPropagation(); onLike(); }}
+      >
+        <Heart className={cn("h-4 w-4", track.isLiked && "fill-current")} />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+      >
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>

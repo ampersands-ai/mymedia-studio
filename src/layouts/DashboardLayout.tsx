@@ -134,10 +134,11 @@ export const DashboardLayout = () => {
         <Outlet />
       </main>
 
-      {/* Global Mobile Navigation */}
+      {/* Global Mobile Navigation - Hidden on Audio Studio (has its own nav) */}
       {!isAudioStudio && <GlobalMobileNav />}
 
-      <Footer />
+      {/* Footer - Hidden on Audio Studio (uses full-height layout) */}
+      {!isAudioStudio && <Footer />}
     </div>
   );
 };

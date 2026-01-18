@@ -149,3 +149,9 @@ verify_jwt = false
 
 [functions.get-timestamped-lyrics]
 verify_jwt = false
+
+[functions.elevenlabs-voice-changer]
+verify_jwt = true
+
+[functions.elevenlabs-stem-separation]
+verify_jwt = true

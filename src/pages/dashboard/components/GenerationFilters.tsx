@@ -103,7 +103,7 @@ export const GenerationFilters = ({
       {/* Content Type Filter */}
       <div>
         <Tabs value={contentTypeFilter} onValueChange={(v) => onContentTypeFilterChange(v as ContentTypeFilter)}>
-          <TabsList className="flex w-full max-w-3xl overflow-x-auto scrollbar-hide gap-1 sm:grid sm:grid-cols-6 sm:overflow-visible">
+          <TabsList className="flex w-full max-w-3xl overflow-x-auto scrollbar-hide gap-1 px-1 sm:grid sm:grid-cols-6 sm:overflow-visible sm:px-0">
             <TabsTrigger value="all" className="shrink-0 whitespace-nowrap">
               <Sparkles className="h-4 w-4 mr-1" />
               All

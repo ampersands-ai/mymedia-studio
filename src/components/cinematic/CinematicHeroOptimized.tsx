@@ -71,11 +71,18 @@ export const CinematicHeroOptimized = () => {
     return () => clearTimeout(timer);
   }, [currentWordIndex]);
 
-  const scrollToPortfolio = () => {
-    const element = document.getElementById("portfolio");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+  const scrollToNextSection = () => {
+    // Try multiple possible next section IDs
+    const possibleIds = ["carousel", "about", "portfolio", "features"];
+    for (const id of possibleIds) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
     }
+    // Fallback: scroll down by viewport height
+    window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
   };
 
   return (
@@ -145,7 +152,7 @@ export const CinematicHeroOptimized = () => {
             Start Creating Free
           </Link>
           <button
-            onClick={scrollToPortfolio}
+            onClick={scrollToNextSection}
             className="px-6 sm:px-8 py-3 sm:py-4 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors text-sm sm:text-base rounded-2xl"
           >
             Use Cases
@@ -163,7 +170,7 @@ export const CinematicHeroOptimized = () => {
 
       {/* Scroll Indicator */}
       <button
-        onClick={scrollToPortfolio}
+        onClick={scrollToNextSection}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 hover:text-white transition-colors animate-bounce z-20"
       >
         <ChevronDown className="w-8 h-8" />

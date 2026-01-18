@@ -1,7 +1,7 @@
 import { 
   Home, Settings, LogOut, Shield, Sparkles, LayoutTemplate, BookOpen, HelpCircle,
   History, Video, Clock, Clapperboard, ChevronDown, Palette, ImagePlus, Music, 
-  CircleUser, Repeat, FolderOpen, Info, Film, CreditCard, Cpu
+  CircleUser, Repeat, FolderOpen, Info, Film, CreditCard, Cpu, Mic
 } from "lucide-react";
 import {
   Collapsible,
@@ -193,6 +193,11 @@ export const SignedInHamburgerMenuContent = ({
             {/* Audio */}
             <div className="bg-muted/30 rounded-lg p-2 space-y-1">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1 border-b border-border/50">Audio</p>
+              <MenuItem 
+                path="/dashboard/custom-creation?group=prompt_to_audio"
+                label="Audio Studio" 
+                icon={<Mic className="h-4 w-4" />} 
+              />
               <MenuItem 
                 path="/dashboard/audio-studio"
                 label="Music Studio" 

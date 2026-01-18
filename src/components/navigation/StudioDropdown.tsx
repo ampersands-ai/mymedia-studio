@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, ChevronDown, Video, Scissors, BookOpen, ImagePlus, Film, Music, Palette, CircleUser, Repeat } from "lucide-react";
+import { Sparkles, ChevronDown, Video, Scissors, BookOpen, ImagePlus, Film, Music, Palette, CircleUser, Repeat, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -138,6 +138,18 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           {/* Audio */}
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Audio</p>
+            <Link
+              to="/dashboard/custom-creation?group=prompt_to_audio"
+              onClick={() => setOpenDropdown(null)}
+              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-lg bg-primary-orange/20 text-primary-orange group-hover:bg-primary-orange group-hover:text-neutral-900 transition-colors">
+                <Mic className="h-4 w-4" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xs text-foreground text-[10px]">Audio Studio</p>
+              </div>
+            </Link>
             <Link
               to="/dashboard/audio-studio"
               onClick={() => setOpenDropdown(null)}

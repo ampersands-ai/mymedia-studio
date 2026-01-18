@@ -1,4 +1,4 @@
-// Music Studio TypeScript Definitions
+// Audio Studio TypeScript Definitions
 
 export type AudioStudioView = 
   | 'home' 

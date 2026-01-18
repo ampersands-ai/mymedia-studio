@@ -37,7 +37,7 @@ const CREATION_GROUPS = [
   { id: "prompt_to_image", label: "Text to Image" },
   { id: "prompt_to_video", label: "Text to Video" },
   { id: "image_to_video", label: "Image to Video" },
-  { id: "prompt_to_audio", label: "Music Studio" },
+  { id: "prompt_to_audio", label: "Audio Studio" },
 ];
 
 

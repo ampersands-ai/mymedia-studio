@@ -1,4 +1,4 @@
-# Music Studio Models
+# Audio Studio Models
 
 This directory contains locked model files for audio generation.
 

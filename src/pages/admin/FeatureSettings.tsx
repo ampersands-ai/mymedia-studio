@@ -13,7 +13,7 @@ const CREATION_GROUP_LABELS: Record<string, { label: string; icon: React.ReactNo
   image_to_video: { label: 'Image to Video', icon: <Video className="h-4 w-4" /> },
   video_to_video: { label: 'Video to Video', icon: <Repeat className="h-4 w-4" /> },
   lip_sync: { label: 'Custom Avatar', icon: <CircleUser className="h-4 w-4" /> },
-  prompt_to_audio: { label: 'Music Studio', icon: <Music className="h-4 w-4" /> },
+  prompt_to_audio: { label: 'Audio Studio', icon: <Music className="h-4 w-4" /> },
 };
 
 export default function FeatureSettings() {

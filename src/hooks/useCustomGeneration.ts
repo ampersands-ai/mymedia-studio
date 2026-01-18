@@ -359,7 +359,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         'image_to_video': 'Image animation',
         'video_to_video': 'Video to video',
         'lip_sync': 'Lip sync',
-        'prompt_to_audio': 'Music studio'
+        'prompt_to_audio': 'Audio studio'
       };
       
       toast.success(`${promptTypeLabels[state.selectedGroup]} prompt loaded!`);

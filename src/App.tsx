@@ -181,7 +181,7 @@ const AppContent = () => {
               <Route path="templates" element={<RouteErrorBoundary routeName="Dashboard > Templates"><Templates /></RouteErrorBoundary>} />
               <Route path="history" element={<RouteErrorBoundary routeName="Dashboard > History"><History /></RouteErrorBoundary>} />
               <Route path="video-studio" element={<RouteErrorBoundary routeName="Dashboard > Video Studio"><VideoStudio /></RouteErrorBoundary>} />
-              <Route path="audio-studio" element={<RouteErrorBoundary routeName="Dashboard > Music Studio"><AudioStudioPage /></RouteErrorBoundary>} />
+              <Route path="audio-studio" element={<RouteErrorBoundary routeName="Dashboard > Audio Studio"><AudioStudioPage /></RouteErrorBoundary>} />
               <Route path="storyboard" element={<RouteErrorBoundary routeName="Dashboard > Storyboard"><StoryboardPage /></RouteErrorBoundary>} />
               <Route path="settings" element={<RouteErrorBoundary routeName="Dashboard > Settings"><Settings /></RouteErrorBoundary>} />
               <Route path="prompts" element={<RouteErrorBoundary routeName="Dashboard > Prompt Library"><PromptLibrary /></RouteErrorBoundary>} />

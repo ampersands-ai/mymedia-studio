@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
 
     // ========================================================================
     // VOICEOVER GENERATION VIA PROVIDER (NOT DIRECT ELEVENLABS)
-    // Routes through generate-content edge function like Music Studio models
+    // Routes through generate-content edge function like Audio Studio models
     // ========================================================================
     
     // Determine model based on voiceover tier (tier already declared above)

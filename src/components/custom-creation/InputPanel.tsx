@@ -210,7 +210,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     return isAudioModel ? (isSunoModel ? 'Prompt' : 'Text') : 'Prompt';
   })();
   const promptPlaceholder = isAudioModel 
-    ? (isSunoModel ? 'Enter your lyrics here...' : 'Enter your text here...') 
+    ? (isSunoModel ? 'Describe your song...' : 'Enter your text here...') 
     : 'Describe what you want to create...';
 
   // Read explicit renderer toggles from schema (with backward-compatible defaults)

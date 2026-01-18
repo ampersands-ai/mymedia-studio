@@ -140,6 +140,12 @@ function getKieApiKey(modelId: string, recordId: string): string {
   else if (modelId.includes('prompt_to_image')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_IMAGE';
   else if (modelId.includes('prompt_to_video')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_VIDEO';
   else if (modelId.includes('prompt_to_audio')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
+  // Audio-related content types - reuse prompt_to_audio key
+  else if (modelId.includes('speech_to_text') || modelId.includes('speech-to-text')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
+  else if (modelId.includes('text_to_speech') || modelId.includes('text-to-speech')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
+  else if (modelId.includes('sound_effect') || modelId.includes('sound-effect')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
+  else if (modelId.includes('elevenlabs')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
+  else if (modelId.includes('suno')) secretName = 'KIE_AI_API_KEY_PROMPT_TO_AUDIO';
   else secretName = 'KIE_AI_API_KEY';
   
   const apiKey = Deno.env.get(secretName) || Deno.env.get('KIE_AI_API_KEY');

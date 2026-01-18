@@ -60,17 +60,32 @@ export function BackgroundMediaSelector({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const getDefaultQuery = (style: string): string => {
-    const styleQueries: Record<string, string> = {
-      modern: 'abstract geometric patterns',
-      minimal: 'minimalist clean backgrounds',
-      cinematic: 'cinematic footage nature',
-      vibrant: 'colorful vibrant abstract',
-      nature: 'nature landscapes',
-      urban: 'city urban skyline',
-      tech: 'technology digital abstract',
-    };
-    return styleQueries[style] || 'abstract backgrounds';
+  // Loop-focused search terms for background media auto-selection
+  const loopSearchTerms = [
+    'tunnel loop',
+    'abstract loop',
+    'underground loops',
+    'rave loops',
+    '90s loops',
+    'glitter loop',
+    'music loops',
+    'disco loop',
+    'fire loop',
+    'money loop',
+    'abstract neon light loops',
+    'falling music note loops',
+    'neon loop',
+    'particles loop',
+  ];
+
+  const getRandomLoopTerm = (): string => {
+    return loopSearchTerms[Math.floor(Math.random() * loopSearchTerms.length)];
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getDefaultQuery = (_style: string): string => {
+    // Return a random loop-focused search term for variety
+    return getRandomLoopTerm();
   };
 
   const getOrientation = (aspectRatio: string): string => {

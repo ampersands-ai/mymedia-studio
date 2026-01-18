@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Music, Mic, Volume2, Zap, Scissors, Sparkles, Loader2, Upload, FileAudio, MessageSquare } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Music, Volume2, Zap, Sparkles, Loader2, Upload, FileAudio, MessageSquare, AudioLines } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +22,7 @@ import { useAudioGeneration, type TTSQuality } from '../hooks/useAudioGeneration
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 import { DialogueInput, type DialogueEntry } from '@/components/generation/DialogueInput';
 import { MODEL_CONFIG as DIALOGUE_CONFIG, calculateCost as calculateDialogueCost } from '@/lib/models/locked/text_to_speech/ElevenLabs_Dialogue_V3';
+
 
 interface CreateViewProps {
   initialTab?: CreateTab;
@@ -59,21 +60,17 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
             <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
             <span className="hidden sm:inline">TTS</span>
           </TabsTrigger>
-          <TabsTrigger value="voice" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
-            <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Voice</span>
-          </TabsTrigger>
           <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
             <span className="hidden sm:inline">SFX</span>
           </TabsTrigger>
-          <TabsTrigger value="stems" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
-            <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Stems</span>
-          </TabsTrigger>
           <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
             <span className="hidden sm:inline">Dialogue</span>
+          </TabsTrigger>
+          <TabsTrigger value="stt" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <AudioLines className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden sm:inline">STT</span>
           </TabsTrigger>
         </TabsList>
 
@@ -83,13 +80,14 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
         <TabsContent value="tts">
           <TTSTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
-        <TabsContent value="voice"><VoiceChangerTab /></TabsContent>
         <TabsContent value="sfx">
           <SFXTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
-        <TabsContent value="stems"><StemSeparationTab /></TabsContent>
         <TabsContent value="dialogue">
           <DialogueTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
+        </TabsContent>
+        <TabsContent value="stt">
+          <SpeechToTextTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -361,11 +359,12 @@ function TTSTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
   );
 }
 
-function VoiceChangerTab() {
+function SpeechToTextTab() {
   const [file, setFile] = useState<File | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState<VoiceData>(VOICE_DATABASE[0]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [transcription, setTranscription] = useState<string | null>(null);
+  const [diarize, setDiarize] = useState(true);
+  const [tagAudioEvents, setTagAudioEvents] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -375,31 +374,32 @@ function VoiceChangerTab() {
         toast.error('Please select an audio file');
         return;
       }
-      if (selectedFile.size > 50 * 1024 * 1024) {
-        toast.error('File size must be less than 50MB');
+      if (selectedFile.size > 100 * 1024 * 1024) {
+        toast.error('File size must be less than 100MB');
         return;
       }
       setFile(selectedFile);
-      setResult(null);
+      setTranscription(null);
       toast.success(`Selected: ${selectedFile.name}`);
     }
   };
 
-  const handleProcess = async () => {
+  const handleTranscribe = async () => {
     if (!file) {
       toast.error('Please upload an audio file');
       return;
     }
     setIsProcessing(true);
-    toast.info(`Converting voice to ${selectedVoice.name}...`);
+    toast.info('Transcribing audio...');
 
     try {
       const formData = new FormData();
       formData.append('audio', file);
-      formData.append('voice_id', selectedVoice.voice_id);
+      formData.append('diarize', String(diarize));
+      formData.append('tag_audio_events', String(tagAudioEvents));
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-voice-changer`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-transcribe`,
         {
           method: 'POST',
           headers: {
@@ -413,23 +413,29 @@ function VoiceChangerTab() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
-      setResult(audioUrl);
-      toast.success('Voice conversion complete!');
+      setTranscription(data.text || 'No transcription available');
+      toast.success('Transcription complete!');
     } catch (error) {
-      console.error('Voice changer error:', error);
-      toast.error(error instanceof Error ? error.message : 'Voice conversion failed');
+      console.error('Transcription error:', error);
+      toast.error(error instanceof Error ? error.message : 'Transcription failed');
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const handleCopy = useCallback(() => {
+    if (transcription) {
+      navigator.clipboard.writeText(transcription);
+      toast.success('Copied to clipboard!');
+    }
+  }, [transcription]);
+
   return (
     <div className="space-y-6 max-w-3xl">
       <Card
         className={cn(
-          'border-2 border-dashed p-8 cursor-pointer transition-colors hover:border-primary-orange/50',
-          file ? 'border-primary-orange bg-primary-orange/5' : 'border-border'
+          'border-2 border-dashed p-8 cursor-pointer transition-colors hover:border-accent-pink/50',
+          file ? 'border-accent-pink bg-accent-pink/5' : 'border-border'
         )}
         onClick={() => fileInputRef.current?.click()}
       >
@@ -437,7 +443,7 @@ function VoiceChangerTab() {
         <div className="flex flex-col items-center gap-3 text-center">
           {file ? (
             <>
-              <FileAudio className="h-12 w-12 text-primary-orange" />
+              <FileAudio className="h-12 w-12 text-accent-pink" />
               <div>
                 <p className="font-medium text-foreground">{file.name}</p>
                 <p className="text-sm text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
@@ -449,33 +455,64 @@ function VoiceChangerTab() {
               <Upload className="h-12 w-12 text-muted-foreground" />
               <div>
                 <p className="font-medium text-foreground">Upload Audio File</p>
-                <p className="text-sm text-muted-foreground">MP3, WAV, M4A up to 50MB</p>
+                <p className="text-sm text-muted-foreground">MP3, WAV, M4A up to 100MB</p>
               </div>
             </>
           )}
         </div>
       </Card>
 
-      <div className="space-y-3">
-        <Label>Target Voice</Label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {VOICE_DATABASE.slice(0, 8).map((voice) => (
-            <VoiceCard key={voice.voice_id} voice={voice} isSelected={selectedVoice.voice_id === voice.voice_id} onSelect={() => setSelectedVoice(voice)} size="sm" />
-          ))}
+      {/* Options */}
+      <div className="space-y-4">
+        <Label>Options</Label>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <Switch id="diarize" checked={diarize} onCheckedChange={setDiarize} disabled={isProcessing} />
+            <Label htmlFor="diarize" className="text-sm">Speaker Diarization</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch id="tagEvents" checked={tagAudioEvents} onCheckedChange={setTagAudioEvents} disabled={isProcessing} />
+            <Label htmlFor="tagEvents" className="text-sm">Tag Audio Events</Label>
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Diarization identifies different speakers. Audio events detect laughter, applause, music, etc.
+        </p>
       </div>
 
-      {result && (
-        <Card className="p-4 border-primary-orange/50 bg-primary-orange/5">
-          <Label className="mb-2 block">Result</Label>
-          <audio src={result} controls className="w-full" />
+      {/* Transcription Result */}
+      {transcription && (
+        <Card className="p-4 border-accent-pink/50 bg-accent-pink/5">
+          <div className="flex justify-between items-center mb-2">
+            <Label>Transcription</Label>
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              Copy
+            </Button>
+          </div>
+          <div className="bg-background rounded-lg p-4 max-h-[300px] overflow-y-auto">
+            <p className="text-sm whitespace-pre-wrap">{transcription}</p>
+          </div>
         </Card>
       )}
 
-      <Button onClick={handleProcess} disabled={isProcessing || !file} className="w-full h-12 bg-gradient-to-r from-accent-purple to-primary-orange hover:opacity-90 text-black font-bold">
-        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Mic className="h-5 w-5 mr-2" />}
-        {isProcessing ? 'Processing...' : 'Convert Voice'}
+      <Button 
+        onClick={handleTranscribe} 
+        disabled={isProcessing || !file} 
+        className="w-full h-12 bg-gradient-to-r from-accent-pink to-accent-purple hover:opacity-90 text-white font-bold"
+      >
+        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <AudioLines className="h-5 w-5 mr-2" />}
+        {isProcessing ? 'Transcribing...' : 'Transcribe Audio'}
       </Button>
+
+      {/* Info Card */}
+      <Card className="p-4 bg-muted/30 border-border">
+        <h4 className="font-medium text-sm mb-2">💡 Speech to Text Tips</h4>
+        <ul className="text-xs text-muted-foreground space-y-1">
+          <li>• Supports 99+ languages with automatic detection</li>
+          <li>• Clear audio with minimal background noise works best</li>
+          <li>• Speaker diarization helps identify who said what</li>
+        </ul>
+      </Card>
     </div>
   );
 }
@@ -575,143 +612,6 @@ function SFXTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
   );
 }
 
-function StemSeparationTab() {
-  const [file, setFile] = useState<File | null>(null);
-  const [stems, setStems] = useState({ vocals: true, drums: true, bass: true, other: true });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<{ vocals?: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      if (!selectedFile.type.startsWith('audio/')) {
-        toast.error('Please select an audio file');
-        return;
-      }
-      if (selectedFile.size > 100 * 1024 * 1024) {
-        toast.error('File size must be less than 100MB');
-        return;
-      }
-      setFile(selectedFile);
-      setResult(null);
-      toast.success(`Selected: ${selectedFile.name}`);
-    }
-  };
-
-  const handleProcess = async () => {
-    if (!file) {
-      toast.error('Please upload an audio file');
-      return;
-    }
-    const selectedStems = Object.entries(stems).filter(([, v]) => v).map(([k]) => k);
-    if (selectedStems.length === 0) {
-      toast.error('Please select at least one stem');
-      return;
-    }
-    setIsProcessing(true);
-    toast.info(`Separating ${selectedStems.join(', ')}...`);
-
-    try {
-      const formData = new FormData();
-      formData.append('audio', file);
-      formData.append('stems', JSON.stringify(stems));
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stem-separation`,
-        {
-          method: 'POST',
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      if (data.stems?.vocals) {
-        setResult({ vocals: `data:audio/mpeg;base64,${data.stems.vocals}` });
-      }
-      toast.success('Stem separation complete! (Vocals extracted)');
-      if (data.note) toast.info(data.note);
-    } catch (error) {
-      console.error('Stem separation error:', error);
-      toast.error(error instanceof Error ? error.message : 'Stem separation failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6 max-w-3xl">
-      <Card
-        className={cn(
-          'border-2 border-dashed p-8 cursor-pointer transition-colors hover:border-accent-purple/50',
-          file ? 'border-accent-purple bg-accent-purple/5' : 'border-border'
-        )}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileSelect} className="hidden" />
-        <div className="flex flex-col items-center gap-3 text-center">
-          {file ? (
-            <>
-              <FileAudio className="h-12 w-12 text-accent-purple" />
-              <div>
-                <p className="font-medium text-foreground">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-              </div>
-              <Button variant="outline" size="sm">Change File</Button>
-            </>
-          ) : (
-            <>
-              <Upload className="h-12 w-12 text-muted-foreground" />
-              <div>
-                <p className="font-medium text-foreground">Upload Audio File</p>
-                <p className="text-sm text-muted-foreground">Upload a song to separate (up to 100MB)</p>
-              </div>
-            </>
-          )}
-        </div>
-      </Card>
-
-      <div className="space-y-3">
-        <Label>Select Stems to Extract</Label>
-        <div className="grid grid-cols-2 gap-3">
-          {Object.entries(stems).map(([stem, enabled]) => (
-            <Card
-              key={stem}
-              className={cn('p-4 cursor-pointer transition-colors', enabled ? 'border-accent-purple bg-accent-purple/10' : 'border-border hover:border-muted-foreground')}
-              onClick={() => setStems(prev => ({ ...prev, [stem]: !prev[stem as keyof typeof stems] }))}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn('h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold', enabled ? 'bg-accent-purple text-white' : 'bg-muted text-muted-foreground')}>
-                  {stem[0].toUpperCase()}
-                </div>
-                <span className="font-medium capitalize">{stem}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">Note: Currently vocal extraction is supported. Full stem separation coming soon.</p>
-      </div>
-
-      {result?.vocals && (
-        <Card className="p-4 border-accent-purple/50 bg-accent-purple/5">
-          <Label className="mb-2 block">Extracted Vocals</Label>
-          <audio src={result.vocals} controls className="w-full" />
-        </Card>
-      )}
-
-      <Button onClick={handleProcess} disabled={isProcessing || !file} className="w-full h-12 bg-gradient-to-r from-accent-purple to-accent-pink hover:opacity-90 text-white font-bold">
-        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Scissors className="h-5 w-5 mr-2" />}
-        {isProcessing ? 'Separating...' : 'Separate Stems'}
-      </Button>
-    </div>
-  );
-}
 
 function DialogueTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps) {
   const [dialogueEntries, setDialogueEntries] = useState<DialogueEntry[]>([

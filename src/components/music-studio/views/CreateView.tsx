@@ -54,11 +54,11 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
         <TabsList className="bg-card border border-border p-1 h-auto w-full overflow-x-auto flex gap-1 scrollbar-hide">
           <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Music className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="whitespace-nowrap">Song</span>
+            <span className="whitespace-nowrap">Prompt to Song</span>
           </TabsTrigger>
           <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="whitespace-nowrap">Effects</span>
+            <span className="whitespace-nowrap">Sound Effects</span>
           </TabsTrigger>
           <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
@@ -66,11 +66,11 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
           </TabsTrigger>
           <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="whitespace-nowrap">TTS</span>
+            <span className="whitespace-nowrap">Text to Speech</span>
           </TabsTrigger>
           <TabsTrigger value="stt" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <AudioLines className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="whitespace-nowrap">STT</span>
+            <span className="whitespace-nowrap">Speech to Text</span>
           </TabsTrigger>
         </TabsList>
 

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu } from "lucide-react";
+import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -15,7 +15,7 @@ interface LibraryDropdownProps {
 }
 
 export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
-  const { isFeatureEnabled } = useFeatureFlags();
+  const { isFeatureEnabled, isPageEnabled } = useFeatureFlags();
   const { isAdmin } = useAdminRole();
   const { openDropdown, setOpenDropdown } = useNavDropdown();
 
@@ -90,7 +90,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         <Link
           to="/models"
           onClick={() => setOpenDropdown(null)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+          className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 mb-2 group"
         >
           <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
             <Cpu className="h-5 w-5" />
@@ -100,6 +100,21 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
             <p className="text-sm text-muted-foreground">AI model directory</p>
           </div>
         </Link>
+        {isPageEnabled('features') && (
+          <Link
+            to="/features"
+            onClick={() => setOpenDropdown(null)}
+            className="flex items-center gap-4 p-4 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group"
+          >
+            <div className="p-2.5 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-foreground">Features</p>
+              <p className="text-sm text-muted-foreground">Explore capabilities</p>
+            </div>
+          </Link>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -51,26 +51,26 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
       )}
       
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CreateTab)} className="space-y-6">
-        <TabsList className="bg-card border border-border p-1 h-auto flex-wrap gap-1 w-full overflow-x-auto">
-          <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+        <TabsList className="bg-card border border-border p-1 h-auto w-full overflow-x-auto flex gap-1 scrollbar-hide">
+          <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Music className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Prompt to Song</span>
+            <span className="whitespace-nowrap">Song</span>
           </TabsTrigger>
-          <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+          <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Sound Effects</span>
+            <span className="whitespace-nowrap">Effects</span>
           </TabsTrigger>
-          <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+          <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Dialogue</span>
+            <span className="whitespace-nowrap">Dialogue</span>
           </TabsTrigger>
-          <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+          <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Text to Speech</span>
+            <span className="whitespace-nowrap">TTS</span>
           </TabsTrigger>
-          <TabsTrigger value="stt" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+          <TabsTrigger value="stt" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0 min-w-fit">
             <AudioLines className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Speech to Text</span>
+            <span className="whitespace-nowrap">STT</span>
           </TabsTrigger>
         </TabsList>
 

@@ -66,8 +66,8 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
             </Button>
           </div>
 
-          {/* Creation Mode Buttons */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          {/* Creation Mode Buttons - Horizontal scroll on mobile, wrap on larger screens */}
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap sm:overflow-visible -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-hide">
             {CREATION_MODES.map((mode) => {
               const Icon = mode.icon;
               const isSelected = selectedMode === mode.tab;
@@ -75,13 +75,13 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
                 <button
                   key={mode.id}
                   onClick={() => handleModeClick(mode.tab)}
-                  className={`group flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg bg-card/60 border transition-all duration-200 ${
+                  className={`group flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg bg-card/60 border transition-all duration-200 flex-shrink-0 ${
                     isSelected 
                       ? 'border-primary-orange bg-card/80' 
                       : 'border-border hover:border-primary-orange/50 hover:bg-card/80'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 text-${mode.color}`} />
+                  <Icon className={`h-4 w-4 flex-shrink-0 text-${mode.color}`} />
                   <span className="font-medium text-xs sm:text-sm text-foreground whitespace-nowrap">{mode.title}</span>
                 </button>
               );

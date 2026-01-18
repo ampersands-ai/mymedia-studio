@@ -67,7 +67,7 @@ export const SCHEMA = Object.freeze({
   properties: {
     prompt: {
       type: "string",
-      title: "Prompt / Lyrics",
+      title: "Prompt",
       default: "",
       description: "Give an idea for auto-generated lyrics. Max 500 chars.",
       maxLength: 5000,
@@ -89,6 +89,7 @@ export const SCHEMA = Object.freeze({
     style: {
       type: "string",
       title: "Style",
+      showToUser: false,
       default: "",
       maxLength: 1000,
       description: "Music style (e.g., Jazz, Classical, Pop). Required in Custom Mode. Max 1000 chars.",
@@ -96,6 +97,7 @@ export const SCHEMA = Object.freeze({
     title: {
       type: "string",
       title: "Title",
+      showToUser: false,
       default: "",
       maxLength: 80,
       description: "Track title. Required in Custom Mode. Max 80 chars.",
@@ -103,6 +105,7 @@ export const SCHEMA = Object.freeze({
     negativeTags: {
       type: "string",
       title: "Negative Tags",
+      showToUser: false,
       default: "",
       description: "Styles to exclude (e.g., 'Heavy Metal, Upbeat Drums')",
       isAdvanced: true,
@@ -110,6 +113,7 @@ export const SCHEMA = Object.freeze({
     vocalGender: {
       type: "string",
       title: "Vocal Gender",
+      showToUser: false,
       default: "",
       enum: ["", "m", "f"],
       enumLabels: { "": "Auto", m: "Male", f: "Female" },
@@ -122,6 +126,7 @@ export const SCHEMA = Object.freeze({
       default: 0.5,
       minimum: 0,
       maximum: 1,
+      showToUser: false,
       step: 0.01,
       description: "Strength of style adherence (0-1)",
       isAdvanced: true,
@@ -131,6 +136,7 @@ export const SCHEMA = Object.freeze({
       title: "Weirdness",
       default: 0.5,
       minimum: 0,
+      showToUser: false,
       maximum: 1,
       step: 0.01,
       description: "Creative deviation level (0-1)",
@@ -140,6 +146,7 @@ export const SCHEMA = Object.freeze({
       type: "number",
       title: "Audio Weight",
       default: 0.5,
+      showToUser: false,
       minimum: 0,
       maximum: 1,
       step: 0.01,
@@ -147,6 +154,7 @@ export const SCHEMA = Object.freeze({
       isAdvanced: true,
     },
     personaId: {
+      showToUser: false,
       type: "string",
       title: "Persona ID",
       default: "",

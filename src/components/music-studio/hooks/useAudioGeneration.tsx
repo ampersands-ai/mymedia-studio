@@ -9,6 +9,7 @@ import { MODEL_CONFIG as TTS_FAST_CONFIG, SCHEMA as TTS_FAST_SCHEMA, preparePayl
 import { MODEL_CONFIG as SUNO_CONFIG, SCHEMA as SUNO_SCHEMA, preparePayload as prepareSunoPayload, calculateCost as calculateSunoCost } from '@/lib/models/locked/prompt_to_audio/Suno';
 import { MODEL_CONFIG as SFX_CONFIG, SCHEMA as SFX_SCHEMA, preparePayload as prepareSFXPayload, calculateCost as calculateSFXCost } from '@/lib/models/locked/text_to_audio/ElevenLabs_Sound_Effect_V2';
 import { MODEL_CONFIG as DIALOGUE_CONFIG, SCHEMA as DIALOGUE_SCHEMA, preparePayload as prepareDialoguePayload, calculateCost as calculateDialogueCost, validate as validateDialogue } from '@/lib/models/locked/text_to_speech/ElevenLabs_Dialogue_V3';
+import { MODEL_CONFIG as STT_CONFIG, SCHEMA as STT_SCHEMA, preparePayload as prepareSTTPayload, calculateCost as calculateSTTCost } from '@/lib/models/locked/speech_to_text/ElevenLabs_Speech_to_Text';
 
 import { GENERATION_STATUS } from '@/constants/generation-status';
 import { sanitizeForStorage } from '@/lib/database/sanitization';
@@ -52,6 +53,19 @@ interface MusicOptions {
   genre?: Genre;
   mood?: Mood;
   instrumental?: boolean;
+}
+
+interface STTOptions {
+  audioFile: File;
+  diarize?: boolean;
+  tagAudioEvents?: boolean;
+  languageCode?: string;
+}
+
+export interface STTResult {
+  text: string;
+  words?: Array<{ word: string; start: number; end: number; speaker?: string }>;
+  audioEvents?: Array<{ event: string; start: number; end: number }>;
 }
 
 const POLL_INTERVAL = 2000;
@@ -476,6 +490,163 @@ export function useAudioGeneration() {
     }
   }, [updateProgress, pollGeneration]);
 
+  const generateSTT = useCallback(async (options: STTOptions, userId: string): Promise<STTResult | null> => {
+    setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
+
+    try {
+      updateProgress(5, 'Uploading audio file...');
+
+      // Upload audio file to Supabase storage
+      const fileName = `${userId}/stt-${Date.now()}-${options.audioFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('audio-uploads')
+        .upload(fileName, options.audioFile, {
+          contentType: options.audioFile.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload audio: ${uploadError.message}`);
+      }
+
+      // Get public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('audio-uploads')
+        .getPublicUrl(fileName);
+
+      updateProgress(15, 'Reserving credits...');
+
+      // Build inputs for STT model
+      const inputs = {
+        audio_url: publicUrl,
+        diarize: options.diarize ?? true,
+        tag_audio_events: options.tagAudioEvents ?? true,
+        language_code: options.languageCode || '',
+      };
+
+      const cost = calculateSTTCost(inputs);
+      await reserveCredits(userId, cost);
+
+      updateProgress(20, 'Creating transcription job...');
+
+      // Create generation record
+      const { data: generation, error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: userId,
+          prompt: 'Speech-to-Text Transcription',
+          model_id: STT_CONFIG.modelId,
+          model_record_id: STT_CONFIG.recordId,
+          type: getGenerationType(STT_CONFIG.contentType),
+          status: GENERATION_STATUS.PROCESSING,
+          tokens_used: cost,
+          settings: sanitizeForStorage(inputs),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !generation) {
+        throw new Error(`Failed to create generation: ${insertError?.message}`);
+      }
+
+      updateProgress(30, 'Connecting to transcription service...');
+
+      // Call generate-content edge function (uses Kie.ai provider)
+      const { error: functionError } = await supabase.functions.invoke('generate-content', {
+        body: {
+          generationId: generation.id,
+          user_id: userId,
+          model_id: STT_CONFIG.modelId,
+          model_record_id: STT_CONFIG.recordId,
+          prompt: 'Speech-to-Text Transcription',
+          custom_parameters: prepareSTTPayload(inputs),
+          cost: cost,
+          use_api_key: STT_CONFIG.use_api_key,
+          model_config: STT_CONFIG,
+          model_schema: STT_SCHEMA,
+        },
+      });
+
+      if (functionError) {
+        throw new Error(`Transcription failed: ${functionError.message}`);
+      }
+
+      updateProgress(40, 'Transcribing audio...');
+
+      // Poll for completion - STT returns text in output_url or provider_response
+      return new Promise((resolve, reject) => {
+        const pollStartTime = Date.now();
+
+        const pollInterval = setInterval(async () => {
+          try {
+            const elapsed = Date.now() - pollStartTime;
+            
+            if (elapsed > MAX_POLL_TIME) {
+              clearInterval(pollInterval);
+              reject(new Error('Transcription timed out'));
+              return;
+            }
+
+            const progressPercent = Math.min(90, 40 + (elapsed / MAX_POLL_TIME) * 50);
+            updateProgress(progressPercent, 'Processing transcription...');
+
+            const { data: gen, error } = await supabase
+              .from('generations')
+              .select('*')
+              .eq('id', generation.id)
+              .single();
+
+            if (error) {
+              console.error('Poll error:', error);
+              return;
+            }
+
+            if (gen.status === GENERATION_STATUS.COMPLETED) {
+              clearInterval(pollInterval);
+              updateProgress(100, 'Complete!');
+
+              // Parse transcription from provider_response or output_url
+              let transcriptionText = '';
+              let words: STTResult['words'] = [];
+              let audioEvents: STTResult['audioEvents'] = [];
+
+              if (gen.provider_response) {
+                const response = typeof gen.provider_response === 'string' 
+                  ? JSON.parse(gen.provider_response) 
+                  : gen.provider_response;
+                
+                transcriptionText = response.text || response.transcription || '';
+                words = response.words || [];
+                audioEvents = response.audio_events || [];
+              } else if (gen.output_url) {
+                // If text is stored as output_url (for STT models)
+                transcriptionText = gen.output_url;
+              }
+
+              toast.success('Transcription complete!');
+              resolve({ text: transcriptionText, words, audioEvents });
+            } else if (gen.status === GENERATION_STATUS.FAILED) {
+              clearInterval(pollInterval);
+              reject(new Error('Transcription failed'));
+            }
+          } catch (pollError) {
+            console.error('Poll error:', pollError);
+          }
+        }, POLL_INTERVAL);
+
+        // Store interval for cleanup
+        pollIntervalRef.current = pollInterval;
+      });
+    } catch (error) {
+      console.error('STT generation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to transcribe audio');
+      return null;
+    } finally {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      setState({ isGenerating: false, progress: 0, currentStep: '' });
+    }
+  }, [updateProgress]);
+
   const saveToLibrary = useCallback(async (track: AudioTrack, userId: string): Promise<boolean> => {
     try {
       // First upload the audio file to storage
@@ -532,6 +703,7 @@ export function useAudioGeneration() {
     generateSFX,
     generateMusic,
     generateDialogue,
+    generateSTT,
     saveToLibrary,
   };
 }

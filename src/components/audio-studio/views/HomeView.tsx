@@ -91,6 +91,13 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
         </div>
       </section>
 
+      {/* Recent Creations */}
+      <section>
+        <h2 className="text-lg font-bold text-foreground mb-4">Recent Creations</h2>
+        <div className="rounded-xl border border-border bg-card/50 p-8 text-center">
+          <p className="text-muted-foreground">No creations yet...</p>
+        </div>
+      </section>
     </div>
   );
 }

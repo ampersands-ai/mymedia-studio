@@ -21,7 +21,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
   const hasActiveTrack = !!currentTrack;
 
   return (
-    <div className="h-[calc(100vh-64px)] bg-background overflow-hidden">
+    <div className="min-h-[calc(100vh-64px)] bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <AudioStudioSidebar

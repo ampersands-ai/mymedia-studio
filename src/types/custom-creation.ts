@@ -46,6 +46,7 @@ export interface GenerationOutput {
   provider_task_id?: string | null;
   model_id?: string | null;
   provider?: string | null;
+  modelFamily?: string | null;
 }
 
 /**

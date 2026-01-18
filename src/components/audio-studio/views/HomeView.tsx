@@ -55,7 +55,7 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-              placeholder="Describe your music idea..."
+              placeholder="Enter your idea..."
               className="flex-1 h-11 sm:h-12 bg-card/80 border-border text-sm sm:text-base"
             />
             <Button

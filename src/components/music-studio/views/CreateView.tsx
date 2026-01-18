@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Music, Mic, Volume2, Zap, Scissors, Sparkles, Loader2, Upload, FileAudio } from 'lucide-react';
+import { Music, Mic, Volume2, Zap, Scissors, Sparkles, Loader2, Upload, FileAudio, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudioGeneration, type TTSQuality } from '../hooks/useAudioGeneration';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
+import { DialogueInput, type DialogueEntry } from '@/components/generation/DialogueInput';
+import { MODEL_CONFIG as DIALOGUE_CONFIG, calculateCost as calculateDialogueCost } from '@/lib/models/locked/text_to_speech/ElevenLabs_Dialogue_V3';
 
 interface CreateViewProps {
   initialTab?: CreateTab;
@@ -69,6 +71,10 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
             <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
             <span className="hidden sm:inline">Stems</span>
           </TabsTrigger>
+          <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden sm:inline">Dialogue</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="song">
@@ -82,6 +88,9 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
           <SFXTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
         <TabsContent value="stems"><StemSeparationTab /></TabsContent>
+        <TabsContent value="dialogue">
+          <DialogueTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -700,6 +709,96 @@ function StemSeparationTab() {
         {isProcessing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Scissors className="h-5 w-5 mr-2" />}
         {isProcessing ? 'Separating...' : 'Separate Stems'}
       </Button>
+    </div>
+  );
+}
+
+function DialogueTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps) {
+  const [dialogueEntries, setDialogueEntries] = useState<DialogueEntry[]>([
+    { text: '', voice: 'Liam' }
+  ]);
+  const [stability, setStability] = useState(0.5);
+
+  // Calculate cost based on total character count
+  const cost = calculateDialogueCost({ dialogue: dialogueEntries });
+  
+  // Check if we have valid entries (at least one with text)
+  const hasValidEntries = dialogueEntries.some(entry => entry.text.trim().length > 0);
+
+  const handleGenerate = async () => {
+    if (!hasValidEntries) {
+      toast.error('Please enter at least one dialogue line');
+      return;
+    }
+    if (!userId) {
+      toast.error('Please sign in to generate dialogue');
+      return;
+    }
+
+    // Filter out empty entries
+    const validEntries = dialogueEntries.filter(entry => entry.text.trim().length > 0);
+
+    const track = await audioGeneration.generateDialogue({
+      dialogue: validEntries,
+      stability,
+    }, userId);
+
+    if (track) {
+      onTrackGenerated(track);
+      // Reset to one empty entry
+      setDialogueEntries([{ text: '', voice: 'Liam' }]);
+    }
+  };
+
+  const isGenerating = audioGeneration.isGenerating;
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      {/* Dialogue Input Component */}
+      <DialogueInput
+        value={dialogueEntries}
+        onChange={setDialogueEntries}
+        voices={[...DIALOGUE_CONFIG.voices]}
+        maxCharacters={5000}
+        required
+      />
+
+      {/* Stability Slider */}
+      <div className="space-y-3">
+        <div className="flex justify-between">
+          <Label>Stability</Label>
+          <span className="text-sm text-muted-foreground">{Math.round(stability * 100)}%</span>
+        </div>
+        <Slider
+          value={[stability]}
+          onValueChange={([v]) => setStability(v)}
+          min={0}
+          max={1}
+          step={0.05}
+          disabled={isGenerating}
+        />
+        <p className="text-xs text-muted-foreground">Higher = more consistent voice, lower = more expressive</p>
+      </div>
+
+      {/* Generate Button */}
+      <Button
+        onClick={handleGenerate}
+        disabled={isGenerating || !hasValidEntries || !userId}
+        className="w-full h-12 bg-gradient-to-r from-accent-purple to-primary-orange hover:opacity-90 text-black font-bold"
+      >
+        {isGenerating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <MessageSquare className="h-5 w-5 mr-2" />}
+        {isGenerating ? 'Generating...' : `Generate Dialogue (${cost} credits)`}
+      </Button>
+
+      {/* Info Card */}
+      <Card className="p-4 bg-muted/30 border-border">
+        <h4 className="font-medium text-sm mb-2">💡 Dialogue Tips</h4>
+        <ul className="text-xs text-muted-foreground space-y-1">
+          <li>• Add emotion tags like <code className="bg-muted px-1 rounded">[excitedly]</code>, <code className="bg-muted px-1 rounded">[whispering]</code>, <code className="bg-muted px-1 rounded">[curiously]</code></li>
+          <li>• Use different voices for each character in your conversation</li>
+          <li>• Maximum 5,000 characters total across all dialogue entries</li>
+        </ul>
+      </Card>
     </div>
   );
 }

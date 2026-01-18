@@ -8,6 +8,7 @@ import { MODEL_CONFIG as TTS_PRO_CONFIG, SCHEMA as TTS_PRO_SCHEMA, preparePayloa
 import { MODEL_CONFIG as TTS_FAST_CONFIG, SCHEMA as TTS_FAST_SCHEMA, preparePayload as prepareTTSFastPayload, calculateCost as calculateTTSFastCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_Fast';
 import { MODEL_CONFIG as SUNO_CONFIG, SCHEMA as SUNO_SCHEMA, preparePayload as prepareSunoPayload, calculateCost as calculateSunoCost } from '@/lib/models/locked/prompt_to_audio/Suno';
 import { MODEL_CONFIG as SFX_CONFIG, SCHEMA as SFX_SCHEMA, preparePayload as prepareSFXPayload, calculateCost as calculateSFXCost } from '@/lib/models/locked/text_to_audio/ElevenLabs_Sound_Effect_V2';
+import { MODEL_CONFIG as DIALOGUE_CONFIG, SCHEMA as DIALOGUE_SCHEMA, preparePayload as prepareDialoguePayload, calculateCost as calculateDialogueCost, validate as validateDialogue } from '@/lib/models/locked/text_to_speech/ElevenLabs_Dialogue_V3';
 
 import { GENERATION_STATUS } from '@/constants/generation-status';
 import { sanitizeForStorage } from '@/lib/database/sanitization';
@@ -37,6 +38,12 @@ interface SFXOptions {
   prompt: string;
   duration?: number;
   category?: string;
+}
+
+interface DialogueOptions {
+  dialogue: Array<{ text: string; voice: string }>;
+  stability?: number;
+  languageCode?: string;
 }
 
 interface MusicOptions {
@@ -380,6 +387,95 @@ export function useAudioGeneration() {
     }
   }, [updateProgress, pollGeneration]);
 
+  const generateDialogue = useCallback(async (options: DialogueOptions, userId: string): Promise<AudioTrack | null> => {
+    setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
+
+    try {
+      // Validate inputs
+      const inputs = {
+        dialogue: options.dialogue,
+        stability: options.stability ?? 0.5,
+        language_code: options.languageCode ?? 'auto',
+      };
+
+      const validation = validateDialogue(inputs);
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Invalid dialogue input');
+      }
+
+      updateProgress(5, 'Reserving credits...');
+
+      const cost = calculateDialogueCost(inputs);
+      await reserveCredits(userId, cost);
+
+      updateProgress(10, 'Creating generation...');
+
+      // Generate description from first dialogue entry
+      const description = options.dialogue.length > 0 
+        ? `${options.dialogue[0].voice}: "${options.dialogue[0].text.substring(0, 50)}${options.dialogue[0].text.length > 50 ? '...' : ''}"`
+        : "Dialogue generation";
+
+      const { data: generation, error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: userId,
+          prompt: description,
+          model_id: DIALOGUE_CONFIG.modelId,
+          model_record_id: DIALOGUE_CONFIG.recordId,
+          type: getGenerationType(DIALOGUE_CONFIG.contentType),
+          status: GENERATION_STATUS.PROCESSING,
+          tokens_used: cost,
+          settings: sanitizeForStorage(inputs),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !generation) {
+        throw new Error(`Failed to create generation: ${insertError?.message}`);
+      }
+
+      updateProgress(20, 'Connecting to dialogue service...');
+
+      const { error: functionError } = await supabase.functions.invoke('generate-content', {
+        body: {
+          generationId: generation.id,
+          user_id: userId,
+          model_id: DIALOGUE_CONFIG.modelId,
+          model_record_id: DIALOGUE_CONFIG.recordId,
+          prompt: description,
+          custom_parameters: prepareDialoguePayload(inputs),
+          cost: cost,
+          use_api_key: DIALOGUE_CONFIG.use_api_key,
+          model_config: DIALOGUE_CONFIG,
+          model_schema: DIALOGUE_SCHEMA,
+        },
+      });
+
+      if (functionError) {
+        throw new Error(`Dialogue generation failed: ${functionError.message}`);
+      }
+
+      updateProgress(30, 'Generating dialogue...');
+
+      const track = await pollGeneration(generation.id);
+      
+      if (track) {
+        track.type = 'voiceover';
+        track.artist = 'AI Dialogue';
+        toast.success('Dialogue generated successfully!');
+      }
+
+      return track;
+    } catch (error) {
+      console.error('Dialogue generation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate dialogue');
+      return null;
+    } finally {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      setState({ isGenerating: false, progress: 0, currentStep: '' });
+    }
+  }, [updateProgress, pollGeneration]);
+
   const saveToLibrary = useCallback(async (track: AudioTrack, userId: string): Promise<boolean> => {
     try {
       // First upload the audio file to storage
@@ -435,6 +531,7 @@ export function useAudioGeneration() {
     generateTTS,
     generateSFX,
     generateMusic,
+    generateDialogue,
     saveToLibrary,
   };
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle, Volume2, VolumeX, ListMusic, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { WaveformVisualizer } from '../shared/WaveformVisualizer';
+import { RealWaveformVisualizer } from '../shared/RealWaveformVisualizer';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 import { AudioQueueSheet } from './AudioQueueSheet';
 import { cn } from '@/lib/utils';
@@ -75,7 +75,11 @@ export function FullScreenPlayer() {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-orange to-accent-purple">
-              <WaveformVisualizer isPlaying={isPlaying} barCount={12} />
+              <RealWaveformVisualizer 
+                audioUrl={currentTrack.audioUrl} 
+                isPlaying={isPlaying}
+                className="h-24"
+              />
             </div>
           )}
         </div>

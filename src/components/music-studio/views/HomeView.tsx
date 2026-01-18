@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import type { CreateTab } from '../types/music-studio.types';
 
 const CREATION_MODES = [
-  { id: 'song', tab: 'song' as CreateTab, icon: Music, title: 'Create Song', color: 'primary-orange' },
-  { id: 'tts', tab: 'tts' as CreateTab, icon: Volume2, title: 'Text to Speech', color: 'accent-pink' },
+  { id: 'song', tab: 'song' as CreateTab, icon: Music, title: 'Prompt to Song', color: 'primary-orange' },
   { id: 'sfx', tab: 'sfx' as CreateTab, icon: Zap, title: 'Sound Effects', color: 'primary-orange' },
-  { id: 'dialogue', tab: 'dialogue' as CreateTab, icon: MessageSquare, title: 'AI Dialogue', color: 'accent-purple' },
+  { id: 'dialogue', tab: 'dialogue' as CreateTab, icon: MessageSquare, title: 'Dialogue', color: 'accent-purple' },
+  { id: 'tts', tab: 'tts' as CreateTab, icon: Volume2, title: 'Text to Speech', color: 'accent-pink' },
   { id: 'stt', tab: 'stt' as CreateTab, icon: AudioLines, title: 'Speech to Text', color: 'accent-pink' },
 ];
 

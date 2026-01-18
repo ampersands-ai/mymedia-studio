@@ -45,7 +45,7 @@ export const CREATION_GROUPS = [
   },
   { 
     id: "prompt_to_audio" as const, 
-    label: "Audio Studio", 
+    label: "Music Studio", 
     subtitle: "(sounds to songs)",
     Icon: Music, 
     description: "Generate audio from text" 

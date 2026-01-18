@@ -1,4 +1,4 @@
-// Mock data for Audio Studio Phase 1
+// Mock data for Music Studio Phase 1
 
 import type { AudioTrack, FeaturedPlaylist, TrendingTrack, GenreOption, MoodOption } from '../types/audio-studio.types';
 

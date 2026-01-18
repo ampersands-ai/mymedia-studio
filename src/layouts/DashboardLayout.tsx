@@ -1,4 +1,4 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Coins, Settings, LogOut, Info, HelpCircle } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
@@ -7,6 +7,7 @@ import { MobileMenu } from "@/components/MobileMenu";
 import { NotificationBell } from "@/components/notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
+import { GlobalMobileNav } from "@/components/navigation/mobile";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import {
@@ -26,7 +27,11 @@ const dashboardLogger = logger.child({ component: 'DashboardLayout' });
  */
 export const DashboardLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: tokenData } = useUserTokens();
+
+  // Hide global mobile nav on Audio Studio (it has its own nav)
+  const isAudioStudio = location.pathname.includes('/audio-studio');
 
   const handleLogout = async () => {
     try {
@@ -40,7 +45,6 @@ export const DashboardLayout = () => {
       toast.error("Error signing out. Please try again.");
     }
   };
-
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -126,9 +130,12 @@ export const DashboardLayout = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <Outlet />
       </main>
+
+      {/* Global Mobile Navigation */}
+      {!isAudioStudio && <GlobalMobileNav />}
 
       <Footer />
     </div>

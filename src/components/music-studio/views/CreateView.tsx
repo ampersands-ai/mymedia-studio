@@ -54,37 +54,37 @@ export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateVi
         <TabsList className="bg-card border border-border p-1 h-auto flex-wrap gap-1 w-full overflow-x-auto">
           <TabsTrigger value="song" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Music className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">Song</span>
-          </TabsTrigger>
-          <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
-            <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">TTS</span>
+            <span className="hidden sm:inline">Prompt to Song</span>
           </TabsTrigger>
           <TabsTrigger value="sfx" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">SFX</span>
+            <span className="hidden sm:inline">Sound Effects</span>
           </TabsTrigger>
           <TabsTrigger value="dialogue" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
             <span className="hidden sm:inline">Dialogue</span>
           </TabsTrigger>
+          <TabsTrigger value="tts" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
+            <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+            <span className="hidden sm:inline">Text to Speech</span>
+          </TabsTrigger>
           <TabsTrigger value="stt" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black flex-shrink-0">
             <AudioLines className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
-            <span className="hidden sm:inline">STT</span>
+            <span className="hidden sm:inline">Speech to Text</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="song">
           <SongGeneratorTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} initialPrompt={initialPrompt} />
         </TabsContent>
-        <TabsContent value="tts">
-          <TTSTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
-        </TabsContent>
         <TabsContent value="sfx">
           <SFXTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
         <TabsContent value="dialogue">
           <DialogueTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
+        </TabsContent>
+        <TabsContent value="tts">
+          <TTSTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
         </TabsContent>
         <TabsContent value="stt">
           <SpeechToTextTab />

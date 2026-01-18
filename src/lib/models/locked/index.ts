@@ -36,6 +36,9 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
     'video_to_video': 'video',
     'prompt_to_audio': 'audio',
     'text_to_speech': 'audio',
+    'text_to_audio': 'audio',
+    'speech_to_text': 'text',
+    'audio_to_audio': 'audio',
   };
 
   const type = typeMap[contentType];
@@ -116,6 +119,15 @@ import * as SunoV4_5 from "./prompt_to_audio/Suno_V4_5";
 import * as SunoV4_5_Plus from "./prompt_to_audio/Suno_V4_5_Plus";
 import * as SunoV4_5_All from "./prompt_to_audio/Suno_V4_5_All";
 import * as SunoV5 from "./prompt_to_audio/Suno_V5";
+
+// Text to Audio Models (1)
+import * as ElevenLabsSoundEffectV2 from "./text_to_audio/ElevenLabs_Sound_Effect_V2";
+
+// Speech to Text Models (1)
+import * as ElevenLabsSpeechToText from "./speech_to_text/ElevenLabs_Speech_to_Text";
+
+// Audio to Audio Models (1)
+import * as ElevenLabsAudioIsolation from "./audio_to_audio/ElevenLabs_Audio_Isolation";
 
 // Text to Speech Models (1)
 import * as ElevenLabsDialogueV3 from "./text_to_speech/ElevenLabs_Dialogue_V3";
@@ -316,6 +328,21 @@ export const RECORD_ID_REGISTRY: Record<string, ModelModule> = {
   // TEXT TO SPEECH MODELS (1 total)
   // ═══════════════════════════════════════════════════════════════════════════
   "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d": ElevenLabsDialogueV3 as ModelModule,              // ElevenLabs Dialogue V3
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TEXT TO AUDIO MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "a1b2c3d4-5e6f-0a1b-2c3d-e4f5a6b7c8d9": ElevenLabsSoundEffectV2 as ModelModule,           // ElevenLabs Sound Effect V2
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPEECH TO TEXT MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "b2c3d4e5-6f0a-1b2c-3d4e-f5a6b7c8d9e0": ElevenLabsSpeechToText as ModelModule,            // ElevenLabs Speech-to-Text
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AUDIO TO AUDIO MODELS (1 total)
+  // ═══════════════════════════════════════════════════════════════════════════
+  "c3d4e5f6-0a1b-2c3d-4e5f-a6b7c8d9e0f1": ElevenLabsAudioIsolation as ModelModule,          // ElevenLabs Audio Isolation
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IMAGE EDITING MODELS (20 total)

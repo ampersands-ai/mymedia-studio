@@ -32,6 +32,9 @@ export function getGenerationType(contentType: string): 'image' | 'video' | 'aud
     'lip_sync': 'video',
     'video_to_video': 'video',
     'prompt_to_audio': 'audio',
+    'text_to_audio': 'audio',
+    'speech_to_text': 'text',
+    'audio_to_audio': 'audio',
   };
 
   const type = typeMap[contentType];

@@ -1,7 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AudioTrack, Genre, Mood } from '../types/audio-studio.types';
+
+// Import existing Kie.ai model configs
+import { MODEL_CONFIG as TTS_CONFIG, SCHEMA as TTS_SCHEMA, preparePayload as prepareTTSPayload, calculateCost as calculateTTSCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_TTS';
+import { MODEL_CONFIG as SUNO_CONFIG, SCHEMA as SUNO_SCHEMA, preparePayload as prepareSunoPayload, calculateCost as calculateSunoCost } from '@/lib/models/locked/prompt_to_audio/Suno';
+
+import { GENERATION_STATUS } from '@/constants/generation-status';
+import { sanitizeForStorage } from '@/lib/database/sanitization';
+import { getGenerationType } from '@/lib/models/registry';
+import { reserveCredits } from '@/lib/models/creditDeduction';
 
 interface GenerationState {
   isGenerating: boolean;
@@ -11,7 +20,7 @@ interface GenerationState {
 
 interface TTSOptions {
   text: string;
-  voiceId: string;
+  voice?: string;
   speed?: number;
   stability?: number;
   similarityBoost?: number;
@@ -28,7 +37,11 @@ interface MusicOptions {
   duration?: number;
   genre?: Genre;
   mood?: Mood;
+  instrumental?: boolean;
 }
+
+const POLL_INTERVAL = 2000;
+const MAX_POLL_TIME = 300000; // 5 minutes
 
 export function useAudioGeneration() {
   const [state, setState] = useState<GenerationState>({
@@ -37,144 +50,239 @@ export function useAudioGeneration() {
     currentStep: '',
   });
 
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollStartTimeRef = useRef<number>(0);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
   const updateProgress = useCallback((progress: number, step: string) => {
     setState(prev => ({ ...prev, progress, currentStep: step }));
   }, []);
 
-  const generateTTS = useCallback(async (options: TTSOptions): Promise<AudioTrack | null> => {
+  const pollGeneration = useCallback(async (generationId: string): Promise<AudioTrack | null> => {
+    return new Promise((resolve, reject) => {
+      pollStartTimeRef.current = Date.now();
+
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const elapsed = Date.now() - pollStartTimeRef.current;
+          
+          if (elapsed > MAX_POLL_TIME) {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            reject(new Error('Generation timed out'));
+            return;
+          }
+
+          // Update progress based on elapsed time
+          const progressPercent = Math.min(90, 10 + (elapsed / MAX_POLL_TIME) * 80);
+          updateProgress(progressPercent, 'Processing audio...');
+
+          const { data: generation, error } = await supabase
+            .from('generations')
+            .select('*')
+            .eq('id', generationId)
+            .single();
+
+          if (error) {
+            console.error('Poll error:', error);
+            return;
+          }
+
+          if (generation.status === GENERATION_STATUS.COMPLETED && generation.output_url) {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            updateProgress(100, 'Complete!');
+
+            const track: AudioTrack = {
+              id: generation.id,
+              title: generation.prompt?.slice(0, 50) + (generation.prompt?.length > 50 ? '...' : '') || 'Untitled',
+              artist: 'AI Studio',
+              duration: 0, // Will be updated when audio loads
+              audioUrl: generation.output_url,
+              type: generation.type === 'audio' ? 'song' : 'voiceover',
+              createdAt: generation.created_at,
+            };
+
+            resolve(track);
+          } else if (generation.status === GENERATION_STATUS.FAILED) {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            reject(new Error('Generation failed'));
+          }
+        } catch (error) {
+          console.error('Poll error:', error);
+        }
+      }, POLL_INTERVAL);
+    });
+  }, [updateProgress]);
+
+  const generateTTS = useCallback(async (options: TTSOptions, userId: string): Promise<AudioTrack | null> => {
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
-      updateProgress(10, 'Connecting to voice service...');
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            text: options.text,
-            voiceId: options.voiceId,
-            speed: options.speed ?? 1.0,
-            stability: options.stability ?? 0.5,
-            similarityBoost: options.similarityBoost ?? 0.75,
-          }),
-        }
-      );
-
-      updateProgress(50, 'Generating speech...');
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'TTS generation failed');
-      }
-
-      updateProgress(80, 'Processing audio...');
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Create audio element to get duration
-      const audio = new Audio(audioUrl);
-      await new Promise((resolve) => {
-        audio.addEventListener('loadedmetadata', resolve);
-      });
-
-      updateProgress(100, 'Complete!');
-
-      const track: AudioTrack = {
-        id: crypto.randomUUID(),
-        title: options.text.slice(0, 50) + (options.text.length > 50 ? '...' : ''),
-        artist: 'AI Voice',
-        duration: Math.round(audio.duration),
-        audioUrl,
-        type: 'voiceover',
-        createdAt: new Date().toISOString(),
+      updateProgress(5, 'Reserving credits...');
+      
+      const inputs = {
+        text: options.text,
+        voice: options.voice ?? 'Brian',
+        speed: options.speed ?? 1.0,
+        stability: options.stability ?? 0.5,
+        similarity_boost: options.similarityBoost ?? 0.75,
       };
 
-      toast.success('Voice generated successfully!');
+      const cost = calculateTTSCost(inputs);
+      await reserveCredits(userId, cost);
+
+      updateProgress(10, 'Creating generation...');
+
+      // Create generation record
+      const { data: generation, error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: userId,
+          prompt: options.text,
+          model_id: TTS_CONFIG.modelId,
+          model_record_id: TTS_CONFIG.recordId,
+          type: getGenerationType(TTS_CONFIG.contentType),
+          status: GENERATION_STATUS.PROCESSING,
+          tokens_used: cost,
+          settings: sanitizeForStorage(inputs),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !generation) {
+        throw new Error(`Failed to create generation: ${insertError?.message}`);
+      }
+
+      updateProgress(20, 'Connecting to voice service...');
+
+      // Call generate-content edge function (uses Kie.ai provider)
+      const { error: functionError } = await supabase.functions.invoke('generate-content', {
+        body: {
+          generationId: generation.id,
+          prompt: options.text,
+          custom_parameters: prepareTTSPayload(inputs),
+          model_config: TTS_CONFIG,
+          model_schema: TTS_SCHEMA,
+        },
+      });
+
+      if (functionError) {
+        throw new Error(`TTS generation failed: ${functionError.message}`);
+      }
+
+      updateProgress(30, 'Generating speech...');
+
+      // Poll for completion
+      const track = await pollGeneration(generation.id);
+      
+      if (track) {
+        track.type = 'voiceover';
+        track.artist = 'AI Voice';
+        toast.success('Voice generated successfully!');
+      }
+
       return track;
     } catch (error) {
       console.error('TTS generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate voice');
       return null;
     } finally {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       setState({ isGenerating: false, progress: 0, currentStep: '' });
     }
-  }, [updateProgress]);
+  }, [updateProgress, pollGeneration]);
 
-  const generateSFX = useCallback(async (options: SFXOptions): Promise<AudioTrack | null> => {
+  const generateSFX = useCallback(async (options: SFXOptions, userId: string): Promise<AudioTrack | null> => {
+    // SFX uses TTS model with sound effect prompts
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
-      updateProgress(10, 'Connecting to sound service...');
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-sfx`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            prompt: options.prompt,
-            duration: options.duration ?? 5,
-          }),
-        }
-      );
-
-      updateProgress(50, 'Generating sound effect...');
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'SFX generation failed');
-      }
-
-      updateProgress(80, 'Processing audio...');
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      const audio = new Audio(audioUrl);
-      await new Promise((resolve) => {
-        audio.addEventListener('loadedmetadata', resolve);
-      });
-
-      updateProgress(100, 'Complete!');
-
-      const track: AudioTrack = {
-        id: crypto.randomUUID(),
-        title: options.prompt.slice(0, 50) + (options.prompt.length > 50 ? '...' : ''),
-        artist: 'AI SFX',
-        duration: Math.round(audio.duration),
-        audioUrl,
-        type: 'sfx',
-        createdAt: new Date().toISOString(),
+      updateProgress(5, 'Reserving credits...');
+      
+      // For SFX, we use the TTS model with descriptive text
+      const sfxPrompt = `[Sound effect: ${options.prompt}]`;
+      const inputs = {
+        text: sfxPrompt,
+        voice: 'Brian',
+        stability: 0.3,
+        similarity_boost: 0.5,
       };
 
-      toast.success('Sound effect generated successfully!');
+      const cost = calculateTTSCost(inputs);
+      await reserveCredits(userId, cost);
+
+      updateProgress(10, 'Creating generation...');
+
+      const { data: generation, error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: userId,
+          prompt: options.prompt,
+          model_id: TTS_CONFIG.modelId,
+          model_record_id: TTS_CONFIG.recordId,
+          type: 'audio',
+          status: GENERATION_STATUS.PROCESSING,
+          tokens_used: cost,
+          settings: sanitizeForStorage({ ...inputs, category: options.category }),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !generation) {
+        throw new Error(`Failed to create generation: ${insertError?.message}`);
+      }
+
+      updateProgress(20, 'Connecting to sound service...');
+
+      const { error: functionError } = await supabase.functions.invoke('generate-content', {
+        body: {
+          generationId: generation.id,
+          prompt: sfxPrompt,
+          custom_parameters: prepareTTSPayload(inputs),
+          model_config: TTS_CONFIG,
+          model_schema: TTS_SCHEMA,
+        },
+      });
+
+      if (functionError) {
+        throw new Error(`SFX generation failed: ${functionError.message}`);
+      }
+
+      updateProgress(30, 'Generating sound effect...');
+
+      const track = await pollGeneration(generation.id);
+      
+      if (track) {
+        track.type = 'sfx';
+        track.artist = 'AI SFX';
+        track.title = options.prompt.slice(0, 50) + (options.prompt.length > 50 ? '...' : '');
+        toast.success('Sound effect generated successfully!');
+      }
+
       return track;
     } catch (error) {
       console.error('SFX generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate sound effect');
       return null;
     } finally {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       setState({ isGenerating: false, progress: 0, currentStep: '' });
     }
-  }, [updateProgress]);
+  }, [updateProgress, pollGeneration]);
 
-  const generateMusic = useCallback(async (options: MusicOptions): Promise<AudioTrack | null> => {
+  const generateMusic = useCallback(async (options: MusicOptions, userId: string): Promise<AudioTrack | null> => {
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
-      updateProgress(10, 'Connecting to music service...');
-
+      updateProgress(5, 'Reserving credits...');
+      
       // Build prompt with genre and mood
       let fullPrompt = options.prompt;
       if (options.genre) {
@@ -184,63 +292,76 @@ export function useAudioGeneration() {
         fullPrompt = `${options.mood} mood, ${fullPrompt}`;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-music`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            prompt: fullPrompt,
-            duration: options.duration ?? 30,
-          }),
-        }
-      );
-
-      updateProgress(50, 'Generating music...');
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Music generation failed');
-      }
-
-      updateProgress(80, 'Processing audio...');
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      const audio = new Audio(audioUrl);
-      await new Promise((resolve) => {
-        audio.addEventListener('loadedmetadata', resolve);
-      });
-
-      updateProgress(100, 'Complete!');
-
-      const track: AudioTrack = {
-        id: crypto.randomUUID(),
-        title: options.prompt.slice(0, 50) + (options.prompt.length > 50 ? '...' : ''),
-        artist: 'AI Studio',
-        duration: Math.round(audio.duration),
-        audioUrl,
-        type: 'song',
-        genre: options.genre,
-        mood: options.mood,
-        createdAt: new Date().toISOString(),
+      const inputs = {
+        prompt: fullPrompt,
+        tags: options.genre || '',
+        title: options.prompt.slice(0, 80),
+        model: 'V5',
+        customMode: false,
+        instrumental: options.instrumental ?? false,
       };
 
-      toast.success('Music generated successfully!');
+      const cost = calculateSunoCost(inputs);
+      await reserveCredits(userId, cost);
+
+      updateProgress(10, 'Creating generation...');
+
+      const { data: generation, error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: userId,
+          prompt: fullPrompt,
+          model_id: SUNO_CONFIG.modelId,
+          model_record_id: SUNO_CONFIG.recordId,
+          type: getGenerationType(SUNO_CONFIG.contentType),
+          status: GENERATION_STATUS.PROCESSING,
+          tokens_used: cost,
+          settings: sanitizeForStorage({ ...inputs, genre: options.genre, mood: options.mood }),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !generation) {
+        throw new Error(`Failed to create generation: ${insertError?.message}`);
+      }
+
+      updateProgress(20, 'Connecting to music service...');
+
+      const { error: functionError } = await supabase.functions.invoke('generate-content', {
+        body: {
+          generationId: generation.id,
+          prompt: fullPrompt,
+          custom_parameters: prepareSunoPayload(inputs),
+          model_config: SUNO_CONFIG,
+          model_schema: SUNO_SCHEMA,
+        },
+      });
+
+      if (functionError) {
+        throw new Error(`Music generation failed: ${functionError.message}`);
+      }
+
+      updateProgress(30, 'Generating music...');
+
+      const track = await pollGeneration(generation.id);
+      
+      if (track) {
+        track.type = 'song';
+        track.genre = options.genre;
+        track.mood = options.mood;
+        toast.success('Music generated successfully!');
+      }
+
       return track;
     } catch (error) {
       console.error('Music generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate music');
       return null;
     } finally {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       setState({ isGenerating: false, progress: 0, currentStep: '' });
     }
-  }, [updateProgress]);
+  }, [updateProgress, pollGeneration]);
 
   const saveToLibrary = useCallback(async (track: AudioTrack, userId: string): Promise<boolean> => {
     try {

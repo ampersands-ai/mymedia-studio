@@ -137,8 +137,8 @@ export const DashboardLayout = () => {
       {/* Global Mobile Navigation - Hidden on Audio Studio (has its own nav) */}
       {!isAudioStudio && <GlobalMobileNav />}
 
-      {/* Footer - Higher z-index on Audio Studio to appear above sidebar */}
-      <div className={isAudioStudio ? 'relative z-50' : ''}>
+      {/* Footer - Add spacing on Audio Studio so it isn't covered by the fixed player */}
+      <div className={isAudioStudio ? 'pb-20' : ''}>
         <Footer />
       </div>
     </div>

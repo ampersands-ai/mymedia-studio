@@ -69,8 +69,7 @@ export const SCHEMA = Object.freeze({
       type: "string",
       title: "Prompt",
       default: "",
-      description:
-        "In Custom Mode with vocals: used as exact lyrics. In Non-custom Mode: idea for auto-generated lyrics. Max 3000 chars (Custom) or 500 chars (Non-custom).",
+      description: "Give an idea for auto-generated lyrics. Max 500 chars.",
       maxLength: 3000,
       renderer: "prompt",
     },

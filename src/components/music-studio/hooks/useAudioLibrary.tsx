@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { AudioTrack } from '../types/audio-studio.types';
+import type { AudioTrack } from '../types/music-studio.types';
 
 type LibraryFilter = 'all' | 'songs' | 'voiceovers' | 'sfx' | 'stems' | 'favorites';
 

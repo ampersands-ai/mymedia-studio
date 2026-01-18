@@ -151,7 +151,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
             <Link
-              to="/dashboard/audio-studio"
+              to="/dashboard/music-studio"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group"
             >

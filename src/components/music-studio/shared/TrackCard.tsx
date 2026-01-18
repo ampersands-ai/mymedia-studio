@@ -2,7 +2,7 @@ import { Play, Pause, Heart, MoreHorizontal, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
-import type { AudioTrack } from '../types/audio-studio.types';
+import type { AudioTrack } from '../types/music-studio.types';
 
 interface TrackCardProps {
   track: AudioTrack;

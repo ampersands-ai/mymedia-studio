@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { GenreOption } from '../types/audio-studio.types';
+import type { GenreOption } from '../types/music-studio.types';
 
 interface GenreCardProps {
   genre: GenreOption;

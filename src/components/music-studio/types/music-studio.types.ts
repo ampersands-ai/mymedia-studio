@@ -1,6 +1,6 @@
-// Audio Studio TypeScript Definitions
+// Music Studio TypeScript Definitions
 
-export type AudioStudioView = 
+export type MusicStudioView = 
   | 'home' 
   | 'create' 
   | 'library' 
@@ -105,7 +105,7 @@ export interface SFXParams {
 }
 
 export interface NavItem {
-  id: AudioStudioView;
+  id: MusicStudioView;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }

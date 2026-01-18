@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { AudioPlayerProvider, useAudioPlayer } from '../hooks/useAudioStudioPlayer';
-import { AudioStudioSidebar } from './AudioStudioSidebar';
-import { AudioStudioMobileNav } from './AudioStudioMobileNav';
+import { MusicStudioSidebar } from './MusicStudioSidebar';
+import { MusicStudioMobileNav } from './MusicStudioMobileNav';
 import { PersistentAudioPlayer, MiniAudioPlayer } from './PersistentAudioPlayer';
 import { FullScreenPlayer } from './FullScreenPlayer';
 import { AudioQueueSheet } from './AudioQueueSheet';
-import type { AudioStudioView } from '../types/audio-studio.types';
+import type { MusicStudioView } from '../types/music-studio.types';
 
-interface AudioStudioLayoutProps {
+interface MusicStudioLayoutProps {
   children: React.ReactNode;
-  activeView: AudioStudioView;
-  onViewChange: (view: AudioStudioView) => void;
+  activeView: MusicStudioView;
+  onViewChange: (view: MusicStudioView) => void;
 }
 
-function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayoutProps) {
+function LayoutContent({ children, activeView, onViewChange }: MusicStudioLayoutProps) {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isQueueOpen, setQueueOpen] = useState(false);
   const { currentTrack, isFullScreen } = useAudioPlayer();
@@ -25,7 +25,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
       <div className="md:flex">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <AudioStudioSidebar
+          <MusicStudioSidebar
             activeView={activeView}
             onViewChange={onViewChange}
             isCollapsed={isSidebarCollapsed}
@@ -44,7 +44,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
 
       {/* Mobile Player + Nav */}
       <MiniAudioPlayer />
-      <AudioStudioMobileNav
+      <MusicStudioMobileNav
         activeView={activeView}
         onViewChange={onViewChange}
         hasActiveTrack={hasActiveTrack}
@@ -59,7 +59,7 @@ function LayoutContent({ children, activeView, onViewChange }: AudioStudioLayout
   );
 }
 
-export function AudioStudioLayout(props: AudioStudioLayoutProps) {
+export function MusicStudioLayout(props: MusicStudioLayoutProps) {
   return (
     <AudioPlayerProvider>
       <LayoutContent {...props} />

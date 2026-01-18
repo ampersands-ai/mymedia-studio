@@ -14,7 +14,7 @@ import { MoodPills } from '../shared/MoodPills';
 import { VoiceCard } from '../shared/VoiceCard';
 import { GENRES, MOODS, DURATIONS, SFX_CATEGORIES } from '../data/mock-data';
 import { VOICE_DATABASE, type VoiceData } from '@/lib/voice-mapping';
-import type { CreateTab, Genre, Mood, AudioTrack } from '../types/audio-studio.types';
+import type { CreateTab, Genre, Mood, AudioTrack } from '../types/music-studio.types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';

@@ -1,6 +1,6 @@
 import { Home, Sparkles, Music, Search, Trophy, Heart, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AudioStudioView, NavItem } from '../types/audio-studio.types';
+import type { MusicStudioView, NavItem } from '../types/music-studio.types';
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home },
@@ -12,19 +12,19 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-interface AudioStudioSidebarProps {
-  activeView: AudioStudioView;
-  onViewChange: (view: AudioStudioView) => void;
+interface MusicStudioSidebarProps {
+  activeView: MusicStudioView;
+  onViewChange: (view: MusicStudioView) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
 
-export function AudioStudioSidebar({
+export function MusicStudioSidebar({
   activeView,
   onViewChange,
   isCollapsed,
   onToggleCollapse,
-}: AudioStudioSidebarProps) {
+}: MusicStudioSidebarProps) {
   return (
     <aside
       className={cn(

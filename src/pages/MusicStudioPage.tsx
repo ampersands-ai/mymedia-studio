@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { Music, Loader2 } from 'lucide-react';
-import { AudioStudioLayout } from '@/components/audio-studio/layout/AudioStudioLayout';
-import { HomeView } from '@/components/audio-studio/views/HomeView';
-import { CreateView } from '@/components/audio-studio/views/CreateView';
-import { LibraryView } from '@/components/audio-studio/views/LibraryView';
-import { DiscoverView } from '@/components/audio-studio/views/DiscoverView';
-import { ChartsView } from '@/components/audio-studio/views/ChartsView';
-import { FavoritesView } from '@/components/audio-studio/views/FavoritesView';
-import { SettingsView } from '@/components/audio-studio/views/SettingsView';
+import { MusicStudioLayout } from '@/components/music-studio/layout/MusicStudioLayout';
+import { HomeView } from '@/components/music-studio/views/HomeView';
+import { CreateView } from '@/components/music-studio/views/CreateView';
+import { LibraryView } from '@/components/music-studio/views/LibraryView';
+import { DiscoverView } from '@/components/music-studio/views/DiscoverView';
+import { ChartsView } from '@/components/music-studio/views/ChartsView';
+import { FavoritesView } from '@/components/music-studio/views/FavoritesView';
+import { SettingsView } from '@/components/music-studio/views/SettingsView';
 import { useAdminRole } from '@/hooks/useAdminRole';
-import type { AudioStudioView, CreateTab } from '@/components/audio-studio/types/audio-studio.types';
+import type { MusicStudioView, CreateTab } from '@/components/music-studio/types/music-studio.types';
 
-export default function AudioStudioPage() {
+export default function MusicStudioPage() {
   const { isAdmin, loading } = useAdminRole();
-  const [activeView, setActiveView] = useState<AudioStudioView>('home');
+  const [activeView, setActiveView] = useState<MusicStudioView>('home');
   const [createTab, setCreateTab] = useState<CreateTab>('song');
   const [initialPrompt, setInitialPrompt] = useState('');
 
@@ -74,8 +74,8 @@ export default function AudioStudioPage() {
   };
 
   return (
-    <AudioStudioLayout activeView={activeView} onViewChange={setActiveView}>
+    <MusicStudioLayout activeView={activeView} onViewChange={setActiveView}>
       {renderView()}
-    </AudioStudioLayout>
+    </MusicStudioLayout>
   );
 }

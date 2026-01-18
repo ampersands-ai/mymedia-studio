@@ -1,6 +1,6 @@
 // Mock data for Audio Studio Phase 1
 
-import type { AudioTrack, FeaturedPlaylist, TrendingTrack, GenreOption, MoodOption } from '../types/audio-studio.types';
+import type { AudioTrack, FeaturedPlaylist, TrendingTrack, GenreOption, MoodOption } from '../types/music-studio.types';
 
 export const GENRES: GenreOption[] = [
   { value: 'pop', label: 'Pop', icon: '🎤' },

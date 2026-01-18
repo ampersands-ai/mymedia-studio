@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Music, Mic, Volume2, Zap, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +9,15 @@ import type { CreateTab } from '../types/audio-studio.types';
 const ICONS = { Music, Mic, Volume2, Zap };
 
 interface HomeViewProps {
-  onNavigateToCreate: (tab?: CreateTab) => void;
+  onNavigateToCreate: (tab?: CreateTab, prompt?: string) => void;
 }
 
 export function HomeView({ onNavigateToCreate }: HomeViewProps) {
+  const [prompt, setPrompt] = useState('');
+
+  const handleGenerate = () => {
+    onNavigateToCreate('song', prompt);
+  };
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Hero Section */}
@@ -26,11 +32,14 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
           </p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               placeholder="Describe your music idea..."
               className="flex-1 h-10 sm:h-12 bg-card/80 border-border text-sm sm:text-base"
             />
             <Button
-              onClick={() => onNavigateToCreate('song')}
+              onClick={handleGenerate}
               className="h-10 sm:h-12 px-4 sm:px-6 bg-primary-orange hover:bg-primary-orange/90 text-black font-semibold w-full sm:w-auto"
             >
               <Sparkles className="h-4 w-4 mr-2" />

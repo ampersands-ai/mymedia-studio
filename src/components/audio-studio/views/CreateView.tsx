@@ -23,9 +23,10 @@ import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 
 interface CreateViewProps {
   initialTab?: CreateTab;
+  initialPrompt?: string;
 }
 
-export function CreateView({ initialTab = 'song' }: CreateViewProps) {
+export function CreateView({ initialTab = 'song', initialPrompt = '' }: CreateViewProps) {
   const [activeTab, setActiveTab] = useState<CreateTab>(initialTab);
   const { user } = useAuth();
   const audioGeneration = useAudioGeneration();
@@ -71,7 +72,7 @@ export function CreateView({ initialTab = 'song' }: CreateViewProps) {
         </TabsList>
 
         <TabsContent value="song">
-          <SongGeneratorTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
+          <SongGeneratorTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} initialPrompt={initialPrompt} />
         </TabsContent>
         <TabsContent value="tts">
           <TTSTab userId={user?.id} audioGeneration={audioGeneration} onTrackGenerated={(track) => { play(track); }} />
@@ -90,10 +91,11 @@ interface GeneratorTabProps {
   userId?: string;
   audioGeneration: ReturnType<typeof useAudioGeneration>;
   onTrackGenerated: (track: AudioTrack) => void;
+  initialPrompt?: string;
 }
 
-function SongGeneratorTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps) {
-  const [prompt, setPrompt] = useState('');
+function SongGeneratorTab({ userId, audioGeneration, onTrackGenerated, initialPrompt = '' }: GeneratorTabProps) {
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [genre, setGenre] = useState<Genre | ''>('');
   const [mood, setMood] = useState<Mood | undefined>();
   const [duration, setDuration] = useState(120);

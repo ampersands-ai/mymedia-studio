@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeatureChapter } from "../FeatureChapter";
 import { ParticleField } from "../effects";
@@ -20,16 +20,6 @@ export const ChapterFinalCTA = () => {
       }
     >
       <div className="text-center max-w-3xl mx-auto">
-        <motion.div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-orange/10 border border-primary-orange/30 text-primary-orange text-sm font-medium mb-8"
-          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Sparkles className="w-4 h-4" />
-          30+ AI Models. One Platform.
-        </motion.div>
-
         <motion.h2
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tight mb-6"
           initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}

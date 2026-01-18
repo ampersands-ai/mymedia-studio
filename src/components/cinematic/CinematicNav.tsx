@@ -73,7 +73,7 @@ export const CinematicNav = () => {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
-          ? "bg-background/40 backdrop-blur-md border-b border-white/10 shadow-md shadow-black/10"
+          ? "bg-background/40 backdrop-blur-md border-b border-white/5 shadow-md shadow-black/10"
           : "bg-transparent"
       )}
     >

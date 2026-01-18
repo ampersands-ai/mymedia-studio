@@ -87,36 +87,39 @@ export function LibraryView() {
       )}
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LibraryTab)}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <TabsList className="bg-card border border-border p-1 h-auto">
-            <TabsTrigger value="all" className="data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-              All
-            </TabsTrigger>
-            <TabsTrigger value="songs" className="gap-1.5 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-              <Music className="h-3.5 w-3.5" /> Songs
-            </TabsTrigger>
-            <TabsTrigger value="voiceovers" className="gap-1.5 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-              <Volume2 className="h-3.5 w-3.5" /> Voice
-            </TabsTrigger>
-            <TabsTrigger value="sfx" className="gap-1.5 data-[state=active]:bg-primary-orange data-[state=active]:text-black">
-              <Zap className="h-3.5 w-3.5" /> SFX
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col gap-4">
+          {/* Tabs - scrollable on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="bg-card border border-border p-1 h-auto w-max sm:w-auto">
+              <TabsTrigger value="all" className="text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="songs" className="gap-1 sm:gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black">
+                <Music className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Songs
+              </TabsTrigger>
+              <TabsTrigger value="voiceovers" className="gap-1 sm:gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black">
+                <Volume2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Voice
+              </TabsTrigger>
+              <TabsTrigger value="sfx" className="gap-1 sm:gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary-orange data-[state=active]:text-black">
+                <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> SFX
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          {/* Controls - responsive layout */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[140px] max-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-[180px] bg-card border-border"
+                className="pl-9 w-full bg-card border-border text-sm h-9"
               />
             </div>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[120px] bg-card border-border">
+              <SelectTrigger className="w-[100px] sm:w-[120px] bg-card border-border text-sm h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -126,28 +129,28 @@ export function LibraryView() {
               </SelectContent>
             </Select>
 
-            <div className="flex border border-border rounded-lg overflow-hidden">
+            <div className="flex border border-border rounded-lg overflow-hidden ml-auto">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  "rounded-none h-9 w-9",
+                  "rounded-none h-8 w-8 sm:h-9 sm:w-9",
                   viewMode === 'grid' && "bg-primary-orange text-black"
                 )}
               >
-                <Grid3X3 className="h-4 w-4" />
+                <Grid3X3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  "rounded-none h-9 w-9",
+                  "rounded-none h-8 w-8 sm:h-9 sm:w-9",
                   viewMode === 'list' && "bg-primary-orange text-black"
                 )}
               >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>

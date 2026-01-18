@@ -195,7 +195,7 @@ export function MiniAudioPlayer({ className }: { className?: string }) {
 
   return (
     <div className={cn(
-      'fixed bottom-14 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-border z-40 md:hidden',
+      'fixed left-0 right-0 h-14 sm:h-16 bg-card/95 backdrop-blur-lg border-t border-border z-40 md:hidden',
       className
     )}
     style={{ bottom: 'calc(56px + env(safe-area-inset-bottom))' }}
@@ -208,24 +208,24 @@ export function MiniAudioPlayer({ className }: { className?: string }) {
         />
       </div>
       
-      <div className="h-full px-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary-orange/20 to-accent-purple/20 flex items-center justify-center flex-shrink-0 border border-border">
-          <ListMusic className="h-4 w-4 text-primary-orange" />
+      <div className="h-full px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
+        <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-primary-orange/20 to-accent-purple/20 flex items-center justify-center flex-shrink-0 border border-border">
+          <ListMusic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-orange" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{currentTrack.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{currentTrack.artist || 'AI Studio'}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">{currentTrack.title}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{currentTrack.artist || 'AI Studio'}</p>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-foreground text-background hover:bg-foreground/90"
+          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-foreground text-background hover:bg-foreground/90 flex-shrink-0"
           onClick={toggle}
         >
           {isPlaying ? (
-            <Pause className="h-5 w-5" />
+            <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
           ) : (
-            <Play className="h-5 w-5 ml-0.5" />
+            <Play className="h-4 w-4 sm:h-5 sm:w-5 ml-0.5" />
           )}
         </Button>
       </div>

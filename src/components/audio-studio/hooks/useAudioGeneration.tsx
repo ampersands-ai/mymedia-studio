@@ -7,6 +7,7 @@ import type { AudioTrack, Genre, Mood } from '../types/audio-studio.types';
 import { MODEL_CONFIG as TTS_PRO_CONFIG, SCHEMA as TTS_PRO_SCHEMA, preparePayload as prepareTTSProPayload, calculateCost as calculateTTSProCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_TTS';
 import { MODEL_CONFIG as TTS_FAST_CONFIG, SCHEMA as TTS_FAST_SCHEMA, preparePayload as prepareTTSFastPayload, calculateCost as calculateTTSFastCost } from '@/lib/models/locked/prompt_to_audio/ElevenLabs_Fast';
 import { MODEL_CONFIG as SUNO_CONFIG, SCHEMA as SUNO_SCHEMA, preparePayload as prepareSunoPayload, calculateCost as calculateSunoCost } from '@/lib/models/locked/prompt_to_audio/Suno';
+import { MODEL_CONFIG as SFX_CONFIG, SCHEMA as SFX_SCHEMA, preparePayload as prepareSFXPayload, calculateCost as calculateSFXCost } from '@/lib/models/locked/text_to_audio/ElevenLabs_Sound_Effect_V2';
 
 import { GENERATION_STATUS } from '@/constants/generation-status';
 import { sanitizeForStorage } from '@/lib/database/sanitization';
@@ -218,22 +219,20 @@ export function useAudioGeneration() {
   }, [updateProgress, pollGeneration]);
 
   const generateSFX = useCallback(async (options: SFXOptions, userId: string): Promise<AudioTrack | null> => {
-    // SFX uses Fast TTS model (cost-effective) with sound effect prompts
+    // SFX uses ElevenLabs Sound Effect V2 model
     setState({ isGenerating: true, progress: 0, currentStep: 'Initializing...' });
 
     try {
       updateProgress(5, 'Reserving credits...');
       
-      // For SFX, we use the Fast TTS model with descriptive text
-      const sfxPrompt = `[Sound effect: ${options.prompt}]`;
+      // Build the inputs for the SFX model
       const inputs = {
-        text: sfxPrompt,
-        voice: 'Brian',
-        stability: 0.3,
-        similarity_boost: 0.5,
+        text: options.prompt,
+        duration_seconds: options.duration ?? 5,
+        prompt_influence: 0.5,
       };
 
-      const cost = calculateTTSFastCost(inputs);
+      const cost = calculateSFXCost(inputs);
       await reserveCredits(userId, cost);
 
       updateProgress(10, 'Creating generation...');
@@ -243,9 +242,9 @@ export function useAudioGeneration() {
         .insert({
           user_id: userId,
           prompt: options.prompt,
-          model_id: TTS_FAST_CONFIG.modelId,
-          model_record_id: TTS_FAST_CONFIG.recordId,
-          type: 'audio',
+          model_id: SFX_CONFIG.modelId,
+          model_record_id: SFX_CONFIG.recordId,
+          type: getGenerationType(SFX_CONFIG.contentType),
           status: GENERATION_STATUS.PROCESSING,
           tokens_used: cost,
           settings: sanitizeForStorage({ ...inputs, category: options.category }),
@@ -262,10 +261,10 @@ export function useAudioGeneration() {
       const { error: functionError } = await supabase.functions.invoke('generate-content', {
         body: {
           generationId: generation.id,
-          prompt: sfxPrompt,
-          custom_parameters: prepareTTSFastPayload(inputs),
-          model_config: TTS_FAST_CONFIG,
-          model_schema: TTS_FAST_SCHEMA,
+          prompt: options.prompt,
+          custom_parameters: prepareSFXPayload(inputs),
+          model_config: SFX_CONFIG,
+          model_schema: SFX_SCHEMA,
         },
       });
 

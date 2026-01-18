@@ -219,7 +219,7 @@ export const platformBenefits = [
   {
     id: "pricing",
     title: "Credit-Based Pricing",
-    description: "Pay only for what you use. No subscriptions required.",
+    description: "Flexible plans with credits that match your creative needs",
     icon: CreditCard,
   },
   {

@@ -147,7 +147,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
                 <Music className="h-4 w-4" />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-xs text-foreground">Audio Studio</p>
+                <p className="font-semibold text-xs text-foreground">Music Studio</p>
               </div>
             </Link>
           </div>

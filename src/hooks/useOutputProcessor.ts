@@ -111,9 +111,11 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
         if (!child.storage_path || !child.model_record_id) continue;
 
         let provider = '';
+        let modelFamily = '';
         try {
           const model = getModel(child.model_record_id);
           provider = model.MODEL_CONFIG.provider;
+          modelFamily = model.MODEL_CONFIG.modelFamily || '';
         } catch {
           // Ignore registry errors
         }
@@ -126,6 +128,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
           provider_task_id: child.provider_task_id || '',
           model_id: child.model_id || '',
           provider,
+          modelFamily,
         });
       }
     }
@@ -133,10 +136,12 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
     // If parent has storage_path and no children, use parent directly
     if (outputList.length === 0 && parent.storage_path) {
       let provider = '';
+      let modelFamily = '';
       if (parent.model_record_id) {
         try {
           const model = getModel(parent.model_record_id);
           provider = model.MODEL_CONFIG.provider;
+          modelFamily = model.MODEL_CONFIG.modelFamily || '';
         } catch {
           // Ignore
         }
@@ -149,6 +154,7 @@ export const useOutputProcessor = (options: UseOutputProcessorOptions = {}): Use
         output_index: 0,
         model_id: parent.model_id || '',
         provider,
+        modelFamily,
       });
     }
 

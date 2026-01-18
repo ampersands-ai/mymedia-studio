@@ -11,6 +11,7 @@ export interface GenerationOutput {
   provider_task_id?: string;
   model_id?: string;
   provider?: string;
+  modelFamily?: string;
 }
 
 export interface ProcessorConfig {

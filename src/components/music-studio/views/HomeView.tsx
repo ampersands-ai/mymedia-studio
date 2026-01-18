@@ -67,7 +67,7 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
           </div>
 
           {/* Creation Mode Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {CREATION_MODES.map((mode) => {
               const Icon = mode.icon;
               const isSelected = selectedMode === mode.tab;
@@ -75,16 +75,14 @@ export function HomeView({ onNavigateToCreate }: HomeViewProps) {
                 <button
                   key={mode.id}
                   onClick={() => handleModeClick(mode.tab)}
-                  className={`group p-4 rounded-xl bg-card/60 border transition-all duration-200 text-left ${
+                  className={`group flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg bg-card/60 border transition-all duration-200 ${
                     isSelected 
                       ? 'border-primary-orange bg-card/80' 
                       : 'border-border hover:border-primary-orange/50 hover:bg-card/80'
                   }`}
                 >
-                  <div className={`h-9 w-9 rounded-lg bg-${mode.color}/20 flex items-center justify-center mb-2`}>
-                    <Icon className={`h-4 w-4 text-${mode.color}`} />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">{mode.title}</p>
+                  <Icon className={`h-4 w-4 text-${mode.color}`} />
+                  <span className="font-medium text-xs sm:text-sm text-foreground whitespace-nowrap">{mode.title}</span>
                 </button>
               );
             })}

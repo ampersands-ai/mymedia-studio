@@ -1,15 +1,16 @@
 import { Heart, Play, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TrackCard } from '../shared/TrackCard';
-import { EmptyState } from '../shared/EmptyState';
-import { MOCK_TRACKS } from '../data/mock-data';
+
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
+import { useAudioLibrary } from '../hooks/useAudioLibrary';
 
 export function FavoritesView() {
   const { play, addToQueue } = useAudioPlayer();
   
-  // Filter for liked tracks (mock data)
-  const likedTracks = MOCK_TRACKS.filter(track => track.isLiked);
+  // Fetch real liked tracks from the library
+  const { tracks, isLoading } = useAudioLibrary({ filter: 'favorites' });
+  const likedTracks = tracks.filter(track => track.isLiked);
 
   const handlePlayAll = () => {
     if (likedTracks.length > 0) {
@@ -66,11 +67,14 @@ export function FavoritesView() {
       </div>
 
       {/* Content */}
-      {likedTracks.length === 0 ? (
-        <EmptyState
-          type="favorites"
-          onAction={() => {}}
-        />
+      {isLoading ? (
+        <div className="rounded-xl border border-border bg-card/50 p-8 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      ) : likedTracks.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card/50 p-8 text-center">
+          <p className="text-muted-foreground">No favorites yet...</p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {likedTracks.map((track) => (

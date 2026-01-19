@@ -16,7 +16,13 @@ export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDi
   const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
   const { isOnCooldown, remainingSeconds, cooldownDuration } = useGenerationCooldown();
 
-  const activeCount = activeGenerations.length;
+  // Count ONLY truly active generations (pending/processing), de-duped by root
+  const activeCount = new Set(
+    activeGenerations
+      .filter(g => g.status === 'pending' || g.status === 'processing')
+      .map(g => (g.parent_generation_id ?? g.id))
+  ).size;
+
   const percentage = Math.min((activeCount / maxConcurrent) * 100, 100);
   const isAtLimit = activeCount >= maxConcurrent;
   const isNearLimit = activeCount >= maxConcurrent * 0.8;

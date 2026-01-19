@@ -21,6 +21,7 @@ export interface ActiveGeneration {
   status: string;
   created_at: string;
   completed_at: string | null;
+  parent_generation_id: string | null;
   model_record_id: string;
 }
 
@@ -50,7 +51,7 @@ export const useActiveGenerations = () => {
       // Note: generations table has completed_at, not updated_at
       const { data, error } = await supabase
         .from("generations")
-        .select("id, model_id, prompt, status, created_at, completed_at, model_record_id")
+        .select("id, model_id, prompt, status, created_at, completed_at, parent_generation_id, model_record_id")
         .eq("user_id", user.id)
         .or(
           `status.in.(${ACTIVE_GENERATION_STATUSES.join(',')}),` +
@@ -86,13 +87,15 @@ export const useActiveGenerations = () => {
             status: gen.status as string,
             created_at: gen.created_at as string,
             completed_at: (gen.completed_at as string | null) || null,
+            parent_generation_id: (gen.parent_generation_id as string | null) || null,
             model_record_id: gen.model_record_id as string,
           };
         });
     },
     enabled: !!user?.id,
-    // REMOVED: refetchInterval: 3000 (polling)
-    // REPLACED WITH: Realtime subscription below (instant updates, 95% less DB load)
+    // Low-frequency fallback polling in case realtime drops (mobile networks)
+    refetchInterval: 15000,
+    refetchIntervalInBackground: true,
     staleTime: 30000, // Data stays fresh for 30s (Realtime keeps it updated)
   });
 

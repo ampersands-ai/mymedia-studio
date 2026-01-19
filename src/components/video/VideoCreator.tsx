@@ -500,7 +500,9 @@ export function VideoCreator() {
       }
 
       // Check if voiceover has been generated
-      if (job.status !== 'awaiting_voice_approval' || !job.voiceover_url) {
+      // Allow render from: awaiting_voice_approval, assembling (stuck), fetching_video (stuck), or failed (retry)
+      const allowedStatuses = ['awaiting_voice_approval', 'assembling', 'fetching_video', 'failed'];
+      if (!allowedStatuses.includes(job.status) || !job.voiceover_url) {
         setError('Please generate a voiceover before rendering the video');
         setState((prev) => ({ ...prev, step: 'voiceover_setup' }));
         return;

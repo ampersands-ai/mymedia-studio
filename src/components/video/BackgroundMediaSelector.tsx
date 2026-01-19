@@ -295,6 +295,52 @@ export function BackgroundMediaSelector({
               </div>
             </div>
 
+            {/* Preview Section */}
+            {previewMedia && (
+              <div className="rounded-lg border bg-accent/50 overflow-hidden">
+                <div className="p-2 border-b bg-background/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    {previewMedia.type === 'video' ? (
+                      <Video className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Image className="h-4 w-4 text-primary" />
+                    )}
+                    Preview
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setPreviewMedia(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="aspect-video bg-black flex items-center justify-center">
+                  {previewMedia.type === 'video' ? (
+                    <video
+                      key={previewMedia.videoURL}
+                      src={previewMedia.videoURL}
+                      className="max-h-full max-w-full"
+                      autoPlay
+                      muted
+                      loop
+                    />
+                  ) : (
+                    <img
+                      src={previewMedia.largeImageURL || previewMedia.fullHDURL || previewMedia.imageURL}
+                      alt="Preview"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  )}
+                </div>
+                <div className="p-2 bg-background/50 text-xs text-muted-foreground">
+                  {previewMedia.width} × {previewMedia.height}
+                  {previewMedia.duration && ` • ${Math.round(previewMedia.duration)}s`}
+                </div>
+              </div>
+            )}
+
             {/* Selection Info */}
             {selectedMedia.length > 0 && (
               <div className="p-3 bg-primary/10 rounded-lg border border-primary/30">
@@ -311,53 +357,8 @@ export function BackgroundMediaSelector({
             )}
             </div>
 
-            {/* Right Side - Media Grid & Preview */}
-            <div className="lg:col-span-3 flex flex-col gap-4 min-h-0 overflow-hidden">
-              {/* Preview Section - Compact inline */}
-              {previewMedia && (
-                <div className="rounded-lg border bg-accent/50 overflow-hidden flex items-center gap-4 p-2">
-                  <div className="h-24 w-40 flex-shrink-0 bg-black rounded overflow-hidden flex items-center justify-center">
-                    {previewMedia.type === 'video' ? (
-                      <video
-                        key={previewMedia.videoURL}
-                        src={previewMedia.videoURL}
-                        className="h-full w-full object-cover"
-                        autoPlay
-                        muted
-                        loop
-                      />
-                    ) : (
-                      <img
-                        src={previewMedia.largeImageURL || previewMedia.fullHDURL || previewMedia.imageURL}
-                        alt="Preview"
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                      {previewMedia.type === 'video' ? (
-                        <Video className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Image className="h-4 w-4 text-primary" />
-                      )}
-                      Preview
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {previewMedia.width} × {previewMedia.height}
-                      {previewMedia.duration && ` • ${Math.round(previewMedia.duration)}s`}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={() => setPreviewMedia(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+            {/* Right Side - Media Grid */}
+            <div className="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
 
             {/* Media Grid */}
             <ScrollArea className="flex-1 min-h-0 rounded-md border p-4">

@@ -555,16 +555,19 @@ export function VideoCreator() {
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Failed to render video', error);
       
-      // Check if it's a transient network error
-      const isTransientError = error.message.toLowerCase().includes('failed to send') || 
-                               error.message.toLowerCase().includes('network') ||
-                               error.message.toLowerCase().includes('timeout') ||
-                               error.message.toLowerCase().includes('edge function');
+      // Check if it's a transient network error (not a server-side failure)
+      const errorMsg = error.message.toLowerCase();
+      const isTransientError = (errorMsg.includes('failed to send') || 
+                               errorMsg.includes('network') ||
+                               errorMsg.includes('timeout')) &&
+                               !errorMsg.includes('rendering failed') &&
+                               !errorMsg.includes('shotstack');
       
       if (isTransientError) {
         setError('Connection interrupted. The video may still be processing. Tap "Check Status" to verify.');
       } else {
-        setError(error.message);
+        // Show actual error message for server-side failures
+        setError(error.message || 'Video rendering failed. Please try again.');
       }
       setState((prev) => ({ ...prev, step: 'render_setup' }));
     }

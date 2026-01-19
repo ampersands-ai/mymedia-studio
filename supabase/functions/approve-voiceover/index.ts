@@ -1106,6 +1106,9 @@ async function assembleVideo(
   // Transition duration for clip overlap - prevents black frames between clips
   const TRANSITION_DURATION = 0.5;
   
+  // Minimum clip duration - clips shorter than this are not useful
+  const MIN_CLIP_DURATION = 1.0;
+  
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     // Image-only mode: use shuffled unique images with safety limit
     const shuffledImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
@@ -1122,7 +1125,19 @@ async function assembleVideo(
         break;
       }
       
-      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
+      const remainingTime = assets.duration - currentTime;
+      
+      // Stop if remaining time is too short for a meaningful clip
+      if (remainingTime < MIN_CLIP_DURATION) {
+        // Extend the last clip to cover remaining time instead of adding a tiny clip
+        if (imageClips.length > 0) {
+          const lastClip = imageClips[imageClips.length - 1] as { length: number };
+          lastClip.length += remainingTime;
+        }
+        break;
+      }
+      
+      const clipDuration = Math.min(getRandomClipDuration(), remainingTime);
       const imageUrl = shuffledImages[imageIndex % shuffledImages.length];
       const isFirstClip = imageClips.length === 0;
       
@@ -1139,7 +1154,9 @@ async function assembleVideo(
       });
       
       // Overlap clips by transition duration to prevent black frames
-      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
+      // Ensure we always advance by at least MIN_CLIP_DURATION to prevent infinite loops
+      const advancement = Math.max(clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION), MIN_CLIP_DURATION);
+      currentTime += advancement;
       imageIndex++;
     }
     
@@ -1184,6 +1201,16 @@ async function assembleVideo(
       const remainingTime = assets.duration - currentTime;
       const isFirstClip = mediaClips.length === 0;
       
+      // Stop if remaining time is too short for a meaningful clip
+      if (remainingTime < MIN_CLIP_DURATION) {
+        // Extend the last clip to cover remaining time instead of adding a tiny clip
+        if (mediaClips.length > 0) {
+          const lastClip = mediaClips[mediaClips.length - 1] as { length: number };
+          lastClip.length += remainingTime;
+        }
+        break;
+      }
+      
       // Use actual video duration (capped at 15s), or random for images
       let clipDuration: number;
       if (media.type === 'video' && media.duration) {
@@ -1220,7 +1247,9 @@ async function assembleVideo(
       }
       
       // Overlap clips by transition duration to prevent black frames
-      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
+      // Ensure we always advance by at least MIN_CLIP_DURATION to prevent infinite loops
+      const advancement = Math.max(clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION), MIN_CLIP_DURATION);
+      currentTime += advancement;
       mediaIndex++;
     }
     
@@ -1257,6 +1286,16 @@ async function assembleVideo(
       const remainingTime = assets.duration - currentTime;
       const isFirstClip = videoClips.length === 0;
       
+      // Stop if remaining time is too short for a meaningful clip
+      if (remainingTime < MIN_CLIP_DURATION) {
+        // Extend the last clip to cover remaining time instead of adding a tiny clip
+        if (videoClips.length > 0) {
+          const lastClip = videoClips[videoClips.length - 1] as { length: number };
+          lastClip.length += remainingTime;
+        }
+        break;
+      }
+      
       // Use actual video duration, capped at 15s for variety
       const clipDuration = Math.min(
         video.duration,      // Actual stock video duration
@@ -1278,7 +1317,9 @@ async function assembleVideo(
       });
       
       // Overlap clips by transition duration to prevent black frames
-      currentTime += clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION);
+      // Ensure we always advance by at least MIN_CLIP_DURATION to prevent infinite loops
+      const advancement = Math.max(clipDuration - (isFirstClip ? 0 : TRANSITION_DURATION), MIN_CLIP_DURATION);
+      currentTime += advancement;
       videoIndex++;
     }
     

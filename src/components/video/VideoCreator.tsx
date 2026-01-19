@@ -508,6 +508,24 @@ export function VideoCreator() {
         return;
       }
 
+      // If job is stuck in assembling/fetching_video (e.g., previous crash), reset to awaiting_voice_approval first
+      const stuckStatuses = ['assembling', 'fetching_video'];
+      if (stuckStatuses.includes(job.status)) {
+        logger.info('Resetting stuck job before retry', { jobId: state.jobId, previousStatus: job.status });
+        await supabase
+          .from('video_jobs')
+          .update({
+            status: 'awaiting_voice_approval',
+            error_details: {
+              message: 'Reset from stuck status for retry',
+              previous_status: job.status,
+              reset_at: new Date().toISOString()
+            },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', state.jobId);
+      }
+
       setState((prev) => ({ ...prev, step: 'rendering' }));
       setRenderingStartTime(Date.now());
 

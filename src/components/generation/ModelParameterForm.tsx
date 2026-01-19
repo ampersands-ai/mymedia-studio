@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { SchemaInput } from "./SchemaInput";
 import type {
   ModelParameters,
   JsonSchemaProperty,
-  ModelParameterValue
+  ModelParameterValue,
+  ModelJsonSchema,
 } from "@/types/model-schema";
 import {
   toModelJsonSchema,
   getSchemaProperty,
   getFieldOrder,
   initializeParameters,
-  getFilteredEnum
+  getFilteredEnum,
 } from "@/types/model-schema";
 
 interface ModelParameterFormProps {
@@ -22,66 +23,63 @@ interface ModelParameterFormProps {
   provider?: string;
 }
 
-export const ModelParameterForm = ({ 
-  modelSchema: modelSchemaProp, 
-  onChange, 
-  currentValues = {}, 
-  allowedKeys, 
-  modelId, 
-  provider 
+/**
+ * Controlled form for model parameters.
+ *
+ * Important: this component must NOT push defaults upstream during render/mount,
+ * because that can fight user input (e.g. sliders) and trigger React warnings.
+ * The parent is responsible for initializing defaults.
+ */
+export const ModelParameterForm = ({
+  modelSchema: modelSchemaProp,
+  onChange,
+  currentValues = {},
+  allowedKeys,
+  modelId,
+  provider,
 }: ModelParameterFormProps) => {
   const modelSchema = toModelJsonSchema(modelSchemaProp);
-  
-  const [parameters, setParameters] = useState<ModelParameters>(() => {
-    return initializeParameters(modelSchema, currentValues);
-  });
 
-  useEffect(() => {
-    if (!modelSchema) return;
+  const parameters: ModelParameters = useMemo(() => {
+    const initialized = initializeParameters(modelSchema, currentValues);
 
-    const defaults = initializeParameters(modelSchema, currentValues);
-    setParameters(defaults);
-    onChange(defaults);
-  }, [modelSchema, currentValues, onChange]);
+    // Rehydrate enums / empty values to schema defaults (UI safety)
+    if (!modelSchema?.properties) return initialized;
 
-  useEffect(() => {
-    if (!modelSchema?.properties) return;
-    
-    const rehydrated: ModelParameters = {};
+    const rehydrated: ModelParameters = { ...initialized };
     Object.entries(modelSchema.properties).forEach(([key, schemaProp]) => {
       if (!schemaProp) return;
       const schema = schemaProp as JsonSchemaProperty;
       const val = currentValues[key];
 
-      const enumValues = Array.isArray(schema.enum) ? (schema.enum as readonly unknown[]) : null;
+      const enumValues = Array.isArray(schema.enum)
+        ? (schema.enum as readonly unknown[])
+        : null;
       const isEnumValueValid = !enumValues || enumValues.includes(val as unknown);
 
       if ((val === "" || val === undefined || val === null) && schema.default !== undefined) {
         rehydrated[key] = schema.default as ModelParameterValue;
       } else if (!isEnumValueValid && schema.default !== undefined) {
         rehydrated[key] = schema.default as ModelParameterValue;
-      } else {
+      } else if (val !== undefined) {
         rehydrated[key] = val;
       }
     });
-    
-    setParameters(rehydrated);
-  }, [currentValues, modelSchema]);
+
+    return rehydrated;
+  }, [modelSchema, currentValues]);
 
   const autoCorrectDependencies = (
-    _changedField: string, 
-    _newValue: ModelParameterValue, 
+    _changedField: string,
+    _newValue: ModelParameterValue,
     updatedParams: ModelParameters
   ): ModelParameters => {
     return updatedParams;
   };
 
   const handleParameterChange = (key: string, value: ModelParameterValue) => {
-    setParameters(prev => {
-      const updated = autoCorrectDependencies(key, value, { ...prev, [key]: value });
-      onChange(updated);
-      return updated;
-    });
+    const updated = autoCorrectDependencies(key, value, { ...parameters, [key]: value });
+    onChange(updated);
   };
 
   if (!modelSchema?.properties) {
@@ -91,11 +89,11 @@ export const ModelParameterForm = ({
   const properties = modelSchema.properties;
   const required = modelSchema.required || [];
 
-  const order = getFieldOrder(modelSchema);
-  
+  const order = getFieldOrder(modelSchema as ModelJsonSchema);
+
   // Use allowedKeys if provided, otherwise use order
-  const filteredKeys = allowedKeys 
-    ? allowedKeys.filter(key => properties[key])
+  const filteredKeys = allowedKeys
+    ? allowedKeys.filter((key) => properties[key])
     : order.filter((key: string) => properties[key]);
 
   return (
@@ -103,7 +101,7 @@ export const ModelParameterForm = ({
       {filteredKeys.map((key: string) => {
         const schemaProp = getSchemaProperty(modelSchema, key);
         if (!schemaProp) return null;
-        
+
         return (
           <SchemaInput
             key={key}

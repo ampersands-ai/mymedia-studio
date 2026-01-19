@@ -400,6 +400,17 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 15,
     isActive: true,
   },
+  // FLUX.1 Pro with UUID record ID (for generate-content-sync compatibility)
+  "7a2f8c3e-4b5d-6e9a-1f8c-2d4b6e9a3f5c": {
+    recordId: "7a2f8c3e-4b5d-6e9a-1f8c-2d4b6e9a3f5c",
+    modelId: "runware:100@1",
+    modelName: "FLUX.1 Pro",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.2,
+    estimatedTimeSeconds: 15,
+    isActive: true,
+  },
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": {
     recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6",
     modelId: "flux-kontext-max",

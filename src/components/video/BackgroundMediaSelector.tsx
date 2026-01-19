@@ -237,7 +237,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[98vw] h-[95vh] max-w-none max-h-none overflow-hidden flex flex-col">
+        <DialogContent className="!w-[98vw] !h-[95vh] !max-w-[98vw] !max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <DialogDescription className="sr-only">

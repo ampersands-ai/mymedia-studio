@@ -70,6 +70,17 @@ const CustomCreation = () => {
   const { data: activeGenerations = [] } = useActiveGenerations();
   const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
 
+  // IMPORTANT: Count ONLY truly active generations (pending/processing), de-duped by root
+  // (parent + children should count as 1 slot)
+  const activeInProgressCount = useMemo(() => {
+    const roots = new Set(
+      activeGenerations
+        .filter(g => g.status === 'pending' || g.status === 'processing')
+        .map(g => (g.parent_generation_id ?? g.id))
+    );
+    return roots.size;
+  }, [activeGenerations]);
+
   // Filter and sort models by selected group (default to cost sorting)
   const filteredModels = useMemo(() => {
     return allModels?.filter(model => {
@@ -366,7 +377,7 @@ const CustomCreation = () => {
     setFirstGeneration,
     userTokens: userTokens || null,
     // Concurrent generation limit enforcement
-    activeGenerationsCount: activeGenerations.length,
+    activeGenerationsCount: activeInProgressCount,
     maxConcurrentGenerations: maxConcurrent,
   });
 
@@ -777,7 +788,7 @@ const CustomCreation = () => {
             estimatedTokens={estimatedTokens}
             isOnCooldown={isOnCooldown}
             cooldownRemaining={cooldownRemaining}
-            activeGenerationsCount={activeGenerations.length}
+            activeGenerationsCount={activeInProgressCount}
             maxConcurrentGenerations={maxConcurrent}
             showNotifyOnCompletion={
               (currentModel?.show_notify_on_completion ?? true) && 

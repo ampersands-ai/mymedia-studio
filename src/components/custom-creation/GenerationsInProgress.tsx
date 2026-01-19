@@ -27,6 +27,14 @@ export const GenerationsInProgress = ({
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  const inProgressGenerations = activeGenerations.filter(
+    g => g.status === 'pending' || g.status === 'processing'
+  );
+
+  const activeCount = new Set(
+    inProgressGenerations.map(g => (g.parent_generation_id ?? g.id))
+  ).size;
+
   const handleCancelGeneration = async (generationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -94,7 +102,7 @@ export const GenerationsInProgress = ({
     }
   };
 
-  if (isLoading || activeGenerations.length === 0) {
+  if (isLoading || inProgressGenerations.length === 0) {
     return null;
   }
 
@@ -106,13 +114,13 @@ export const GenerationsInProgress = ({
           <h3 className="font-semibold text-sm">Generations in Progress</h3>
         </div>
         <Badge variant="secondary" className="text-xs">
-          {activeGenerations.length}/{maxConcurrent}
+          {activeCount}/{maxConcurrent}
         </Badge>
       </div>
 
       <ScrollArea className="max-h-[240px]">
         <div className="space-y-2">
-          {activeGenerations.map((gen) => (
+          {inProgressGenerations.map((gen) => (
             <div
               key={gen.id}
               className={cn(
@@ -204,7 +212,7 @@ export const GenerationsInProgress = ({
         </div>
       </ScrollArea>
 
-      {activeGenerations.length >= maxConcurrent && (
+      {activeCount >= maxConcurrent && (
         <div className="mt-3 p-2 rounded-md bg-warning/10 border border-warning/20">
           <p className="text-xs text-warning-foreground">
             You've reached your concurrent generation limit. Upgrade your plan for more simultaneous generations.

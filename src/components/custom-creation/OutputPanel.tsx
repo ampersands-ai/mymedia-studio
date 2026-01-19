@@ -94,6 +94,12 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
     const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
     const navigate = useNavigate();
 
+    const activeCount = new Set(
+      activeGenerations
+        .filter(g => g.status === 'pending' || g.status === 'processing')
+        .map(g => (g.parent_generation_id ?? g.id))
+    ).size;
+
     const hasGeneration =
       localGenerating || isGenerating || isPolling || pollingGenerationId || 
       generationState.generatedOutput || 
@@ -117,7 +123,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
           <div className="border-b border-border px-4 md:px-6 py-3 md:py-4 bg-muted/30 shrink-0">
             <div className="flex items-center justify-between">
               <h2 className="text-base md:text-lg font-bold text-foreground">Output</h2>
-              {activeGenerations.length > 0 && (
+              {activeCount > 0 && (
                 <Badge 
                   variant="secondary" 
                   className="cursor-pointer hover:bg-primary/20 transition-colors gap-1.5"
@@ -125,7 +131,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
                 >
                   <Loader2 className="h-3 w-3 animate-spin" />
                   <span className="text-xs font-medium">
-                    {activeGenerations.length}/{maxConcurrent === 999 ? '∞' : maxConcurrent}
+                    {activeCount}/{maxConcurrent === 999 ? '∞' : maxConcurrent}
                   </span>
                 </Badge>
               )}

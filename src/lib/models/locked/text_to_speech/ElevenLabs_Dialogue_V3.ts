@@ -205,7 +205,11 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   };
 
   if (inputs.stability !== undefined) payload.stability = inputs.stability;
-  if (inputs.language_code) payload.language_code = inputs.language_code;
+  
+  // Skip "auto" - let API auto-detect language (same as ElevenLabs Fast)
+  if (inputs.language_code && inputs.language_code !== "auto" && inputs.language_code !== "") {
+    payload.language_code = inputs.language_code;
+  }
 
   return {
     model: MODEL_CONFIG.modelId,

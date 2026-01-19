@@ -237,7 +237,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[90vh] w-[95vw] overflow-hidden flex flex-col">
+        <DialogContent className="w-[98vw] h-[95vh] max-w-none max-h-none overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <DialogDescription className="sr-only">
@@ -363,7 +363,7 @@ export function BackgroundMediaSelector({
               )}
 
             {/* Media Grid */}
-            <ScrollArea className="flex-1 min-h-0 rounded-md border p-4 max-h-[calc(90vh-280px)]">
+            <ScrollArea className="flex-1 min-h-0 rounded-md border p-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />

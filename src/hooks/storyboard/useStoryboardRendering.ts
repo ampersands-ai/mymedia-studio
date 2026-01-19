@@ -18,13 +18,10 @@ export const useStoryboardRendering = (
   // Render video mutation
   const renderVideoMutation = useMutation({
     mutationFn: async ({ confirmRerender = false, notifyOnCompletion = true }: { confirmRerender?: boolean; notifyOnCompletion?: boolean } = {}) => {
-      // Use inline render for Quick Mode, template-based for Customize mode
-      const isQuickMode = storyboard?.render_mode === 'quick';
-      const renderFunction = isQuickMode 
-        ? 'render-storyboard-video-inline' 
-        : 'render-storyboard-video';
+      // Always use inline renderer to avoid JSON2Video template issues (e.g., invalid font-color property)
+      const renderFunction = 'render-storyboard-video-inline';
       
-      logger.info(`Using ${renderFunction} for ${isQuickMode ? 'Quick' : 'Customize'} mode`, {
+      logger.info(`Using ${renderFunction}`, {
         component: 'useStoryboardRendering',
         operation: 'renderVideo',
         storyboardId: currentStoryboardId,

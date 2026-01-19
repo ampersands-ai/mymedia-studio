@@ -677,13 +677,25 @@ async function getBackgroundVideos(
   searchQueries.push(...loopFallbackQueries);
 
   // Fetch videos from multiple queries, deduplicate by Pixabay ID
-  const uniqueVideosMap = new Map<number, PixabayVideo>();
+  // Memory optimization: store only essential data (URL + duration), not full video objects
+  interface VideoMetadata {
+    id: number;
+    url: string;
+    duration: number;
+    width: number;
+    height: number;
+  }
+  const uniqueVideosMap = new Map<number, VideoMetadata>();
+  
+  // Reduce per_page to 50 and target 40 unique videos for memory efficiency
+  const TARGET_UNIQUE_VIDEOS = 40;
+  const PER_PAGE = 50;
   
   for (const searchQuery of searchQueries) {
-    // Stop if we have enough unique videos (target: 30+ for good variety)
-    if (uniqueVideosMap.size >= 30) break;
+    // Stop early if we have enough unique videos
+    if (uniqueVideosMap.size >= TARGET_UNIQUE_VIDEOS) break;
 
-    const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=100`;
+    const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=${PER_PAGE}`;
     const requestSentAt = new Date();
 
     try {
@@ -701,7 +713,7 @@ async function getBackgroundVideos(
             endpoint: endpoint.replace(pixabayApiKey, 'REDACTED'),
             httpMethod: 'GET',
             stepName: 'fetch_background_videos',
-            requestPayload: { query: searchQuery, per_page: 100 },
+            requestPayload: { query: searchQuery, per_page: PER_PAGE },
             additionalMetadata: { style, duration, topic: topic || 'none', targetOrientation }
           },
           requestSentAt,
@@ -716,13 +728,31 @@ async function getBackgroundVideos(
 
       if (response.ok && data?.hits) {
         for (const video of data.hits) {
-          if (video.id && !uniqueVideosMap.has(video.id)) {
-            uniqueVideosMap.set(video.id, video);
+          // Early break if we have enough
+          if (uniqueVideosMap.size >= TARGET_UNIQUE_VIDEOS) break;
+          
+          if (video.id && !uniqueVideosMap.has(video.id) && video.duration && video.duration > 0) {
+            // Extract only what we need - URL and duration (memory optimization)
+            const videoData = video.videos;
+            const selectedVideo = videoData?.large || videoData?.medium || videoData?.small;
+            
+            if (selectedVideo?.url) {
+              uniqueVideosMap.set(video.id, {
+                id: video.id,
+                url: selectedVideo.url,
+                duration: video.duration,
+                width: selectedVideo.width || 1920,
+                height: selectedVideo.height || 1080
+              });
+            }
           }
         }
         logger?.debug("Fetched videos from query", { 
           metadata: { query: searchQuery, newVideos: data.hits.length, totalUnique: uniqueVideosMap.size }
         });
+        // Explicitly release the response data
+        // deno-lint-ignore no-explicit-any
+        (data as any).hits = null;
       }
     } catch (e) {
       logger?.warn("Failed to fetch from query, continuing with next", { 
@@ -732,6 +762,8 @@ async function getBackgroundVideos(
   }
 
   const allVideos = Array.from(uniqueVideosMap.values());
+  // Clear the map to free memory
+  uniqueVideosMap.clear();
   
   if (allVideos.length === 0) {
     throw new Error('No background videos found');
@@ -745,10 +777,9 @@ async function getBackgroundVideos(
   }
 
   // Filter videos by orientation based on aspect ratio
-  const filterByOrientation = (video: PixabayVideo) => {
-    const videoWidth = video.videos?.large?.width || video.videos?.medium?.width || 1920;
-    const videoHeight = video.videos?.large?.height || video.videos?.medium?.height || 1080;
-    const videoRatio = videoWidth / videoHeight;
+  // Now works with simplified VideoMetadata instead of full PixabayVideo objects
+  const filterByOrientation = (video: VideoMetadata) => {
+    const videoRatio = video.width / video.height;
     
     if (targetOrientation === 'portrait') {
       return videoRatio < 1; // height > width
@@ -758,39 +789,26 @@ async function getBackgroundVideos(
     return true; // square or all
   };
 
-  // Select video URL based on aspect ratio and availability
-  const selectVideoUrl = (video: PixabayVideo): string | undefined => {
-    const videos = video.videos;
-    
-    if (targetOrientation === 'portrait') {
-      // Prefer medium/small for portrait to ensure proper dimensions
-      return videos?.medium?.url || videos?.small?.url || videos?.large?.url;
-    } else {
-      // Prefer large for landscape
-      return videos?.large?.url || videos?.medium?.url || videos?.small?.url;
-    }
-  };
-
   // Tiered filtering to ensure video variety (at least 5 unique videos)
-  let videosToUse: PixabayVideo[] = [];
+  let videosToUse: VideoMetadata[] = [];
   
   // Tier 1: Strict - matching orientation + 10s minimum duration
   const orientationFiltered = allVideos.filter(filterByOrientation);
-  const tier1 = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
+  const tier1 = orientationFiltered.filter((v: VideoMetadata) => v.duration >= 10);
   
   if (tier1.length >= 5) {
     videosToUse = tier1;
     logger?.debug("Using Tier 1: orientation + 10s duration", { metadata: { count: tier1.length } });
   } else {
     // Tier 2: Relax duration - matching orientation + 5s minimum
-    const tier2 = orientationFiltered.filter((v: PixabayVideo) => (v.duration || 0) >= 5);
+    const tier2 = orientationFiltered.filter((v: VideoMetadata) => v.duration >= 5);
     
     if (tier2.length >= 5) {
       videosToUse = tier2;
       logger?.debug("Using Tier 2: orientation + 5s duration", { metadata: { count: tier2.length } });
     } else {
       // Tier 3: Relax orientation - any orientation + 10s minimum
-      const tier3 = allVideos.filter((v: PixabayVideo) => (v.duration || 0) >= 10);
+      const tier3 = allVideos.filter((v: VideoMetadata) => v.duration >= 10);
       
       if (tier3.length >= 5) {
         videosToUse = tier3;
@@ -799,7 +817,7 @@ async function getBackgroundVideos(
         });
       } else {
         // Tier 4: Relax duration further - any orientation + 3s minimum
-        const tier4 = allVideos.filter((v: PixabayVideo) => (v.duration || 0) >= 3);
+        const tier4 = allVideos.filter((v: VideoMetadata) => v.duration >= 3);
         
         if (tier4.length >= 3) {
           videosToUse = tier4;
@@ -825,9 +843,10 @@ async function getBackgroundVideos(
     return [];
   }
   
-  // Calculate how many clips we need (aim for 3-5 second clips, average 4s)
-  const averageClipDuration = 4;
-  const numberOfClips = Math.min(30, Math.ceil(duration / averageClipDuration));
+  // Calculate how many clips we need based on actual video durations
+  // With 15s cap and actual durations, we need fewer clips for variety
+  const averageClipDuration = 8; // Higher average since we use actual durations now
+  const numberOfClips = Math.min(20, Math.ceil(duration / averageClipDuration));
 
   logger?.info("Selecting background videos for duration", {
     metadata: { numberOfClips, duration, averageClipDuration, availableVideos: videosToUse.length }
@@ -836,35 +855,14 @@ async function getBackgroundVideos(
   // Shuffle videos using proper Fisher-Yates algorithm
   const shuffledVideos = shuffleArray(videosToUse);
   
-  // Extract unique URLs first to avoid duplicates
-  // Now includes duration metadata for intelligent clip timing
-  const uniqueUrls = new Set<string>();
-  const selectedVideos: BackgroundVideo[] = [];
-  
-  // First pass: collect unique video URLs with duration
-  for (const video of shuffledVideos) {
-    const videoUrl = selectVideoUrl(video);
-    const videoDuration = video.duration;
-    
-    // Skip videos without duration metadata (cannot determine proper clip length)
-    if (!videoDuration || videoDuration <= 0) {
-      logger?.debug("Skipping video without duration metadata", { 
-        metadata: { videoId: video.id }
-      });
-      continue;
-    }
-    
-    if (videoUrl && !uniqueUrls.has(videoUrl)) {
-      uniqueUrls.add(videoUrl);
-      selectedVideos.push({ url: videoUrl, duration: videoDuration });
-    }
-    // Stop when we have enough unique videos
-    if (selectedVideos.length >= numberOfClips) break;
-  }
-  
-  logger?.info("Unique videos selected with duration metadata", {
+  // Convert to BackgroundVideo format (already have URL and duration)
+  const selectedVideos: BackgroundVideo[] = shuffledVideos
+    .slice(0, numberOfClips)
+    .map(v => ({ url: v.url, duration: v.duration }));
+
+  logger?.info("Videos selected with duration metadata", {
     metadata: { 
-      uniqueCount: selectedVideos.length, 
+      selectedCount: selectedVideos.length, 
       targetClips: numberOfClips,
       avgDuration: selectedVideos.length > 0 
         ? (selectedVideos.reduce((sum, v) => sum + v.duration, 0) / selectedVideos.length).toFixed(1)

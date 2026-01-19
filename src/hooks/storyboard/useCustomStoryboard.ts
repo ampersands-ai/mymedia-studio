@@ -8,6 +8,7 @@ interface CustomScene {
   voiceOverText: string;
   imagePrompt: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
 
 interface CreateCustomStoryboardInput {

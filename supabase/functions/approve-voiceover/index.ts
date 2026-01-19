@@ -1722,11 +1722,14 @@ async function pollRenderStatus(supabase: SupabaseClient, jobId: string, renderI
           }
           
           // Update job with permanent storage URL instead of temporary Shotstack URL
+          // Clear any stale error fields from previous failed attempts
           await supabase.from('video_jobs').update({
             status: GENERATION_STATUS.COMPLETED,
             final_video_url: videoPublicUrl,
             completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            error_message: null,
+            error_details: null
           }).eq('id', jobId);
           
           // Trigger email notification if enabled

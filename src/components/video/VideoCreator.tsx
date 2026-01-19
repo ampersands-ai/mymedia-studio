@@ -500,27 +500,25 @@ export function VideoCreator() {
       }
 
       // Check if voiceover has been generated
-      // Allow render from: awaiting_voice_approval, assembling (stuck), fetching_video (stuck), or failed (retry)
-      const allowedStatuses = ['awaiting_voice_approval', 'assembling', 'fetching_video', 'failed'];
+      // Allow render from: awaiting_voice_approval, assembling (stuck), fetching_video (stuck), failed (retry), or completed (re-render)
+      const allowedStatuses = ['awaiting_voice_approval', 'assembling', 'fetching_video', 'failed', 'completed'];
       if (!allowedStatuses.includes(job.status) || !job.voiceover_url) {
         setError('Please generate a voiceover before rendering the video');
         setState((prev) => ({ ...prev, step: 'voiceover_setup' }));
         return;
       }
 
-      // If job is stuck in assembling/fetching_video (e.g., previous crash), reset to awaiting_voice_approval first
-      const stuckStatuses = ['assembling', 'fetching_video'];
-      if (stuckStatuses.includes(job.status)) {
-        logger.info('Resetting stuck job before retry', { jobId: state.jobId, previousStatus: job.status });
+      // If job needs reset before re-render (stuck, failed, or completed), reset to awaiting_voice_approval first
+      const resetStatuses = ['assembling', 'fetching_video', 'completed'];
+      if (resetStatuses.includes(job.status)) {
+        logger.info('Resetting job before render', { jobId: state.jobId, previousStatus: job.status });
         await supabase
           .from('video_jobs')
           .update({
             status: 'awaiting_voice_approval',
-            error_details: {
-              message: 'Reset from stuck status for retry',
-              previous_status: job.status,
-              reset_at: new Date().toISOString()
-            },
+            final_video_url: null,      // Clear previous video for fresh render
+            error_message: null,        // Clear any stale error message
+            error_details: null,        // Clear any stale error details
             updated_at: new Date().toISOString()
           })
           .eq('id', state.jobId);

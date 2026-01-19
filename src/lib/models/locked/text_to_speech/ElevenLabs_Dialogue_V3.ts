@@ -103,9 +103,12 @@ export const SCHEMA = Object.freeze({
       type: "number",
       title: "Stability",
       default: 0.5,
-      minimum: 0,
-      maximum: 1,
-      step: 0.1,
+      enum: [0, 0.5, 1],
+      enumLabels: {
+        0: "Expressive (0)",
+        0.5: "Balanced (0.5)",
+        1: "Consistent (1)",
+      },
       description: "Voice stability. Higher = more consistent, lower = more expressive.",
       isAdvanced: true,
     },
@@ -204,7 +207,17 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
     dialogue: inputs.dialogue || [],
   };
 
-  if (inputs.stability !== undefined) payload.stability = inputs.stability;
+  // API only accepts 0, 0.5, or 1 - clamp to nearest valid value as safety net
+  if (inputs.stability !== undefined) {
+    const rawStability = Number(inputs.stability);
+    if (rawStability <= 0.25) {
+      payload.stability = 0;
+    } else if (rawStability <= 0.75) {
+      payload.stability = 0.5;
+    } else {
+      payload.stability = 1;
+    }
+  }
   
   // Skip "auto" - let API auto-detect language (same as ElevenLabs Fast)
   if (inputs.language_code && inputs.language_code !== "auto" && inputs.language_code !== "") {

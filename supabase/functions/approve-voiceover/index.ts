@@ -26,6 +26,12 @@ interface PixabayVideo {
   id?: number;
 }
 
+// Background video with duration metadata for intelligent clip timing
+interface BackgroundVideo {
+  url: string;
+  duration: number; // in seconds
+}
+
 interface PixabayImageResponse {
   hits?: PixabayImage[];
 }
@@ -263,7 +269,7 @@ Deno.serve(async (req) => {
     // Step 3: Fetch multiple background videos or images
     await updateJobStatus(supabaseClient, job_id, 'fetching_video', logger);
     
-    let backgroundVideoUrls: string[] = [];
+    let backgroundVideoUrls: BackgroundVideo[] = [];
     let backgroundImageUrls: string[] = [];
     
     // Calculate how many clips we need (3-5 second clips, average 4s)
@@ -307,7 +313,7 @@ Deno.serve(async (req) => {
       }
       
       // Get unique video count (dedupe by URL)
-      const uniqueVideoUrls = [...new Set(backgroundVideoUrls)];
+      const uniqueVideoUrls = [...new Map(backgroundVideoUrls.map(v => [v.url, v])).values()];
       
       // If videos cover all clips without repeats, use videos only
       if (uniqueVideoUrls.length >= numberOfClipsNeeded) {
@@ -317,7 +323,7 @@ Deno.serve(async (req) => {
         logger.info("Sufficient video variety, using videos only", {
           metadata: { uniqueCount: uniqueVideoUrls.length, clipsNeeded: numberOfClipsNeeded }
         });
-      } 
+      }
       // If we have some videos but not enough for all clips, use hybrid
       else if (uniqueVideoUrls.length >= 3) {
         const imagesNeeded = numberOfClipsNeeded - uniqueVideoUrls.length;
@@ -337,7 +343,7 @@ Deno.serve(async (req) => {
             logger
           );
           backgroundMediaType = 'hybrid';
-          backgroundVideoUrls = uniqueVideoUrls; // Use only unique videos
+          backgroundVideoUrls = uniqueVideoUrls; // Use only unique videos with duration
           logger.info("Hybrid mode: videos + images", { 
             metadata: { 
               videoCount: uniqueVideoUrls.length, 
@@ -381,7 +387,7 @@ Deno.serve(async (req) => {
     }
     
     await supabaseClient.from('video_jobs').update({ 
-      background_video_url: backgroundVideoUrls[0] || backgroundImageUrls[0] // Store first URL for reference
+      background_video_url: backgroundVideoUrls[0]?.url || backgroundImageUrls[0] // Store first URL for reference
     }).eq('id', job_id);
     logger.info("Background media fetched", { metadata: { jobId: job_id } });
 
@@ -831,22 +837,39 @@ async function getBackgroundVideos(
   const shuffledVideos = shuffleArray(videosToUse);
   
   // Extract unique URLs first to avoid duplicates
+  // Now includes duration metadata for intelligent clip timing
   const uniqueUrls = new Set<string>();
-  const selectedVideos: string[] = [];
+  const selectedVideos: BackgroundVideo[] = [];
   
-  // First pass: collect unique video URLs
+  // First pass: collect unique video URLs with duration
   for (const video of shuffledVideos) {
     const videoUrl = selectVideoUrl(video);
+    const videoDuration = video.duration;
+    
+    // Skip videos without duration metadata (cannot determine proper clip length)
+    if (!videoDuration || videoDuration <= 0) {
+      logger?.debug("Skipping video without duration metadata", { 
+        metadata: { videoId: video.id }
+      });
+      continue;
+    }
+    
     if (videoUrl && !uniqueUrls.has(videoUrl)) {
       uniqueUrls.add(videoUrl);
-      selectedVideos.push(videoUrl);
+      selectedVideos.push({ url: videoUrl, duration: videoDuration });
     }
     // Stop when we have enough unique videos
     if (selectedVideos.length >= numberOfClips) break;
   }
   
-  logger?.info("Unique videos selected (no repeats)", {
-    metadata: { uniqueCount: selectedVideos.length, targetClips: numberOfClips }
+  logger?.info("Unique videos selected with duration metadata", {
+    metadata: { 
+      uniqueCount: selectedVideos.length, 
+      targetClips: numberOfClips,
+      avgDuration: selectedVideos.length > 0 
+        ? (selectedVideos.reduce((sum, v) => sum + v.duration, 0) / selectedVideos.length).toFixed(1)
+        : 0
+    }
   });
   
   logger?.info("Background videos selected", { 
@@ -864,7 +887,7 @@ async function assembleVideo(
   assets: {
     script: string;
     voiceoverUrl: string;
-    backgroundVideoUrls: string[];
+    backgroundVideoUrls: BackgroundVideo[];
     backgroundImageUrls?: string[];
     duration: number;
   },
@@ -1057,17 +1080,21 @@ async function assembleVideo(
     logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length, uniqueImages: shuffledImages.length } });
   } else if (backgroundMediaType === 'hybrid' && assets.backgroundVideoUrls.length > 0 && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     // Hybrid mode: use unique videos first, then unique images (no repeats)
-    const uniqueVideos = shuffleArray([...new Set(assets.backgroundVideoUrls)]);
+    // Videos now have duration metadata for intelligent clip timing
+    const uniqueVideos = shuffleArray([...new Map(assets.backgroundVideoUrls.map(v => [v.url, v])).values()]);
     const uniqueImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
     
-    // Combine: all unique videos first, then fill with images
-    const combinedMedia: Array<{ type: 'video' | 'image'; url: string }> = [];
+    // Maximum clip duration cap for variety (videos shouldn't dominate too long)
+    const MAX_CLIP_DURATION = 15;
     
-    // Add all unique videos
-    for (const url of uniqueVideos) {
-      combinedMedia.push({ type: 'video', url });
+    // Combine: all unique videos first, then fill with images
+    const combinedMedia: Array<{ type: 'video' | 'image'; url: string; duration?: number }> = [];
+    
+    // Add all unique videos with their duration
+    for (const video of uniqueVideos) {
+      combinedMedia.push({ type: 'video', url: video.url, duration: video.duration });
     }
-    // Add unique images to fill remaining
+    // Add unique images to fill remaining (images use random 3-5s duration)
     for (const url of uniqueImages) {
       combinedMedia.push({ type: 'image', url });
     }
@@ -1077,9 +1104,17 @@ async function assembleVideo(
     let mediaIndex = 0;
     
     while (currentTime < assets.duration) {
-      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
       const media = combinedMedia[mediaIndex % combinedMedia.length];
+      const remainingTime = assets.duration - currentTime;
       const isFirstClip = mediaClips.length === 0;
+      
+      // Use actual video duration (capped at 15s), or random for images
+      let clipDuration: number;
+      if (media.type === 'video' && media.duration) {
+        clipDuration = Math.min(media.duration, MAX_CLIP_DURATION, remainingTime);
+      } else {
+        clipDuration = Math.min(getRandomClipDuration(), remainingTime);
+      }
       
       if (media.type === 'video') {
         mediaClips.push({
@@ -1114,29 +1149,40 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: mediaClips });
-    logger?.info("Added hybrid background clips (videos + images)", { 
+    logger?.info("Added hybrid background clips (videos + images) with actual durations", { 
       metadata: { 
         clipCount: mediaClips.length, 
         uniqueVideos: uniqueVideos.length, 
-        uniqueImages: uniqueImages.length 
+        uniqueImages: uniqueImages.length,
+        maxClipDuration: MAX_CLIP_DURATION
       } 
     });
   } else {
-    // Video-only mode: use shuffled unique videos
-    const shuffledVideos = shuffleArray([...new Set(assets.backgroundVideoUrls)]);
+    // Video-only mode: use shuffled unique videos with actual duration metadata
+    const shuffledVideos = shuffleArray([...new Map(assets.backgroundVideoUrls.map(v => [v.url, v])).values()]);
     const videoClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
     let videoIndex = 0;
     
+    // Maximum clip duration cap for variety
+    const MAX_CLIP_DURATION = 15;
+    
     while (currentTime < assets.duration) {
-      const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
-      const videoUrl = shuffledVideos[videoIndex % shuffledVideos.length];
+      const video = shuffledVideos[videoIndex % shuffledVideos.length];
+      const remainingTime = assets.duration - currentTime;
       const isFirstClip = videoClips.length === 0;
+      
+      // Use actual video duration, capped at 15s for variety
+      const clipDuration = Math.min(
+        video.duration,      // Actual stock video duration
+        MAX_CLIP_DURATION,   // 15 second cap for variety
+        remainingTime        // Don't exceed remaining video length
+      );
       
       videoClips.push({
         asset: {
           type: 'video',
-          src: videoUrl,
+          src: video.url,
           volume: 0
         },
         start: currentTime,
@@ -1152,7 +1198,16 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: videoClips });
-    logger?.info("Added background video clips", { metadata: { clipCount: videoClips.length, uniqueVideos: shuffledVideos.length } });
+    logger?.info("Added background video clips with actual durations", { 
+      metadata: { 
+        clipCount: videoClips.length, 
+        uniqueVideos: shuffledVideos.length,
+        maxClipDuration: MAX_CLIP_DURATION,
+        avgVideoDuration: shuffledVideos.length > 0 
+          ? (shuffledVideos.reduce((sum, v) => sum + v.duration, 0) / shuffledVideos.length).toFixed(1)
+          : 0
+      } 
+    });
   }
 
   // Debug: Log track order before submission

@@ -237,7 +237,7 @@ export function BackgroundMediaSelector({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] w-[95vw]">
+        <DialogContent className="max-w-[95vw] max-h-[90vh] w-[95vw] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Select Background Media</DialogTitle>
             <DialogDescription className="sr-only">
@@ -256,9 +256,9 @@ export function BackgroundMediaSelector({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 overflow-hidden">
             {/* Left Side - Controls */}
-            <div className="lg:col-span-1 space-y-4">
+            <div className="lg:col-span-1 space-y-4 min-w-[280px]">
             {/* Media Type Toggle */}
             <Tabs value={mediaType} onValueChange={(value) => handleMediaTypeChange(value as 'video' | 'image')}>
               <TabsList className="grid w-full grid-cols-2">
@@ -312,7 +312,7 @@ export function BackgroundMediaSelector({
             </div>
 
             {/* Right Side - Media Grid & Preview */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-3 flex flex-col gap-4 min-h-0 overflow-hidden">
               {/* Preview Section */}
               {previewMedia && (
                 <div className="rounded-lg border bg-accent/50 overflow-hidden">
@@ -363,7 +363,7 @@ export function BackgroundMediaSelector({
               )}
 
             {/* Media Grid */}
-            <ScrollArea className="h-[calc(90vh-240px)] rounded-md border p-4">
+            <ScrollArea className="flex-1 min-h-0 rounded-md border p-4 max-h-[calc(90vh-280px)]">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -375,7 +375,7 @@ export function BackgroundMediaSelector({
                   <p className="text-sm text-muted-foreground">Try a different search term</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
                   {mediaItems.map((media) => (
                     <div
                       key={media.id}

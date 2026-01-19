@@ -6,7 +6,15 @@ import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
 import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 import { withCircuitBreaker } from "../_shared/circuit-breaker-enhanced.ts";
 
-// Type definitions
+// ============= MEMORY OPTIMIZATION CONSTANTS =============
+// These values are tuned for Deno's 150MB memory limit under concurrent load
+const TARGET_UNIQUE_VIDEOS = 25;  // Reduced from 40 - sufficient for 60s videos
+const PER_PAGE = 30;              // Reduced from 50 - less memory per API call
+const MAX_QUERIES = 5;            // Limit total Pixabay API calls
+const FETCH_TIMEOUT_MS = 10000;   // 10 second timeout for external APIs
+const MAX_CLIPS_SAFETY = 100;     // Safety limit for clip assembly loops
+
+// ============= TYPE DEFINITIONS =============
 interface SanitizedData {
   [key: string]: unknown;
 }
@@ -26,10 +34,18 @@ interface PixabayVideo {
   id?: number;
 }
 
-// Background video with duration metadata for intelligent clip timing
+// Background video with minimal metadata (memory-optimized)
 interface BackgroundVideo {
   url: string;
   duration: number; // in seconds
+}
+
+// Minimal video metadata for memory efficiency during fetching
+interface VideoMetadata {
+  id: number;
+  url: string;
+  duration: number;
+  isPortrait: boolean; // Pre-computed to avoid storing width/height
 }
 
 interface PixabayImageResponse {
@@ -38,6 +54,36 @@ interface PixabayImageResponse {
 
 interface PixabayVideoResponse {
   hits?: PixabayVideo[];
+}
+
+// ============= UTILITY FUNCTIONS =============
+
+/**
+ * Fetch with timeout wrapper - prevents hanging requests from consuming memory
+ * Implements AbortController for clean cancellation
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    return response;
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms`);
+    }
+    throw error;
+  }
 }
 
 interface VideoJob {
@@ -608,6 +654,16 @@ async function getBackgroundImages(
   return imageUrls;
 }
 
+/**
+ * Memory-optimized video fetching using streaming-first approach
+ * 
+ * Key optimizations:
+ * 1. Fetch one query at a time, process immediately, release response
+ * 2. Store only minimal metadata (url, duration, isPortrait)
+ * 3. Stop early once TARGET_UNIQUE_VIDEOS reached
+ * 4. Use timeouts to prevent hanging requests
+ * 5. Explicit garbage collection hints
+ */
 async function getBackgroundVideos(
   supabase: SupabaseClient,
   style: string,
@@ -618,11 +674,11 @@ async function getBackgroundVideos(
   customVideoUrl?: string,
   topic?: string,
   logger?: EdgeLogger
-): Promise<string[]> {
+): Promise<BackgroundVideo[]> {
   // If user selected custom video, return it as single-item array
   if (customVideoUrl) {
     logger?.info("Using custom background video", { metadata: { customVideoUrl } });
-    return [customVideoUrl];
+    return [{ url: customVideoUrl, duration: 60 }]; // Assume 60s for custom
   }
 
   const pixabayApiKey = Deno.env.get('PIXABAY_API_KEY');
@@ -638,6 +694,7 @@ async function getBackgroundVideos(
     '1:1': 'square'
   };
   const targetOrientation = orientationMap[aspectRatio] || 'portrait';
+  const isPortraitTarget = targetOrientation === 'portrait';
 
   // Build search queries - primary based on topic, then fallbacks
   const searchQueries: string[] = [];
@@ -671,39 +728,43 @@ async function getBackgroundVideos(
     'fire loop',
     'money loop',
     'abstract neon light loops',
+    'falling music note loops',
     'neon loop',
     'particles loop',
   ];
   searchQueries.push(...loopFallbackQueries);
 
-  // Fetch videos from multiple queries, deduplicate by Pixabay ID
-  // Memory optimization: store only essential data (URL + duration), not full video objects
-  interface VideoMetadata {
-    id: number;
-    url: string;
-    duration: number;
-    width: number;
-    height: number;
-  }
-  const uniqueVideosMap = new Map<number, VideoMetadata>();
-  
-  // Reduce per_page to 50 and target 40 unique videos for memory efficiency
-  const TARGET_UNIQUE_VIDEOS = 40;
-  const PER_PAGE = 50;
-  
+  // Streaming-first fetch: process each query immediately, store minimal data
+  const selectedVideos: VideoMetadata[] = [];
+  const seenIds = new Set<number>();
+  let queriesExecuted = 0;
+
   for (const searchQuery of searchQueries) {
-    // Stop early if we have enough unique videos
-    if (uniqueVideosMap.size >= TARGET_UNIQUE_VIDEOS) break;
+    // Stop if we have enough videos or hit query limit
+    if (selectedVideos.length >= TARGET_UNIQUE_VIDEOS || queriesExecuted >= MAX_QUERIES) {
+      break;
+    }
 
     const endpoint = `${API_ENDPOINTS.PIXABAY.apiUrl}/videos/?key=${pixabayApiKey}&q=${encodeURIComponent(searchQuery)}&per_page=${PER_PAGE}`;
     const requestSentAt = new Date();
 
     try {
-      const response = await fetch(endpoint);
-      const data: PixabayVideoResponse | null = response.ok ? await response.json() : null;
-
-      // Log the API call (only for first query to avoid spam)
-      if (searchQuery === searchQueries[0]) {
+      // Use timeout wrapper to prevent hanging requests
+      const response = await fetchWithTimeout(endpoint, {}, FETCH_TIMEOUT_MS);
+      
+      if (!response.ok) {
+        logger?.warn("Pixabay API returned error", { 
+          metadata: { query: searchQuery, status: response.status }
+        });
+        continue;
+      }
+      
+      // Parse response and immediately extract minimal data
+      const data = await response.json() as PixabayVideoResponse;
+      const hits = data?.hits || [];
+      
+      // Log only for first query to avoid log spam
+      if (queriesExecuted === 0) {
         logApiCall(
           supabase,
           {
@@ -719,96 +780,100 @@ async function getBackgroundVideos(
           requestSentAt,
           {
             statusCode: response.status,
-            payload: { totalHits: data?.hits?.length || 0 },
-            isError: !response.ok,
-            errorMessage: response.ok ? undefined : `Pixabay returned ${response.status}`
+            payload: { totalHits: hits.length },
+            isError: false
           }
         ).catch(e => logger?.error('Failed to log API call', e as Error));
       }
 
-      if (response.ok && data?.hits) {
-        for (const video of data.hits) {
-          // Early break if we have enough
-          if (uniqueVideosMap.size >= TARGET_UNIQUE_VIDEOS) break;
-          
-          if (video.id && !uniqueVideosMap.has(video.id) && video.duration && video.duration > 0) {
-            // Extract only what we need - URL and duration (memory optimization)
-            const videoData = video.videos;
-            const selectedVideo = videoData?.large || videoData?.medium || videoData?.small;
-            
-            if (selectedVideo?.url) {
-              uniqueVideosMap.set(video.id, {
-                id: video.id,
-                url: selectedVideo.url,
-                duration: video.duration,
-                width: selectedVideo.width || 1920,
-                height: selectedVideo.height || 1080
-              });
-            }
-          }
-        }
-        logger?.debug("Fetched videos from query", { 
-          metadata: { query: searchQuery, newVideos: data.hits.length, totalUnique: uniqueVideosMap.size }
+      // Stream-friendly: process hits immediately, extract only needed data
+      for (const video of hits) {
+        // Early break if we have enough
+        if (selectedVideos.length >= TARGET_UNIQUE_VIDEOS) break;
+        
+        // Skip if no ID, already seen, or too short
+        if (!video.id || seenIds.has(video.id)) continue;
+        if (!video.duration || video.duration < 3) continue;
+        
+        // Extract video URL - prefer large, fall back to medium/small
+        const videoData = video.videos;
+        const selectedVideo = videoData?.large || videoData?.medium || videoData?.small;
+        if (!selectedVideo?.url) continue;
+        
+        // Compute orientation once, store as boolean (saves memory vs width/height)
+        const width = selectedVideo.width || 1920;
+        const height = selectedVideo.height || 1080;
+        const isPortrait = height > width;
+        
+        seenIds.add(video.id);
+        selectedVideos.push({
+          id: video.id,
+          url: selectedVideo.url,
+          duration: video.duration,
+          isPortrait
         });
-        // Explicitly release the response data
-        // deno-lint-ignore no-explicit-any
-        (data as any).hits = null;
       }
+      
+      // Explicit cleanup hint for GC
+      // deno-lint-ignore no-explicit-any
+      (data as any).hits = null;
+      
+      logger?.debug("Fetched videos from query", { 
+        metadata: { 
+          query: searchQuery, 
+          newVideos: hits.length, 
+          totalUnique: selectedVideos.length,
+          queryNumber: queriesExecuted + 1
+        }
+      });
+      
     } catch (e) {
-      logger?.warn("Failed to fetch from query, continuing with next", { 
-        metadata: { query: searchQuery, error: (e as Error).message }
+      logger?.warn("Failed to fetch from query, continuing", { 
+        metadata: { 
+          query: searchQuery, 
+          error: (e as Error).message,
+          queryNumber: queriesExecuted + 1
+        }
       });
     }
+    
+    queriesExecuted++;
   }
 
-  const allVideos = Array.from(uniqueVideosMap.values());
-  // Clear the map to free memory
-  uniqueVideosMap.clear();
-  
-  if (allVideos.length === 0) {
+  // Clear the seen IDs set to free memory
+  seenIds.clear();
+
+  if (selectedVideos.length === 0) {
     throw new Error('No background videos found');
   }
 
   // Log warning if low variety
-  if (allVideos.length < 10) {
+  if (selectedVideos.length < 10) {
     logger?.warn("Low video variety - may cause repeats", {
-      metadata: { uniqueCount: allVideos.length, topic: topic || 'none', style }
+      metadata: { uniqueCount: selectedVideos.length, topic: topic || 'none', style }
     });
   }
-
-  // Filter videos by orientation based on aspect ratio
-  // Now works with simplified VideoMetadata instead of full PixabayVideo objects
-  const filterByOrientation = (video: VideoMetadata) => {
-    const videoRatio = video.width / video.height;
-    
-    if (targetOrientation === 'portrait') {
-      return videoRatio < 1; // height > width
-    } else if (targetOrientation === 'landscape') {
-      return videoRatio > 1; // width > height
-    }
-    return true; // square or all
-  };
 
   // Tiered filtering to ensure video variety (at least 5 unique videos)
   let videosToUse: VideoMetadata[] = [];
   
   // Tier 1: Strict - matching orientation + 10s minimum duration
-  const orientationFiltered = allVideos.filter(filterByOrientation);
-  const tier1 = orientationFiltered.filter((v: VideoMetadata) => v.duration >= 10);
+  const orientationFiltered = selectedVideos.filter(v => isPortraitTarget ? v.isPortrait : !v.isPortrait);
+  const tier1 = orientationFiltered.filter(v => v.duration >= 10);
   
   if (tier1.length >= 5) {
     videosToUse = tier1;
     logger?.debug("Using Tier 1: orientation + 10s duration", { metadata: { count: tier1.length } });
   } else {
     // Tier 2: Relax duration - matching orientation + 5s minimum
-    const tier2 = orientationFiltered.filter((v: VideoMetadata) => v.duration >= 5);
+    const tier2 = orientationFiltered.filter(v => v.duration >= 5);
     
     if (tier2.length >= 5) {
       videosToUse = tier2;
       logger?.debug("Using Tier 2: orientation + 5s duration", { metadata: { count: tier2.length } });
     } else {
       // Tier 3: Relax orientation - any orientation + 10s minimum
-      const tier3 = allVideos.filter((v: VideoMetadata) => v.duration >= 10);
+      const tier3 = selectedVideos.filter(v => v.duration >= 10);
       
       if (tier3.length >= 5) {
         videosToUse = tier3;
@@ -817,7 +882,7 @@ async function getBackgroundVideos(
         });
       } else {
         // Tier 4: Relax duration further - any orientation + 3s minimum
-        const tier4 = allVideos.filter((v: VideoMetadata) => v.duration >= 3);
+        const tier4 = selectedVideos.filter(v => v.duration >= 3);
         
         if (tier4.length >= 3) {
           videosToUse = tier4;
@@ -826,9 +891,9 @@ async function getBackgroundVideos(
           });
         } else {
           // Tier 5: No restrictions - use all available
-          videosToUse = allVideos;
+          videosToUse = selectedVideos;
           logger?.warn("Using Tier 5: no filtering (video pool very limited)", { 
-            metadata: { count: allVideos.length } 
+            metadata: { count: selectedVideos.length } 
           });
         }
       }
@@ -844,40 +909,36 @@ async function getBackgroundVideos(
   }
   
   // Calculate how many clips we need based on actual video durations
-  // With 15s cap and actual durations, we need fewer clips for variety
-  const averageClipDuration = 8; // Higher average since we use actual durations now
+  const averageClipDuration = 8;
   const numberOfClips = Math.min(20, Math.ceil(duration / averageClipDuration));
 
   logger?.info("Selecting background videos for duration", {
-    metadata: { numberOfClips, duration, averageClipDuration, availableVideos: videosToUse.length }
+    metadata: { 
+      numberOfClips, 
+      duration, 
+      availableVideos: videosToUse.length,
+      queriesExecuted
+    }
   });
 
-  // Shuffle videos using proper Fisher-Yates algorithm
+  // Shuffle videos using Fisher-Yates algorithm
   const shuffledVideos = shuffleArray(videosToUse);
   
-  // Convert to BackgroundVideo format (already have URL and duration)
-  const selectedVideos: BackgroundVideo[] = shuffledVideos
+  // Convert to BackgroundVideo format (only url and duration)
+  const result: BackgroundVideo[] = shuffledVideos
     .slice(0, numberOfClips)
     .map(v => ({ url: v.url, duration: v.duration }));
 
-  logger?.info("Videos selected with duration metadata", {
+  logger?.info("Background videos selected", {
     metadata: { 
-      selectedCount: selectedVideos.length, 
+      videoCount: result.length, 
       targetClips: numberOfClips,
-      avgDuration: selectedVideos.length > 0 
-        ? (selectedVideos.reduce((sum, v) => sum + v.duration, 0) / selectedVideos.length).toFixed(1)
-        : 0
+      uniquePoolSize: videosToUse.length,
+      memoryOptimized: true
     }
   });
   
-  logger?.info("Background videos selected", { 
-    metadata: { 
-      videoCount: selectedVideos.length, 
-      targetClips: numberOfClips,
-      uniquePoolSize: videosToUse.length
-    } 
-  });
-  return selectedVideos;
+  return result;
 }
 
 async function assembleVideo(
@@ -1046,13 +1107,21 @@ async function assembleVideo(
   const TRANSITION_DURATION = 0.5;
   
   if (backgroundMediaType === 'image' && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
-    // Image-only mode: use shuffled unique images
+    // Image-only mode: use shuffled unique images with safety limit
     const shuffledImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
     const imageClips: Array<Record<string, unknown>> = [];
     let currentTime = 0;
     let imageIndex = 0;
     
     while (currentTime < assets.duration) {
+      // SAFETY: Prevent infinite loops
+      if (imageClips.length >= MAX_CLIPS_SAFETY) {
+        logger?.warn("Image clip safety limit reached", { 
+          metadata: { clipCount: imageClips.length, currentTime, duration: assets.duration }
+        });
+        break;
+      }
+      
       const clipDuration = Math.min(getRandomClipDuration(), assets.duration - currentTime);
       const imageUrl = shuffledImages[imageIndex % shuffledImages.length];
       const isFirstClip = imageClips.length === 0;
@@ -1075,14 +1144,15 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: imageClips });
-    logger?.info("Added background image clips", { metadata: { clipCount: imageClips.length, uniqueImages: shuffledImages.length } });
+    logger?.info("Added background image clips", { 
+      metadata: { clipCount: imageClips.length, uniqueImages: shuffledImages.length, safetyLimitApplied: imageClips.length >= MAX_CLIPS_SAFETY }
+    });
   } else if (backgroundMediaType === 'hybrid' && assets.backgroundVideoUrls.length > 0 && assets.backgroundImageUrls && assets.backgroundImageUrls.length > 0) {
     // Hybrid mode: use unique videos first, then unique images (no repeats)
-    // Videos now have duration metadata for intelligent clip timing
     const uniqueVideos = shuffleArray([...new Map(assets.backgroundVideoUrls.map(v => [v.url, v])).values()]);
     const uniqueImages = shuffleArray([...new Set(assets.backgroundImageUrls)]);
     
-    // Maximum clip duration cap for variety (videos shouldn't dominate too long)
+    // Maximum clip duration cap for variety
     const MAX_CLIP_DURATION = 15;
     
     // Combine: all unique videos first, then fill with images
@@ -1092,7 +1162,7 @@ async function assembleVideo(
     for (const video of uniqueVideos) {
       combinedMedia.push({ type: 'video', url: video.url, duration: video.duration });
     }
-    // Add unique images to fill remaining (images use random 3-5s duration)
+    // Add unique images to fill remaining
     for (const url of uniqueImages) {
       combinedMedia.push({ type: 'image', url });
     }
@@ -1102,6 +1172,14 @@ async function assembleVideo(
     let mediaIndex = 0;
     
     while (currentTime < assets.duration) {
+      // SAFETY: Prevent infinite loops
+      if (mediaClips.length >= MAX_CLIPS_SAFETY) {
+        logger?.warn("Hybrid clip safety limit reached", { 
+          metadata: { clipCount: mediaClips.length, currentTime, duration: assets.duration }
+        });
+        break;
+      }
+      
       const media = combinedMedia[mediaIndex % combinedMedia.length];
       const remainingTime = assets.duration - currentTime;
       const isFirstClip = mediaClips.length === 0;
@@ -1147,12 +1225,13 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: mediaClips });
-    logger?.info("Added hybrid background clips (videos + images) with actual durations", { 
+    logger?.info("Added hybrid background clips with safety limits", { 
       metadata: { 
         clipCount: mediaClips.length, 
         uniqueVideos: uniqueVideos.length, 
         uniqueImages: uniqueImages.length,
-        maxClipDuration: MAX_CLIP_DURATION
+        maxClipDuration: MAX_CLIP_DURATION,
+        safetyLimitApplied: mediaClips.length >= MAX_CLIPS_SAFETY
       } 
     });
   } else {
@@ -1166,6 +1245,14 @@ async function assembleVideo(
     const MAX_CLIP_DURATION = 15;
     
     while (currentTime < assets.duration) {
+      // SAFETY: Prevent infinite loops
+      if (videoClips.length >= MAX_CLIPS_SAFETY) {
+        logger?.warn("Video clip safety limit reached", { 
+          metadata: { clipCount: videoClips.length, currentTime, duration: assets.duration }
+        });
+        break;
+      }
+      
       const video = shuffledVideos[videoIndex % shuffledVideos.length];
       const remainingTime = assets.duration - currentTime;
       const isFirstClip = videoClips.length === 0;
@@ -1196,14 +1283,15 @@ async function assembleVideo(
     }
     
     edit.timeline.tracks.push({ clips: videoClips });
-    logger?.info("Added background video clips with actual durations", { 
+    logger?.info("Added background video clips with safety limits", { 
       metadata: { 
         clipCount: videoClips.length, 
         uniqueVideos: shuffledVideos.length,
         maxClipDuration: MAX_CLIP_DURATION,
         avgVideoDuration: shuffledVideos.length > 0 
           ? (shuffledVideos.reduce((sum, v) => sum + v.duration, 0) / shuffledVideos.length).toFixed(1)
-          : 0
+          : 0,
+        safetyLimitApplied: videoClips.length >= MAX_CLIPS_SAFETY
       } 
     });
   }
@@ -1219,18 +1307,23 @@ async function assembleVideo(
     }
   });
 
-  // Submit to Shotstack API
+  // Submit to Shotstack API with timeout
   const endpoint = API_ENDPOINTS.SHOTSTACK.renderUrl;
   const requestSentAt = new Date();
+  const SHOTSTACK_TIMEOUT_MS = 30000; // 30 second timeout for Shotstack
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? ''
+  const response = await fetchWithTimeout(
+    endpoint, 
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? ''
+      },
+      body: JSON.stringify(edit)
     },
-    body: JSON.stringify(edit)
-  });
+    SHOTSTACK_TIMEOUT_MS
+  );
 
   const responseText = await response.text();
   let result = null;

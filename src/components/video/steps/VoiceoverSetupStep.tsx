@@ -125,11 +125,13 @@ export function VoiceoverSetupStep({
             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <RadioGroupItem value="standard" className="mt-1 shrink-0" />
-            <div className="ml-3 flex-1">
+            <div className="ml-3 flex-1 min-w-0">
               <p className="font-medium text-sm">Standard</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                First generation: <span className="text-primary font-medium">FREE</span> • Regenerate: <Coins className="inline h-3 w-3 mx-0.5" />{charBlocks * 3}
-              </p>
+              <div className="text-xs text-muted-foreground mt-0.5 flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1">
+                <span>First: <span className="text-primary font-medium">FREE</span></span>
+                <span className="hidden sm:inline">•</span>
+                <span className="flex items-center gap-0.5">Regen: <Coins className="h-3 w-3" />{charBlocks * 3}</span>
+              </div>
             </div>
           </label>
 
@@ -142,17 +144,19 @@ export function VoiceoverSetupStep({
             } ${isDisabled || !canAffordPro ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <RadioGroupItem value="pro" className="mt-1 shrink-0" disabled={!canAffordPro} />
-            <div className="ml-3 flex-1">
-              <div className="flex items-center gap-2">
+            <div className="ml-3 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-medium text-sm">Pro</p>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs shrink-0">
                   <Crown className="h-3 w-3 mr-1" />
                   Premium
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                First generation: <Coins className="inline h-3 w-3 mx-0.5" /><span className="font-medium">{proCost}</span> • Regenerate: <Coins className="inline h-3 w-3 mx-0.5" />{charBlocks * 6}
-              </p>
+              <div className="text-xs text-muted-foreground mt-0.5 flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1">
+                <span className="flex items-center gap-0.5">First: <Coins className="h-3 w-3" /><span className="font-medium">{proCost}</span></span>
+                <span className="hidden sm:inline">•</span>
+                <span className="flex items-center gap-0.5">Regen: <Coins className="h-3 w-3" />{charBlocks * 6}</span>
+              </div>
               {!canAffordPro && (
                 <p className="text-xs text-destructive mt-1">
                   Insufficient credits ({availableCredits} available)

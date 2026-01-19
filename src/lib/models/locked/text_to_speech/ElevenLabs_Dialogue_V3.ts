@@ -302,7 +302,7 @@ export async function execute(params: ExecuteGenerationParams): Promise<string> 
       model_record_id: MODEL_CONFIG.recordId,
       prompt: description,
       custom_parameters: preparePayload(allInputs),
-      cost: cost,
+      preCalculatedCost: cost, // Correct field name for edge function
       use_api_key: MODEL_CONFIG.use_api_key,
       model_config: MODEL_CONFIG,
       model_schema: SCHEMA,

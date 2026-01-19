@@ -230,8 +230,15 @@ Deno.serve(async (req) => {
     );
     validatedParameters = coerceParametersBySchema(validatedParameters, model.input_schema || { properties: {} });
 
-    // Calculate token cost
-    const tokenCost = validatedRequest.preCalculatedCost || calculateTokenCost(
+    // Calculate token cost - prefer preCalculatedCost, fallback to deprecated 'cost', then calculate
+    // Log warning if deprecated 'cost' field is used
+    if (validatedRequest.cost && !validatedRequest.preCalculatedCost) {
+      logger.warn('Deprecated "cost" field used - migrate to "preCalculatedCost"', {
+        userId: authenticatedUser.id,
+        metadata: { model_id: model.id, cost: validatedRequest.cost }
+      });
+    }
+    const tokenCost = validatedRequest.preCalculatedCost ?? validatedRequest.cost ?? calculateTokenCost(
       model.base_token_cost, model.cost_multipliers || {}, validatedParameters
     );
 

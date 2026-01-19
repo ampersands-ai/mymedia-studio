@@ -256,9 +256,9 @@ export function BackgroundMediaSelector({
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
             {/* Left Side - Controls */}
-            <div className="lg:col-span-1 space-y-4 min-w-[280px]">
+            <div className="lg:w-72 flex-shrink-0 space-y-4 overflow-y-auto">
             {/* Media Type Toggle */}
             <Tabs value={mediaType} onValueChange={(value) => handleMediaTypeChange(value as 'video' | 'image')}>
               <TabsList className="grid w-full grid-cols-2">
@@ -358,7 +358,7 @@ export function BackgroundMediaSelector({
             </div>
 
             {/* Right Side - Media Grid */}
-            <div className="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
 
             {/* Media Grid */}
             <ScrollArea className="flex-1 min-h-0 rounded-md border p-4">
@@ -373,7 +373,7 @@ export function BackgroundMediaSelector({
                   <p className="text-sm text-muted-foreground">Try a different search term</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
                   {mediaItems.map((media) => (
                     <div
                       key={media.id}

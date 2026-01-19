@@ -696,27 +696,11 @@ async function getBackgroundVideos(
   const targetOrientation = orientationMap[aspectRatio] || 'portrait';
   const isPortraitTarget = targetOrientation === 'portrait';
 
-  // Build search queries - primary based on topic, then fallbacks
+  // Build search queries - loops FIRST for visual variety, then topic/style as fallback
   const searchQueries: string[] = [];
   
-  if (topic && topic.trim()) {
-    // Primary: topic-based search
-    searchQueries.push(extractSearchTerms(topic));
-    logger?.info("Using topic-based search", { metadata: { searchQuery: searchQueries[0], topic } });
-  } else {
-    // Primary: style-based search
-    const styleQueries: Record<string, string> = {
-      modern: 'technology abstract motion',
-      tech: 'digital technology futuristic',
-      educational: 'books learning study',
-      dramatic: 'cinematic nature dramatic'
-    };
-    searchQueries.push(styleQueries[style] || 'abstract motion background');
-    logger?.info("Using style-based search", { metadata: { searchQuery: searchQueries[0], style } });
-  }
-
-  // Add loop-focused fallback search queries for more variety
-  const loopFallbackQueries = [
+  // PRIMARY: Loop-focused search queries for visually engaging backgrounds
+  const loopPrimaryQueries = [
     'tunnel loop',
     'abstract loop',
     'underground loops',
@@ -732,7 +716,23 @@ async function getBackgroundVideos(
     'neon loop',
     'particles loop',
   ];
-  searchQueries.push(...loopFallbackQueries);
+  searchQueries.push(...loopPrimaryQueries);
+  logger?.info("Using loop-first search strategy", { metadata: { loopQueries: loopPrimaryQueries.length } });
+
+  // SECONDARY: Topic or style-based search for additional variety (fallback)
+  if (topic && topic.trim()) {
+    searchQueries.push(extractSearchTerms(topic));
+    logger?.info("Added topic-based search as fallback", { metadata: { searchQuery: extractSearchTerms(topic), topic } });
+  } else {
+    const styleQueries: Record<string, string> = {
+      modern: 'technology abstract motion',
+      tech: 'digital technology futuristic',
+      educational: 'books learning study',
+      dramatic: 'cinematic nature dramatic'
+    };
+    searchQueries.push(styleQueries[style] || 'abstract motion background');
+    logger?.info("Added style-based search as fallback", { metadata: { style } });
+  }
 
   // Streaming-first fetch: process each query immediately, store minimal data
   const selectedVideos: VideoMetadata[] = [];

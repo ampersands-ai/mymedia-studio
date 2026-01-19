@@ -993,6 +993,21 @@ export function VideoCreator() {
                 </Button>
                 
                 <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setState((prev) => ({
+                      ...prev,
+                      step: 'render_setup',
+                      videoUrl: '',
+                    }));
+                  }}
+                  className="min-h-[44px]"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Re-render with New Settings
+                </Button>
+                
+                <Button
                   variant="outline"
                   onClick={handleGenerateCaption}
                   disabled={isGeneratingCaption}

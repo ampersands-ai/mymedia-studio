@@ -115,6 +115,7 @@ export function validate(inputs: Record<string, unknown>): { valid: boolean; err
 // ============================================================================
 
 export function preparePayload(inputs: Record<string, unknown>): Record<string, unknown> {
+  // Return flat parameters - edge function handles wrapping for 'wrapper' structure
   const payload: Record<string, unknown> = {
     audio_url: inputs.audio_url || "",
   };
@@ -123,10 +124,7 @@ export function preparePayload(inputs: Record<string, unknown>): Record<string, 
   if (inputs.diarize !== undefined) payload.diarize = inputs.diarize;
   if (inputs.tag_audio_events !== undefined) payload.tag_audio_events = inputs.tag_audio_events;
 
-  return {
-    model: MODEL_CONFIG.modelId,
-    input: payload,
-  };
+  return payload;
 }
 
 // ============================================================================

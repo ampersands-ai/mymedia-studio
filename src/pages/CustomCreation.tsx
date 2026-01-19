@@ -106,17 +106,32 @@ const CustomCreation = () => {
   // Get model schema (locked models load from file, unlocked from database)
   const { schema: modelSchema, loading: schemaLoading } = useModelSchema(modelConfig);
 
-  // Initialize model parameters with schema defaults when model changes or parameters are empty
+  // Initialize model parameters with schema defaults when model changes or schema loads.
+  // IMPORTANT: do NOT use JSON.stringify equality here — object key insertion order can differ,
+  // causing false positives that fight user input (e.g. sliders).
   useEffect(() => {
     if (!modelSchema) return;
-    
+
     const initialized = initializeParameters(modelSchema, state.modelParameters);
-    
-    // Only update if defaults changed (avoid infinite loop)
-    if (JSON.stringify(initialized) !== JSON.stringify(state.modelParameters)) {
+
+    // Shallow compare by keys/values (ModelParameters values are primitives/JSON-safe)
+    const allKeys = new Set([
+      ...Object.keys(initialized),
+      ...Object.keys(state.modelParameters ?? {}),
+    ]);
+
+    let needsUpdate = false;
+    for (const key of allKeys) {
+      if (initialized[key] !== state.modelParameters?.[key]) {
+        needsUpdate = true;
+        break;
+      }
+    }
+
+    if (needsUpdate) {
       updateState({ modelParameters: initialized });
     }
-  }, [currentModel?.record_id, modelSchema, state.modelParameters]);
+  }, [currentModel?.record_id, modelSchema, state.modelParameters, updateState]);
 
   // Schema helpers
   const schemaHelpers = useSchemaHelpers();

@@ -270,10 +270,12 @@ voiceOverPart2: "until explorers discovered the hidden chamber"
 imagePrompt2: "minimalist single line icon of a key, centered, small, on white background, flat design, monochrome gray"
 ` : ''}` : ''}
 
-${mediaType === 'video' ? `VIDEO SEARCH QUERIES:
-- Provide 3-5 specific keywords for video stock footage
-- Match the visual style and narrative beat
-- Example: "aerial mountain sunrise cinematic"` : ''}
+${mediaType === 'video' ? `VIDEO SEARCH QUERIES (LOOP-FOCUSED):
+- ALWAYS use abstract loop/motion backgrounds - NOT literal topic scenes
+- These videos play BEHIND voiceover narration, not illustrate it literally
+- Choose from: tunnel loop, abstract loop, neon loop, particles loop, glitter loop, disco loop, fire loop, money loop, rave loops, 90s loops, music loops, underground loops, falling music note loops
+- NEVER use literal scene descriptions like "aerial mountain" or "people walking"
+- Examples: "abstract neon tunnel loop", "particles motion loop", "glitter bokeh loop"` : ''}
 
 LANGUAGE:
 - Use 6th-8th grade reading level
@@ -599,7 +601,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         tokens_cost: tokenCost,
         status: STORYBOARD_STATUS.DRAFT,
         media_type: mediaType,
-        video_search_query: mediaType === 'video' ? topic : null,
+        video_search_query: mediaType === 'video' ? 'abstract loop motion background' : null,
         background_music_url: backgroundMusicUrl || null,
         background_music_volume: backgroundMusicUrl ? backgroundMusicVolume / 100 : 0.05,
         aspect_ratio: aspectRatio,
@@ -706,7 +708,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         image_prompt: imagePrompt,
         image_prompt_2: imagePrompt2,
         video_search_query: mediaType === 'video'
-          ? (scene.videoSearchQuery || scene.video_search_query || null)
+          ? (scene.videoSearchQuery || scene.video_search_query || 'abstract motion loop')
           : null,
         video_url: null, // Will be populated later via video search
         is_edited: false

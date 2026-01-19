@@ -12,17 +12,18 @@ interface CustomScene {
   voiceOverText: string;
   imagePrompt: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
 
 export function CustomStoryboardInput() {
   const [aspectRatio, setAspectRatio] = useState('hd');
   const [scenes, setScenes] = useState<CustomScene[]>([
-    { voiceOverText: '', imagePrompt: '', imageUrl: '' }
+    { voiceOverText: '', imagePrompt: '', imageUrl: '', videoUrl: '' }
   ]);
   const { createCustomStoryboard, isCreating } = useCustomStoryboard();
 
   const handleAddScene = () => {
-    setScenes([...scenes, { voiceOverText: '', imagePrompt: '', imageUrl: '' }]);
+    setScenes([...scenes, { voiceOverText: '', imagePrompt: '', imageUrl: '', videoUrl: '' }]);
   };
 
   const handleRemoveScene = (index: number) => {

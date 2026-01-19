@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Sparkles, Image as ImageIcon, Upload, Video, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2, Sparkles, Image as ImageIcon, Upload, Video, Loader2, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserCredits } from '@/hooks/useUserCredits';
+import { useModels } from '@/hooks/useModels';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackgroundMediaSelector } from '../video/BackgroundMediaSelector';
@@ -28,6 +30,7 @@ interface CustomScene {
   voiceOverText: string;
   imagePrompt: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
 
 interface CustomSceneCardProps {
@@ -49,9 +52,108 @@ export function CustomSceneCard({
 }: CustomSceneCardProps) {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
+  const [selectedImageModelId, setSelectedImageModelId] = useState<string>('');
+  const [selectedVideoModelId, setSelectedVideoModelId] = useState<string>('');
   const { availableCredits, refetch: refetchCredits } = useUserCredits();
+  const { data: models } = useModels();
+  
+  // Polling refs
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Filter models by content type
+  const imageModels = (models ?? [])
+    .filter(m => m.content_type === 'prompt_to_image')
+    .sort((a, b) => a.base_token_cost - b.base_token_cost);
+
+  const videoModels = (models ?? [])
+    .filter(m => m.content_type === 'image_to_video')
+    .sort((a, b) => a.base_token_cost - b.base_token_cost);
+
+  // Set default models on first load
+  useEffect(() => {
+    if (imageModels.length > 0 && !selectedImageModelId) {
+      setSelectedImageModelId(imageModels[0].record_id);
+    }
+    if (videoModels.length > 0 && !selectedVideoModelId) {
+      setSelectedVideoModelId(videoModels[0].record_id);
+    }
+  }, [imageModels, videoModels, selectedImageModelId, selectedVideoModelId]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Get selected model costs
+  const selectedImageModel = imageModels.find(m => m.record_id === selectedImageModelId);
+  const selectedVideoModel = videoModels.find(m => m.record_id === selectedVideoModelId);
+  const imageCost = selectedImageModel?.base_token_cost ?? 0;
+  const videoCost = selectedVideoModel?.base_token_cost ?? 0;
+
+  // Poll for generation result
+  const pollForResult = useCallback(async (generationId: string, type: 'image' | 'video'): Promise<string | null> => {
+    const maxAttempts = 60; // 5 minutes max (5s intervals)
+    let attempts = 0;
+
+    return new Promise((resolve) => {
+      pollIntervalRef.current = setInterval(async () => {
+        attempts++;
+        
+        try {
+          const { data, error } = await supabase
+            .from('generations')
+            .select('status, output_url, provider_response')
+            .eq('id', generationId)
+            .single();
+
+          if (error) throw error;
+
+          if (data?.status === 'completed' && data?.output_url) {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            resolve(data.output_url);
+            return;
+          }
+
+          if (data?.status === 'failed' || data?.status === 'error') {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            const response = data?.provider_response as Record<string, unknown> | null;
+            const errorMsg = response?.error_message || response?.failMsg || 'Generation failed';
+            toast.error(String(errorMsg));
+            resolve(null);
+            return;
+          }
+
+          if (attempts >= maxAttempts) {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            toast.error(`${type === 'image' ? 'Image' : 'Video'} generation timed out`);
+            resolve(null);
+          }
+        } catch (error) {
+          logger.error('Polling error', error instanceof Error ? error : new Error(String(error)), {
+            component: 'CustomSceneCard',
+            generationId,
+            type
+          });
+        }
+      }, 5000); // Poll every 5 seconds
+    });
+  }, []);
 
   const handleEnhancePrompt = async () => {
     setShowEnhanceDialog(false);
@@ -101,31 +203,64 @@ export function CustomSceneCard({
       return;
     }
 
+    if (!selectedImageModelId) {
+      toast.error('Select an image model first');
+      return;
+    }
+
+    if (availableCredits < imageCost) {
+      toast.error(`Insufficient credits. Need ${imageCost} credits.`);
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      // Find the Gemini flash image model
+      // Find model module from registry
       const modules = getAllModels();
-      const modelModule = modules.find(m => m.MODEL_CONFIG.modelId === 'google/gemini-2.5-flash-image-preview');
+      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === selectedImageModelId);
       
       if (!modelModule) {
-        throw new Error('Image generation model not found');
+        throw new Error('Model configuration not found');
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-content', {
+      // Determine which endpoint to use based on provider
+      const provider = modelModule.MODEL_CONFIG.provider;
+      const isSync = provider === 'runware' || provider === 'lovable_ai_sync';
+      const functionName = isSync ? 'generate-content-sync' : 'generate-content';
+
+      // Prepare payload using model's preparePayload function
+      const customParameters = modelModule.preparePayload?.({ 
+        prompt: scene.imagePrompt,
+        positivePrompt: scene.imagePrompt, // Some models use this
+        aspect_ratio: '16:9',
+        aspectRatio: '16:9',
+      }) || { prompt: scene.imagePrompt };
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
           model_id: modelModule.MODEL_CONFIG.modelId,
           model_record_id: modelModule.MODEL_CONFIG.recordId,
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
           prompt: scene.imagePrompt,
+          custom_parameters: customParameters,
+          preCalculatedCost: imageCost,
         },
       });
 
       if (error) throw error;
 
-      if (data?.output_url) {
-        onUpdate('imageUrl', data.output_url);
-        toast.success('Image generated successfully!');
+      let outputUrl = data?.output_url;
+      
+      // For async models, poll for result
+      if (!outputUrl && data?.id) {
+        toast.info('Generating image...', { duration: 3000 });
+        outputUrl = await pollForResult(data.id, 'image');
+      }
+
+      if (outputUrl) {
+        onUpdate('imageUrl', outputUrl);
+        toast.success('Image generated!');
         refetchCredits();
       }
     } catch (error) {
@@ -134,11 +269,90 @@ export function CustomSceneCard({
         component: 'CustomSceneCard',
         sceneIndex: index,
         promptLength: scene.imagePrompt.length,
+        modelId: selectedImageModelId,
         operation: 'handleGenerateImage'
       });
       toast.error('Failed to generate image. Please try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleAnimateImage = async () => {
+    if (!scene.imageUrl) {
+      toast.error('Generate or upload an image first');
+      return;
+    }
+
+    if (!selectedVideoModelId) {
+      toast.error('Select an animation model first');
+      return;
+    }
+
+    if (availableCredits < videoCost) {
+      toast.error(`Insufficient credits. Need ${videoCost} credits.`);
+      return;
+    }
+
+    setIsAnimating(true);
+    try {
+      // Find model module from registry
+      const modules = getAllModels();
+      const modelModule = modules.find(m => m.MODEL_CONFIG.recordId === selectedVideoModelId);
+      
+      if (!modelModule) {
+        throw new Error('Animation model configuration not found');
+      }
+
+      // Prepare payload for image-to-video
+      const customParameters = modelModule.preparePayload?.({ 
+        prompt: scene.imagePrompt || 'Animate this image with subtle motion',
+        image_url: scene.imageUrl,
+        imageUrls: [scene.imageUrl],
+        aspectRatio: '16:9',
+      }) || { 
+        prompt: scene.imagePrompt || 'Animate this image with subtle motion',
+        image_url: scene.imageUrl,
+      };
+
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: {
+          model_id: modelModule.MODEL_CONFIG.modelId,
+          model_record_id: modelModule.MODEL_CONFIG.recordId,
+          model_config: modelModule.MODEL_CONFIG,
+          model_schema: modelModule.SCHEMA,
+          prompt: scene.imagePrompt || 'Animate this image with subtle motion',
+          custom_parameters: customParameters,
+          preCalculatedCost: videoCost,
+        },
+      });
+
+      if (error) throw error;
+
+      let outputUrl = data?.output_url;
+      
+      // Poll for video result
+      if (!outputUrl && data?.id) {
+        toast.info('Creating animation...', { duration: 5000 });
+        outputUrl = await pollForResult(data.id, 'video');
+      }
+
+      if (outputUrl) {
+        onUpdate('videoUrl', outputUrl);
+        toast.success('Animation created!');
+        refetchCredits();
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Scene animation failed', err, {
+        component: 'CustomSceneCard',
+        sceneIndex: index,
+        modelId: selectedVideoModelId,
+        operation: 'handleAnimateImage'
+      });
+      toast.error('Failed to create animation. Please try again.');
+    } finally {
+      setIsAnimating(false);
     }
   };
 
@@ -233,7 +447,7 @@ export function CustomSceneCard({
               ) : (
                 <Sparkles className="w-3 h-3 mr-1" />
               )}
-              Enhance (0.1 credits)
+              Enhance (0.1 cr)
             </Button>
           </div>
           <Textarea
@@ -243,6 +457,32 @@ export function CustomSceneCard({
             disabled={disabled}
             className="min-h-[60px] resize-none"
           />
+        </div>
+
+        {/* Image Model Selector */}
+        <div className="space-y-2">
+          <Label className="text-sm">Image Model</Label>
+          <Select 
+            value={selectedImageModelId} 
+            onValueChange={setSelectedImageModelId}
+            disabled={disabled || isGenerating}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Select model..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px]">
+              {imageModels.map(model => (
+                <SelectItem key={model.record_id} value={model.record_id}>
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className="truncate text-sm">{model.model_name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {model.base_token_cost} cr
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Image Preview */}
@@ -271,7 +511,7 @@ export function CustomSceneCard({
             variant="outline"
             size="sm"
             onClick={handleGenerateImage}
-            disabled={disabled || isGenerating || !scene.imagePrompt.trim()}
+            disabled={disabled || isGenerating || !scene.imagePrompt.trim() || !selectedImageModelId}
             className="flex-1"
           >
             {isGenerating ? (
@@ -279,7 +519,7 @@ export function CustomSceneCard({
             ) : (
               <ImageIcon className="w-3 h-3 mr-1" />
             )}
-            Generate Image
+            Generate ({imageCost} cr)
           </Button>
 
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -350,6 +590,76 @@ export function CustomSceneCard({
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Animation Section - Only show when image exists */}
+        {scene.imageUrl && videoModels.length > 0 && (
+          <div className="space-y-2 pt-3 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm flex items-center gap-1">
+                <Play className="w-3 h-3" />
+                Animate Scene
+              </Label>
+            </div>
+            
+            <Select 
+              value={selectedVideoModelId} 
+              onValueChange={setSelectedVideoModelId}
+              disabled={disabled || isAnimating}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select animation model..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {videoModels.map(model => (
+                  <SelectItem key={model.record_id} value={model.record_id}>
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <span className="truncate text-sm">{model.model_name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {model.base_token_cost} cr
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAnimateImage}
+              disabled={disabled || isAnimating || !selectedVideoModelId}
+              className="w-full"
+            >
+              {isAnimating ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <Video className="w-3 h-3 mr-1" />
+              )}
+              Animate Image ({videoCost} cr)
+            </Button>
+          </div>
+        )}
+
+        {/* Video Preview */}
+        {scene.videoUrl && (
+          <div className="relative rounded-lg overflow-hidden border-2 border-green-500/30">
+            <video
+              src={scene.videoUrl}
+              className="w-full h-32 object-cover"
+              controls
+              muted
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-1 right-1 h-6 w-6 p-0 bg-background/80 hover:bg-background"
+              onClick={() => onUpdate('videoUrl', '')}
+            >
+              ×
+            </Button>
+          </div>
+        )}
       </CardContent>
 
       <AlertDialog open={showEnhanceDialog} onOpenChange={setShowEnhanceDialog}>
@@ -364,7 +674,7 @@ export function CustomSceneCard({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleEnhancePrompt}>
-              Enhance (0.1 credits)
+              Enhance (0.1 cr)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

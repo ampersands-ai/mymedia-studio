@@ -262,7 +262,10 @@ Deno.serve(async (req) => {
       schema: InputSchema,
       applyDefaults: boolean = true
     ): Record<string, unknown> {
-      if (!schema?.properties) return parameters;
+      // Early return if no schema or empty schema - pass through all parameters
+      if (!schema?.properties || Object.keys(schema.properties).length === 0) {
+        return parameters;
+      }
 
       const allowedKeys = Object.keys(schema.properties);
       const filtered: Record<string, unknown> = {};

@@ -159,6 +159,8 @@ export const StoryboardEditor = () => {
   if (!storyboard || scenes.length === 0) return null;
 
   const isQuickMode = storyboard.render_mode === 'quick';
+  const isCustomMode = storyboard.style === 'custom';
+  const isAIGeneratedMode = !isCustomMode && storyboard.style !== 'blackboard';
   
   return (
     <div className="space-y-6">
@@ -193,17 +195,22 @@ export const StoryboardEditor = () => {
           isRendering={isRendering}
           isComplete={storyboard.status === 'complete'}
         >
-          <BulkPreviewGenerator
-            storyboard={storyboard}
-            scenes={scenes}
-            onGenerateAll={generateAllScenePreviews}
-          />
-          
-          <BulkAnimationGenerator
-            storyboard={storyboard}
-            scenes={scenes}
-            onAnimateAll={generateAllSceneAnimations}
-          />
+          {/* Bulk generators only for AI-generated storyboards */}
+          {isAIGeneratedMode && (
+            <>
+              <BulkPreviewGenerator
+                storyboard={storyboard}
+                scenes={scenes}
+                onGenerateAll={generateAllScenePreviews}
+              />
+              
+              <BulkAnimationGenerator
+                storyboard={storyboard}
+                scenes={scenes}
+                onAnimateAll={generateAllSceneAnimations}
+              />
+            </>
+          )}
           
           <IntroSceneCard
             storyboard={storyboard}

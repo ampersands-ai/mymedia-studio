@@ -419,249 +419,279 @@ export function CustomSceneCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <Label className="text-sm">Voice-Over Text</Label>
-          <Textarea
-            value={scene.voiceOverText}
-            onChange={(e) => onUpdate('voiceOverText', e.target.value)}
-            placeholder="Enter the narration text for this scene..."
-            disabled={disabled}
-            className="min-h-[80px] resize-none"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm">Image Prompt</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowEnhanceDialog(true)}
-              disabled={disabled || isEnhancing || !scene.imagePrompt.trim()}
-              className="h-7 text-xs"
-            >
-              {isEnhancing ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : (
-              <Sparkles className="w-3 h-3 mr-1" />
-            )}
-            Enhance <Coins className="w-3 h-3 text-primary-orange ml-1" />0.1
-            </Button>
-          </div>
-          <Textarea
-            value={scene.imagePrompt}
-            onChange={(e) => onUpdate('imagePrompt', e.target.value)}
-            placeholder="Describe the visual for this scene..."
-            disabled={disabled}
-            className="min-h-[60px] resize-none"
-          />
-        </div>
-
-        {/* Image Model Selector */}
-        <div className="space-y-2">
-          <Label className="text-sm">Image Model</Label>
-          <Select 
-            value={selectedImageModelId} 
-            onValueChange={setSelectedImageModelId}
-            disabled={disabled || isGenerating}
-          >
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Select model..." />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px] z-50" position="popper" side="bottom" align="start">
-              {imageModels.map(model => (
-                <SelectItem key={model.record_id} value={model.record_id}>
-                  <div className="flex items-center justify-between w-full gap-2">
-                    <span className="truncate text-sm">{model.model_name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
-                      <Coins className="w-3 h-3 text-primary-orange" />
-                      {model.base_token_cost}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Image Preview */}
-        {scene.imageUrl && (
-          <div className="relative rounded-lg overflow-hidden border-2 border-primary/30">
-            <img
-              src={scene.imageUrl}
-              alt={`Scene ${index + 1} preview`}
-              className="w-full h-32 object-cover"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-1 right-1 h-6 w-6 p-0 bg-background/80 hover:bg-background"
-              onClick={() => onUpdate('imageUrl', '')}
-            >
-              ×
-            </Button>
-          </div>
-        )}
-
-        {/* Image Generation/Upload Options */}
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleGenerateImage}
-            disabled={disabled || isGenerating || !scene.imagePrompt.trim() || !selectedImageModelId}
-            className="flex-1"
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-            ) : (
-              <ImageIcon className="w-3 h-3 mr-1" />
-            )}
-            Generate <Coins className="w-3 h-3 text-primary-orange ml-1" />{imageCost}
-          </Button>
-
-          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* LEFT COLUMN: Inputs */}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Voice-Over Text</Label>
+              <Textarea
+                value={scene.voiceOverText}
+                onChange={(e) => onUpdate('voiceOverText', e.target.value)}
+                placeholder="Enter the narration text for this scene..."
                 disabled={disabled}
-                className="flex-1"
-              >
-                <Upload className="w-3 h-3 mr-1" />
-                Upload/Stock
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh]">
-              <DialogHeader>
-                <DialogTitle>Select Media for Scene {index + 1}</DialogTitle>
-              </DialogHeader>
-
-              <Tabs defaultValue="stock" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="stock">
-                    <Video className="w-4 h-4 mr-2" />
-                    Stock Media
-                  </TabsTrigger>
-                  <TabsTrigger value="upload">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="stock" className="mt-4">
-                  <BackgroundMediaSelector
-                    style="modern"
-                    duration={5}
-                    aspectRatio="16:9"
-                    selectedMedia={scene.imageUrl ? [{ url: scene.imageUrl, thumbnail: scene.imageUrl, type: 'image' }] : []}
-                    onSelectMedia={handleSelectStockMedia}
-                  />
-                </TabsContent>
-
-                <TabsContent value="upload" className="mt-4">
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">Upload Your Image</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Drag and drop or click to browse
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleUploadImage(file);
-                      }}
-                      className="hidden"
-                      id={`file-upload-${index}`}
-                    />
-                    <label htmlFor={`file-upload-${index}`}>
-                      <Button type="button" variant="outline" asChild>
-                        <span>Choose File</span>
-                      </Button>
-                    </label>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Animation Section - Only show when image exists */}
-        {scene.imageUrl && videoModels.length > 0 && (
-          <div className="space-y-2 pt-3 border-t border-border/50">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm flex items-center gap-1">
-                <Play className="w-3 h-3" />
-                Animate Scene
-              </Label>
+                className="min-h-[80px] resize-none"
+              />
             </div>
             
-            <Select 
-              value={selectedVideoModelId} 
-              onValueChange={setSelectedVideoModelId}
-              disabled={disabled || isAnimating}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select animation model..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {videoModels.map(model => (
-                  <SelectItem key={model.record_id} value={model.record_id}>
-                    <div className="flex items-center justify-between w-full gap-2">
-                      <span className="truncate text-sm">{model.model_name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
-                        <Coins className="w-3 h-3 text-primary-orange" />
-                        {model.base_token_cost}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAnimateImage}
-              disabled={disabled || isAnimating || !selectedVideoModelId}
-              className="w-full"
-            >
-              {isAnimating ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-            ) : (
-              <Video className="w-3 h-3 mr-1" />
-            )}
-            Animate <Coins className="w-3 h-3 text-primary-orange ml-1" />{videoCost}
-            </Button>
-          </div>
-        )}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Image Prompt</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEnhanceDialog(true)}
+                  disabled={disabled || isEnhancing || !scene.imagePrompt.trim()}
+                  className="h-7 text-xs"
+                >
+                  {isEnhancing ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3 mr-1" />
+                  )}
+                  Enhance <Coins className="w-3 h-3 text-primary-orange ml-1" />0.1
+                </Button>
+              </div>
+              <Textarea
+                value={scene.imagePrompt}
+                onChange={(e) => onUpdate('imagePrompt', e.target.value)}
+                placeholder="Describe the visual for this scene..."
+                disabled={disabled}
+                className="min-h-[60px] resize-none"
+              />
+            </div>
 
-        {/* Video Preview */}
-        {scene.videoUrl && (
-          <div className="relative rounded-lg overflow-hidden border-2 border-green-500/30">
-            <video
-              src={scene.videoUrl}
-              className="w-full h-32 object-cover"
-              controls
-              muted
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-1 right-1 h-6 w-6 p-0 bg-background/80 hover:bg-background"
-              onClick={() => onUpdate('videoUrl', '')}
-            >
-              ×
-            </Button>
+            {/* Image Model Selector */}
+            <div className="space-y-2">
+              <Label className="text-sm">Image Model</Label>
+              <Select 
+                value={selectedImageModelId} 
+                onValueChange={setSelectedImageModelId}
+                disabled={disabled || isGenerating}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select model..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] z-50" position="popper" side="bottom" align="start">
+                  {imageModels.map(model => (
+                    <SelectItem key={model.record_id} value={model.record_id}>
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <span className="truncate text-sm">{model.model_name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
+                          <Coins className="w-3 h-3 text-primary-orange" />
+                          {model.base_token_cost}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        )}
+
+          {/* RIGHT COLUMN: Preview & Actions */}
+          <div className="space-y-4">
+            {/* Unified Preview Card */}
+            <Card className="bg-background/50 border-border/50">
+              <CardContent className="p-4 space-y-3">
+                <Label className="text-sm flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4" />
+                  Scene Preview
+                </Label>
+                
+                {/* Preview Area */}
+                <div className="relative h-[200px] rounded-lg overflow-hidden bg-muted/50 border border-border/50 flex items-center justify-center">
+                  {isGenerating ? (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                      <span className="text-sm">Generating image...</span>
+                    </div>
+                  ) : scene.imageUrl ? (
+                    <>
+                      <img
+                        src={scene.imageUrl}
+                        alt={`Scene ${index + 1} preview`}
+                        className="w-full h-full object-contain"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 h-6 w-6 p-0 bg-background/80 hover:bg-background"
+                        onClick={() => onUpdate('imageUrl', '')}
+                      >
+                        ×
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <ImageIcon className="w-8 h-8" />
+                      <span className="text-sm">No image yet</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Image Generation/Upload Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateImage}
+                    disabled={disabled || isGenerating || !scene.imagePrompt.trim() || !selectedImageModelId}
+                    className="flex-1"
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                    )}
+                    Generate <Coins className="w-3 h-3 text-primary-orange ml-1" />{imageCost}
+                  </Button>
+
+                  <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={disabled}
+                        className="flex-1"
+                      >
+                        <Upload className="w-3 h-3 mr-1" />
+                        Upload/Stock
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-5xl max-h-[90vh]">
+                      <DialogHeader>
+                        <DialogTitle>Select Media for Scene {index + 1}</DialogTitle>
+                      </DialogHeader>
+
+                      <Tabs defaultValue="stock" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="stock">
+                            <Video className="w-4 h-4 mr-2" />
+                            Stock Media
+                          </TabsTrigger>
+                          <TabsTrigger value="upload">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="stock" className="mt-4">
+                          <BackgroundMediaSelector
+                            style="modern"
+                            duration={5}
+                            aspectRatio="16:9"
+                            selectedMedia={scene.imageUrl ? [{ url: scene.imageUrl, thumbnail: scene.imageUrl, type: 'image' }] : []}
+                            onSelectMedia={handleSelectStockMedia}
+                          />
+                        </TabsContent>
+
+                        <TabsContent value="upload" className="mt-4">
+                          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                            <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                            <h3 className="font-semibold mb-2">Upload Your Image</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Drag and drop or click to browse
+                            </p>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadImage(file);
+                              }}
+                              className="hidden"
+                              id={`file-upload-${index}`}
+                            />
+                            <label htmlFor={`file-upload-${index}`}>
+                              <Button type="button" variant="outline" asChild>
+                                <span>Choose File</span>
+                              </Button>
+                            </label>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Animation Section - Only show when image exists */}
+            {scene.imageUrl && videoModels.length > 0 && (
+              <Card className="bg-background/50 border-border/50">
+                <CardContent className="p-4 space-y-3">
+                  <Label className="text-sm flex items-center gap-2">
+                    <Play className="w-4 h-4" />
+                    Animate Scene
+                  </Label>
+                  
+                  <Select 
+                    value={selectedVideoModelId} 
+                    onValueChange={setSelectedVideoModelId}
+                    disabled={disabled || isAnimating}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select animation model..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {videoModels.map(model => (
+                        <SelectItem key={model.record_id} value={model.record_id}>
+                          <div className="flex items-center justify-between w-full gap-2">
+                            <span className="truncate text-sm">{model.model_name}</span>
+                            <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
+                              <Coins className="w-3 h-3 text-primary-orange" />
+                              {model.base_token_cost}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAnimateImage}
+                    disabled={disabled || isAnimating || !selectedVideoModelId}
+                    className="w-full"
+                  >
+                    {isAnimating ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <Video className="w-3 h-3 mr-1" />
+                    )}
+                    Animate <Coins className="w-3 h-3 text-primary-orange ml-1" />{videoCost}
+                  </Button>
+
+                  {/* Video Preview */}
+                  {scene.videoUrl && (
+                    <div className="relative h-[200px] rounded-lg overflow-hidden bg-muted/50 border-2 border-primary/30">
+                      <video
+                        src={scene.videoUrl}
+                        className="w-full h-full object-contain"
+                        controls
+                        muted
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 h-6 w-6 p-0 bg-background/80 hover:bg-background"
+                        onClick={() => onUpdate('videoUrl', '')}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </CardContent>
 
       <AlertDialog open={showEnhanceDialog} onOpenChange={setShowEnhanceDialog}>

@@ -26,17 +26,17 @@ const SEEDREAM_SIZE_MAP: Record<string, string> = {
   '2:3': 'portrait_2_3',
 };
 
-// Map ratios to pixel dimensions
+// Map ratios to pixel dimensions (all multiples of 16 for Runware compatibility)
 const DIMENSIONS_MAP: Record<string, { width: number; height: number }> = {
   '4:3': { width: 1024, height: 768 },
-  '16:9': { width: 1920, height: 1080 },
+  '16:9': { width: 1152, height: 640 },
   '1:1': { width: 1024, height: 1024 },
-  '9:16': { width: 1080, height: 1920 },
-  '4:5': { width: 1080, height: 1350 },
-  '3:2': { width: 1536, height: 1024 },
-  '2:3': { width: 1024, height: 1536 },
+  '9:16': { width: 640, height: 1152 },
+  '4:5': { width: 896, height: 1120 },
+  '3:2': { width: 1152, height: 768 },
+  '2:3': { width: 768, height: 1152 },
   '3:4': { width: 768, height: 1024 },
-  '21:9': { width: 1920, height: 823 },
+  '21:9': { width: 1536, height: 640 },
 };
 
 // Fallback mapping for unsupported aspect ratios

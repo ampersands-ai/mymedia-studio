@@ -470,7 +470,7 @@ export function CustomSceneCard({
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select model..." />
             </SelectTrigger>
-            <SelectContent className="max-h-[300px]">
+            <SelectContent className="max-h-[300px] z-50" position="popper" side="bottom" align="start">
               {imageModels.map(model => (
                 <SelectItem key={model.record_id} value={model.record_id}>
                   <div className="flex items-center justify-between w-full gap-2">

@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StoryboardInput } from '@/components/storyboard/StoryboardInput';
+import { CustomStoryboardInput } from '@/components/storyboard/CustomStoryboardInput';
+import { BlackboardStoryboardInput } from '@/components/storyboard/BlackboardStoryboardInput';
 import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
 import { StoryboardModeSelector } from '@/components/storyboard/StoryboardModeSelector';
 import { useStoryboard } from '@/hooks/useStoryboard';
-import { Film, ChevronDown, RotateCcw, Coins } from 'lucide-react';
+import { Film, ChevronDown, RotateCcw, Coins, Sparkles, Edit3, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
@@ -29,6 +32,7 @@ export default function StoryboardPage() {
   const [showInputForm, setShowInputForm] = useState(true);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [creationMode, setCreationMode] = useState<'ai' | 'custom' | 'blackboard'>('ai');
 
   // Show mode selector when storyboard is generated without a render_mode set
   useEffect(() => {
@@ -129,24 +133,58 @@ export default function StoryboardPage() {
           </p>
         </div>
 
-        {/* Collapsible Input Form */}
-        <Collapsible open={showInputForm} onOpenChange={setShowInputForm} className="mb-6">
-          {storyboard && (
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full mb-4">
-                {showInputForm ? 'Hide Input Form' : 'Show Input Form'}
-                <ChevronDown className={cn(
-                  "ml-2 h-4 w-4 transition-transform",
-                  showInputForm && "rotate-180"
-                )} />
-              </Button>
-            </CollapsibleTrigger>
-          )}
-          
-          <CollapsibleContent forceMount className={cn(!showInputForm && "hidden")}>
-            <StoryboardInput />
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Mode Tabs - Always visible at top level */}
+        <Tabs value={creationMode} onValueChange={(v) => setCreationMode(v as 'ai' | 'custom' | 'blackboard')} className="mb-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="ai" className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Generated
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="gap-2">
+              <Edit3 className="w-4 h-4" />
+              Custom
+            </TabsTrigger>
+            <TabsTrigger value="blackboard" className="gap-2">
+              <Palette className="w-4 h-4" />
+              Blackboard
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* AI Generated Mode - with collapsible input form */}
+        {creationMode === 'ai' && (
+          <Collapsible open={showInputForm} onOpenChange={setShowInputForm} className="mb-6">
+            {storyboard && (
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full mb-4">
+                  {showInputForm ? 'Hide Input Form' : 'Show Input Form'}
+                  <ChevronDown className={cn(
+                    "ml-2 h-4 w-4 transition-transform",
+                    showInputForm && "rotate-180"
+                  )} />
+                </Button>
+              </CollapsibleTrigger>
+            )}
+            
+            <CollapsibleContent forceMount className={cn(!showInputForm && "hidden")}>
+              <StoryboardInput />
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Custom Mode - direct render without collapsible */}
+        {creationMode === 'custom' && !storyboard && (
+          <div className="mb-6">
+            <CustomStoryboardInput />
+          </div>
+        )}
+
+        {/* Blackboard Mode - direct render without collapsible */}
+        {creationMode === 'blackboard' && !storyboard && (
+          <div className="mb-6">
+            <BlackboardStoryboardInput />
+          </div>
+        )}
 
         {/* Storyboard Editor - only show when mode is selected */}
         {storyboard && storyboard.render_mode && <StoryboardEditor />}

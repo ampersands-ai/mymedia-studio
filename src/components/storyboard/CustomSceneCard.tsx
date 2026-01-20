@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Sparkles, Image as ImageIcon, Upload, Video, Loader2, Play } from 'lucide-react';
+import { Trash2, Sparkles, Image as ImageIcon, Upload, Video, Loader2, Play, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUserCredits } from '@/hooks/useUserCredits';
@@ -445,9 +445,9 @@ export function CustomSceneCard({
               {isEnhancing ? (
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
               ) : (
-                <Sparkles className="w-3 h-3 mr-1" />
-              )}
-              Enhance (0.1 cr)
+              <Sparkles className="w-3 h-3 mr-1" />
+            )}
+            Enhance <Coins className="w-3 h-3 text-primary-orange ml-1" />0.1
             </Button>
           </div>
           <Textarea
@@ -475,8 +475,9 @@ export function CustomSceneCard({
                 <SelectItem key={model.record_id} value={model.record_id}>
                   <div className="flex items-center justify-between w-full gap-2">
                     <span className="truncate text-sm">{model.model_name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {model.base_token_cost} cr
+                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
+                      <Coins className="w-3 h-3 text-primary-orange" />
+                      {model.base_token_cost}
                     </span>
                   </div>
                 </SelectItem>
@@ -519,7 +520,7 @@ export function CustomSceneCard({
             ) : (
               <ImageIcon className="w-3 h-3 mr-1" />
             )}
-            Generate ({imageCost} cr)
+            Generate <Coins className="w-3 h-3 text-primary-orange ml-1" />{imageCost}
           </Button>
 
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -614,8 +615,9 @@ export function CustomSceneCard({
                   <SelectItem key={model.record_id} value={model.record_id}>
                     <div className="flex items-center justify-between w-full gap-2">
                       <span className="truncate text-sm">{model.model_name}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {model.base_token_cost} cr
+                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-0.5">
+                        <Coins className="w-3 h-3 text-primary-orange" />
+                        {model.base_token_cost}
                       </span>
                     </div>
                   </SelectItem>
@@ -633,10 +635,10 @@ export function CustomSceneCard({
             >
               {isAnimating ? (
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : (
-                <Video className="w-3 h-3 mr-1" />
-              )}
-              Animate Image ({videoCost} cr)
+            ) : (
+              <Video className="w-3 h-3 mr-1" />
+            )}
+            Animate <Coins className="w-3 h-3 text-primary-orange ml-1" />{videoCost}
             </Button>
           </div>
         )}
@@ -668,13 +670,13 @@ export function CustomSceneCard({
             <AlertDialogTitle>Enhance Image Prompt?</AlertDialogTitle>
             <AlertDialogDescription>
               This will use AI to improve your image prompt and replace your current text. 
-              This action costs 0.1 credits and cannot be undone.
+              This action costs <span className="inline-flex items-center gap-0.5"><Coins className="w-3 h-3 text-primary-orange" />0.1</span> and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEnhancePrompt}>
-              Enhance (0.1 cr)
+            <AlertDialogAction onClick={handleEnhancePrompt} className="flex items-center gap-1">
+              Enhance <Coins className="w-3 h-3 text-primary-orange" />0.1
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

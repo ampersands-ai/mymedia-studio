@@ -38,7 +38,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
 
   return (
     <span className={cn("flex items-center gap-0.5", className)}>
-      <Coins className="w-3 h-3" />
+      <Coins className="w-3 h-3 text-primary-orange" />
       <span>{displayValue}</span>
     </span>
   );

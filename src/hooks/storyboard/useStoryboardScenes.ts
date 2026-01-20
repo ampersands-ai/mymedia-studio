@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Scene, Storyboard } from './useStoryboardState';
 import { logger } from '@/lib/logger';
-import { getAspectRatioDimensions } from '@/lib/aspect-ratio-mapper';
+import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 // Helper: Check if URL is a video based on explicit file extensions
 const isVideoUrl = (url: string): boolean => {
   const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v'];
@@ -279,23 +279,23 @@ export const useStoryboardScenes = (
         ? 'generate-content-sync' 
         : 'generate-content';
 
-      // Get dimensions for pixel-based APIs (mirrors CustomSceneCard pattern)
-      const dimensions = getAspectRatioDimensions(storyboard?.aspect_ratio);
+      // Map storyboard aspect ratio into the model's expected parameter shape
+      // (e.g. aspectRatio/aspect_ratio for Runware image models)
+      const aspectRatioParams = mapAspectRatioToModelParameters(
+        storyboard?.aspect_ratio,
+        modelModule.SCHEMA
+      ) as Record<string, unknown>;
 
       // Prepare payload using model's preparePayload function
-      // Pass ALL format variants - let the model decide which to use
-      const customParameters = modelModule.preparePayload?.({ 
+      // Pass prompt variants + mapped aspect ratio params - let the model decide what it uses
+      const customParameters = modelModule.preparePayload?.({
         prompt: promptToUse,
         positivePrompt: promptToUse,
-        aspect_ratio: storyboard?.aspect_ratio || '16:9',
-        aspectRatio: storyboard?.aspect_ratio || '16:9',
-        width: dimensions.width,
-        height: dimensions.height,
-      }) || { 
+        ...aspectRatioParams,
+      }) || {
         prompt: promptToUse,
         positivePrompt: promptToUse,
-        width: dimensions.width,
-        height: dimensions.height,
+        ...aspectRatioParams,
       };
 
       const { data, error } = await supabase.functions.invoke(functionName, {

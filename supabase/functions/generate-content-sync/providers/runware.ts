@@ -243,41 +243,65 @@ export async function callRunware(
     taskPayload[promptField] = effectivePrompt;
   }
 
-  // VIDEO INFERENCE: Convert aspectRatio to width/height (Runware rejects aspectRatio for video)
-  // This is a safety net - models should ideally handle this in preparePayload()
-  if (isVideo) {
-    const aspectRatioValue = taskPayload.aspectRatio || taskPayload.aspect_ratio || params.aspectRatio || params.aspect_ratio;
-    
-    if (aspectRatioValue && !taskPayload.width && !taskPayload.height) {
-      // Map common aspect ratios to safe video dimensions (matching model presets)
-      const videoAspectPresets: Record<string, { width: number; height: number }> = {
-        '16:9': { width: 736, height: 544 },
-        '9:16': { width: 544, height: 736 },
-        '1:1': { width: 640, height: 640 },
-        '4:3': { width: 640, height: 480 },
-        '3:4': { width: 480, height: 640 },
-        '21:9': { width: 896, height: 384 },
-        '9:21': { width: 384, height: 896 },
-      };
-      
-      const preset = videoAspectPresets[String(aspectRatioValue)];
-      if (preset) {
-        taskPayload.width = preset.width;
-        taskPayload.height = preset.height;
-        logger.info('Converted aspectRatio to width/height for video inference', {
-          metadata: { aspectRatio: aspectRatioValue, width: preset.width, height: preset.height }
-        });
-      }
+  // Convert aspect ratio to explicit width/height when dimensions are missing.
+  // - Video: Runware rejects aspectRatio => MUST convert and remove.
+  // - Image: Some Runware models still require explicit dimensions => convert for safety.
+  const aspectRatioValue =
+    taskPayload.aspectRatio ||
+    taskPayload.aspect_ratio ||
+    params.aspectRatio ||
+    params.aspect_ratio;
+
+  if (aspectRatioValue && !taskPayload.width && !taskPayload.height) {
+    // Use safe, Runware-compatible presets (multiples of 16, within 128-2048)
+    const imageAspectPresets: Record<string, { width: number; height: number }> = {
+      '16:9': { width: 1152, height: 640 },
+      '9:16': { width: 640, height: 1152 },
+      '1:1': { width: 1024, height: 1024 },
+      '4:3': { width: 1024, height: 768 },
+      '3:4': { width: 768, height: 1024 },
+      '21:9': { width: 1536, height: 640 },
+      '3:2': { width: 1152, height: 768 },
+      '2:3': { width: 768, height: 1152 },
+      '4:5': { width: 896, height: 1120 },
+      '5:4': { width: 1120, height: 896 },
+    };
+
+    const videoAspectPresets: Record<string, { width: number; height: number }> = {
+      '16:9': { width: 736, height: 544 },
+      '9:16': { width: 544, height: 736 },
+      '1:1': { width: 640, height: 640 },
+      '4:3': { width: 640, height: 480 },
+      '3:4': { width: 480, height: 640 },
+      '21:9': { width: 896, height: 384 },
+      '9:21': { width: 384, height: 896 },
+    };
+
+    const preset = isVideo
+      ? videoAspectPresets[String(aspectRatioValue)]
+      : imageAspectPresets[String(aspectRatioValue)];
+
+    if (preset) {
+      taskPayload.width = preset.width;
+      taskPayload.height = preset.height;
+      logger.info('Converted aspectRatio to width/height', {
+        metadata: {
+          taskType,
+          aspectRatio: aspectRatioValue,
+          width: preset.width,
+          height: preset.height,
+        },
+      });
+
+      // For deterministic payloads, remove aspect ratio once converted.
+      delete taskPayload.aspectRatio;
+      delete taskPayload.aspect_ratio;
+      delete (taskPayload as Record<string, unknown>)['aspectRatio'];
+      delete (taskPayload as Record<string, unknown>)['aspect_ratio'];
     }
-    
-    // CRITICAL: Always remove aspectRatio from video payloads - Runware rejects it
-    delete taskPayload.aspectRatio;
-    delete taskPayload.aspect_ratio;
-    delete (taskPayload as Record<string, unknown>)['aspectRatio'];
-    delete (taskPayload as Record<string, unknown>)['aspect_ratio'];
   }
 
-  // For video inference: convert inputImage to frameImages format (Runware's expected format)
+  // VIDEO INFERENCE: Convert inputImage to frameImages format (Runware's expected format)
   // Runware video models expect frameImages array, not inputImage parameter
   if (isVideo && params.inputImage && !taskPayload.frameImages) {
     const inputImageUrl = typeof params.inputImage === 'string' ? params.inputImage : null;

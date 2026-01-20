@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/lib/logger';
+import { saveCriticalId } from '@/lib/state-persistence';
 
 interface CustomScene {
   voiceOverText: string;
@@ -49,6 +50,7 @@ export const useCustomStoryboard = () => {
           estimated_render_cost: duration * 1.5, // Estimate based on duration
           aspect_ratio: input.aspectRatio,
           video_quality: 'hd',
+          render_mode: 'customize', // Skip mode selector for custom storyboards
         })
         .select()
         .single();
@@ -71,8 +73,9 @@ export const useCustomStoryboard = () => {
 
       if (scenesError) throw scenesError;
 
-      // Store the storyboard ID in localStorage
-      localStorage.setItem('currentStoryboardId', storyboard.id);
+      // Persist storyboard ID using database-verified pattern
+      saveCriticalId('currentStoryboardId', storyboard.id);
+      window.dispatchEvent(new CustomEvent('storyboard-id-changed', { detail: storyboard.id }));
 
       // Invalidate queries to refresh the UI
       await queryClient.invalidateQueries({ queryKey: ['storyboard', storyboard.id] });

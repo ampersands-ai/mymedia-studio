@@ -11,7 +11,7 @@ export function CostDisplay({ duration, estimatedCost, tokensRemaining }: CostDi
     <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 text-sm">
-          <Coins className="w-4 h-4 text-primary" />
+          <Coins className="w-4 h-4 text-primary-orange" />
           <span>Estimated render cost: <span className="font-bold">{estimatedCost.toFixed(2)}</span> credits</span>
         </div>
         <p className="text-xs text-muted-foreground ml-6">

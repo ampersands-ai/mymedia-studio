@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileCode2, Play } from "lucide-react";
+import { FileCode2, Play, Coins } from "lucide-react";
 
 interface TestConfigurationProps {
   filteredModels: any[] | undefined;
@@ -184,8 +184,9 @@ export function TestConfiguration({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cost:</span>
-                <span className="font-medium">
-                  {selectedModel.base_token_cost} credits
+                <span className="font-medium flex items-center gap-1">
+                  <Coins className="w-3 h-3 text-primary-orange" />
+                  {selectedModel.base_token_cost}
                 </span>
               </div>
             </div>

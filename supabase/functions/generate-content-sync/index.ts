@@ -34,6 +34,21 @@ const GenerateContentSyncRequestSchema = z.object({
   model_record_id: z.string().optional(),
   prompt: z.string().optional(), // Can be in custom_parameters too
   custom_parameters: z.record(z.unknown()).optional().default({}),
+  // Optional schema/config passed from the client (required for schema-driven providers like Runware)
+  model_schema: z
+    .object({
+      properties: z.record(z.unknown()).optional(),
+      required: z.array(z.string()).optional(),
+      promptField: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
+  model_config: z
+    .object({
+      use_api_key: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
   workflow_execution_id: z.string().uuid().optional(),
   workflow_step_number: z.number().int().optional(),
   user_id: z.string().uuid().optional(), // For service role
@@ -107,11 +122,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { 
-      model_id, 
+    const {
+      model_id,
       model_record_id,
-      prompt, 
+      prompt,
       custom_parameters = {},
+      model_schema,
+      model_config,
       workflow_execution_id,
       workflow_step_number,
       user_id, // For service role calls (test mode)
@@ -132,8 +149,18 @@ Deno.serve(async (req) => {
     }
 
     // Compute effective prompt with fallbacks and validate early
+    // Prefer the schema-defined promptField when provided (single source of truth)
+    const schemaPromptField = typeof model_schema?.promptField === 'string'
+      ? model_schema.promptField
+      : undefined;
+
+    const schemaPromptValue = schemaPromptField
+      ? (custom_parameters as Record<string, unknown>)[schemaPromptField]
+      : undefined;
+
     const effectivePrompt = (
       (prompt ?? '') ||
+      (typeof schemaPromptValue === 'string' ? schemaPromptValue : '') ||
       (custom_parameters?.positivePrompt ?? '') ||
       (custom_parameters?.prompt ?? '')
     ).toString().trim();
@@ -196,6 +223,17 @@ Deno.serve(async (req) => {
     // Verify this is a runware model
     if (model.provider !== 'runware') {
       throw new Error('This endpoint only supports Runware models. Use generate-content for other providers.');
+    }
+
+    // Defensive check: prevent mismatched model_id/model_record_id payloads
+    if (model_id && model_id !== model.id) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request parameters',
+          details: 'model_id does not match the selected model_record_id'
+        }),
+        { status: 400, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     logger.info('Model loaded', {
@@ -309,9 +347,17 @@ Deno.serve(async (req) => {
       return filtered;
     }
 
+    // Validate and filter parameters
+    // IMPORTANT: registry metadata does not include schema, so we accept schema from client
+    // and use it as the source of truth for:
+    // - allowed parameter keys
+    // - default injection for hidden params
+    // - enum validation
+    const schemaForValidation = (model_schema || model.input_schema || { properties: {} }) as InputSchema;
+
     let parameters = validateAndFilterParameters(
-      custom_parameters, 
-      (model.input_schema || { properties: {} }) as InputSchema,
+      custom_parameters,
+      schemaForValidation,
       !useStoryboardDefaults // Skip defaults if using storyboard defaults
     );
     
@@ -442,13 +488,16 @@ Deno.serve(async (req) => {
     });
 
     try {
-      // Call Runware provider synchronously
-      const providerRequest = {
-        model: model.id,
-        prompt: effectivePrompt,
-        parameters: parameters,
-        input_schema: model.input_schema,
-      };
+       // Call Runware provider synchronously
+       const providerRequest = {
+         model: model.id,
+         prompt: effectivePrompt,
+         parameters: parameters,
+         // Runware provider is schema-driven (it only forwards keys present in schema)
+         // so we must pass the client-provided model_schema here.
+         input_schema: model_schema || model.input_schema,
+         use_api_key: model_config?.use_api_key,
+       };
 
       logger.info('Calling Runware provider', {
         userId: user.id,

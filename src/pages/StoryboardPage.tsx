@@ -119,7 +119,7 @@ export default function StoryboardPage() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black">
               AI STORYBOARD
               <span className="inline-flex items-center gap-1 text-sm md:text-base font-medium text-muted-foreground ml-2">
-                <Coins className="w-4 h-4" />
+                <Coins className="w-4 h-4 text-primary-orange" />
                 from 0.3/s
               </span>
             </h1>

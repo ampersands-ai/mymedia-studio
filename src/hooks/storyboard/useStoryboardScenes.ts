@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Scene, Storyboard } from './useStoryboardState';
 import { logger } from '@/lib/logger';
-import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
+import { getAspectRatioDimensions } from '@/lib/aspect-ratio-mapper';
 // Helper: Check if URL is a video based on explicit file extensions
 const isVideoUrl = (url: string): boolean => {
   const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v'];
@@ -279,34 +279,24 @@ export const useStoryboardScenes = (
         ? 'generate-content-sync' 
         : 'generate-content';
 
-      // For Runware models, always use width/height dimensions (not aspectRatio string)
-      // Runware API requires integer width/height values, not aspectRatio strings
-      const isRunwareProvider = modelModule.MODEL_CONFIG.provider === 'runware';
-      
-      let aspectRatioParams: Record<string, unknown> = {};
-      if (storyboard?.aspect_ratio) {
-        if (isRunwareProvider) {
-          // Runware needs explicit width/height - use getAspectRatioDimensions
-          const { getAspectRatioDimensions } = await import('@/lib/aspect-ratio-mapper');
-          const dimensions = getAspectRatioDimensions(storyboard.aspect_ratio);
-          aspectRatioParams = { width: dimensions.width, height: dimensions.height };
-        } else {
-          // Other providers can use the schema-driven mapper
-          aspectRatioParams = mapAspectRatioToModelParameters(
-            storyboard.aspect_ratio,
-            modelModule.SCHEMA?.properties ? modelModule.SCHEMA : { properties: {} }
-          );
-        }
-      }
+      // Get dimensions for pixel-based APIs (mirrors CustomSceneCard pattern)
+      const dimensions = getAspectRatioDimensions(storyboard?.aspect_ratio);
 
-      // Build custom parameters with prompt and dimensions
-      const baseParams = {
+      // Prepare payload using model's preparePayload function
+      // Pass ALL format variants - let the model decide which to use
+      const customParameters = modelModule.preparePayload?.({ 
         prompt: promptToUse,
         positivePrompt: promptToUse,
-        ...aspectRatioParams,
+        aspect_ratio: storyboard?.aspect_ratio || '16:9',
+        aspectRatio: storyboard?.aspect_ratio || '16:9',
+        width: dimensions.width,
+        height: dimensions.height,
+      }) || { 
+        prompt: promptToUse,
+        positivePrompt: promptToUse,
+        width: dimensions.width,
+        height: dimensions.height,
       };
-      
-      const customParameters = modelModule.preparePayload?.(baseParams) || baseParams;
 
       const { data, error } = await supabase.functions.invoke(functionName, {
         headers: {
@@ -319,6 +309,7 @@ export const useStoryboardScenes = (
           model_schema: modelModule.SCHEMA,
           prompt: promptToUse,
           custom_parameters: customParameters,
+          preCalculatedCost: modelModule.MODEL_CONFIG.baseCreditCost,
         }
       });
       

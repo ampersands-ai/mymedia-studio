@@ -249,6 +249,13 @@ export async function callKieAI(
       cleanedParameters[cleanKey] = value;
     }
     
+    // Strip language_code: "auto" - this is a schema UI default meaning "auto-detect"
+    // The API expects the field to be OMITTED for auto-detection, not set to "auto"
+    if (cleanedParameters.language_code === 'auto') {
+      delete cleanedParameters.language_code;
+      logger.debug('Stripped language_code="auto" - letting API auto-detect');
+    }
+    
     // For wrapper structure, callBackUrl must be at the TOP LEVEL (not inside input)
     // This matches the November 17th working structure
     payload = {

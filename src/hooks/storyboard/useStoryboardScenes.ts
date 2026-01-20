@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Scene, Storyboard } from './useStoryboardState';
 import { logger } from '@/lib/logger';
-
+import { mapAspectRatioToModelParameters } from '@/lib/aspect-ratio-mapper';
 // Helper: Check if URL is a video based on explicit file extensions
 const isVideoUrl = (url: string): boolean => {
   const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v'];
@@ -279,6 +279,21 @@ export const useStoryboardScenes = (
         ? 'generate-content-sync' 
         : 'generate-content';
 
+      // Map storyboard aspect ratio to model-specific parameters
+      const aspectRatioParams = mapAspectRatioToModelParameters(
+        storyboard?.aspect_ratio,
+        modelModule.SCHEMA?.properties ? modelModule.SCHEMA : { properties: {} }
+      );
+
+      // Build custom parameters with prompt and aspect ratio
+      const baseParams = {
+        prompt: promptToUse,
+        positivePrompt: promptToUse,
+        ...aspectRatioParams,
+      };
+      
+      const customParameters = modelModule.preparePayload?.(baseParams) || baseParams;
+
       const { data, error } = await supabase.functions.invoke(functionName, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -289,7 +304,7 @@ export const useStoryboardScenes = (
           model_config: modelModule.MODEL_CONFIG,
           model_schema: modelModule.SCHEMA,
           prompt: promptToUse,
-          custom_parameters: {},
+          custom_parameters: customParameters,
         }
       });
       

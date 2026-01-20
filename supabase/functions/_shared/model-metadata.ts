@@ -411,6 +411,17 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     estimatedTimeSeconds: 15,
     isActive: true,
   },
+  // FLUX.1 Schnell with UUID record ID (0.1 credit version)
+  "8b3e9d2f-5c6a-7f1b-2e9c-4d5a8f3b7c1e": {
+    recordId: "8b3e9d2f-5c6a-7f1b-2e9c-4d5a8f3b7c1e",
+    modelId: "runware:flux-schnell",
+    modelName: "FLUX.1 Schnell",
+    provider: "runware",
+    contentType: "prompt_to_image",
+    baseCreditCost: 0.1,
+    estimatedTimeSeconds: 10,
+    isActive: true,
+  },
   "c1bd50df-1c27-48a3-8630-0970eedd21f6": {
     recordId: "c1bd50df-1c27-48a3-8630-0970eedd21f6",
     modelId: "flux-kontext-max",

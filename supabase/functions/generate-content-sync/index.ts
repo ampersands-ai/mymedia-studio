@@ -5,7 +5,7 @@ import { calculateTokenCost } from "./utils/token-calculator.ts";
 import { uploadToStorage } from "./utils/storage.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { getModelConfig } from "../_shared/registry/index.ts";
+import { getModelConfig, getGenerationType } from "../_shared/registry/index.ts";
 import { GENERATION_STATUS, AUDIT_ACTIONS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 
@@ -411,7 +411,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         model_id: model.id,
         model_record_id: model.record_id,
-        type: model.content_type,
+        type: getGenerationType(model.content_type),
         prompt: effectivePrompt,
         original_prompt: effectivePrompt,
         settings: parameters,

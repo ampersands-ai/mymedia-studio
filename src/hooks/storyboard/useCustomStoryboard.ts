@@ -30,7 +30,7 @@ export const useCustomStoryboard = () => {
       // Calculate total duration (5 seconds per scene)
       const duration = input.scenes.length * 5;
 
-      // Create the storyboard record
+      // Create the storyboard record with render_mode set to skip mode selector
       const { data: storyboard, error: storyboardError } = await supabase
         .from('storyboards')
         .insert({
@@ -49,6 +49,7 @@ export const useCustomStoryboard = () => {
           estimated_render_cost: duration * 1.5, // Estimate based on duration
           aspect_ratio: input.aspectRatio,
           video_quality: 'hd',
+          render_mode: 'customize', // Skip mode selector, go straight to editor
         })
         .select()
         .single();

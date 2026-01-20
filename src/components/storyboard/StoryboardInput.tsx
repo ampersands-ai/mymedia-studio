@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStoryboard } from '@/hooks/useStoryboard';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useStoryboardForm } from '@/hooks/storyboard/useStoryboardForm';
-import { Film, Loader2, Sparkles, Edit3, Palette } from 'lucide-react';
+import { Film, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopicSection } from './sections/TopicSection';
 import { DurationSection } from './sections/DurationSection';
@@ -14,11 +12,8 @@ import { StyleSelector } from './sections/StyleSelector';
 import { ToneSelector } from './sections/ToneSelector';
 import { MediaTypeSelector } from './sections/MediaTypeSelector';
 import { CostDisplay } from './sections/CostDisplay';
-import { CustomStoryboardInput } from './CustomStoryboardInput';
-import { BlackboardStoryboardInput } from './BlackboardStoryboardInput';
 
 export function StoryboardInput() {
-  const [mode, setMode] = useState<'ai' | 'custom' | 'blackboard'>('ai');
   const { formState, updateField, estimatedRenderCost, canGenerate } = useStoryboardForm();
   const { generateStoryboard, isGenerating } = useStoryboard();
   const { availableCredits } = useUserCredits();
@@ -80,111 +75,84 @@ export function StoryboardInput() {
   };
 
   return (
-    <Tabs value={mode} onValueChange={(v) => setMode(v as 'ai' | 'custom' | 'blackboard')} className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-4">
-        <TabsTrigger value="ai" className="gap-2">
-          <Sparkles className="w-4 h-4" />
-          AI Generated
-        </TabsTrigger>
-        <TabsTrigger value="custom" className="gap-2">
-          <Edit3 className="w-4 h-4" />
-          Custom
-        </TabsTrigger>
-        <TabsTrigger value="blackboard" className="gap-2">
-          <Palette className="w-4 h-4" />
-          Blackboard
-        </TabsTrigger>
-      </TabsList>
+    <Card className="relative overflow-hidden bg-card border-2">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-xl font-black flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          AI GENERATED STORYBOARD
+        </CardTitle>
+        <CardDescription className="text-sm">
+          Generate AI-powered video scripts with full editing control. Credits are charged when you render the video.
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <TopicSection
+          topic={formState.topic}
+          onTopicChange={(topic) => updateField('topic', topic)}
+          disabled={isGenerating}
+        />
 
-      <TabsContent value="ai" className="mt-0">
-        <Card className="relative overflow-hidden bg-card border-2">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-xl font-black flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              AI GENERATED STORYBOARD
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Generate AI-powered video scripts with full editing control. Credits are charged when you render the video.
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            <TopicSection
-              topic={formState.topic}
-              onTopicChange={(topic) => updateField('topic', topic)}
-              disabled={isGenerating}
-            />
+        <DurationSection
+          duration={formState.duration}
+          onDurationChange={(duration) => updateField('duration', duration)}
+          disabled={isGenerating}
+        />
 
-            <DurationSection
-              duration={formState.duration}
-              onDurationChange={(duration) => updateField('duration', duration)}
-              disabled={isGenerating}
-            />
+        <ResolutionSelector
+          aspectRatio={formState.aspectRatio}
+          onAspectRatioChange={(ratio) => updateField('aspectRatio', ratio)}
+          disabled={isGenerating}
+        />
 
-            <ResolutionSelector
-              aspectRatio={formState.aspectRatio}
-              onAspectRatioChange={(ratio) => updateField('aspectRatio', ratio)}
-              disabled={isGenerating}
-            />
+        <StyleSelector
+          style={formState.style}
+          onStyleChange={(style) => updateField('style', style)}
+          disabled={isGenerating}
+        />
 
-            <StyleSelector
-              style={formState.style}
-              onStyleChange={(style) => updateField('style', style)}
-              disabled={isGenerating}
-            />
+        <ToneSelector
+          tone={formState.tone}
+          onToneChange={(tone) => updateField('tone', tone)}
+          disabled={isGenerating}
+        />
 
-            <ToneSelector
-              tone={formState.tone}
-              onToneChange={(tone) => updateField('tone', tone)}
-              disabled={isGenerating}
-            />
+        <MediaTypeSelector
+          mediaType={formState.mediaType}
+          onMediaTypeChange={(type) => updateField('mediaType', type)}
+          disabled={isGenerating}
+        />
 
-            <MediaTypeSelector
-              mediaType={formState.mediaType}
-              onMediaTypeChange={(type) => updateField('mediaType', type)}
-              disabled={isGenerating}
-            />
+        <CostDisplay
+          duration={formState.duration}
+          estimatedCost={estimatedRenderCost}
+          tokensRemaining={availableCredits}
+        />
 
-            <CostDisplay
-              duration={formState.duration}
-              estimatedCost={estimatedRenderCost}
-              tokensRemaining={availableCredits}
-            />
+        <Button
+          onClick={handleGenerate}
+          disabled={!canGenerate || isGenerating}
+          className="w-full"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              Generate Storyboard
+              <Film className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
 
-            <Button
-              onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  Generate Storyboard
-                  <Film className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-
-            {isGenerating && (
-              <p className="text-sm text-center text-muted-foreground">
-                ✨ AI is crafting your video script...
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="custom" className="mt-0">
-        <CustomStoryboardInput />
-      </TabsContent>
-
-      <TabsContent value="blackboard" className="mt-0">
-        <BlackboardStoryboardInput />
-      </TabsContent>
-    </Tabs>
+        {isGenerating && (
+          <p className="text-sm text-center text-muted-foreground">
+            ✨ AI is crafting your video script...
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

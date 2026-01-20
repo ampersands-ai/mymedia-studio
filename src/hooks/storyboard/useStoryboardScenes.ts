@@ -279,13 +279,27 @@ export const useStoryboardScenes = (
         ? 'generate-content-sync' 
         : 'generate-content';
 
-      // Map storyboard aspect ratio to model-specific parameters
-      const aspectRatioParams = mapAspectRatioToModelParameters(
-        storyboard?.aspect_ratio,
-        modelModule.SCHEMA?.properties ? modelModule.SCHEMA : { properties: {} }
-      );
+      // For Runware models, always use width/height dimensions (not aspectRatio string)
+      // Runware API requires integer width/height values, not aspectRatio strings
+      const isRunwareProvider = modelModule.MODEL_CONFIG.provider === 'runware';
+      
+      let aspectRatioParams: Record<string, unknown> = {};
+      if (storyboard?.aspect_ratio) {
+        if (isRunwareProvider) {
+          // Runware needs explicit width/height - use getAspectRatioDimensions
+          const { getAspectRatioDimensions } = await import('@/lib/aspect-ratio-mapper');
+          const dimensions = getAspectRatioDimensions(storyboard.aspect_ratio);
+          aspectRatioParams = { width: dimensions.width, height: dimensions.height };
+        } else {
+          // Other providers can use the schema-driven mapper
+          aspectRatioParams = mapAspectRatioToModelParameters(
+            storyboard.aspect_ratio,
+            modelModule.SCHEMA?.properties ? modelModule.SCHEMA : { properties: {} }
+          );
+        }
+      }
 
-      // Build custom parameters with prompt and aspect ratio
+      // Build custom parameters with prompt and dimensions
       const baseParams = {
         prompt: promptToUse,
         positivePrompt: promptToUse,

@@ -34,19 +34,27 @@ export default function StoryboardPage() {
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [creationMode, setCreationMode] = useState<'ai' | 'custom' | 'blackboard'>('ai');
 
-  // Show mode selector when storyboard is generated without a render_mode set
+  // Derived storyboard type flags for workspace scoping
+  const isCustomStoryboard = storyboard?.style === 'custom';
+  const isAIStoryboard = storyboard && !isCustomStoryboard;
+
+  // Show mode selector ONLY for AI-generated storyboards without render_mode
   useEffect(() => {
-    if (storyboard && !storyboard.render_mode) {
+    if (creationMode === 'ai' && isAIStoryboard && !storyboard.render_mode) {
       setShowModeSelector(true);
       setShowInputForm(false);
-    } else if (storyboard) {
+    } else if (creationMode === 'ai' && isAIStoryboard) {
+      setShowModeSelector(false);
+      setShowInputForm(false);
+    } else if (creationMode === 'custom' && isCustomStoryboard) {
+      // Custom storyboard exists, hide input
       setShowModeSelector(false);
       setShowInputForm(false);
     } else {
       setShowModeSelector(false);
       setShowInputForm(true);
     }
-  }, [storyboard]);
+  }, [storyboard, creationMode, isAIStoryboard, isCustomStoryboard]);
 
   const handleModeSelection = async (mode: 'quick' | 'customize') => {
     if (!storyboard) return;
@@ -115,7 +123,8 @@ export default function StoryboardPage() {
                 from 0.3/s
               </span>
             </h1>
-            {storyboard && (
+            {/* Reset button: only for AI/Custom tabs when storyboard exists */}
+            {creationMode !== 'blackboard' && storyboard && (
               <Button
                 type="button"
                 variant="outline"
@@ -124,7 +133,7 @@ export default function StoryboardPage() {
                 className="gap-2 ml-auto"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                Reset
+                Reset {isCustomStoryboard ? 'Custom' : ''} Storyboard
               </Button>
             )}
           </div>
@@ -151,47 +160,57 @@ export default function StoryboardPage() {
           </TabsList>
         </Tabs>
 
-        {/* AI Generated Mode - with collapsible input form */}
+        {/* ===== AI GENERATED TAB ===== */}
         {creationMode === 'ai' && (
-          <Collapsible open={showInputForm} onOpenChange={setShowInputForm} className="mb-6">
-            {storyboard && (
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full mb-4">
-                  {showInputForm ? 'Hide Input Form' : 'Show Input Form'}
-                  <ChevronDown className={cn(
-                    "ml-2 h-4 w-4 transition-transform",
-                    showInputForm && "rotate-180"
-                  )} />
-                </Button>
-              </CollapsibleTrigger>
+          <>
+            <Collapsible open={showInputForm} onOpenChange={setShowInputForm} className="mb-6">
+              {isAIStoryboard && (
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full mb-4">
+                    {showInputForm ? 'Hide Input Form' : 'Show Input Form'}
+                    <ChevronDown className={cn(
+                      "ml-2 h-4 w-4 transition-transform",
+                      showInputForm && "rotate-180"
+                    )} />
+                  </Button>
+                </CollapsibleTrigger>
+              )}
+              
+              <CollapsibleContent forceMount className={cn(!showInputForm && "hidden")}>
+                <StoryboardInput />
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* AI Storyboard Editor - only for AI storyboards with render_mode */}
+            {isAIStoryboard && storyboard.render_mode && <StoryboardEditor />}
+          </>
+        )}
+
+        {/* ===== CUSTOM TAB ===== */}
+        {creationMode === 'custom' && (
+          <>
+            {/* Show input form when no custom storyboard exists */}
+            {!isCustomStoryboard && (
+              <div className="mb-6">
+                <CustomStoryboardInput />
+              </div>
             )}
-            
-            <CollapsibleContent forceMount className={cn(!showInputForm && "hidden")}>
-              <StoryboardInput />
-            </CollapsibleContent>
-          </Collapsible>
+
+            {/* Custom Storyboard Editor - only for custom storyboards with render_mode */}
+            {isCustomStoryboard && storyboard.render_mode && <StoryboardEditor />}
+          </>
         )}
 
-        {/* Custom Mode - direct render without collapsible */}
-        {creationMode === 'custom' && !storyboard && (
-          <div className="mb-6">
-            <CustomStoryboardInput />
-          </div>
-        )}
-
-        {/* Blackboard Mode - direct render without collapsible */}
-        {creationMode === 'blackboard' && !storyboard && (
+        {/* ===== BLACKBOARD TAB ===== */}
+        {creationMode === 'blackboard' && (
           <div className="mb-6">
             <BlackboardStoryboardInput />
           </div>
         )}
-
-        {/* Storyboard Editor - only show when mode is selected */}
-        {storyboard && storyboard.render_mode && <StoryboardEditor />}
       </div>
 
-      {/* Mode Selector Dialog */}
-      {storyboard && (
+      {/* Mode Selector Dialog - AI tab only */}
+      {creationMode === 'ai' && isAIStoryboard && (
         <StoryboardModeSelector
           open={showModeSelector}
           onSelectMode={handleModeSelection}

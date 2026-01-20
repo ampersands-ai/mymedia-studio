@@ -41,25 +41,15 @@ export function CustomStoryboardInput() {
   };
 
   const handleCreate = async () => {
-    // Validate all scenes have content
-    const hasEmptyScenes = scenes.some(
-      scene => !scene.voiceOverText.trim() || !scene.imagePrompt.trim()
-    );
-
-    if (hasEmptyScenes) {
-      toast.error('All scenes must have both voice-over text and image prompt');
-      return;
-    }
-
+    // Custom mode: create empty placeholder scenes, users fill them in the editor
     await createCustomStoryboard({
       scenes,
       aspectRatio,
     });
   };
 
-  const canCreate = scenes.every(
-    scene => scene.voiceOverText.trim() && scene.imagePrompt.trim()
-  ) && !isCreating;
+  // Allow creation with any number of scenes (even empty ones for custom mode)
+  const canCreate = scenes.length > 0 && !isCreating;
 
   return (
     <Card className="relative overflow-hidden bg-card border-2">

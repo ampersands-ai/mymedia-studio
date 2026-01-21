@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ClearButton } from "@/components/ui/ClearButton";
 
 interface PromptInputProps {
   value: string;
@@ -73,6 +74,10 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     }
   };
 
+  const handleClear = () => {
+    onChange('');
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -80,6 +85,12 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           {label} {isRequired && <span className="text-destructive">*</span>}
         </label>
         <div className="flex items-center gap-2">
+          <ClearButton
+            onClear={handleClear}
+            hasContent={value.trim().length > 0}
+            disabled={disabled}
+            toastMessage="Prompt cleared"
+          />
           <Button
             variant="ghost"
             size="sm"

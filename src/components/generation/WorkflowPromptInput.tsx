@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Loader2 } from "lucide-react";
+import { ClearButton } from "@/components/ui/ClearButton";
 
 interface WorkflowPromptInputProps {
   value: string;
@@ -35,6 +36,10 @@ export const WorkflowPromptInput: React.FC<WorkflowPromptInputProps> = ({
 }) => {
   const isOverLimit = value.length > maxLength;
 
+  const handleClear = () => {
+    onChange('');
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -42,6 +47,12 @@ export const WorkflowPromptInput: React.FC<WorkflowPromptInputProps> = ({
           Prompt {isRequired && <span className="text-destructive">*</span>}
         </label>
         <div className="flex items-center gap-2">
+          <ClearButton
+            onClear={handleClear}
+            hasContent={value.trim().length > 0}
+            disabled={disabled}
+            toastMessage="Prompt cleared"
+          />
           <Button
             variant="ghost"
             size="sm"

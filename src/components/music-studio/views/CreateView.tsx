@@ -22,6 +22,7 @@ import { useAudioGeneration, type TTSQuality } from '../hooks/useAudioGeneration
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 import { DialogueInput, type DialogueEntry } from '@/components/generation/DialogueInput';
 import { MODEL_CONFIG as DIALOGUE_CONFIG, calculateCost as calculateDialogueCost } from '@/lib/models/locked/text_to_speech/ElevenLabs_Dialogue_V3';
+import { ClearButton } from '@/components/ui/ClearButton';
 
 
 interface CreateViewProps {
@@ -139,7 +140,15 @@ function SongGeneratorTab({ userId, audioGeneration, onTrackGenerated, initialPr
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="space-y-2">
-        <Label htmlFor="prompt">Describe your song</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="prompt">Describe your song</Label>
+          <ClearButton
+            onClear={() => setPrompt('')}
+            hasContent={prompt.trim().length > 0}
+            disabled={isGenerating}
+            toastMessage="Prompt cleared"
+          />
+        </div>
         <Textarea
           id="prompt"
           placeholder="e.g., 'upbeat pop song about summer love with catchy chorus'"
@@ -242,7 +251,15 @@ function TTSTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="space-y-2">
-        <Label>Text to convert</Label>
+        <div className="flex items-center justify-between">
+          <Label>Text to convert</Label>
+          <ClearButton
+            onClear={() => setText('')}
+            hasContent={text.trim().length > 0}
+            disabled={isGenerating}
+            toastMessage="Text cleared"
+          />
+        </div>
         <Textarea
           placeholder="Enter the text you want to convert to speech..."
           value={text}
@@ -543,7 +560,15 @@ function SFXTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="space-y-2">
-        <Label>Describe the sound effect</Label>
+        <div className="flex items-center justify-between">
+          <Label>Describe the sound effect</Label>
+          <ClearButton
+            onClear={() => setPrompt('')}
+            hasContent={prompt.trim().length > 0}
+            disabled={isGenerating}
+            toastMessage="Prompt cleared"
+          />
+        </div>
         <Textarea
           placeholder="e.g., 'futuristic laser gun blast with echo', 'rain falling on a tin roof'"
           value={prompt}

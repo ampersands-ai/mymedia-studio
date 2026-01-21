@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ClearButton } from '@/components/ui/ClearButton';
 
 const STORAGE_KEY = 'faceless_video_recent_topics';
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -107,11 +108,23 @@ export function TopicSection({ topic, onTopicChange, disabled }: TopicSectionPro
     }
   };
 
+  const handleClear = () => {
+    onTopicChange('');
+  };
+
   return (
     <div className="space-y-2">
-      <Label htmlFor="topic" className="text-sm font-medium">
-        Video Topic *
-      </Label>
+      <div className="flex items-center justify-between">
+        <Label htmlFor="topic" className="text-sm font-medium">
+          Video Topic *
+        </Label>
+        <ClearButton
+          onClear={handleClear}
+          hasContent={topic.trim().length > 0}
+          disabled={disabled}
+          toastMessage="Topic cleared"
+        />
+      </div>
       <Textarea
         id="topic"
         placeholder="e.g., 'The Science Behind Dreams' or 'Top 5 Ancient Civilizations'"

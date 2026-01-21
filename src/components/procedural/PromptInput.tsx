@@ -3,8 +3,9 @@ import { ShaderParams } from '@/types/procedural-background';
 import { parsePromptToParams, getPromptSuggestions } from '@/utils/promptParser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ClearButton } from '@/components/ui/ClearButton';
 
 interface PromptInputProps {
   onApply: (params: Partial<ShaderParams>) => void;
@@ -80,15 +81,12 @@ export function PromptInput({ onApply }: PromptInputProps) {
             placeholder="e.g., gold cubes spiral"
             className="h-10 bg-background pr-8 text-sm sm:h-9"
           />
-          {prompt && (
-            <button
-              onClick={clearPrompt}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
         </div>
+        <ClearButton
+          onClear={clearPrompt}
+          hasContent={prompt.trim().length > 0}
+          toastMessage="Prompt cleared"
+        />
         <Button onClick={handleParse} variant="outline" className="h-10 sm:h-9">
           Parse
         </Button>

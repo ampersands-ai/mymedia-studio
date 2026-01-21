@@ -128,6 +128,8 @@ function SongGeneratorTab({ userId, audioGeneration, onTrackGenerated, initialPr
 
     if (track) {
       onTrackGenerated(track);
+      // Auto-save to library
+      await audioGeneration.saveToLibrary(track, userId);
       setPrompt('');
     }
   };
@@ -229,6 +231,8 @@ function TTSTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
 
     if (track) {
       onTrackGenerated(track);
+      // Auto-save to library
+      await audioGeneration.saveToLibrary(track, userId);
       setText('');
     }
   };
@@ -528,6 +532,8 @@ function SFXTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTabProps
 
     if (track) {
       onTrackGenerated(track);
+      // Auto-save to library
+      await audioGeneration.saveToLibrary(track, userId);
       setPrompt('');
     }
   };
@@ -633,6 +639,8 @@ function DialogueTab({ userId, audioGeneration, onTrackGenerated }: GeneratorTab
 
     if (track) {
       onTrackGenerated(track);
+      // Auto-save to library
+      await audioGeneration.saveToLibrary(track, userId);
       // Reset to one empty entry
       setDialogueEntries([{ text: '', voice: 'Liam' }]);
     }

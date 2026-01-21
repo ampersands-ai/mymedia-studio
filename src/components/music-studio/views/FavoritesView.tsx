@@ -1,6 +1,7 @@
 import { Heart, Play, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TrackCard } from '../shared/TrackCard';
+import { toast } from 'sonner';
 
 import { useAudioPlayer } from '../hooks/useAudioStudioPlayer';
 import { useAudioLibrary } from '../hooks/useAudioLibrary';
@@ -9,7 +10,7 @@ export function FavoritesView() {
   const { play, addToQueue } = useAudioPlayer();
   
   // Fetch real liked tracks from the library
-  const { tracks, isLoading } = useAudioLibrary({ filter: 'favorites' });
+  const { tracks, isLoading, toggleLike, deleteTrack } = useAudioLibrary({ filter: 'favorites' });
   const likedTracks = tracks.filter(track => track.isLiked);
 
   const handlePlayAll = () => {
@@ -28,6 +29,33 @@ export function FavoritesView() {
       if (shuffled.length > 1) {
         addToQueue(shuffled.slice(1));
       }
+    }
+  };
+
+  const handleDelete = async (trackId: string) => {
+    const success = await deleteTrack(trackId);
+    if (success) {
+      toast.success('Track deleted');
+    } else {
+      toast.error('Failed to delete track');
+    }
+  };
+
+  const handleDownload = async (track: { title: string; audioUrl: string }) => {
+    try {
+      const response = await fetch(track.audioUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Download started');
+    } catch {
+      toast.error('Failed to download');
     }
   };
 
@@ -78,7 +106,13 @@ export function FavoritesView() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {likedTracks.map((track) => (
-            <TrackCard key={track.id} track={track} />
+            <TrackCard 
+              key={track.id} 
+              track={track}
+              onLike={() => toggleLike(track.id)}
+              onDelete={() => handleDelete(track.id)}
+              onDownload={handleDownload}
+            />
           ))}
         </div>
       )}

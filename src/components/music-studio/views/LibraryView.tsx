@@ -55,12 +55,30 @@ export function LibraryView() {
     incrementPlayCount(track.id);
   };
 
-  const handleDelete = async (track: AudioTrack) => {
-    const success = await deleteTrack(track.id);
+  const handleDelete = async (trackId: string) => {
+    const success = await deleteTrack(trackId);
     if (success) {
       toast.success('Track deleted');
     } else {
       toast.error('Failed to delete track');
+    }
+  };
+
+  const handleDownload = async (track: AudioTrack) => {
+    try {
+      const response = await fetch(track.audioUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Download started');
+    } catch {
+      toast.error('Failed to download');
     }
   };
 
@@ -177,6 +195,9 @@ export function LibraryView() {
                   <TrackCard 
                     key={track.id} 
                     track={track}
+                    onLike={() => toggleLike(track.id)}
+                    onDelete={() => handleDelete(track.id)}
+                    onDownload={handleDownload}
                   />
                 ) : (
                   <TrackListItem
@@ -184,7 +205,7 @@ export function LibraryView() {
                     track={track}
                     onPlay={() => handlePlay(track)}
                     onLike={() => toggleLike(track.id)}
-                    onDelete={() => handleDelete(track)}
+                    onDelete={() => handleDelete(track.id)}
                     isPlaying={currentTrack?.id === track.id && isPlaying}
                   />
                 )

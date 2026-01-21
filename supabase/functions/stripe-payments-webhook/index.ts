@@ -527,7 +527,8 @@ async function handleInvoicePaymentSucceeded(
     .single();
 
   if (currentSub) {
-    await supabase
+    // CRITICAL: Capture update error to trigger Stripe retry on failure
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         tokens_remaining: currentSub.tokens_remaining + tokens,
@@ -537,6 +538,33 @@ async function handleInvoicePaymentSucceeded(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', subscription.user_id);
+
+    if (updateError) {
+      logger.error('Failed to update tokens on renewal', updateError as unknown as Error);
+      throw updateError; // Return 500 to trigger Stripe webhook retry
+    }
+
+    logger.info('Renewal credits added successfully', { 
+      metadata: { 
+        userId: subscription.user_id, 
+        tokensAdded: tokens, 
+        newBalance: currentSub.tokens_remaining + tokens 
+      } 
+    });
+
+    // Audit log for renewal (critical for tracking)
+    await supabase.from('audit_logs').insert({
+      user_id: subscription.user_id,
+      action: 'webhook.stripe.renewed',
+      resource_type: 'subscription',
+      metadata: { 
+        plan: normalizedPlan, 
+        tokensAdded: tokens, 
+        invoiceId: invoice.id,
+        previousBalance: currentSub.tokens_remaining,
+        newBalance: currentSub.tokens_remaining + tokens,
+      },
+    });
 
     // Get user email and send renewal notification with receipt
     const { data: profile } = await supabase

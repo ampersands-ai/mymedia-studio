@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, MessageSquare } from "lucide-react";
+import { ClearButton } from "@/components/ui/ClearButton";
 
 export interface DialogueEntry {
   text: string;
@@ -41,6 +42,9 @@ export const DialogueInput = ({
   // Calculate total character count
   const totalCharacters = entries.reduce((sum, entry) => sum + (entry.text?.length || 0), 0);
 
+  // Check if any entry has content
+  const hasContent = entries.some(entry => entry.text.trim().length > 0);
+
   const updateEntry = (index: number, field: keyof DialogueEntry, newValue: string) => {
     const newEntries = [...entries];
     newEntries[index] = { ...newEntries[index], [field]: newValue };
@@ -58,6 +62,10 @@ export const DialogueInput = ({
     onChange(newEntries);
   };
 
+  const clearAll = () => {
+    onChange([{ text: "", voice: voices[0] || "Liam" }]);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with character counter */}
@@ -69,9 +77,18 @@ export const DialogueInput = ({
             {required && <span className="text-destructive ml-1">*</span>}
           </Label>
         </div>
-        <span className={`text-sm ${totalCharacters > maxCharacters * 0.9 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
-          {totalCharacters} / {maxCharacters}
-        </span>
+        <div className="flex items-center gap-2">
+          <ClearButton
+            onClear={clearAll}
+            hasContent={hasContent}
+            label="Clear All"
+            toastMessage="Dialogue cleared"
+            dialogDescription="This will clear all dialogue entries. This action cannot be undone."
+          />
+          <span className={`text-sm ${totalCharacters > maxCharacters * 0.9 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+            {totalCharacters} / {maxCharacters}
+          </span>
+        </div>
       </div>
 
       {/* Dialogue Entries */}

@@ -504,7 +504,7 @@ async function handleSubscriptionCancelled(
   gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
 
   // Set grace period status - freeze credits
-  await supabase
+  const { error: updateError } = await supabase
     .from('user_subscriptions')
     .update({ 
       status: 'grace_period',
@@ -514,6 +514,11 @@ async function handleSubscriptionCancelled(
     })
     .eq('user_id', userId);
 
+  if (updateError) {
+    logger.error('Failed to set grace period', updateError as unknown as Error);
+    throw updateError;
+  }
+
   logger.info('Grace period started', {
     metadata: { 
       userId, 
@@ -521,6 +526,26 @@ async function handleSubscriptionCancelled(
       gracePeriodEnd: gracePeriodEnd.toISOString() 
     }
   });
+
+  // Get user email for cancellation notification
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profile?.email && userId) {
+    try {
+      await sendSubscriptionEmail(supabase, {
+        user_id: userId,
+        email: profile.email,
+        event_type: 'cancelled',
+        plan_name: currentSub?.plan || 'unknown',
+      }, logger);
+    } catch (emailError) {
+      logger.warn('Failed to send cancellation email', { metadata: { errorMessage: (emailError as Error).message } });
+    }
+  }
 }
 
 async function handleSubscriptionExpired(
@@ -605,14 +630,15 @@ async function handleSubscriptionRenewed(
     .single();
 
   if (!currentSub) {
+    logger.error('Subscription not found for renewal', new Error('Subscription not found'));
     throw new Error('Subscription not found');
   }
 
   // Calculate next billing date
   const nextBillingDate = data.current_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Add new tokens
-  await supabase
+  // CRITICAL: Capture update error to trigger retry on failure
+  const { error: updateError } = await supabase
     .from('user_subscriptions')
     .update({
       tokens_remaining: currentSub.tokens_remaining + tokens,
@@ -621,6 +647,34 @@ async function handleSubscriptionRenewed(
       current_period_end: nextBillingDate,
     })
     .eq('user_id', userId);
+
+  if (updateError) {
+    logger.error('Failed to update tokens on renewal', updateError as unknown as Error);
+    throw updateError; // Return 500 to trigger webhook retry
+  }
+
+  logger.info('Renewal credits added successfully', { 
+    metadata: { 
+      userId, 
+      tokensAdded: tokens, 
+      previousBalance: currentSub.tokens_remaining,
+      newBalance: currentSub.tokens_remaining + tokens 
+    } 
+  });
+
+  // Audit log for renewal (critical for tracking)
+  await supabase.from('audit_logs').insert({
+    user_id: userId,
+    action: 'webhook.dodo.renewed',
+    resource_type: 'subscription',
+    metadata: { 
+      plan: planKey, 
+      tokensAdded: tokens, 
+      paymentId: data.payment_id,
+      previousBalance: currentSub.tokens_remaining,
+      newBalance: currentSub.tokens_remaining + tokens,
+    },
+  });
 
   // Get user email for notification
   const { data: profile } = await supabase
@@ -695,7 +749,7 @@ async function handleSubscriptionPlanChanged(
     const newTokensRemaining = (currentSub?.tokens_remaining || 0) + newTokens;
     const newTokensTotal = (currentSub?.tokens_total || 0) + newTokens;
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         plan: planKey,
@@ -707,9 +761,47 @@ async function handleSubscriptionPlanChanged(
       })
       .eq('user_id', userId);
 
+    if (updateError) {
+      logger.error('Failed to apply upgrade', updateError as unknown as Error);
+      throw updateError;
+    }
+
     logger.info('Upgrade applied immediately', {
       metadata: { userId, tokensAdded: newTokens, newBalance: newTokensRemaining }
     });
+
+    // Audit log for upgrade
+    await supabase.from('audit_logs').insert({
+      user_id: userId,
+      action: 'webhook.dodo.upgraded',
+      resource_type: 'subscription',
+      metadata: { 
+        previousPlan: currentPlan, 
+        newPlan: planKey, 
+        tokensAdded: newTokens,
+      },
+    });
+
+    // Send upgrade email
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'upgraded',
+          plan_name: planKey,
+          tokens_added: newTokens,
+        }, logger);
+      } catch (emailError) {
+        logger.warn('Failed to send upgrade email', { metadata: { errorMessage: (emailError as Error).message } });
+      }
+    }
 
   } else if (isDowngrade) {
     // DOWNGRADE: Schedule for end of billing period
@@ -717,28 +809,69 @@ async function handleSubscriptionPlanChanged(
       ? new Date(data.current_period_end)
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         pending_downgrade_plan: planKey,
         pending_downgrade_at: downgradeAt.toISOString(),
-        // Keep current plan active
       })
       .eq('user_id', userId);
+
+    if (updateError) {
+      logger.error('Failed to schedule downgrade', updateError as unknown as Error);
+      throw updateError;
+    }
 
     logger.info('Downgrade scheduled for end of billing period', {
       metadata: { userId, pendingPlan: planKey, downgradeAt: downgradeAt.toISOString() }
     });
 
+    // Audit log for scheduled downgrade
+    await supabase.from('audit_logs').insert({
+      user_id: userId,
+      action: 'webhook.dodo.downgrade_scheduled',
+      resource_type: 'subscription',
+      metadata: { 
+        currentPlan, 
+        pendingPlan: planKey, 
+        downgradeAt: downgradeAt.toISOString(),
+      },
+    });
+
+    // Send downgrade email
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendSubscriptionEmail(supabase, {
+          user_id: userId,
+          email: profile.email,
+          event_type: 'downgraded',
+          plan_name: planKey,
+        }, logger);
+      } catch (emailError) {
+        logger.warn('Failed to send downgrade email', { metadata: { errorMessage: (emailError as Error).message } });
+      }
+    }
+
   } else {
     // Same tier change (maybe billing period)
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         plan: planKey,
         status: 'active',
       })
       .eq('user_id', userId);
+
+    if (updateError) {
+      logger.error('Failed to update plan', updateError as unknown as Error);
+      throw updateError;
+    }
   }
 }
 

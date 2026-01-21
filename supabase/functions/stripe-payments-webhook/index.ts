@@ -626,7 +626,7 @@ async function handleInvoicePaymentFailed(
 
   logger.warn('Payment failed', { metadata: { userId: subscription.user_id } });
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('user_subscriptions')
     .update({
       status: 'payment_failed',
@@ -634,6 +634,22 @@ async function handleInvoicePaymentFailed(
       last_webhook_at: new Date().toISOString(),
     })
     .eq('user_id', subscription.user_id);
+
+  if (updateError) {
+    logger.error('Failed to update payment failed status', updateError as unknown as Error);
+    throw updateError;
+  }
+
+  // Audit log for payment failure
+  await supabase.from('audit_logs').insert({
+    user_id: subscription.user_id,
+    action: 'webhook.stripe.payment_failed',
+    resource_type: 'subscription',
+    metadata: { 
+      invoiceId: invoice.id,
+      amountDue: invoice.amount_due,
+    },
+  });
 }
 
 /**
@@ -678,7 +694,7 @@ async function handleSubscriptionDeleted(
   gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
 
   // Set grace period status - freeze credits instead of wiping them
-  await supabase
+  const { error: updateError } = await supabase
     .from('user_subscriptions')
     .update({
       status: 'grace_period',
@@ -691,6 +707,11 @@ async function handleSubscriptionDeleted(
       last_webhook_at: new Date().toISOString(),
     })
     .eq('user_id', userSub.user_id);
+
+  if (updateError) {
+    logger.error('Failed to set grace period on cancellation', updateError as unknown as Error);
+    throw updateError;
+  }
 
   // Get user email and send cancellation notification with grace period info
   const { data: profile } = await supabase
@@ -764,7 +785,7 @@ async function handleSubscriptionUpdated(
 
   if (!planChanged && !billingPeriodChanged) {
     // No significant changes, just update period end
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         current_period_end: subscription.current_period_end 
@@ -774,6 +795,11 @@ async function handleSubscriptionUpdated(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', userSub.user_id);
+
+    if (updateError) {
+      logger.error('Failed to update subscription period', updateError as unknown as Error);
+      throw updateError;
+    }
     return;
   }
 
@@ -808,7 +834,7 @@ async function handleSubscriptionUpdated(
       metadata: { tokensToAdd, existingBalance: currentSub?.tokens_remaining } 
     });
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         plan: newPlanKey,
@@ -825,6 +851,11 @@ async function handleSubscriptionUpdated(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', userSub.user_id);
+
+    if (updateError) {
+      logger.error('Failed to apply upgrade', updateError as unknown as Error);
+      throw updateError;
+    }
 
     // Send upgrade email
     const { data: profile } = await supabase
@@ -878,7 +909,7 @@ async function handleSubscriptionUpdated(
 
     // Note: Stripe already handles the actual plan change at period end
     // We just track it for UI display and the cron job handles credit adjustment
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         pending_downgrade_plan: newPlanKey,
@@ -889,6 +920,11 @@ async function handleSubscriptionUpdated(
         last_webhook_at: new Date().toISOString(),
       })
       .eq('user_id', userSub.user_id);
+
+    if (updateError) {
+      logger.error('Failed to schedule downgrade', updateError as unknown as Error);
+      throw updateError;
+    }
 
     // Send downgrade scheduled email
     const { data: profile } = await supabase
@@ -927,7 +963,7 @@ async function handleSubscriptionUpdated(
 
   } else {
     // Billing period change only (or same-tier change)
-    await supabase
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
         plan: newPlanKey,
@@ -940,13 +976,17 @@ async function handleSubscriptionUpdated(
       })
       .eq('user_id', userSub.user_id);
 
+    if (updateError) {
+      logger.error('Failed to update billing period', updateError as unknown as Error);
+      throw updateError;
+    }
+
     // Audit log for billing period change
     if (billingPeriodChanged) {
       await supabase.from('audit_logs').insert({
         user_id: userSub.user_id,
         action: 'webhook.stripe.billing_period_changed',
         resource_type: 'subscription',
-        resource_id: subscription.id,
         metadata: { 
           plan: newPlanKey,
           previousBillingPeriod,

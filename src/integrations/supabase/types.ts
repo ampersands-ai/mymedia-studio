@@ -287,6 +287,13 @@ export type Database = {
             foreignKeyName: "api_call_logs_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "api_call_logs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -1154,6 +1161,13 @@ export type Database = {
             foreignKeyName: "collection_items_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "collection_items_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -1209,6 +1223,13 @@ export type Database = {
           views_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "community_creations_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
           {
             foreignKeyName: "community_creations_generation_id_fkey"
             columns: ["generation_id"]
@@ -1662,6 +1683,13 @@ export type Database = {
             foreignKeyName: "generation_notifications_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "generation_notifications_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -1791,6 +1819,13 @@ export type Database = {
             foreignKeyName: "generations_parent_generation_id_fkey"
             columns: ["parent_generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "generations_parent_generation_id_fkey"
+            columns: ["parent_generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -1870,6 +1905,13 @@ export type Database = {
           task_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "kie_credit_audits_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
           {
             foreignKeyName: "kie_credit_audits_generation_id_fkey"
             columns: ["generation_id"]
@@ -2578,6 +2620,13 @@ export type Database = {
             foreignKeyName: "share_tokens_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "share_tokens_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -3147,6 +3196,13 @@ export type Database = {
             foreignKeyName: "test_execution_logs_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "test_execution_logs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -3232,6 +3288,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "test_execution_runs_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
           {
             foreignKeyName: "test_execution_runs_generation_id_fkey"
             columns: ["generation_id"]
@@ -3436,6 +3499,13 @@ export type Database = {
             foreignKeyName: "token_dispute_reports_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: true
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "token_dispute_reports_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -3604,6 +3674,84 @@ export type Database = {
           withdrawn_at?: string | null
         }
         Relationships: []
+      }
+      user_daily_snapshots: {
+        Row: {
+          audio_generated: number | null
+          avg_generation_time_ms: number | null
+          cancelled_runs: number | null
+          created_at: string | null
+          credits_refunded: number | null
+          credits_remaining_eod: number | null
+          credits_used: number | null
+          failed_runs: number | null
+          id: string
+          images_generated: number | null
+          pending_runs: number | null
+          snapshot_date: string
+          successful_runs: number | null
+          total_generations: number | null
+          total_processing_time_ms: number | null
+          updated_at: string | null
+          user_id: string
+          videos_generated: number | null
+        }
+        Insert: {
+          audio_generated?: number | null
+          avg_generation_time_ms?: number | null
+          cancelled_runs?: number | null
+          created_at?: string | null
+          credits_refunded?: number | null
+          credits_remaining_eod?: number | null
+          credits_used?: number | null
+          failed_runs?: number | null
+          id?: string
+          images_generated?: number | null
+          pending_runs?: number | null
+          snapshot_date: string
+          successful_runs?: number | null
+          total_generations?: number | null
+          total_processing_time_ms?: number | null
+          updated_at?: string | null
+          user_id: string
+          videos_generated?: number | null
+        }
+        Update: {
+          audio_generated?: number | null
+          avg_generation_time_ms?: number | null
+          cancelled_runs?: number | null
+          created_at?: string | null
+          credits_refunded?: number | null
+          credits_remaining_eod?: number | null
+          credits_used?: number | null
+          failed_runs?: number | null
+          id?: string
+          images_generated?: number | null
+          pending_runs?: number | null
+          snapshot_date?: string
+          successful_runs?: number | null
+          total_generations?: number | null
+          total_processing_time_ms?: number | null
+          updated_at?: string | null
+          user_id?: string
+          videos_generated?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_daily_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_error_logs: {
         Row: {
@@ -3949,6 +4097,13 @@ export type Database = {
             foreignKeyName: "user_onboarding_progress_first_generation_id_fkey"
             columns: ["first_generation_id"]
             isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "user_onboarding_progress_first_generation_id_fkey"
+            columns: ["first_generation_id"]
+            isOneToOne: false
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -4013,6 +4168,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_saved_prompts_source_generation_id_fkey"
+            columns: ["source_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
           {
             foreignKeyName: "user_saved_prompts_source_generation_id_fkey"
             columns: ["source_generation_id"]
@@ -4807,6 +4969,13 @@ export type Database = {
             foreignKeyName: "community_creations_generation_id_fkey"
             columns: ["generation_id"]
             isOneToOne: true
+            referencedRelation: "generation_ledger"
+            referencedColumns: ["artifio_id"]
+          },
+          {
+            foreignKeyName: "community_creations_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: true
             referencedRelation: "generations"
             referencedColumns: ["id"]
           },
@@ -4822,6 +4991,46 @@ export type Database = {
           users_last_30d: number | null
         }
         Relationships: []
+      }
+      generation_ledger: {
+        Row: {
+          api_duration_ms: number | null
+          artifio_id: string | null
+          completed_at: string | null
+          content_type: string | null
+          credits_cost: number | null
+          has_output: boolean | null
+          model_id: string | null
+          model_record_id: string | null
+          output_url: string | null
+          prompt: string | null
+          provider_task_id: string | null
+          run_date: string | null
+          setup_duration_ms: number | null
+          status: string | null
+          storage_path: string | null
+          tokens_charged: number | null
+          total_duration_ms: number | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "churn_risk_indicators"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_program_metrics: {
         Row: {

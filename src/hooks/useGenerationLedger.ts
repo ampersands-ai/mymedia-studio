@@ -87,7 +87,7 @@ export function useGenerationLedger(options: UseGenerationLedgerOptions = {}) {
           email,
           display_name
         )
-      `, { count: 'exact' })
+      `)
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -118,21 +118,47 @@ export function useGenerationLedger(options: UseGenerationLedgerOptions = {}) {
     // Apply pagination
     const from = page * pageSize;
     const to = from + pageSize - 1;
+    
     query = query.range(from, to);
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
       throw error;
     }
 
-    if (count !== null) {
-      setTotalCount(count);
+    // Get count separately for pagination - using simple count query
+    let countQuery = supabase
+      .from('generations')
+      .select('id');
+    
+    // Apply same filters to count query
+    if (filters.dateFrom) {
+      countQuery = countQuery.gte('created_at', filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      countQuery = countQuery.lte('created_at', filters.dateTo);
+    }
+    if (filters.userId) {
+      countQuery = countQuery.eq('user_id', filters.userId);
+    }
+    if (filters.status && filters.status !== 'all') {
+      countQuery = countQuery.eq('status', filters.status);
+    }
+    if (filters.contentType && filters.contentType !== 'all') {
+      countQuery = countQuery.eq('type', filters.contentType);
+    }
+
+    const { data: countData } = await countQuery;
+    const totalItems = countData?.length || 0;
+
+    if (totalItems > 0) {
+      setTotalCount(totalItems);
     }
 
     // Transform to ledger format
-    type GenRow = typeof data extends (infer T)[] | null ? T : never;
-    const entries: GenerationLedgerEntry[] = (data || []).map((g: GenRow) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const entries: GenerationLedgerEntry[] = (data || []).map((g: any) => {
       const profile = g.profiles as { email?: string; display_name?: string } | null;
       return {
         artifio_id: g.id,

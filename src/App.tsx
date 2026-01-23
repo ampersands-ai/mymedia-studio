@@ -82,6 +82,8 @@ const VaultSetup = lazy(() => import("./pages/admin/VaultSetup"));
 const ModelPricing = lazy(() => import("./pages/admin/ModelPricing"));
 const FeatureSettings = lazy(() => import("./pages/admin/FeatureSettings"));
 const SecurityDashboard = lazy(() => import("./pages/admin/SecurityDashboard"));
+const GenerationLedger = lazy(() => import("./pages/admin/GenerationLedger"));
+const UserDailySummaries = lazy(() => import("./pages/admin/UserDailySummaries"));
 const CinematicTest = lazy(() => import("./pages/CinematicTest"));
 const ModelDirectory = lazy(() => import("./pages/ModelDirectory"));
 const ModelLanding = lazy(() => import("./pages/ModelLanding"));
@@ -221,6 +223,8 @@ const AppContent = () => {
               <Route path="moderation" element={<RouteErrorBoundary routeName="Admin > Moderation"><ModerationDashboard /></RouteErrorBoundary>} />
               <Route path="model-pages" element={<RouteErrorBoundary routeName="Admin > Model Pages"><ModelPagesManager /></RouteErrorBoundary>} />
               <Route path="model-pages/:id" element={<RouteErrorBoundary routeName="Admin > Model Page Editor"><ModelPageEditor /></RouteErrorBoundary>} />
+              <Route path="generation-ledger" element={<RouteErrorBoundary routeName="Admin > Generation Ledger"><GenerationLedger /></RouteErrorBoundary>} />
+              <Route path="user-summaries" element={<RouteErrorBoundary routeName="Admin > User Summaries"><UserDailySummaries /></RouteErrorBoundary>} />
             </Route>
             <Route path="/pricing" element={<RouteErrorBoundary routeName="Pricing"><Pricing /></RouteErrorBoundary>} />
             <Route path="/privacy" element={<RouteErrorBoundary routeName="Privacy"><Privacy /></RouteErrorBoundary>} />

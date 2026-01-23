@@ -145,8 +145,8 @@ export function useUserSummaries(searchTerm?: string) {
     }
 
     // Build summaries
-    type ProfileRow = typeof profiles extends (infer T)[] | null ? T : never;
-    const summaries: UserSummary[] = (profiles || []).map((p: ProfileRow) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summaries: UserSummary[] = (profiles || []).map((p: any) => {
       const stats = statsMap.get(p.id) || {
         total: 0,
         successful: 0,

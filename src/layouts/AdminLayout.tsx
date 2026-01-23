@@ -15,6 +15,8 @@ const navItems = [
   { path: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
   { path: "/admin/analytics", label: "Analytics", icon: TrendingUp },
   { path: "/admin/advanced-analytics", label: "Advanced Analytics", icon: BarChart3 },
+  { path: "/admin/generation-ledger", label: "Generation Ledger", icon: FileText },
+  { path: "/admin/user-summaries", label: "User Summaries", icon: Users },
   { path: "/admin/blog/create", label: "Create Blog", icon: PenSquare },
   { path: "/admin/models", label: "AI Models", icon: Database },
   { path: "/admin/model-pricing", label: "Model Pricing", icon: DollarSign },

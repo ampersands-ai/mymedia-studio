@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,6 @@ import {
   Search, 
   Download, 
   RefreshCw, 
-  Calendar, 
   CheckCircle2, 
   XCircle, 
   Clock, 
@@ -25,8 +24,8 @@ import {
   Music,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Copy
+  Copy,
+  Eye
 } from 'lucide-react';
 import { VirtualizedTable, type ColumnDefinition } from '@/components/admin/VirtualizedTable';
 import { useGenerationLedger, type GenerationLedgerEntry, type LedgerFilters } from '@/hooks/useGenerationLedger';
@@ -41,7 +40,7 @@ const CONTENT_TYPES = ['all', 'image', 'video', 'audio'];
 export default function GenerationLedger() {
   const { toast } = useToast();
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(50);
+  const pageSize = 50;
   const [filters, setFilters] = useState<LedgerFilters>({});
   const [selectedEntry, setSelectedEntry] = useState<GenerationLedgerEntry | null>(null);
   
@@ -116,56 +115,71 @@ export default function GenerationLedger() {
       header: 'User',
       width: 180,
       minWidth: 150,
-      render: (value, row) => (
-        <div className="truncate" title={value as string || undefined}>
-          {value || row.user_name || row.user_id.slice(0, 8)}
-        </div>
-      ),
+      render: (value, row): React.ReactNode => {
+        const displayValue = String(value || row.user_name || row.user_id.slice(0, 8));
+        return (
+          <div className="truncate" title={String(value) || undefined}>
+            {displayValue}
+          </div>
+        );
+      },
     },
     {
       key: 'artifio_id',
       header: 'Artifio ID',
       width: 120,
       minWidth: 100,
-      render: (value) => (
-        <code className="text-xs bg-muted px-1 py-0.5 rounded truncate block" title={value as string}>
-          {(value as string).slice(0, 8)}...
-        </code>
-      ),
+      render: (value): React.ReactNode => {
+        const id = value as string;
+        return (
+          <code className="text-xs bg-muted px-1 py-0.5 rounded truncate block" title={id}>
+            {id.slice(0, 8)}...
+          </code>
+        );
+      },
     },
     {
       key: 'provider_task_id',
       header: 'Provider ID',
       width: 120,
       minWidth: 100,
-      render: (value) => value ? (
-        <code className="text-xs bg-muted px-1 py-0.5 rounded truncate block" title={value as string}>
-          {(value as string).slice(0, 10)}...
-        </code>
-      ) : '—',
+      render: (value): React.ReactNode => {
+        if (!value) return <span>—</span>;
+        const id = value as string;
+        return (
+          <code className="text-xs bg-muted px-1 py-0.5 rounded truncate block" title={id}>
+            {id.slice(0, 10)}...
+          </code>
+        );
+      },
     },
     {
       key: 'model_id',
       header: 'Model',
       width: 140,
       minWidth: 120,
-      render: (value) => (
-        <div className="truncate text-sm" title={value as string || undefined}>
-          {value || '—'}
-        </div>
-      ),
+      render: (value): React.ReactNode => {
+        return (
+          <div className="truncate text-sm" title={String(value) || undefined}>
+            {String(value || '—')}
+          </div>
+        );
+      },
     },
     {
       key: 'content_type',
       header: 'Type',
       width: 80,
       minWidth: 70,
-      render: (value) => (
-        <div className="flex items-center gap-1">
-          {getContentTypeIcon(value as string)}
-          <span className="capitalize text-sm">{value || '—'}</span>
-        </div>
-      ),
+      render: (value): React.ReactNode => {
+        const typeValue = value as string;
+        return (
+          <div className="flex items-center gap-1">
+            {getContentTypeIcon(typeValue)}
+            <span className="capitalize text-sm">{typeValue || '—'}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'status',
@@ -179,20 +193,21 @@ export default function GenerationLedger() {
       header: 'Cost',
       width: 70,
       minWidth: 60,
-      render: (value) => (
-        <span className="font-mono text-sm">{value || 0}</span>
-      ),
+      render: (value): React.ReactNode => {
+        return <span className="font-mono text-sm">{String(value || 0)}</span>;
+      },
     },
     {
       key: 'has_output',
       header: 'Output',
       width: 70,
       minWidth: 60,
-      render: (value) => value ? (
-        <CheckCircle2 className="h-4 w-4 text-green-500" />
-      ) : (
-        <XCircle className="h-4 w-4 text-muted-foreground" />
-      ),
+      render: (value): React.ReactNode => {
+        if (value) {
+          return <CheckCircle2 className="h-4 w-4 text-primary" />;
+        }
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
+      },
     },
     {
       key: 'total_duration_ms',

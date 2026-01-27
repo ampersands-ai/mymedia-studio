@@ -272,11 +272,13 @@ export const useCreditLog = (options: UseCreditLogOptions = {}) => {
         );
 
         // For completed generations, credits were charged via tokens_used (reserved upfront)
-        // Note: tokens_charged can be 0 even for completed, so fall back to tokens_used
+        // For failed/refunded generations, show 0 credits charged (they were refunded)
+        // Only show tokens_used as charged if status is 'charged' AND tokens_charged > 0
         const creditsCharged = creditStatus === 'charged' 
-          ? (gen.tokens_charged || gen.tokens_used)
-          : (gen.tokens_charged || 0);
+          ? (gen.tokens_charged && gen.tokens_charged > 0 ? gen.tokens_charged : gen.tokens_used)
+          : 0;
         
+        // Show refund amount for refunded status
         const refundAmount = creditStatus === 'refunded' ? gen.tokens_used : 0;
 
         return {

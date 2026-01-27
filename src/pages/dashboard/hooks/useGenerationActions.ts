@@ -147,46 +147,30 @@ export const useGenerationActions = (userId: string | undefined) => {
         }
       }
 
-      // Check if this is a failed generation - auto-refund tokens
+      // Check if this is a failed generation - auto-refund tokens via dedicated endpoint
       if (generation.status === 'failed') {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('No session');
 
-        // Refund tokens automatically
-        const refundResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+        // Use dedicated refund endpoint for failed generations (no admin role required)
+        const refundResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/refund-failed-generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            user_id: userId,
-            amount: generation.tokens_used,
-            action: 'add'
+            generation_id: generationId,
+            reason: reason,
           }),
         });
 
         if (!refundResponse.ok) {
-          throw new Error('Failed to refund credits');
+          const errorData = await refundResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to refund credits');
         }
-
-        // Create dispute record as auto-resolved
-        const errorMsg = generation.provider_response?.data?.failMsg || 'Generation failed';
-        const { error } = await supabase
-          .from("token_dispute_reports")
-          .insert({
-            generation_id: generationId,
-            user_id: userId!,
-            reason: reason,
-            status: 'resolved',
-            auto_resolved: true,
-            refund_amount: generation.tokens_used,
-            admin_notes: `Auto-resolved on ${new Date().toISOString()}\nReason: Failed generation detected\nAction: Refunded ${generation.tokens_used} tokens automatically\nGeneration ID: ${generationId}\nError: ${errorMsg}`,
-          });
-
-        if (error) throw error;
       } else {
-        // Normal dispute flow for non-failed generations
+        // Normal dispute flow for non-failed generations - submit for admin review
         const { error } = await supabase
           .from("token_dispute_reports")
           .insert({
@@ -196,6 +180,22 @@ export const useGenerationActions = (userId: string | undefined) => {
           });
 
         if (error) throw error;
+
+        // Send admin notification for pending disputes
+        try {
+          await supabase.functions.invoke('send-dispute-notification', {
+            body: {
+              generation_id: generationId,
+              user_id: userId,
+              reason: reason,
+              refund_amount: generation.tokens_used,
+              auto_resolved: false,
+              status: 'pending'
+            }
+          });
+        } catch {
+          // Don't fail if notification fails
+        }
       }
     },
     onSuccess: (_data, variables) => {

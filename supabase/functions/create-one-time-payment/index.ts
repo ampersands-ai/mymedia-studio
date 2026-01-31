@@ -124,9 +124,9 @@ async function tryDodoPayment(
         success_url: successUrl,
         cancel_url: cancelUrl,
       },
+      // Only send email - don't send name to avoid mismatch with existing Dodo customer
       customer: {
         email: email,
-        name: profileName || '',
       },
       metadata: {
         user_id: userId,

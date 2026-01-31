@@ -58,6 +58,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
   };
 
   const isPaidPlan = subscription?.plan && subscription.plan !== 'freemium';
+  const isActiveSubscription = subscription?.status === 'active';
 
   return (
     <div className="space-y-4">
@@ -141,7 +142,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
           </CardContent>
         </Card>
 
-        {isPaidPlan && subscription && (
+        {isPaidPlan && isActiveSubscription && subscription && (
           <CreditBoostSection 
             plan={normalizePlanName(subscription.plan)} 
           />

@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     // Get user's current subscription
     const { data: subscription, error: subError } = await supabase
       .from('user_subscriptions')
-      .select('plan, stripe_customer_id')
+      .select('plan, stripe_customer_id, status')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -87,10 +87,16 @@ Deno.serve(async (req) => {
     }
 
     const plan = subscription.plan?.toLowerCase();
+    const status = subscription.status?.toLowerCase();
 
     // Check if user is on freemium (not allowed to buy boosts)
     if (plan === 'freemium' || !plan) {
       throw new Error('Credit boosts are only available to paid subscribers. Please upgrade to a paid plan first.');
+    }
+
+    // Check if subscription is active
+    if (status !== 'active') {
+      throw new Error('Credit boosts are only available to active subscribers. Please renew your subscription first.');
     }
 
     // Get the correct price ID for user's plan
@@ -120,18 +126,23 @@ Deno.serve(async (req) => {
     // Use existing Stripe customer if available
     let customerId = subscription.stripe_customer_id;
     
-    // If no customer ID, try to find by email
+    // If no customer ID stored, try to find by email
     if (!customerId && userEmail) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
+        // Update the stored customer ID for future use
+        await supabase
+          .from('user_subscriptions')
+          .update({ stripe_customer_id: customerId })
+          .eq('user_id', userId);
       }
     }
 
     // Create checkout session for one-time payment
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId || undefined,
-      customer_email: customerId ? undefined : userEmail,
+    // IMPORTANT: Only use customer OR customer_email, never both
+    // If we have a customer ID, use it. Otherwise, create new customer with email.
+    const checkoutParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         {
           price: priceId,
@@ -147,7 +158,17 @@ Deno.serve(async (req) => {
         credits_to_add: creditsToAdd.toString(),
         plan: normalizedPlan,
       },
-    });
+    };
+
+    // Only set one: customer OR customer_email (never both to avoid conflicts)
+    if (customerId) {
+      checkoutParams.customer = customerId;
+    } else if (userEmail) {
+      checkoutParams.customer_email = userEmail;
+      checkoutParams.customer_creation = 'always';
+    }
+
+    const session = await stripe.checkout.sessions.create(checkoutParams);
 
     logger.info('Boost checkout session created', { 
       metadata: { sessionId: session.id, plan: normalizedPlan, credits: creditsToAdd } 

@@ -1,72 +1,108 @@
 
 
-## Mobile Alignment Fix for Prompt Input Components
+## Fix: Active Generations Counter Lag and Inversion Issue
 
-### Problem Identified
-On mobile devices, the prompt input header row containing:
-- Label ("Prompt")
-- Clear button
-- Surprise Me button  
-- Character count (e.g., "0 / 1200")
+### Problem Analysis
 
-...is misaligned because all elements are in a single `flex justify-between` row that doesn't wrap gracefully on narrow screens.
+Based on the screenshots and code exploration, the active generations counter (`X/3`) is showing stale/inverted data:
+- Screenshot 1: **3/3** with warning icon when there are **no active generations** (empty list)
+- Screenshot 2: **0/3** when there are **3 processing** generations visible
 
-### Components Affected
-1. **`src/components/custom-creation/PromptInput.tsx`** - Main creation prompt
-2. **`src/components/generation/WorkflowPromptInput.tsx`** - Workflow generation prompt
+This is caused by React Query cache staleness combined with unreliable realtime updates on mobile networks.
+
+---
+
+### Root Causes Identified
+
+| Issue | Current Value | Problem |
+|-------|---------------|---------|
+| `staleTime` | 30 seconds | Data stays cached too long, ignoring DB updates |
+| `refetchInterval` | 15 seconds | Too slow for status changes that complete in seconds |
+| `refetchOnMount` | Not set (defaults to `true` but affected by staleTime) | Page navigation doesn't refresh if data is "fresh" |
+| `refetchOnWindowFocus` | Not set (defaults to `true` but affected by staleTime) | Switching tabs doesn't refresh |
+| Realtime subscription | User-scoped filter | May miss updates on flaky mobile connections |
+
+---
 
 ### Solution
 
-**Restructure the header layout to be mobile-friendly:**
+#### 1. Reduce Cache Staleness in `useActiveGenerations.ts`
 
-1. **Stack layout on mobile, inline on desktop**
-   - Label stays on its own line on mobile
-   - Action buttons and character count wrap below the label on small screens
-   - Use `flex-wrap` with proper gap spacing
-
-2. **Responsive button sizing**
-   - Buttons should shrink appropriately on mobile
-   - Character count should not get truncated
-
----
-
-### Technical Changes
-
-#### 1. PromptInput.tsx (Lines 83-122)
-
-**Current Layout:**
-```
-[Label] ----------------------- [Clear] [Surprise Me] [0/1200]
-```
-
-**New Mobile-Friendly Layout:**
-```
-[Label]
-[Clear] [Surprise Me] [0/1200]    (stacked on mobile)
-
-[Label] ----------- [Clear] [Surprise Me] [0/1200]  (inline on desktop)
-```
+**File:** `src/hooks/useActiveGenerations.ts`
 
 **Changes:**
-- Replace `flex items-center justify-between` with `flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between`
-- Wrap action buttons in a container with `flex items-center gap-2 flex-wrap`
-- Ensure character count doesn't shrink: add `shrink-0` class
+- Reduce `staleTime` from 30s to 5s for more responsive updates
+- Reduce `refetchInterval` from 15s to 8s for faster fallback polling
+- Add `refetchOnMount: 'always'` to force refresh when component mounts
+- Add `refetchOnWindowFocus: 'always'` to refresh on tab switch
 
-#### 2. WorkflowPromptInput.tsx (Lines 45-73)
+```text
+Before:
+- staleTime: 30000 (30 seconds)
+- refetchInterval: 15000 (15 seconds)
 
-Apply the same pattern:
-- Stack label above actions on mobile
-- Inline layout on larger screens
-- Prevent character count truncation
+After:
+- staleTime: 5000 (5 seconds)
+- refetchInterval: 8000 (8 seconds)
+- refetchOnMount: 'always'
+- refetchOnWindowFocus: 'always'
+```
+
+#### 2. Force Immediate Refetch on Page Navigation
+
+**File:** `src/pages/dashboard/History.tsx`
+
+**Changes:**
+- Add `useActiveGenerations` hook import
+- Use `refetch()` from the hook on component mount to ensure fresh data on the My Creations page
+
+#### 3. Add Manual Refresh Trigger to RateLimitDisplay
+
+**File:** `src/components/shared/RateLimitDisplay.tsx`
+
+**Changes:**
+- Make the refresh button also invalidate the `active-generations` query
+- This provides users a way to manually force-refresh if they notice stale data
 
 ---
 
-### Summary
+### Technical Implementation Details
+
+```typescript
+// useActiveGenerations.ts - Updated query config
+const query = useQuery<ActiveGeneration[]>({
+  queryKey: ["active-generations", user?.id],
+  queryFn: async () => { /* existing logic */ },
+  enabled: !!user?.id,
+  // More aggressive cache invalidation for responsive UI
+  refetchInterval: 8000,              // 8s fallback (was 15s)
+  refetchIntervalInBackground: true,
+  staleTime: 5000,                    // 5s stale time (was 30s)
+  refetchOnMount: 'always',           // Always refetch on mount
+  refetchOnWindowFocus: 'always',     // Always refetch on focus
+});
+```
+
+---
+
+### Trade-offs
+
+| Aspect | Impact |
+|--------|--------|
+| Database queries | ~2x more queries (8s vs 15s polling) |
+| Battery/bandwidth | Slightly higher on mobile |
+| UI responsiveness | Significantly improved - counter updates within 5-8s max |
+| User experience | No more stale/inverted counters |
+
+The additional database load is minimal since this query is lightweight and user-scoped with proper indexing.
+
+---
+
+### Files to Modify
 
 | File | Change |
 |------|--------|
-| `PromptInput.tsx` | Responsive header layout with stacked mobile view |
-| `WorkflowPromptInput.tsx` | Same responsive pattern applied |
-
-Both fixes use standard Tailwind responsive utilities (`sm:` prefix) to maintain the current desktop appearance while fixing mobile alignment.
+| `src/hooks/useActiveGenerations.ts` | Reduce staleTime, add refetchOnMount/Focus |
+| `src/pages/dashboard/History.tsx` | Force refetch on mount |
+| `src/components/shared/RateLimitDisplay.tsx` | Add click-to-refresh on counter |
 

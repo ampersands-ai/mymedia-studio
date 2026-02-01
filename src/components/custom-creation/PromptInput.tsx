@@ -80,11 +80,11 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <label className="text-sm font-medium text-foreground">
           {label} {isRequired && <span className="text-destructive">*</span>}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <ClearButton
             onClear={handleClear}
             hasContent={value.trim().length > 0}
@@ -116,7 +116,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
             )}
             Surprise Me
           </Button>
-          <span className={`text-xs ${isOverLimit ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+          <span className={`text-xs shrink-0 ${isOverLimit ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
             {value.length} / {maxLength}
           </span>
         </div>

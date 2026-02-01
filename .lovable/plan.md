@@ -1,84 +1,120 @@
+# Parallelize Bulk Storyboard Generation
 
-# Fix: Mobile Width Inconsistency Across Creation Groups
-
-## Problem Identified
-
-The Input panel card displays at different widths depending on which creation group is selected on mobile. This is visible when comparing:
-- Image to Image / Text to Image / Image to Video (full width)
-- Audio Studio / Custom Avatar (narrower with visible side margins)
-
-## Root Cause
-
-The `CreationGroupSelector` component uses a negative margin pattern (`-mx-4 px-4`) to create edge-to-edge horizontal scrolling for the group buttons on mobile. This pattern can cause unpredictable layout behavior where:
-
-1. The horizontal scroll position affects container width calculations
-2. The `overflow-x-auto` on the scroll area interacts with `overflow-x-hidden` on the page wrapper
-3. Different scroll positions (based on selected group) cause different overflow states
-
-**Location:** `src/components/custom-creation/CreationGroupSelector.tsx` (lines 121-132)
+## Problem
+Currently, `generateAllScenePreviews` and `generateAllSceneAnimations` process scenes **sequentially** (one at a time in a `for` loop). This is slow when generating previews or animations for multiple scenes.
 
 ## Solution
+Send all generation requests in parallel using `Promise.allSettled()`, with optional concurrency limiting to avoid overwhelming the API.
 
-Wrap the negative-margin scroll container in an `overflow-hidden` parent to isolate the layout effect and prevent it from affecting the width of subsequent elements (InputPanel and OutputPanel).
+## Implementation Plan
 
-## Technical Changes
+### 1. Modify `generateAllScenePreviews` in `src/hooks/storyboard/useStoryboardScenes.ts`
 
-### File: `src/components/custom-creation/CreationGroupSelector.tsx`
-
-**Current Code (lines 121-133):**
-```tsx
-return (
-  <div className="mb-4 md:mb-6">
-    <div 
-      className={cn(
-        isMobile 
-          ? "flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
-          : "flex flex-wrap gap-2 justify-center"
-      )}
-    >
-      {visibleGroups.map(renderGroupButton)}
-    </div>
-  </div>
-);
+**Current Pattern (Sequential - lines 272-354):**
+```typescript
+for (let i = 0; i < scenesToGenerate.length; i++) {
+  // Process one scene at a time
+  const scene = scenesToGenerate[i];
+  onProgress?.(i + 1, scenesToGenerate.length);
+  // ... await generation
+  // ... await update
+}
 ```
 
-**Updated Code:**
-```tsx
-return (
-  <div className="mb-4 md:mb-6">
-    {/* Overflow-hidden wrapper isolates negative margin from affecting grid layout */}
-    <div className={cn(isMobile && "overflow-hidden")}>
-      <div 
-        className={cn(
-          isMobile 
-            ? "flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
-            : "flex flex-wrap gap-2 justify-center"
-        )}
-      >
-        {visibleGroups.map(renderGroupButton)}
-      </div>
-    </div>
-  </div>
-);
+**New Pattern (Parallel with Concurrency Control):**
+```typescript
+// Helper function to process a single scene
+const processScene = async (scene, index) => {
+  // ... generation logic for one scene
+  return { sceneNumber: scene.sceneNumber, success: true, url: outputUrl };
+};
+
+// Option A: Full Parallel (all at once)
+const promises = scenesToGenerate.map((scene, i) => processScene(scene, i));
+const settledResults = await Promise.allSettled(promises);
+
+// Option B: Controlled Concurrency (e.g., 5 at a time) - Recommended
+const CONCURRENCY_LIMIT = 5;
+const results = [];
+for (let i = 0; i < scenesToGenerate.length; i += CONCURRENCY_LIMIT) {
+  const batch = scenesToGenerate.slice(i, i + CONCURRENCY_LIMIT);
+  const batchResults = await Promise.allSettled(
+    batch.map((scene, batchIndex) => processScene(scene, i + batchIndex))
+  );
+  results.push(...batchResults);
+  onProgress?.(Math.min(i + CONCURRENCY_LIMIT, scenesToGenerate.length), scenesToGenerate.length);
+}
 ```
 
-## Why This Works
+**Changes Required:**
+1. Extract single-scene generation logic into a helper function
+2. Use `Promise.allSettled()` to run all requests in parallel
+3. Add optional concurrency limit (e.g., 5 concurrent requests) for stability
+4. Update progress tracking to show "X started" instead of "processing X of Y"
+5. Handle abort signal by checking before each batch
 
-The `overflow-hidden` wrapper creates a new block formatting context that:
-1. Contains the negative margin effects within itself
-2. Prevents the horizontal overflow from affecting the parent container's width calculation
-3. Ensures consistent width for subsequent grid elements (InputPanel)
+### 2. Modify `generateAllSceneAnimations` in `src/hooks/storyboard/useStoryboardScenes.ts`
 
-This is a standard CSS pattern for isolating negative margin effects while preserving the visual edge-to-edge scrolling experience.
+Apply the same parallel pattern to the animation generation loop (lines 454-538).
 
-## Testing Checklist
+**Note:** Video generation is slower and more resource-intensive. Consider a lower concurrency limit (e.g., 3) for animations.
 
-After implementation, verify on mobile:
-- [ ] Image to Image group shows full-width Input card
-- [ ] Text to Image group shows full-width Input card
-- [ ] Image to Video group shows full-width Input card
-- [ ] Video to Video group shows full-width Input card
-- [ ] Custom Avatar group shows full-width Input card
-- [ ] Audio Studio group shows full-width Input card
-- [ ] Group selector still scrolls edge-to-edge
-- [ ] Switching between groups maintains consistent card width
+### 3. Update Progress Tracking in UI Components
+
+**Modify `BulkPreviewGenerator.tsx` and `BulkAnimationGenerator.tsx`:**
+
+Current progress text: "Generating scene X of Y..."
+
+New progress text options:
+- "Processing X scenes in parallel..." (during generation)
+- "Completed X of Y scenes..." (as results come in)
+
+The `onProgress` callback signature may need adjustment:
+```typescript
+// Current
+onProgress: (current: number, total: number) => void
+
+// Enhanced (optional)
+onProgress: (completed: number, inProgress: number, total: number) => void
+```
+
+### 4. Handle Abort Signal Properly
+
+When user cancels:
+- In-flight requests cannot be stopped (they will complete)
+- Stop initiating new batches
+- Mark remaining as "cancelled"
+- Refund credits for cancelled/failed generations (if applicable)
+
+## Files to Modify
+
+1. **`src/hooks/storyboard/useStoryboardScenes.ts`** (Primary changes)
+   - Lines 202-379: Refactor `generateAllScenePreviews` to use parallel execution
+   - Lines 382-562: Refactor `generateAllSceneAnimations` to use parallel execution
+   - Add concurrency control helper
+
+2. **`src/components/storyboard/BulkPreviewGenerator.tsx`** (Minor UI updates)
+   - Update progress text for parallel processing context
+
+3. **`src/components/storyboard/BulkAnimationGenerator.tsx`** (Minor UI updates)
+   - Update progress text for parallel processing context
+
+## Recommended Concurrency Limits
+
+- **Image Generation (previews):** 5 concurrent requests
+- **Video Generation (animations):** 3 concurrent requests
+
+These can be adjusted based on API rate limits and performance testing.
+
+## Edge Cases to Handle
+
+1. **Partial Failures:** Some requests may fail while others succeed - use `Promise.allSettled()` to handle gracefully
+2. **Abort Mid-Batch:** Don't start new batches if aborted, but let in-flight complete
+3. **Rate Limiting:** If API returns 429, consider implementing exponential backoff for that batch
+4. **Progress Accuracy:** Track completed count separately from in-progress count
+
+## Expected Improvements
+
+- **Speed:** 5x-10x faster for bulk generation (parallel vs sequential)
+- **User Experience:** All scenes start generating immediately
+- **Reliability:** `Promise.allSettled()` ensures all results are captured, even with partial failures

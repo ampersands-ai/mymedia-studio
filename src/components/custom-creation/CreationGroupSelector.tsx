@@ -120,17 +120,14 @@ export const CreationGroupSelector: React.FC<CreationGroupSelectorProps> = ({
 
   return (
     <div className="mb-4 md:mb-6">
-      {/* Overflow-hidden wrapper isolates negative margin from affecting grid layout */}
-      <div className={cn(isMobile && "overflow-hidden")}>
-        <div 
-          className={cn(
-            isMobile 
-              ? "flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
-              : "flex flex-wrap gap-2 justify-center"
-          )}
-        >
-          {visibleGroups.map(renderGroupButton)}
-        </div>
+      <div 
+        className={cn(
+          isMobile 
+            ? "flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
+            : "flex flex-wrap gap-2 justify-center"
+        )}
+      >
+        {visibleGroups.map(renderGroupButton)}
       </div>
     </div>
   );

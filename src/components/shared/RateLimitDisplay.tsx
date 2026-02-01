@@ -1,6 +1,8 @@
 import { useActiveGenerations } from "@/hooks/useActiveGenerations";
 import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
 import { useGenerationCooldown } from "@/hooks/useGenerationCooldown";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Zap, AlertTriangle, Timer } from "lucide-react";
@@ -12,6 +14,8 @@ interface RateLimitDisplayProps {
 }
 
 export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDisplayProps) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: activeGenerations = [] } = useActiveGenerations();
   const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
   const { isOnCooldown, remainingSeconds, cooldownDuration } = useGenerationCooldown();
@@ -27,6 +31,11 @@ export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDi
   const isAtLimit = activeCount >= maxConcurrent;
   const isNearLimit = activeCount >= maxConcurrent * 0.8;
   const cooldownPercentage = isOnCooldown ? ((cooldownDuration - remainingSeconds) / cooldownDuration) * 100 : 100;
+
+  // Manual refresh handler - click counter to force sync
+  const handleManualRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["active-generations", user?.id] });
+  };
 
   if (variant === 'compact') {
     return (
@@ -50,17 +59,20 @@ export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDi
             </Tooltip>
           )}
           
-          {/* Concurrent generations indicator */}
+          {/* Concurrent generations indicator - clickable to refresh */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm",
-                isAtLimit 
-                  ? "border-destructive/50 bg-destructive/10 text-destructive" 
-                  : isNearLimit 
-                    ? "border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
-                    : "border-border bg-muted/50 text-muted-foreground",
-              )}>
+              <button
+                onClick={handleManualRefresh}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm cursor-pointer transition-colors hover:bg-muted/80",
+                  isAtLimit 
+                    ? "border-destructive/50 bg-destructive/10 text-destructive" 
+                    : isNearLimit 
+                      ? "border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                      : "border-border bg-muted/50 text-muted-foreground",
+                )}
+              >
                 {isAtLimit ? (
                   <AlertTriangle className="h-4 w-4" />
                 ) : (
@@ -69,7 +81,7 @@ export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDi
                 <span className="font-medium">
                   {activeCount}/{maxConcurrent}
                 </span>
-              </div>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-xs">
               <p className="font-medium">Concurrent Generations</p>
@@ -78,6 +90,7 @@ export const RateLimitDisplay = ({ className, variant = 'compact' }: RateLimitDi
                   ? "You've reached your limit. Wait for current generations to complete."
                   : `You can run up to ${maxConcurrent} generations at once.`}
               </p>
+              <p className="text-xs text-muted-foreground mt-1 italic">Tap to refresh</p>
             </TooltipContent>
           </Tooltip>
         </div>

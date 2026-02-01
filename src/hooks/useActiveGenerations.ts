@@ -93,10 +93,12 @@ export const useActiveGenerations = () => {
         });
     },
     enabled: !!user?.id,
-    // Low-frequency fallback polling in case realtime drops (mobile networks)
-    refetchInterval: 15000,
+    // Aggressive sync for responsive UI - counters must reflect reality
+    refetchInterval: 8000,              // 8s fallback (was 15s)
     refetchIntervalInBackground: true,
-    staleTime: 30000, // Data stays fresh for 30s (Realtime keeps it updated)
+    staleTime: 5000,                    // 5s stale time (was 30s)
+    refetchOnMount: 'always',           // Always refetch on mount
+    refetchOnWindowFocus: 'always',     // Always refetch on focus
   });
 
   // Subscribe to real-time updates for user's generations

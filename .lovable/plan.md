@@ -1,109 +1,46 @@
 
-# ✅ COMPLETED
+## Fix: Chrome Incorrectly Detecting Page as Italian
 
-## Fix: Active Generations Counter Lag and Inversion Issue
+### Problem
+Chrome's automatic language detection is misidentifying your English website as Italian and showing "Translate page? Italian to English". This happens because:
 
-### Problem Analysis
-
-Based on the screenshots and code exploration, the active generations counter (`X/3`) is showing stale/inverted data:
-- Screenshot 1: **3/3** with warning icon when there are **no active generations** (empty list)
-- Screenshot 2: **0/3** when there are **3 processing** generations visible
-
-This is caused by React Query cache staleness combined with unreliable realtime updates on mobile networks.
-
----
-
-### Root Causes Identified
-
-| Issue | Current Value | Problem |
-|-------|---------------|---------|
-| `staleTime` | 30 seconds | Data stays cached too long, ignoring DB updates |
-| `refetchInterval` | 15 seconds | Too slow for status changes that complete in seconds |
-| `refetchOnMount` | Not set (defaults to `true` but affected by staleTime) | Page navigation doesn't refresh if data is "fresh" |
-| `refetchOnWindowFocus` | Not set (defaults to `true` but affected by staleTime) | Switching tabs doesn't refresh |
-| Realtime subscription | User-scoped filter | May miss updates on flaky mobile connections |
-
----
+1. **Brand name "artifio"** sounds Italian (Italian words often end in "-io" like "studio", "portfolio")
+2. **Minimal initial text** - The hero section has short phrases that don't give Chrome enough context
+3. **Missing explicit translation hints** for the browser
 
 ### Solution
 
-#### 1. Reduce Cache Staleness in `useActiveGenerations.ts`
+Add stronger language declaration hints in `index.html`:
 
-**File:** `src/hooks/useActiveGenerations.ts`
+| Change | Purpose |
+|--------|---------|
+| Add `translate="no"` to `<html>` | Tells Chrome not to offer translation |
+| Add `Content-Language` meta header | Explicitly declares content language |
+| Add `hreflang` for SEO | Reinforces English language declaration |
 
-**Changes:**
-- Reduce `staleTime` from 30s to 5s for more responsive updates
-- Reduce `refetchInterval` from 15s to 8s for faster fallback polling
-- Add `refetchOnMount: 'always'` to force refresh when component mounts
-- Add `refetchOnWindowFocus: 'always'` to refresh on tab switch
+### File Changes
 
-```text
-Before:
-- staleTime: 30000 (30 seconds)
-- refetchInterval: 15000 (15 seconds)
+**File: `index.html`**
 
-After:
-- staleTime: 5000 (5 seconds)
-- refetchInterval: 8000 (8 seconds)
-- refetchOnMount: 'always'
-- refetchOnWindowFocus: 'always'
+```html
+<!-- Change line 2 from: -->
+<html lang="en">
+
+<!-- To: -->
+<html lang="en" translate="no">
 ```
 
-#### 2. Force Immediate Refetch on Page Navigation
-
-**File:** `src/pages/dashboard/History.tsx`
-
-**Changes:**
-- Add `useActiveGenerations` hook import
-- Use `refetch()` from the hook on component mount to ensure fresh data on the My Creations page
-
-#### 3. Add Manual Refresh Trigger to RateLimitDisplay
-
-**File:** `src/components/shared/RateLimitDisplay.tsx`
-
-**Changes:**
-- Make the refresh button also invalidate the `active-generations` query
-- This provides users a way to manually force-refresh if they notice stale data
-
----
-
-### Technical Implementation Details
-
-```typescript
-// useActiveGenerations.ts - Updated query config
-const query = useQuery<ActiveGeneration[]>({
-  queryKey: ["active-generations", user?.id],
-  queryFn: async () => { /* existing logic */ },
-  enabled: !!user?.id,
-  // More aggressive cache invalidation for responsive UI
-  refetchInterval: 8000,              // 8s fallback (was 15s)
-  refetchIntervalInBackground: true,
-  staleTime: 5000,                    // 5s stale time (was 30s)
-  refetchOnMount: 'always',           // Always refetch on mount
-  refetchOnWindowFocus: 'always',     // Always refetch on focus
-});
+Also add inside `<head>`:
+```html
+<!-- Explicit language declaration to prevent translation prompts -->
+<meta http-equiv="Content-Language" content="en" />
+<link rel="alternate" hreflang="en" href="https://artifio.ai/" />
 ```
 
----
+### Why This Works
 
-### Trade-offs
+- `translate="no"` is a standard HTML attribute that tells browsers not to offer automatic translation
+- `Content-Language` meta tag explicitly tells the browser the page content is in English
+- `hreflang` link reinforces this for both browsers and search engines
 
-| Aspect | Impact |
-|--------|--------|
-| Database queries | ~2x more queries (8s vs 15s polling) |
-| Battery/bandwidth | Slightly higher on mobile |
-| UI responsiveness | Significantly improved - counter updates within 5-8s max |
-| User experience | No more stale/inverted counters |
-
-The additional database load is minimal since this query is lightweight and user-scoped with proper indexing.
-
----
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/hooks/useActiveGenerations.ts` | Reduce staleTime, add refetchOnMount/Focus |
-| `src/pages/dashboard/History.tsx` | Force refetch on mount |
-| `src/components/shared/RateLimitDisplay.tsx` | Add click-to-refresh on counter |
-
+This is a common issue for brands with non-English sounding names (like "artifio") - the fix is simple and doesn't affect any functionality.

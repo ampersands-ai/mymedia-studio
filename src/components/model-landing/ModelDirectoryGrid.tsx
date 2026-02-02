@@ -66,7 +66,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
             onClick={() => navigate(`/models/${model.slug}`)}
           >
             {/* Logo as main image */}
-            <div className="aspect-[4/3] relative overflow-hidden bg-white border-b">
+            <div className="aspect-[4/3] relative overflow-hidden bg-white border-b shadow-sm">
               <div className="w-full h-full flex items-center justify-center p-6">
                 <img
                   src={logoPath}

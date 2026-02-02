@@ -106,7 +106,7 @@ export function ModelDirectoryFilters({
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
           >
-            Providers ({totalProviders})
+            Developers ({totalProviders})
           </button>
         </div>
 

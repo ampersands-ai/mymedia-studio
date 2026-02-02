@@ -149,6 +149,7 @@ export function getContentTypeIcon(contentType: string): string {
 export function getProviderLogo(provider: string): string {
   const logoMap: Record<string, string> = {
     'openai': '/logos/openai.png',
+    'sora': '/logos/openai.png',
     'google': '/logos/google.png',
     'flux': '/logos/flux.png',
     'black forest labs': '/logos/flux.png',
@@ -163,13 +164,14 @@ export function getProviderLogo(provider: string): string {
     'hailuo': '/logos/hailuo.png',
     'recraft': '/logos/recraft.png',
     'seedream': '/logos/seedream.png',
-    'sora': '/logos/sora.png',
+    'bytedance': '/logos/seedream.png',
     'wan': '/logos/wan.png',
+    'alibaba': '/logos/wan.png',
+    'qwen': '/logos/wan.png',
     'xai': '/logos/xai.png',
     'hidream': '/logos/hidream.png',
     'ideogram': '/logos/ideogram.png',
     'topaz': '/logos/topaz.png',
-    'qwen': '/logos/qwen.png',
     'plum': '/logos/plum.png',
     'grok': '/logos/grok.png',
   };

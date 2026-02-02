@@ -1,46 +1,140 @@
 
-## Fix: Chrome Incorrectly Detecting Page as Italian
+## Fix: Audio Studio Navigation Not Working
 
 ### Problem
-Chrome's automatic language detection is misidentifying your English website as Italian and showing "Translate page? Italian to English". This happens because:
+When you're on the Custom Creation page (e.g., "Text to Image" group) and click on "Audio Studio" from a navigation menu, the page stays on the current group instead of switching.
 
-1. **Brand name "artifio"** sounds Italian (Italian words often end in "-io" like "studio", "portfolio")
-2. **Minimal initial text** - The hero section has short phrases that don't give Chrome enough context
-3. **Missing explicit translation hints** for the browser
+### Root Cause
+The Custom Creation page reads the `group` URL parameter only **on initial mount**. When navigating between groups using links (same page, different query param), React Router doesn't remount the component, so the URL change is never picked up.
+
+**Current code (line 546-557 in `CustomCreation.tsx`):**
+```typescript
+useEffect(() => {
+  const urlGroup = searchParams.get('group');
+  if (urlGroup) {
+    // ... validate and set group
+  }
+  // Only run on mount - intentionally exclude state.selectedGroup to prevent loops
+}, []); // <-- Empty dependency = mount only
+```
 
 ### Solution
-
-Add stronger language declaration hints in `index.html`:
+Make the effect reactive to `searchParams` changes. Use a ref to track if the change originated from user clicking group buttons (internal) vs. URL navigation (external), preventing infinite update loops.
 
 | Change | Purpose |
 |--------|---------|
-| Add `translate="no"` to `<html>` | Tells Chrome not to offer translation |
-| Add `Content-Language` meta header | Explicitly declares content language |
-| Add `hreflang` for SEO | Reinforces English language declaration |
+| Add `searchParams` to effect dependencies | React to URL changes from navigation |
+| Track internal updates with ref | Prevent loops from bidirectional sync |
+| Clear ref after state update | Allow next URL navigation to work |
 
 ### File Changes
 
-**File: `index.html`**
+**File: `src/pages/CustomCreation.tsx`**
 
-```html
-<!-- Change line 2 from: -->
-<html lang="en">
-
-<!-- To: -->
-<html lang="en" translate="no">
+**Change 1: Add a ref to track internal group changes (after line 45)**
+```typescript
+const outputSectionRef = useRef<HTMLDivElement>(null);
+const isInternalGroupChange = useRef(false); // NEW: Track internal vs URL changes
 ```
 
-Also add inside `<head>`:
-```html
-<!-- Explicit language declaration to prevent translation prompts -->
-<meta http-equiv="Content-Language" content="en" />
-<link rel="alternate" hreflang="en" href="https://artifio.ai/" />
+**Change 2: Update URL → State sync effect (lines 545-557)**
+
+Replace:
+```typescript
+// Sync URL group param to state on mount only
+useEffect(() => {
+  const urlGroup = searchParams.get('group');
+  if (urlGroup) {
+    const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
+                         'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
+    if (validGroups.includes(urlGroup)) {
+      setStateSelectedGroup(urlGroup as CreationGroup);
+    }
+  }
+  // Only run on mount - intentionally exclude state.selectedGroup to prevent loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 ```
 
-### Why This Works
+With:
+```typescript
+// Sync URL group param to state (reactive to URL changes from navigation)
+useEffect(() => {
+  // Skip if this change came from user clicking group buttons
+  if (isInternalGroupChange.current) {
+    isInternalGroupChange.current = false;
+    return;
+  }
+  
+  const urlGroup = searchParams.get('group');
+  if (urlGroup && urlGroup !== state.selectedGroup) {
+    const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
+                         'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
+    if (validGroups.includes(urlGroup)) {
+      setStateSelectedGroup(urlGroup as CreationGroup);
+    }
+  }
+}, [searchParams, state.selectedGroup, setStateSelectedGroup]);
+```
 
-- `translate="no"` is a standard HTML attribute that tells browsers not to offer automatic translation
-- `Content-Language` meta tag explicitly tells the browser the page content is in English
-- `hreflang` link reinforces this for both browsers and search engines
+**Change 3: Update State → URL sync effect (lines 610-616)**
 
-This is a common issue for brands with non-English sounding names (like "artifio") - the fix is simple and doesn't affect any functionality.
+Replace:
+```typescript
+// Sync state changes back to URL (when user clicks group buttons)
+useEffect(() => {
+  const currentUrlGroup = searchParams.get('group');
+  if (state.selectedGroup !== currentUrlGroup) {
+    setSearchParams({ group: state.selectedGroup }, { replace: true });
+  }
+}, [state.selectedGroup, searchParams, setSearchParams]);
+```
+
+With:
+```typescript
+// Sync state changes back to URL (when user clicks group buttons)
+useEffect(() => {
+  const currentUrlGroup = searchParams.get('group');
+  if (state.selectedGroup !== currentUrlGroup) {
+    isInternalGroupChange.current = true; // Mark as internal change
+    setSearchParams({ group: state.selectedGroup }, { replace: true });
+  }
+}, [state.selectedGroup, searchParams, setSearchParams]);
+```
+
+### How This Fixes It
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                 BEFORE (Broken)                              │
+├─────────────────────────────────────────────────────────────┤
+│  Click "Audio Studio" link                                   │
+│          ↓                                                   │
+│  URL changes to ?group=prompt_to_audio                       │
+│          ↓                                                   │
+│  useEffect with [] deps does NOT run                         │
+│          ↓                                                   │
+│  State stays on prompt_to_image ❌                           │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                 AFTER (Fixed)                                │
+├─────────────────────────────────────────────────────────────┤
+│  Click "Audio Studio" link                                   │
+│          ↓                                                   │
+│  URL changes to ?group=prompt_to_audio                       │
+│          ↓                                                   │
+│  useEffect with [searchParams] deps RUNS                     │
+│          ↓                                                   │
+│  isInternalGroupChange.current is false (external nav)       │
+│          ↓                                                   │
+│  setStateSelectedGroup('prompt_to_audio') called ✓           │
+│          ↓                                                   │
+│  UI switches to Audio Studio ✓                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why This Won't Cause Infinite Loops
+
+1. **User clicks group button** → State changes → URL sync effect sets `isInternalGroupChange = true` → URL updates → URL sync effect runs but skips (sees the flag)
+2. **User navigates via link** → URL changes → `isInternalGroupChange` is false → State updates → URL is already correct so URL sync effect is a no-op

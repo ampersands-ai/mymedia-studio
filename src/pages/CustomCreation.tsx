@@ -43,6 +43,7 @@ const CustomCreation = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const outputSectionRef = useRef<HTMLDivElement>(null);
+  const isInternalGroupChange = useRef(false); // Track internal vs URL changes
 
   // State management
   const { 
@@ -542,19 +543,23 @@ const CustomCreation = () => {
     }
   }, [filteredModels, state.selectedModel, setStateSelectedModel]);
 
-  // Sync URL group param to state on mount only
+  // Sync URL group param to state (reactive to URL changes from navigation)
   useEffect(() => {
+    // Skip if this change came from user clicking group buttons
+    if (isInternalGroupChange.current) {
+      isInternalGroupChange.current = false;
+      return;
+    }
+    
     const urlGroup = searchParams.get('group');
-    if (urlGroup) {
+    if (urlGroup && urlGroup !== state.selectedGroup) {
       const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
                            'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
       if (validGroups.includes(urlGroup)) {
         setStateSelectedGroup(urlGroup as CreationGroup);
       }
     }
-    // Only run on mount - intentionally exclude state.selectedGroup to prevent loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, state.selectedGroup, setStateSelectedGroup]);
 
   // Sync URL model and prompt params to state on mount (for deep linking from model pages)
   useEffect(() => {
@@ -611,6 +616,7 @@ const CustomCreation = () => {
   useEffect(() => {
     const currentUrlGroup = searchParams.get('group');
     if (state.selectedGroup !== currentUrlGroup) {
+      isInternalGroupChange.current = true; // Mark as internal change
       setSearchParams({ group: state.selectedGroup }, { replace: true });
     }
   }, [state.selectedGroup, searchParams, setSearchParams]);

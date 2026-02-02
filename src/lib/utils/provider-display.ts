@@ -151,6 +151,8 @@ export function getProviderLogo(provider: string): string {
     'openai': '/logos/openai.png',
     'google': '/logos/google.png',
     'flux': '/logos/flux.png',
+    'black forest labs': '/logos/flux.png',
+    'blackforestlabs': '/logos/flux.png',
     'kling': '/logos/kling.png',
     'minimax': '/logos/minimax.png',
     'elevenlabs': '/logos/elevenlabs.png',

@@ -54,7 +54,7 @@ export const MODEL_CONFIG = {
   scheduler: "FlowMatchEulerDiscreteScheduler",
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/blackforestlabs.svg",
+  logoUrl: "/logos/flux.png",
   modelFamily: "FLUX",
   variantName: "Flux 1 Dev",
   displayOrderInFamily: 1,

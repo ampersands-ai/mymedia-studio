@@ -100,7 +100,7 @@ export function ModelDirectoryFilters({
           <button
             onClick={() => setActiveTab("providers")}
             className={cn(
-              "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+              "flex-1 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap",
               activeTab === "providers"
                 ? "bg-primary/10 text-primary border-b-2 border-primary"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

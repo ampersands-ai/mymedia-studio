@@ -33,8 +33,8 @@ export const GlobalHeader = () => {
     <header className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
       isScrolled 
-        ? "backdrop-blur-xl bg-card/80 shadow-lg border-b border-border/30" 
-        : "backdrop-blur-sm bg-black/20"
+        ? "backdrop-blur-xl bg-background/95 shadow-lg border-b border-border/30" 
+        : "backdrop-blur-md bg-background/90"
     )}>
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">

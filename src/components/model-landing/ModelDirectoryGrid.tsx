@@ -65,20 +65,19 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
             className="group overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border hover:border-primary/30"
             onClick={() => navigate(`/models/${model.slug}`)}
           >
-            {/* Image */}
-            <div className="aspect-[4/3] relative overflow-hidden bg-muted">
-              {model.hero_image_url ? (
+            {/* Logo as main image */}
+            <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-muted via-muted/80 to-muted/60">
+              <div className="w-full h-full flex items-center justify-center p-6">
                 <img
-                  src={model.hero_image_url}
+                  src={logoPath}
                   alt={model.model_name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-md"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = '/logos/artifio.png';
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-                  <span className="text-3xl">{getCategoryIcon(model.category)}</span>
-                </div>
-              )}
+              </div>
 
               {/* Badges */}
               <div className="absolute top-1.5 left-1.5">

@@ -24,7 +24,7 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/flux.png",
+  logoUrl: "/logos/blackforestlabs.svg",
   modelFamily: "Flux",
   variantName: "Flux 1.1 Pro",
   displayOrderInFamily: 3,

@@ -96,7 +96,7 @@ export default function ModelLanding() {
       <div className="min-h-screen bg-background flex flex-col">
         <GlobalHeader />
         
-        <main className="flex-1">
+        <main className="flex-1 pt-20">
           {/* Breadcrumbs */}
           <div className="container mx-auto px-4 pt-6">
             <ModelBreadcrumbs 

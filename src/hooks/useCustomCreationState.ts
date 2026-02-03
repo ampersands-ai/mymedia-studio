@@ -353,8 +353,12 @@ export const useCustomCreationState = () => {
    */
   const setSelectedGroup = useCallback((selectedGroup: CreationGroup) => {
     setState(prev => {
-      // Only clear outputs if group is actually changing and not during active generation
+      // Only proceed with full cleanup if group is actually changing
       const isChanging = selectedGroup !== prev.selectedGroup;
+      if (!isChanging) {
+        return prev; // No change needed
+      }
+      
       const isGenerating = prev.localGenerating || prev.pollingGenerationId;
       const hasOutputs = prev.generatedOutputs.length > 0 || prev.generatedOutput;
       
@@ -362,25 +366,27 @@ export const useCustomCreationState = () => {
       const isRecentlyComplete = prev.generationCompleteTime && 
         (Date.now() - prev.generationCompleteTime) < 2000;
       
-      // Don't clear outputs if:
-      // - Group isn't changing
-      // - Generation is in progress
-      // - We have existing outputs (just completed)
-      // - Generation just completed recently
-      if (!isChanging || isGenerating || hasOutputs || isRecentlyComplete) {
-        return { ...prev, selectedGroup };
+      // ALWAYS clear selectedModel when switching groups - the old model won't be 
+      // in the new group's filtered list, causing undefined currentModel issues
+      const baseUpdate = {
+        ...prev,
+        selectedGroup,
+        selectedModel: null, // Always clear - model from old group won't be in new group
+        modelParameters: {}, // Clear so new schema defaults apply
+      };
+      
+      // If generation is in progress, recently completed, or has outputs, preserve outputs
+      if (isGenerating || hasOutputs || isRecentlyComplete) {
+        return baseUpdate;
       }
       
+      // Full cleanup for fresh group switch
       return {
-        ...prev, 
-        selectedGroup, 
-        selectedModel: null,
-        // Clear everything when group changes (different content type entirely)
+        ...baseUpdate,
         generatedOutput: null,
         generatedOutputs: [],
         selectedOutputIndex: 0,
         failedGenerationError: null,
-        modelParameters: {}, // Clear so new schema defaults apply
         prompt: '', // Clear prompt since switching to different content type
       };
     });

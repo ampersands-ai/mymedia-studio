@@ -16,6 +16,8 @@ import { sanitizeForStorage } from "@/lib/database/sanitization";
  *
  * When using task_id, you reference a previous Grok image generation
  * and select one of the 6 generated images (index 0-5)
+ *
+ * Video duration: 6 or 10 seconds
  */
 export const MODEL_CONFIG = {
   modelId: "grok-imagine/image-to-video",
@@ -87,6 +89,18 @@ export const SCHEMA = {
       },
       type: "string",
       title: "Mode",
+      description: "Spicy mode only available when using task_id input method",
+    },
+    duration: {
+      default: "6",
+      enum: ["6", "10"],
+      enumLabels: {
+        "6": "6 seconds",
+        "10": "10 seconds",
+      },
+      type: "string",
+      title: "Duration",
+      description: "Video duration in seconds",
     },
   },
   required: ["prompt", "image_urls"], // No individual field is strictly required, but need image_urls OR task_id
@@ -130,6 +144,11 @@ export function validate(inputs: Record<string, any>) {
     return { valid: false, error: "Prompt must be 5000 characters or less" };
   }
 
+  // Validate duration
+  if (inputs.duration && !["6", "10"].includes(inputs.duration)) {
+    return { valid: false, error: "Duration must be 6 or 10 seconds" };
+  }
+
   return { valid: true };
 }
 
@@ -147,11 +166,15 @@ export function preparePayload(inputs: Record<string, any>) {
   if (inputs.task_id) {
     payload.task_id = inputs.task_id;
     if (inputs.index !== undefined) payload.index = inputs.index;
+    // Spicy mode supported with task_id
     payload.mode = inputs.mode || "normal";
   }
 
   // Optional prompt
   if (inputs.prompt) payload.prompt = inputs.prompt;
+
+  // Duration (default to 6 seconds)
+  payload.duration = inputs.duration || "6";
 
   return {
     model: MODEL_CONFIG.modelId,

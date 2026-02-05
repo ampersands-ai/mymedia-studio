@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu, Sparkles } from "lucide-react";
+import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -120,6 +120,20 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
               </div>
             </Link>
           )}
+
+          {/* Blog */}
+          <Link
+            to="/blog"
+            onClick={() => setOpenDropdown(null)}
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
+          >
+            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <BookOpen className="h-4 w-4" />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-xs text-foreground">Blog</p>
+            </div>
+          </Link>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

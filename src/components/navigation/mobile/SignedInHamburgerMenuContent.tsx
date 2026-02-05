@@ -1,7 +1,7 @@
 import { 
   Home, Settings, LogOut, Shield, Sparkles, LayoutTemplate, BookOpen, HelpCircle,
   History, Video, Clock, Clapperboard, ChevronDown, Palette, ImagePlus, Music, 
-  CircleUser, Repeat, FolderOpen, Info, Film, CreditCard, Cpu, Mic
+  CircleUser, Repeat, FolderOpen, Info, Film, CreditCard, Cpu, Mic, FileText
 } from "lucide-react";
 import {
   Collapsible,
@@ -268,6 +268,13 @@ export const SignedInHamburgerMenuContent = ({
                 path="/features" 
                 label="Features" 
                 icon={<Sparkles className="h-4 w-4" />} 
+              />
+            )}
+            {isPageEnabled('blog') && (
+              <MenuItem 
+                path="/blog" 
+                label="Blog" 
+                icon={<FileText className="h-4 w-4" />} 
               />
             )}
           </CollapsibleContent>

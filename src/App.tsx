@@ -9,6 +9,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { MediaProvider } from "./contexts/MediaContext";
+import { BrandProvider } from "./contexts/BrandContext";
 import { Analytics } from "./components/Analytics";
 import { App as CapacitorApp } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
@@ -266,18 +267,20 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       {import.meta.env.DEV && <ReactQueryDevtools />}
-      <AuthProvider>
-        <MediaProvider>
-          <TooltipProvider>
+      <BrandProvider>
+        <AuthProvider>
+          <MediaProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
               <AppContent />
             </BrowserRouter>
-          </TooltipProvider>
-        </MediaProvider>
-      </AuthProvider>
+            </TooltipProvider>
+          </MediaProvider>
+        </AuthProvider>
+      </BrandProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );

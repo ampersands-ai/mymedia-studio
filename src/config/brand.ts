@@ -1,32 +1,123 @@
 /**
  * White-Label Brand Configuration
  *
- * This is the single source of truth for all branding across the application.
- * To white-label this application, update the values below or override them
- * via environment variables prefixed with VITE_BRAND_.
+ * Supports two deployment modes:
  *
- * Environment variable overrides (all optional):
- *   VITE_BRAND_NAME          - Display name (e.g. "MyBrand")
- *   VITE_BRAND_DOMAIN        - Primary domain (e.g. "mybrand.com")
- *   VITE_BRAND_TAGLINE       - Short tagline
- *   VITE_BRAND_DESCRIPTION   - SEO meta description
- *   VITE_BRAND_SUPPORT_EMAIL - Support email address
- *   VITE_BRAND_PRIVACY_EMAIL - Privacy/DPO email address
- *   VITE_BRAND_LOGO_PATH     - Path to logo asset (e.g. "/logos/mybrand.png")
- *   VITE_BRAND_FAVICON_PATH  - Path to favicon
- *   VITE_BRAND_OG_IMAGE      - Open Graph image URL
- *   VITE_BRAND_TWITTER_HANDLE- Twitter/X handle (e.g. "@mybrand")
- *   VITE_BRAND_APP_URL       - Full app URL with protocol (e.g. "https://mybrand.com")
+ * 1. PLATFORM MODE (mybrand.mymedia.studio)
+ *    - Multi-tenant: brand config loaded from Supabase `brands` table
+ *    - Resolved at runtime from the subdomain or custom domain
+ *    - Managed via BrandProvider context
+ *
+ * 2. CUSTOM DOMAIN MODE (mybrand.com)
+ *    - Standalone deployment: brand config from environment variables
+ *    - Set VITE_BRAND_* variables in .env
+ *
+ * The mode is auto-detected:
+ *   - If hostname matches *.VITE_PLATFORM_DOMAIN → platform mode
+ *   - Otherwise → env mode (custom domain)
+ *
+ * Components should use:
+ *   import { useBrand } from '@/contexts/BrandContext';
+ *   const brand = useBrand();
+ *
+ * For non-React code that needs static access (SEO schemas, etc.),
+ * use the exported `brand` object which is the env-based default.
  */
 
-// Helper to read env with fallback
+// ─── Types ─────────────────────────────────────────────────────────────
+
+export interface BrandConfig {
+  // Identity
+  name: string;
+  slug: string;
+  domain: string;
+  tagline: string;
+  description: string;
+  appUrl: string;
+
+  // Assets
+  logoPath: string;
+  faviconPath: string;
+  ogImage: string;
+
+  // Contact
+  supportEmail: string;
+  privacyEmail: string;
+  alertsEmail: string;
+  noreplyEmail: string;
+
+  // Social
+  social: {
+    twitter: string;
+    twitterHandle: string;
+    linkedin: string;
+    youtube: string;
+    instagram: string;
+    facebook: string;
+  };
+
+  // Mobile app
+  mobile: {
+    appId: string;
+    appName: string;
+  };
+
+  // SEO
+  seo: {
+    defaultTitle: string;
+    titleSuffix: string;
+    keywords: string;
+    author: string;
+  };
+
+  // Storage keys (namespaced)
+  storageKeys: {
+    cookieConsent: string;
+    utmParams: string;
+    deviceId: string;
+    theme: string;
+  };
+
+  // Theme overrides (from DB)
+  theme: Record<string, string>;
+
+  // Feature settings (from DB)
+  settings: Record<string, unknown>;
+
+  // Source of the config
+  _source: 'env' | 'database';
+  _brandId?: string;
+}
+
+// ─── Environment helpers ───────────────────────────────────────────────
+
 const env = (key: string, fallback: string): string =>
   import.meta.env[key] || fallback;
 
-export const brand = {
-  // ─── Identity ────────────────────────────────────────────────────────
-  name: env('VITE_BRAND_NAME', 'artifio.ai'),
-  domain: env('VITE_BRAND_DOMAIN', 'artifio.ai'),
+/** The platform base domain for subdomain-based tenants */
+export const PLATFORM_DOMAIN = env('VITE_PLATFORM_DOMAIN', 'mymedia.studio');
+
+// ─── Storage key helper ────────────────────────────────────────────────
+
+function storageKeysFor(domain: string) {
+  const ns = domain.replace(/\./g, '_');
+  return {
+    cookieConsent: `${ns}_cookie_consent`,
+    utmParams: `${ns}_utm_params`,
+    deviceId: `${ns}_device_id`,
+    theme: 'theme',
+  };
+}
+
+// ─── Default brand (from environment variables) ────────────────────────
+
+const defaultName = env('VITE_BRAND_NAME', 'artifio.ai');
+const defaultDomain = env('VITE_BRAND_DOMAIN', 'artifio.ai');
+
+export const defaultBrand: BrandConfig = {
+  name: defaultName,
+  slug: env('VITE_BRAND_SLUG', 'default'),
+  domain: defaultDomain,
   tagline: env('VITE_BRAND_TAGLINE', 'All-in-one AI content platform for creators'),
   description: env(
     'VITE_BRAND_DESCRIPTION',
@@ -34,18 +125,15 @@ export const brand = {
   ),
   appUrl: env('VITE_BRAND_APP_URL', 'https://artifio.ai'),
 
-  // ─── Assets ──────────────────────────────────────────────────────────
   logoPath: env('VITE_BRAND_LOGO_PATH', '/logos/artifio.png'),
   faviconPath: env('VITE_BRAND_FAVICON_PATH', '/favicon.png'),
   ogImage: env('VITE_BRAND_OG_IMAGE', ''),
 
-  // ─── Contact ─────────────────────────────────────────────────────────
   supportEmail: env('VITE_BRAND_SUPPORT_EMAIL', 'support@artifio.ai'),
   privacyEmail: env('VITE_BRAND_PRIVACY_EMAIL', 'privacy@artifio.ai'),
   alertsEmail: env('VITE_BRAND_ALERTS_EMAIL', 'alerts@artifio.ai'),
   noreplyEmail: env('VITE_BRAND_NOREPLY_EMAIL', 'noreply@artifio.ai'),
 
-  // ─── Social ──────────────────────────────────────────────────────────
   social: {
     twitter: env('VITE_BRAND_TWITTER', 'https://x.com/artifio_ai'),
     twitterHandle: env('VITE_BRAND_TWITTER_HANDLE', '@artifio_ai'),
@@ -55,56 +143,154 @@ export const brand = {
     facebook: env('VITE_BRAND_FACEBOOK', 'https://www.facebook.com/share/1F1J8UFCgr/'),
   },
 
-  // ─── Mobile App ──────────────────────────────────────────────────────
   mobile: {
     appId: env('VITE_BRAND_APP_ID', 'com.artifio.create'),
     appName: env('VITE_BRAND_APP_NAME', 'Artifio Create'),
   },
 
-  // ─── SEO ─────────────────────────────────────────────────────────────
   seo: {
-    defaultTitle: env('VITE_BRAND_NAME', 'artifio.ai'),
-    titleSuffix: env('VITE_BRAND_NAME', 'artifio.ai'),
+    defaultTitle: defaultName,
+    titleSuffix: defaultName,
     keywords: 'AI video generator, AI image creator, AI content creation, portrait headshots, photo editing, video creation, product photography, social media content, AI tools',
-    author: env('VITE_BRAND_NAME', 'artifio.ai'),
+    author: defaultName,
   },
 
-  // ─── Storage Keys (namespaced per brand to avoid conflicts) ──────────
-  storageKeys: {
-    cookieConsent: `${env('VITE_BRAND_DOMAIN', 'artifio.ai').replace(/\./g, '_')}_cookie_consent`,
-    utmParams: `${env('VITE_BRAND_DOMAIN', 'artifio.ai').replace(/\./g, '_')}_utm_params`,
-    deviceId: `${env('VITE_BRAND_DOMAIN', 'artifio.ai').replace(/\./g, '_')}_device_id`,
-    theme: 'theme',
-  },
-} as const;
+  storageKeys: storageKeysFor(defaultDomain),
 
-// ─── Helper Functions ────────────────────────────────────────────────────
+  theme: {},
+  settings: {},
 
-/** Get a page title formatted with brand suffix (e.g. "Settings - artifio.ai") */
+  _source: 'env',
+};
+
+// ─── Mutable brand reference ───────────────────────────────────────────
+// This is updated by BrandProvider when a DB brand is resolved.
+// Non-React code can import `brand` directly for the current value.
+
+export let brand: BrandConfig = defaultBrand;
+
+/** Called by BrandProvider to update the global brand reference */
+export function _setBrand(config: BrandConfig) {
+  brand = config;
+}
+
+// ─── Helper Functions ──────────────────────────────────────────────────
+
+/** Page title formatted with brand suffix (e.g. "Settings - MyBrand") */
 export function pageTitle(page: string): string {
   return `${page} - ${brand.seo.titleSuffix}`;
 }
 
-/** Get a mailto: link for support */
+/** mailto: link for support */
 export function supportMailto(): string {
   return `mailto:${brand.supportEmail}`;
 }
 
-/** Get a mailto: link for privacy */
+/** mailto: link for privacy */
 export function privacyMailto(): string {
   return `mailto:${brand.privacyEmail}`;
 }
 
-/** Get the full URL for a path (e.g. "/pricing" -> "https://artifio.ai/pricing") */
+/** Full URL for a path (e.g. "/pricing" -> "https://mybrand.com/pricing") */
 export function brandUrl(path: string): string {
   return `${brand.appUrl}${path}`;
 }
 
-/** Get download filename with brand prefix */
+/** Download filename with brand prefix */
 export function downloadFilename(type: string, ext: string): string {
   const prefix = brand.domain.replace(/\./g, '-');
   const timestamp = Date.now();
   return `${prefix}-${type}-${timestamp}.${ext}`;
 }
 
-export type BrandConfig = typeof brand;
+// ─── Brand Resolution ──────────────────────────────────────────────────
+
+/** Detect deployment mode from hostname */
+export function detectBrandMode(): 'platform' | 'custom' {
+  const hostname = window.location.hostname;
+  if (hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
+    return 'platform';
+  }
+  return 'custom';
+}
+
+/** Extract slug from platform subdomain (e.g. "mybrand.mymedia.studio" -> "mybrand") */
+export function extractSlugFromHostname(): string | null {
+  const hostname = window.location.hostname;
+  if (hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
+    const slug = hostname.replace(`.${PLATFORM_DOMAIN}`, '');
+    return slug || null;
+  }
+  return null;
+}
+
+/** Build a BrandConfig from a database row */
+export function brandConfigFromRow(row: {
+  id: string;
+  slug: string;
+  name: string;
+  custom_domain?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  logo_url?: string | null;
+  favicon_url?: string | null;
+  og_image_url?: string | null;
+  support_email?: string | null;
+  privacy_email?: string | null;
+  alerts_email?: string | null;
+  noreply_email?: string | null;
+  social_links?: Record<string, string> | null;
+  theme?: Record<string, string> | null;
+  settings?: Record<string, unknown> | null;
+}): BrandConfig {
+  const domain = row.custom_domain || `${row.slug}.${PLATFORM_DOMAIN}`;
+  const appUrl = `https://${domain}`;
+  const social = row.social_links || {};
+
+  return {
+    name: row.name,
+    slug: row.slug,
+    domain,
+    tagline: row.tagline || defaultBrand.tagline,
+    description: row.description || defaultBrand.description,
+    appUrl,
+
+    logoPath: row.logo_url || defaultBrand.logoPath,
+    faviconPath: row.favicon_url || defaultBrand.faviconPath,
+    ogImage: row.og_image_url || '',
+
+    supportEmail: row.support_email || `support@${domain}`,
+    privacyEmail: row.privacy_email || `privacy@${domain}`,
+    alertsEmail: row.alerts_email || `alerts@${domain}`,
+    noreplyEmail: row.noreply_email || `noreply@${domain}`,
+
+    social: {
+      twitter: social.twitter || '',
+      twitterHandle: social.twitterHandle || '',
+      linkedin: social.linkedin || '',
+      youtube: social.youtube || '',
+      instagram: social.instagram || '',
+      facebook: social.facebook || '',
+    },
+
+    mobile: {
+      appId: `com.${row.slug}.create`,
+      appName: `${row.name} Create`,
+    },
+
+    seo: {
+      defaultTitle: row.name,
+      titleSuffix: row.name,
+      keywords: defaultBrand.seo.keywords,
+      author: row.name,
+    },
+
+    storageKeys: storageKeysFor(domain),
+
+    theme: row.theme || {},
+    settings: row.settings || {},
+
+    _source: 'database',
+    _brandId: row.id,
+  };
+}

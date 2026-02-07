@@ -1,31 +1,45 @@
 /**
- * CORS Configuration
+ * CORS Configuration (Multi-Tenant)
  *
- * SECURITY: Properly configured CORS headers to prevent CSRF attacks
+ * Allows requests from:
+ * 1. Explicit origins in ALLOWED_ORIGINS env var (comma-separated)
+ * 2. Any *.PLATFORM_DOMAIN subdomain (e.g. mybrand.mymedia.studio)
+ * 3. localhost for development
  *
- * DO NOT use wildcard '*' for Access-Control-Allow-Origin in production
- * as it allows any website to make requests to your API with user credentials.
+ * SECURITY: Does NOT use wildcard '*' for Access-Control-Allow-Origin.
  */
 
+const PLATFORM_DOMAIN = Deno.env.get('PLATFORM_DOMAIN') || 'mymedia.studio';
+
 /**
- * Check if origin matches localhost for development
+ * Check if origin matches allowed patterns
  */
 function isAllowedOrigin(origin: string): boolean {
   // Allow localhost for development
-  if (origin.startsWith('http://localhost:')) {
+  if (origin.startsWith('http://localhost:') || origin === 'http://localhost') {
     return true;
   }
+
+  // Allow any subdomain of the platform domain (mybrand.mymedia.studio)
+  try {
+    const url = new URL(origin);
+    if (url.hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
+      return true;
+    }
+  } catch {
+    // Invalid URL
+  }
+
   return false;
 }
 
 /**
  * Get the allowed origin based on environment
- * Supports multiple origins for development/staging/production
  */
 export function getAllowedOrigin(requestOrigin: string | null): string {
   // Get allowed origins from environment variable (comma-separated)
   const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
-  const allowedOrigins = allowedOriginsEnv 
+  const allowedOrigins = allowedOriginsEnv
     ? allowedOriginsEnv.split(',').map(origin => origin.trim())
     : [];
 
@@ -34,7 +48,7 @@ export function getAllowedOrigin(requestOrigin: string | null): string {
     return requestOrigin;
   }
 
-  // Check localhost (always allowed for development)
+  // Check platform subdomains and localhost
   if (requestOrigin && isAllowedOrigin(requestOrigin)) {
     return requestOrigin;
   }
@@ -43,13 +57,12 @@ export function getAllowedOrigin(requestOrigin: string | null): string {
   if (allowedOrigins.length > 0) {
     return allowedOrigins[0];
   }
-  
+
   return requestOrigin || '*';
 }
 
 /**
  * Get CORS headers for edge functions
- * Dynamically sets the origin based on the request
  */
 export function getCorsHeaders(req: Request): HeadersInit {
   const requestOrigin = req.headers.get('Origin');
@@ -98,17 +111,13 @@ export function handleCorsPreflight(req: Request): Response {
 
   if (requestOrigin) {
     const allowedOriginsEnv = Deno.env.get('ALLOWED_ORIGINS');
-    const allowedOrigins = allowedOriginsEnv 
+    const allowedOrigins = allowedOriginsEnv
       ? allowedOriginsEnv.split(',').map(origin => origin.trim())
       : [];
 
-    // Check explicit list first
     const inExplicitList = allowedOrigins.includes(requestOrigin);
-    
-    // Then check localhost
     const matchesPattern = isAllowedOrigin(requestOrigin);
-    
-    // Reject if neither matches
+
     if (!inExplicitList && !matchesPattern) {
       return new Response('Forbidden', { status: 403 });
     }

@@ -1,4 +1,5 @@
 import type { TemplateLandingPage } from "@/hooks/useTemplateLanding";
+import { brandUrl } from "@/config/brand";
 
 /**
  * Generate JSON-LD structured data for template landing pages
@@ -30,7 +31,7 @@ export function generateSoftwareApplicationSchema(
       availability: "https://schema.org/InStock",
     },
     image: template.hero_after_image || template.thumbnail_url,
-    url: `https://artifio.ai/templates/${template.category_slug}/${template.slug}`,
+    url: brandUrl(`/templates/${template.category_slug}/${template.slug}`),
   };
 }
 
@@ -99,25 +100,25 @@ export function generateBreadcrumbSchema(
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://artifio.ai",
+        item: brandUrl('/'),
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Templates",
-        item: "https://artifio.ai/templates",
+        item: brandUrl('/templates'),
       },
       {
         "@type": "ListItem",
         position: 3,
         name: template.category_slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-        item: `https://artifio.ai/templates/${template.category_slug}`,
+        item: brandUrl(`/templates/${template.category_slug}`),
       },
       {
         "@type": "ListItem",
         position: 4,
         name: template.title,
-        item: `https://artifio.ai/templates/${template.category_slug}/${template.slug}`,
+        item: brandUrl(`/templates/${template.category_slug}/${template.slug}`),
       },
     ],
   };
@@ -198,7 +199,7 @@ export function setCanonical(url: string): void {
 export function generateSitemapEntry(template: TemplateLandingPage): string {
   return `
   <url>
-    <loc>https://artifio.ai/templates/${template.category_slug}/${template.slug}</loc>
+    <loc>${brandUrl(`/templates/${template.category_slug}/${template.slug}`)}</loc>
     <lastmod>${new Date(template.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

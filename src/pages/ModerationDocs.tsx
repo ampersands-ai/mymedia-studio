@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { brand } from '@/config/brand';
 
 const ModerationDocs = () => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -15,7 +16,7 @@ const ModerationDocs = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Artifio.ai Content Moderation System Documentation</title>
+          <title>${brand.name} Content Moderation System Documentation</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -64,11 +65,11 @@ const ModerationDocs = () => {
         </div>
 
         <div ref={contentRef} className="bg-card p-8 rounded-lg border">
-          <h1>Artifio.ai Content Moderation System Documentation</h1>
+          <h1>{brand.name} Content Moderation System Documentation</h1>
 
           <h2>Overview</h2>
           <p>
-            Artifio.ai implements a <strong>mandatory content moderation layer</strong> using OpenAI's 
+            {brand.name} implements a <strong>mandatory content moderation layer</strong> using OpenAI's 
             industry-leading Moderation API. Every user-submitted prompt is automatically screened 
             <strong> before</strong> any AI content generation occurs. This ensures compliance with 
             content policies and prevents the creation of harmful, illegal, or inappropriate content.
@@ -144,7 +145,7 @@ const ModerationDocs = () => {
 
           <hr style={{ margin: '30px 0' }} />
           <p style={{ fontSize: '14px', color: '#666' }}>
-            This system ensures Artifio.ai maintains a safe platform while preventing misuse of AI generation capabilities.
+            This system ensures {brand.name} maintains a safe platform while preventing misuse of AI generation capabilities.
           </p>
           <p style={{ fontSize: '12px', color: '#999', marginTop: '20px' }}>
             Document generated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}

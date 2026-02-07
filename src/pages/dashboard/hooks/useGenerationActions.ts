@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { clientLogger } from "@/lib/logging/client-logger";
+import { downloadFilename } from "@/config/brand";
 import type { Generation } from "./useGenerationHistory";
 
 export const useGenerationActions = (userId: string | undefined) => {
@@ -35,8 +36,8 @@ export const useGenerationActions = (userId: string | undefined) => {
         a.href = blobUrl;
         const isVideo = type === 'video' || type === 'video_editor';
         a.download = isVideo
-          ? `artifio.ai-video-${Date.now()}.mp4`
-          : `artifio.ai-${type}-${Date.now()}`;
+          ? downloadFilename('video', 'mp4')
+          : downloadFilename(type, 'bin');
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(blobUrl);
@@ -90,8 +91,7 @@ export const useGenerationActions = (userId: string | undefined) => {
       a.href = blobUrl;
       const extension = storagePath.split('.').pop() || type;
       const isVideo = type === 'video' || type === 'video_editor';
-      const prefix = isVideo ? 'artifio.ai-video' : `artifio.ai-${type}`;
-      a.download = `${prefix}-${Date.now()}.${extension}`;
+      a.download = downloadFilename(isVideo ? 'video' : type, extension);
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(blobUrl);

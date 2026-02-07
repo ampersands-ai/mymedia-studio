@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import logoImage from "@/assets/logo.png";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
+import { brand } from '@/config/brand';
 
 export const GlobalHeader = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export const GlobalHeader = () => {
           <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <OptimizedImage 
               src={logoImage} 
-              alt="artifio.ai logo" 
+              alt={`${brand.name} logo`}
               width={32}
               height={32}
               className="h-6 md:h-8 object-contain"
@@ -51,7 +52,7 @@ export const GlobalHeader = () => {
               isSupabaseImage={false}
             />
             <span className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-              artifio.ai
+              {brand.name}
             </span>
           </Link>
 

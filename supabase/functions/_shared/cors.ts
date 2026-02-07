@@ -7,22 +7,10 @@
  * as it allows any website to make requests to your API with user credentials.
  */
 
-// Lovable domain patterns for preview and production URLs
-const LOVABLE_PATTERNS = [
-  /^https:\/\/.*\.lovable\.app$/,
-  /^https:\/\/.*\.lovableproject\.com$/,
-];
-
 /**
- * Check if origin matches Lovable domain patterns or localhost
+ * Check if origin matches localhost for development
  */
 function isAllowedOrigin(origin: string): boolean {
-  // Check Lovable patterns
-  for (const pattern of LOVABLE_PATTERNS) {
-    if (pattern.test(origin)) {
-      return true;
-    }
-  }
   // Allow localhost for development
   if (origin.startsWith('http://localhost:')) {
     return true;
@@ -46,7 +34,7 @@ export function getAllowedOrigin(requestOrigin: string | null): string {
     return requestOrigin;
   }
 
-  // Check Lovable patterns and localhost (always allowed)
+  // Check localhost (always allowed for development)
   if (requestOrigin && isAllowedOrigin(requestOrigin)) {
     return requestOrigin;
   }
@@ -117,7 +105,7 @@ export function handleCorsPreflight(req: Request): Response {
     // Check explicit list first
     const inExplicitList = allowedOrigins.includes(requestOrigin);
     
-    // Then check Lovable patterns and localhost
+    // Then check localhost
     const matchesPattern = isAllowedOrigin(requestOrigin);
     
     // Reject if neither matches

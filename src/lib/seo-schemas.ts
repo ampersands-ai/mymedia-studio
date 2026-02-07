@@ -1,11 +1,13 @@
+import { brand, brandUrl } from '@/config/brand';
+
 // SEO schema generation utilities - deferred for performance
 export const generateSchemas = () => {
   const webApplicationSchema = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "artifio.ai",
+    "name": brand.name,
     "description": "Professional AI-powered platform for creating videos, images, music, and more. Generate portrait headshots, cinematic videos, product photography instantly.",
-    "url": "https://artifio.ai",
+    "url": brand.appUrl,
     "applicationCategory": "DesignApplication",
     "offers": {
       "@type": "Offer",
@@ -30,23 +32,23 @@ export const generateSchemas = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is artifio.ai?",
+        "name": `What is ${brand.name}?`,
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "artifio.ai is a professional AI-powered platform for creating videos, images, music, and more. It provides access to cutting-edge AI models at a fraction of competitor costs."
+          "text": `${brand.name} is a professional AI-powered platform for creating videos, images, music, and more. It provides access to cutting-edge AI models at a fraction of competitor costs.`
         }
       },
       {
         "@type": "Question",
-        "name": "How much does artifio.ai cost?",
+        "name": `How much does ${brand.name} cost?`,
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "artifio.ai offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 5 free credits to start with no credit card required."
+          "text": `${brand.name} offers plans starting at just $7.99/month, which is 50-80% less than competitors. You also get 5 free credits to start with no credit card required.`
         }
       },
       {
         "@type": "Question",
-        "name": "What can I create with artifio.ai?",
+        "name": `What can I create with ${brand.name}?`,
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "You can create portrait headshots, cinematic videos, product photography, social media content, audio content including music and voiceovers, text generation, and much more using advanced AI models."
@@ -58,9 +60,9 @@ export const generateSchemas = () => {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "artifio.ai",
-    "url": "https://artifio.ai",
-    "logo": "https://artifio.ai/logo.png",
+    "name": brand.name,
+    "url": brand.appUrl,
+    "logo": brandUrl('/logo.png'),
     "sameAs": [],
     "description": "Professional AI-powered platform for creating videos, images, music, and more."
   };
@@ -73,7 +75,7 @@ export const generateSchemas = () => {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://artifio.ai"
+        "item": brand.appUrl
       }
     ]
   };

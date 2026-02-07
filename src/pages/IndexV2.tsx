@@ -12,6 +12,7 @@ import { HeroSection } from "@/components/homepage/HeroSection";
 import { TemplateCarousel } from "@/components/homepage/TemplateCarousel";
 import { WorkflowSteps } from "@/components/homepage/WorkflowSteps";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { brand } from '@/config/brand';
 
 // Lazy load heavy components
 const FeatureShowcase = lazy(() => import("@/components/homepage/FeatureShowcase").then(m => ({ default: m.FeatureShowcase })));
@@ -80,13 +81,13 @@ const IndexV2 = () => {
           
           <div className="text-center space-y-8 pt-8">
             <h2 className="text-heading-lg">
-              <span className="font-bold">artifio.ai</span> Solves This
+              <span className="font-bold">{brand.name}</span> Solves This
             </h2>
             <p className="text-body-lg text-foreground max-w-3xl mx-auto">
               One Platform. Every Tool. Affordable Pricing.
             </p>
             <p className="text-body max-w-2xl mx-auto">
-              <span className="font-bold">artifio.ai</span> brings all the AI models you need into one place,
+              <span className="font-bold">{brand.name}</span> brings all the AI models you need into one place,
               with templates that work and pricing that makes sense.
             </p>
             <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto text-left">

@@ -2,15 +2,15 @@ import { useEffect } from "react";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  HelpCircle, 
-  Video, 
-  Image, 
-  Music, 
-  Settings, 
-  Lightbulb, 
-  AlertTriangle, 
-  Shield, 
+import {
+  HelpCircle,
+  Video,
+  Image,
+  Music,
+  Settings,
+  Lightbulb,
+  AlertTriangle,
+  Shield,
   Mail,
   PlayCircle,
   Users
@@ -21,13 +21,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { brand, pageTitle, supportMailto } from '@/config/brand';
 
 const Help = () => {
   useEffect(() => {
-    document.title = "Help Center - Artifio.ai";
+    document.title = pageTitle('Help Center');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Complete guide to using Artifio - create videos, images, and audio with 30+ AI models. Learn prompts, manage credits, and troubleshoot issues.');
+      metaDescription.setAttribute('content', `Complete guide to using ${brand.name} - create videos, images, and audio with 30+ AI models. Learn prompts, manage credits, and troubleshoot issues.`);
     }
   }, []);
 
@@ -68,7 +69,7 @@ const Help = () => {
                     <div className="flex justify-between"><span className="text-muted-foreground">Change plan</span><span>Account Settings → Subscription</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">Update payment</span><span>Account Settings → Billing</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">Cancel subscription</span><span>Account Settings → Subscription → Cancel</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Get help</span><span>support@artifio.ai</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Get help</span><span>{brand.supportEmail}</span></div>
                   </div>
                 </div>
               </CardContent>
@@ -92,7 +93,7 @@ const Help = () => {
                 <div>
                   <h3 className="font-bold text-lg mb-3">Creating Your Account</h3>
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                    <li>Go to artifio.ai</li>
+                    <li>Go to {brand.name}</li>
                     <li>Click <strong className="text-foreground">Sign Up</strong></li>
                     <li>Enter your email or continue with Google</li>
                     <li>Verify your email address</li>
@@ -600,7 +601,7 @@ const Help = () => {
                         <li>Check for sufficient funds</li>
                         <li>Try a different payment method</li>
                         <li>Contact your bank if declined repeatedly</li>
-                        <li>Contact support@artifio.ai</li>
+                        <li>Contact {brand.supportEmail}</li>
                       </ul>
                     </AccordionContent>
                   </AccordionItem>
@@ -670,7 +671,7 @@ const Help = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-4">
-                  <p className="text-2xl font-bold mb-2">support@artifio.ai</p>
+                  <p className="text-2xl font-bold mb-2">{brand.supportEmail}</p>
                   <p className="text-muted-foreground mb-4">Response Time: 24-48 hours</p>
                   <div className="text-left max-w-md mx-auto">
                     <p className="font-medium mb-2">When contacting support, include:</p>

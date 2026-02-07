@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Footer } from "@/components/Footer";
+import { brand } from "@/config/brand";
 
 type VerificationStatus = "loading" | "success" | "error" | "expired";
 
@@ -66,11 +67,11 @@ export default function VerifyEmail() {
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img 
               src={logo} 
-              alt="artifio.ai logo" 
+              alt={`${brand.name} logo`}
               className="h-6 md:h-8 object-contain"
               loading="eager"
             />
-            <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+            <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
           </Link>
         </nav>
       </header>

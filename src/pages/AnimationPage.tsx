@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Sparkles, Video, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pageTitle } from '@/config/brand';
 
 export default function AnimationPage() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function AnimationPage() {
   return (
     <>
       <Helmet>
-        <title>Animated Backgrounds | Artifio</title>
+        <title>{pageTitle('Animated Backgrounds')}</title>
         <meta
           name="description"
           content="Create custom animated explainer backgrounds for your videos with AI-powered scene analysis."

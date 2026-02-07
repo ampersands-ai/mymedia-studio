@@ -1,11 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import viteCompression from "vite-plugin-compression";
 import { visualizer } from "rollup-plugin-visualizer";
 import { VitePWA } from "vite-plugin-pwa";
+
+// White-label: Brand values for build-time config (PWA manifest, etc.)
+// These are read from env at build time; runtime config is in src/config/brand.ts
+const BRAND_NAME = process.env.VITE_BRAND_NAME || 'artifio.ai';
+const BRAND_SHORT_NAME = process.env.VITE_BRAND_APP_NAME || 'Artifio';
+const BRAND_DESCRIPTION = process.env.VITE_BRAND_DESCRIPTION || 'Create stunning AI-generated images, videos, and audio';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -14,8 +19,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(), 
-    mode === "development" && componentTagger(),
+    react(),
     ViteImageOptimizer({
       png: { quality: 80 },
       jpeg: { quality: 80 },
@@ -27,9 +31,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'placeholder.svg', 'sw-push.js'],
       manifest: {
-        name: 'Artifio.ai - AI Content Creation',
-        short_name: 'Artifio',
-        description: 'Create stunning AI-generated images, videos, and audio',
+        name: `${BRAND_NAME} - AI Content Creation`,
+        short_name: BRAND_SHORT_NAME,
+        description: BRAND_DESCRIPTION,
         theme_color: '#8b5cf6',
         background_color: '#0a0a0a',
         display: 'standalone',
@@ -136,7 +140,6 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    // Deduplicate critical dependencies to prevent bundle bloat
     dedupe: [
       'react',
       'react-dom',
@@ -158,11 +161,11 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
-    sourcemap: false, // Disable source maps in production for security
+    sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Security: Remove console logs in production
+        drop_console: true,
         drop_debugger: true,
         pure_funcs: [
           'console.log',
@@ -175,7 +178,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Anonymized chunk names for production security
           'v0': ['react', 'react-dom', 'react-router-dom'],
           'v1': ['@supabase/supabase-js'],
           'v2': ['@tanstack/react-query'],

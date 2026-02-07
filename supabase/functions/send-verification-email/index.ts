@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { hashToken } from "../_shared/token-hashing.ts";
+import { edgeBrand, brandFrom } from '../_shared/brand.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const corsHeaders = {
@@ -146,14 +147,14 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Build verification URL
-    const appUrl = Deno.env.get("APP_URL") || "https://artifio.ai";
+    const appUrl = Deno.env.get("APP_URL") || edgeBrand.appUrl;
     const verificationUrl = `${appUrl}/verify-email?token=${token}`;
 
     // Send branded verification email
     const emailResponse = await resend.emails.send({
-      from: "Artifio <noreply@artifio.ai>",
+      from: brandFrom(""),
       to: [email],
-      subject: "Verify your email address - Artifio",
+      subject: `Verify your email address - ${edgeBrand.name}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -169,7 +170,7 @@ serve(async (req: Request): Promise<Response> => {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="text-align: center; padding-bottom: 30px;">
-                      <span style="font-size: 28px; font-weight: 800; color: #ffffff;">artifio.ai</span>
+                      <span style="font-size: 28px; font-weight: 800; color: #ffffff;">${edgeBrand.name}</span>
                     </td>
                   </tr>
                 </table>
@@ -187,7 +188,7 @@ serve(async (req: Request): Promise<Response> => {
                     <td style="text-align: center; padding-bottom: 30px;">
                       <p style="margin: 0; font-size: 16px; line-height: 24px; color: #a0a0a0;">
                         ${fullName ? `Hi ${fullName.split(' ')[0]},` : 'Hi there,'}<br><br>
-                        Thanks for signing up for Artifio! Please verify your email address to unlock all features.
+                        Thanks for signing up for ${edgeBrand.name}! Please verify your email address to unlock all features.
                       </p>
                     </td>
                   </tr>
@@ -221,14 +222,14 @@ serve(async (req: Request): Promise<Response> => {
                   <tr>
                     <td style="text-align: center; padding-top: 30px; border-top: 1px solid #2a2a2a;">
                       <p style="margin: 0; font-size: 12px; color: #555555;">
-                        If you didn't create an account with Artifio, you can safely ignore this email.
+                        If you didn't create an account with ${edgeBrand.name}, you can safely ignore this email.
                       </p>
                       <p style="margin: 10px 0 0 0; font-size: 12px; color: #555555;">
-                        © ${new Date().getFullYear()} Artifio. All rights reserved.
+                        © ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.
                       </p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; color: #444444;">
                         This is an automated message. Please do not reply to this email.<br>
-                        For assistance, contact <a href="mailto:support@artifio.ai" style="color: #f97316;">support@artifio.ai</a>
+                        For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #f97316;">${edgeBrand.supportEmail}</a>
                       </p>
                     </td>
                   </tr>

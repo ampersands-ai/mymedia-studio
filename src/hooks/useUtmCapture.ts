@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { brand } from '@/config/brand';
 
 /**
  * UTM parameters for acquisition tracking
@@ -15,7 +16,7 @@ export interface UtmParams {
   device_type?: 'mobile' | 'tablet' | 'desktop';
 }
 
-const UTM_STORAGE_KEY = 'artifio_utm_params';
+const UTM_STORAGE_KEY = brand.storageKeys.utmParams;
 
 /**
  * Detect device type from user agent (privacy-safe, no raw UA stored)

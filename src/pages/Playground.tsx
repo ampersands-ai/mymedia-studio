@@ -12,6 +12,7 @@ import { ImageIcon, Upload, Coins, LogOut, Sparkles, Download, History, Play } f
 import { SessionWarning } from "@/components/SessionWarning";
 import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { brand, pageTitle, brandUrl } from "@/config/brand";
 
 const Playground = () => {
   const navigate = useNavigate();
@@ -46,10 +47,10 @@ const Playground = () => {
     const webAppSchema = {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Artifio.ai Playground",
+      "name": `${brand.name} Playground`,
       "applicationCategory": "MultimediaApplication",
       "description": "AI-powered creative playground for generating videos, images, music, and text content.",
-      "url": "https://artifio.ai/playground",
+      "url": brandUrl('/playground'),
       "operatingSystem": "Web Browser",
       "offers": {
         "@type": "Offer",
@@ -67,13 +68,13 @@ const Playground = () => {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://artifio.ai/"
+          "item": brandUrl('/')
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Playground",
-          "item": "https://artifio.ai/playground"
+          "item": brandUrl('/playground')
         }
       ]
     };
@@ -89,10 +90,10 @@ const Playground = () => {
       scriptElements.push(script);
     });
 
-    document.title = "Playground - Artifio.ai | Create AI Content Now";
+    document.title = pageTitle('Playground');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Create stunning AI-generated videos, images, music, and text in the Artifio.ai Playground. Start creating with 5 free credits.');
+      metaDescription.setAttribute('content', `Create stunning AI-generated videos, images, music, and text in the ${brand.name} Playground. Start creating with 5 free credits.`);
     }
 
     return () => {
@@ -259,7 +260,7 @@ const Playground = () => {
               <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-3xl font-black gradient-text">ARTIFIO.AI</h1>
+              <h1 className="text-3xl font-black gradient-text">{brand.name.toUpperCase()}</h1>
             </Link>
             <div className="flex items-center gap-4">
               <div className="brutal-card-sm px-4 py-2 bg-neon-yellow">
@@ -569,7 +570,7 @@ const Playground = () => {
                         onClick={() => {
                           const link = document.createElement('a');
                           link.href = generatedOutput;
-                          link.download = `artifio-${Date.now()}.${outputFormat.toLowerCase()}`;
+                          link.download = `${brand.domain.replace(/\./g, '-')}-${Date.now()}.${outputFormat.toLowerCase()}`;
                           link.click();
                           toast.success("Image downloaded!");
                         }}
@@ -592,7 +593,7 @@ const Playground = () => {
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-xl font-black mb-1">COMMUNITY CREATIONS</h3>
-              <p className="text-sm text-muted-foreground">See what others have created with Artifio.ai</p>
+              <p className="text-sm text-muted-foreground">See what others have created with {brand.name}</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">

@@ -7,6 +7,7 @@ import { usePromptTemplates, useSavedPrompts, type PromptCategory } from "@/hook
 import { PromptTemplateCard, PromptCategoryTabs } from "@/components/prompts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { pageTitle } from '@/config/brand';
 
 const PromptLibrary = () => {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ const PromptLibrary = () => {
   };
 
   useEffect(() => {
-    document.title = "Prompt Library - Artifio.ai";
+    document.title = pageTitle('Prompt Library');
   }, []);
 
   return (

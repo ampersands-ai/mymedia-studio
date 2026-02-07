@@ -8,8 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { getArtifioDeviceId } from '@/lib/posthog';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
+import { brand } from '@/config/brand';
 
-const CONSENT_STORAGE_KEY = 'artifio_cookie_consent';
+const CONSENT_STORAGE_KEY = brand.storageKeys.cookieConsent;
 
 interface ConsentPreferences {
   analytics: boolean;

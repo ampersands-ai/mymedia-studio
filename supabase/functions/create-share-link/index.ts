@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand } from '../_shared/brand.ts';
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -66,9 +67,9 @@ Deno.serve(async (req) => {
 
     if (insertError) throw new Error(insertError.message);
 
-    const appUrl = Deno.env.get('VITE_SUPABASE_URL')?.includes('localhost') 
+    const appUrl = Deno.env.get('VITE_SUPABASE_URL')?.includes('localhost')
       ? 'http://localhost:5173'
-      : 'https://artifio.ai';
+      : edgeBrand.appUrl;
     const shareUrl = `${appUrl}/share/${token}`;
 
     logger.info('Share link created successfully', { metadata: { token, shareUrl } });

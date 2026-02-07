@@ -22,6 +22,7 @@ import { GenerationDetailsModal } from "./components/GenerationDetailsModal";
 import { RateLimitDisplay } from "@/components/shared/RateLimitDisplay";
 import { CollectionsSidebar } from "@/components/collections";
 import type { Generation } from "./hooks/useGenerationHistory";
+import { pageTitle } from '@/config/brand';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -171,7 +172,7 @@ const History = () => {
   };
 
   useEffect(() => {
-    document.title = "My Creations - Artifio.ai";
+    document.title = pageTitle('My Creations');
   }, []);
 
   return (

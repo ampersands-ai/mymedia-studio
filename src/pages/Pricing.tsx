@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { trackEvent } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
+import { brand, pageTitle, brandUrl } from '@/config/brand';
 
 
 const plans = [
@@ -196,11 +197,11 @@ const Pricing = () => {
     const offersSchema = {
       "@context": "https://schema.org",
       "@type": "Product",
-      "name": "Artifio.ai AI Content Creation Platform",
+      "name": `${brand.name} AI Content Creation Platform`,
       "description": "Affordable AI-powered content creation with plans from $7.99/mo. Create videos, images, music, and text.",
       "brand": {
         "@type": "Brand",
-        "name": "Artifio.ai"
+        "name": brand.name
       },
       "offers": plans.map(plan => ({
         "@type": "Offer",
@@ -210,7 +211,7 @@ const Pricing = () => {
         "description": plan.description,
         "priceValidUntil": "2025-12-31",
         "availability": "https://schema.org/InStock",
-        "url": "https://artifio.ai/pricing"
+        "url": brandUrl('/pricing')
       })),
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -226,10 +227,10 @@ const Pricing = () => {
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "How much cheaper is Artifio.ai compared to Midjourney?",
+          "name": `How much cheaper is ${brand.name} compared to Midjourney?`,
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai is 85% cheaper than Midjourney. While Midjourney charges $10-60/mo, Artifio.ai starts at just $7.99/mo with similar features."
+            "text": `${brand.name} is 85% cheaper than Midjourney. While Midjourney charges $10-60/mo, ${brand.name} starts at just $7.99/mo with similar features.`
           }
         },
         {
@@ -237,15 +238,15 @@ const Pricing = () => {
           "name": "What is the cheapest AI video creation plan?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Artifio.ai Explorer plan is the cheapest at $7.99/mo with 375 credits, perfect for APAC and LATAM creators."
+            "text": `${brand.name} Explorer plan is the cheapest at $7.99/mo with 375 credits, perfect for APAC and LATAM creators.`
           }
         },
         {
           "@type": "Question",
-          "name": "Does Artifio.ai offer a free plan?",
+          "name": `Does ${brand.name} offer a free plan?`,
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, Artifio.ai offers a Freemium plan with 5 free credits. No credit card required. Perfect for testing the platform before upgrading."
+            "text": `Yes, ${brand.name} offers a Freemium plan with 5 free credits. No credit card required. Perfect for testing the platform before upgrading.`
           }
         }
       ]
@@ -260,13 +261,13 @@ const Pricing = () => {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://artifio.ai/"
+          "item": brandUrl('/')
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Pricing",
-          "item": "https://artifio.ai/pricing"
+          "item": brandUrl('/pricing')
         }
       ]
     };
@@ -283,7 +284,7 @@ const Pricing = () => {
     });
 
     // Update meta tags
-    document.title = "Pricing - Artifio.ai | AI Content Creation from $7.99/mo";
+    document.title = `${pageTitle('Pricing')} | AI Content Creation from $7.99/mo`;
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Affordable AI content creation plans starting at $7.99/mo. 50-80% cheaper than Midjourney, Runway & Jasper. Free plan available with 5 credits. Limited time 20% off all plans.');
@@ -310,10 +311,10 @@ const Pricing = () => {
               <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img 
                   src={logo} 
-                  alt="artifio.ai logo" 
+                  alt={`${brand.name} logo`}
                   className="h-6 md:h-8 object-contain"
                 />
-                <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+                <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
               </Link>
               <div className="flex items-center gap-2 md:gap-3">
                 {!user ? (

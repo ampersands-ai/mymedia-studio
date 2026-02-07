@@ -10,6 +10,7 @@ import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
+import { brand } from "@/config/brand";
 
 const forgotPasswordLogger = logger.child({ component: 'ForgotPassword' });
 
@@ -75,7 +76,7 @@ const ForgotPassword = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Artifio" className="h-8 w-8" />
-            <span className="font-bold text-xl">artifio.ai</span>
+            <span className="font-bold text-xl">{brand.name}</span>
           </Link>
           <Link 
             to="/auth" 

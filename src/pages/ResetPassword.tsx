@@ -11,6 +11,7 @@ import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { PasswordRequirements, validatePasswordRequirements } from "@/components/auth/PasswordRequirements";
 import { logger } from "@/lib/logger";
+import { brand } from "@/config/brand";
 
 const resetPasswordLogger = logger.child({ component: 'ResetPassword' });
 
@@ -213,7 +214,7 @@ const ResetPassword = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Artifio" className="h-8 w-8" />
-            <span className="font-bold text-xl">artifio.ai</span>
+            <span className="font-bold text-xl">{brand.name}</span>
           </Link>
         </div>
       </header>

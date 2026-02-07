@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Helmet } from "react-helmet-async";
 import { BlogPost } from "@/types/blog";
 import { Clock, Eye, Calendar } from "lucide-react";
+import { brand, pageTitle } from '@/config/brand';
 
 export default function BlogList() {
   const { execute } = useErrorHandler();
@@ -64,8 +65,8 @@ export default function BlogList() {
   return (
     <>
       <Helmet>
-        <title>Blog | Artifio AI</title>
-        <meta name="description" content="Read the latest insights, tutorials, and updates about AI technology from Artifio." />
+        <title>{pageTitle('Blog')}</title>
+        <meta name="description" content={`Read the latest insights, tutorials, and updates about AI technology from ${brand.name}.`} />
       </Helmet>
 
       <GlobalHeader />
@@ -75,7 +76,7 @@ export default function BlogList() {
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              Artifio Blog
+              {brand.name} Blog
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Insights, tutorials, and the latest updates in AI technology

@@ -4,28 +4,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { useNavigate } from "react-router-dom";
-import { 
-  Video, 
-  Image, 
-  Music, 
-  Users, 
-  DollarSign, 
-  Zap, 
+import {
+  Video,
+  Image,
+  Music,
+  Users,
+  DollarSign,
+  Zap,
   Layers,
   Heart,
   Mail,
   MapPin,
   Shield
 } from "lucide-react";
+import { brand, pageTitle, supportMailto, privacyMailto } from '@/config/brand';
 
 const About = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "About Us - Artifio.ai | Create Anything. Instantly.";
+    document.title = `${pageTitle('About Us')} | Create Anything. Instantly.`;
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Artifio.ai provides access to 30+ premium AI models for video, image, audio, and avatar creation—all in one place, at a fraction of the cost.');
+      metaDescription.setAttribute('content', `${brand.name} provides access to 30+ premium AI models for video, image, audio, and avatar creation—all in one place, at a fraction of the cost.`);
     }
   }, []);
 
@@ -103,7 +104,7 @@ const About = () => {
                 Without Overpaying.
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-                Artifio.ai gives you access to 30+ of the world's most powerful AI models for video, 
+                {brand.name} gives you access to 30+ of the world's most powerful AI models for video,
                 image, audio, and avatar creation—all in one place, at a fraction of the cost.
               </p>
             </div>
@@ -125,7 +126,7 @@ const About = () => {
                   spending $100–$300/month just to access the tools they needed.
                 </p>
                 <p className="text-foreground font-bold text-xl">
-                  Artifio.ai changes that.
+                  {brand.name} changes that.
                 </p>
                 <p>
                   We've brought together the best AI models under one roof—with unified credits, 
@@ -141,7 +142,7 @@ const About = () => {
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-4">
-              What Artifio Does
+              What {brand.name} Does
             </h2>
             <p className="text-xl text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
               One platform. 30+ premium AI models. Unlimited creative possibilities.
@@ -227,9 +228,9 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center space-y-6">
               <h2 className="text-3xl md:text-5xl font-black">Our Commitment</h2>
               <p className="text-lg text-muted-foreground">
-                Artifio.ai isn't just a tool—it's a creative partner. We're constantly adding 
-                new models, refining performance, and expanding capabilities based on user 
-                feedback. Whether you're creating short-form video, marketing assets, music, 
+                {brand.name} isn't just a tool—it's a creative partner. We're constantly adding
+                new models, refining performance, and expanding capabilities based on user
+                feedback. Whether you're creating short-form video, marketing assets, music,
                 or AI avatars—we're here to help you do it better, faster, and cheaper.
               </p>
               <Button 
@@ -258,11 +259,11 @@ const About = () => {
                     <Mail className="h-6 w-6 text-black" />
                   </div>
                   <h3 className="font-black">Support</h3>
-                  <a 
-                    href="mailto:support@artifio.ai" 
+                  <a
+                    href={supportMailto()}
                     className="text-primary hover:underline"
                   >
-                    support@artifio.ai
+                    {brand.supportEmail}
                   </a>
                 </CardContent>
               </Card>
@@ -273,11 +274,11 @@ const About = () => {
                     <Shield className="h-6 w-6 text-black" />
                   </div>
                   <h3 className="font-black">Privacy</h3>
-                  <a 
-                    href="mailto:privacy@artifio.ai" 
+                  <a
+                    href={privacyMailto()}
                     className="text-primary hover:underline"
                   >
-                    privacy@artifio.ai
+                    {brand.privacyEmail}
                   </a>
                 </CardContent>
               </Card>

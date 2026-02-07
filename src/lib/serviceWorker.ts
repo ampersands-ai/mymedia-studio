@@ -26,14 +26,12 @@ export function registerServiceWorker() {
     return;
   }
   
-  // Skip service worker in iframe (Lovable preview) or dev mode
+  // Skip service worker in iframe or dev mode
   const isInIframe = window.self !== window.top;
-  const isLovablePreview = window.location.hostname.includes('lovable.app') || 
-                           window.location.hostname.includes('lovable.dev') ||
-                           window.location.hostname.includes('localhost');
-  
+  const isDevEnvironment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   // Only register in production and not in preview iframe
-  if (import.meta.env.PROD && !isInIframe && !isLovablePreview) {
+  if (import.meta.env.PROD && !isInIframe && !isDevEnvironment) {
     updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {

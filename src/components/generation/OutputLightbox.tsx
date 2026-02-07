@@ -20,6 +20,7 @@ import { applyTextOverlay } from "@/utils/text-overlay";
 import { getCroppedImg } from "@/utils/crop-canvas";
 import type { SocialMediaTemplate } from "@/utils/social-media-templates";
 import { logger } from "@/lib/logger";
+import { brand, downloadFilename } from "@/config/brand";
 
 interface OutputLightboxProps {
   outputs: Array<{
@@ -146,7 +147,7 @@ export const OutputLightbox = ({
       if (currentEntry) {
         // Download edited version from history
         blob = currentEntry.blob;
-        filename = `artifio-edited-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        filename = downloadFilename('edited', 'png');
 
         trackEvent('edited_image_downloaded', {
           generation_id: currentOutput.id,
@@ -162,7 +163,7 @@ export const OutputLightbox = ({
         if (!response.ok) throw new Error('Failed to fetch image');
 
         blob = await response.blob();
-        filename = `artifio-${currentOutput.output_index + 1}-${Date.now()}.png`;
+        filename = downloadFilename('image', 'png');
 
         trackEvent('original_image_downloaded', {
           generation_id: currentOutput.id
@@ -251,7 +252,7 @@ export const OutputLightbox = ({
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
       
       if (canShare) {
-        await shareFile(publicUrl, 'Created with artifio.ai');
+        await shareFile(publicUrl, `Created with ${brand.name}`);
         trackEvent('output_shared', {
           generation_id: currentOutput.id,
           content_type: contentType,

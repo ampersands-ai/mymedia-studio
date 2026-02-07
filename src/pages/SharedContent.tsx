@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, AlertCircle, Loader2 } from 'lucide-react';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { brand } from '@/config/brand';
 
 export default function SharedContent() {
   const { token } = useParams<{ token: string }>();
@@ -142,7 +143,7 @@ export default function SharedContent() {
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              Created with <span className="font-bold">artifio.ai</span>
+              Created with <span className="font-bold">{brand.name}</span>
             </p>
             <Button 
               variant="outline" 

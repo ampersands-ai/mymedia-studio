@@ -22,6 +22,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useRoutePreload } from "./hooks/useRoutePreload";
 import { logger } from "@/lib/logger";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { brand } from '@/config/brand';
 
 // Lazy load pages for better performance
 const IndexV2 = lazy(() => import("./pages/IndexV2"));
@@ -162,7 +163,7 @@ const AppContent = () => {
           <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="flex items-center gap-3 animate-pulse">
               <span className="font-black text-2xl md:text-3xl text-foreground">
-                artifio.ai
+                {brand.name}
               </span>
             </div>
           </div>

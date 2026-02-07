@@ -3,13 +3,14 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { CinematicNav } from "@/components/cinematic/CinematicNav";
 import { ContactSection } from "@/components/cinematic/ContactSection";
+import { brand, pageTitle, privacyMailto } from '@/config/brand';
 
 const Terms = () => {
   useEffect(() => {
-    document.title = "Terms of Service - Artifio.ai";
+    document.title = pageTitle('Terms of Service');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Terms of Service for Artifio.ai - Understand the rules and guidelines for using our AI-powered creative platform.');
+      metaDescription.setAttribute('content', `Terms of Service for ${brand.name} - Understand the rules and guidelines for using our AI-powered creative platform.`);
     }
   }, []);
 
@@ -38,7 +39,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">1. Acceptance of Terms</h2>
               <p className="leading-relaxed">
-                By accessing or using Artifio.ai ("Service," "Platform," or "we"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Service. We reserve the right to modify these Terms at any time, and your continued use constitutes acceptance of any changes.
+                By accessing or using {brand.name} ("Service," "Platform," or "we"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Service. We reserve the right to modify these Terms at any time, and your continued use constitutes acceptance of any changes.
               </p>
             </section>
 
@@ -46,10 +47,10 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">2. Description of Service</h2>
               <p className="leading-relaxed mb-4">
-                Artifio.ai is an AI content creation platform that provides access to multiple third-party AI models through a unified interface and subscription. The Service enables users to generate videos, images, audio, and other content using AI models.
+                {brand.name} is an AI content creation platform that provides access to multiple third-party AI models through a unified interface and subscription. The Service enables users to generate videos, images, audio, and other content using AI models.
               </p>
               <p className="leading-relaxed mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                <strong className="text-white">Important:</strong> Artifio acts as an aggregator and interface layer. We do not develop or operate the underlying AI models — they are provided by third-party companies.
+                <strong className="text-white">Important:</strong> {brand.name} acts as an aggregator and interface layer. We do not develop or operate the underlying AI models — they are provided by third-party companies.
               </p>
               <p className="leading-relaxed mb-3">Our Service integrates AI providers including but not limited to:</p>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
@@ -67,7 +68,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">3. Eligibility and Account Registration</h2>
               <p className="leading-relaxed mb-4">
-                <strong className="text-white">You must be at least 18 years of age to use this Service.</strong> By using Artifio.ai, you represent and warrant that you are at least 18 years old and have the legal capacity to enter into these Terms.
+                <strong className="text-white">You must be at least 18 years of age to use this Service.</strong> By using {brand.name}, you represent and warrant that you are at least 18 years old and have the legal capacity to enter into these Terms.
               </p>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
                 <li>You must provide accurate, current, and complete information during registration</li>
@@ -138,7 +139,7 @@ const Terms = () => {
               <div className="p-4 bg-white/5 rounded-lg border border-white/10 mb-4">
                 <p className="text-white/90 font-semibold mb-2">Important:</p>
                 <p className="leading-relaxed">
-                  Artifio's pricing is dependent on costs charged by third-party AI model providers. These providers may change their pricing at any time, sometimes with little or no advance notice to us.
+                  {brand.name}'s pricing is dependent on costs charged by third-party AI model providers. These providers may change their pricing at any time, sometimes with little or no advance notice to us.
                 </p>
               </div>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed mb-6">
@@ -329,12 +330,12 @@ const Terms = () => {
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">9.3 Our Platform</h3>
               <p className="leading-relaxed mb-6">
-                The Service, including all software, interface design, branding, and trademarks, is owned by Artifio.ai and protected by intellectual property laws. You may not copy, modify, distribute, or reverse engineer any part of our platform.
+                The Service, including all software, interface design, branding, and trademarks, is owned by {brand.name} and protected by intellectual property laws. You may not copy, modify, distribute, or reverse engineer any part of our platform.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">9.4 Feedback</h3>
               <p className="leading-relaxed">
-                If you provide feedback or suggestions about the Service, you grant Artifio a perpetual, royalty-free license to use that feedback without compensation or attribution.
+                If you provide feedback or suggestions about the Service, you grant {brand.name} a perpetual, royalty-free license to use that feedback without compensation or attribution.
               </p>
             </section>
 
@@ -372,7 +373,7 @@ const Terms = () => {
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">10.3 Provider Terms</h3>
               <p className="leading-relaxed mb-6">
-                By using third-party models through Artifio, you agree to comply with each provider's terms of service and acceptable use policies. Violations of provider terms may result in content blocking or account termination.
+                By using third-party models through {brand.name}, you agree to comply with each provider's terms of service and acceptable use policies. Violations of provider terms may result in content blocking or account termination.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">10.4 Your Responsibility</h3>
@@ -405,8 +406,8 @@ const Terms = () => {
               <h3 className="text-xl font-semibold mb-3 text-white/90">11.2 Designated Agent</h3>
               <div className="p-4 bg-white/5 rounded-lg border border-white/10 mb-6">
                 <p className="leading-relaxed">DMCA notices should be sent to:</p>
-                <p className="mt-2"><strong className="text-white">Email:</strong> privacy@artifio.ai</p>
-                <p className="mt-2"><strong className="text-white">Mail:</strong> Artifio.ai DMCA Agent<br />539 W Commerce St, Ste 5263<br />Dallas, Texas 75208<br />United States of America</p>
+                <p className="mt-2"><strong className="text-white">Email:</strong> {brand.privacyEmail}</p>
+                <p className="mt-2"><strong className="text-white">Mail:</strong> {brand.name} DMCA Agent<br />539 W Commerce St, Ste 5263<br />Dallas, Texas 75208<br />United States of America</p>
               </div>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">11.3 Counter-Notification</h3>
@@ -472,7 +473,7 @@ const Terms = () => {
               <h2 className="text-2xl font-bold mb-4 text-white">15. Limitation of Liability</h2>
               <div className="p-4 bg-white/5 rounded-lg border border-white/10">
                 <p className="leading-relaxed mb-3 uppercase font-bold text-white/90">
-                  TO THE MAXIMUM EXTENT PERMITTED BY LAW, ARTIFIO.AI AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR:
+                  TO THE MAXIMUM EXTENT PERMITTED BY LAW, {brand.name.toUpperCase()} AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR:
                 </p>
                 <ul className="list-disc pl-6 space-y-1 leading-relaxed mb-4">
                   <li>Any indirect, incidental, special, consequential, or punitive damages</li>
@@ -494,7 +495,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">16. Indemnification</h2>
               <p className="leading-relaxed mb-3">
-                You agree to indemnify, defend, and hold harmless Artifio.ai and its affiliates from any claims, damages, losses, liabilities, costs, and expenses (including legal fees) arising from:
+                You agree to indemnify, defend, and hold harmless {brand.name} and its affiliates from any claims, damages, losses, liabilities, costs, and expenses (including legal fees) arising from:
               </p>
               <ul className="list-disc pl-6 space-y-2 leading-relaxed">
                 <li>Your use of the Service</li>
@@ -564,7 +565,7 @@ const Terms = () => {
               
               <h3 className="text-xl font-semibold mb-3 text-white/90">20.1 Entire Agreement</h3>
               <p className="leading-relaxed mb-6">
-                These Terms, together with our Privacy Policy, constitute the entire agreement between you and Artifio.ai regarding the Service.
+                These Terms, together with our Privacy Policy, constitute the entire agreement between you and {brand.name} regarding the Service.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">20.2 Severability</h3>
@@ -595,15 +596,15 @@ const Terms = () => {
                 If you have questions about these Terms of Service, please contact us at:
               </p>
               <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p className="font-semibold text-white">Artifio.ai</p>
-                <p className="font-semibold mt-2 text-white">Email: privacy@artifio.ai</p>
+                <p className="font-semibold text-white">{brand.name}</p>
+                <p className="font-semibold mt-2 text-white">Email: {brand.privacyEmail}</p>
                 <p className="font-semibold mt-2 text-white">Address: 539 W Commerce St, Ste 5263<br />Dallas, Texas 75208<br />United States of America</p>
               </div>
             </section>
 
             <section className="mt-10 p-6 bg-primary/10 rounded-xl border border-primary/30">
               <p className="font-bold text-white">
-                BY USING ARTIFIO.AI, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.
+                BY USING {brand.name.toUpperCase()}, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.
               </p>
             </section>
           </div>

@@ -11,6 +11,7 @@ import { AppCacheSection } from "@/components/settings/AppCacheSection";
 import { CreditActivityLog } from "@/components/credits/CreditActivityLog";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useUserTokens } from "@/hooks/useUserTokens";
+import { pageTitle } from '@/config/brand';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -46,7 +47,7 @@ const Settings = () => {
   } : null;
 
   useEffect(() => {
-    document.title = "Settings - Artifio.ai";
+    document.title = pageTitle('Settings');
     if (user) {
       fetchProfile();
     }

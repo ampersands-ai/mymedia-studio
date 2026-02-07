@@ -4,6 +4,7 @@ import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "
 import { useState } from "react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { brand } from "@/config/brand";
 
 const footerLinks = {
   product: [
@@ -26,17 +27,17 @@ const footerLinks = {
   support: [
     { label: "FAQ", href: "/faq" },
     { label: "Community", href: "/community" },
-    { label: "Contact Us", href: "mailto:support@artifio.ai" },
+    { label: "Contact Us", href: `mailto:${brand.supportEmail}` },
     { label: "Help Center", href: "/help" },
   ],
 };
 
 const socialLinks = [
-  { icon: Twitter, href: "https://x.com/artifio_ai", label: "Twitter" },
-  { icon: Linkedin, href: "https://linkedin.com/company/artifio", label: "LinkedIn" },
-  { icon: Youtube, href: "https://youtube.com/@artifio", label: "YouTube" },
-  { icon: Instagram, href: "https://instagram.com/artifio_ai", label: "Instagram" },
-  { icon: Facebook, href: "https://facebook.com/artifio", label: "Facebook" },
+  { icon: Twitter, href: brand.social.twitter, label: "Twitter" },
+  { icon: Linkedin, href: brand.social.linkedin, label: "LinkedIn" },
+  { icon: Youtube, href: brand.social.youtube, label: "YouTube" },
+  { icon: Instagram, href: brand.social.instagram, label: "Instagram" },
+  { icon: Facebook, href: brand.social.facebook, label: "Facebook" },
 ];
 
 export const ContactSection = () => {
@@ -100,7 +101,7 @@ export const ContactSection = () => {
                 Start Creating Free
               </Link>
               <a
-                href="mailto:support@artifio.ai"
+                href={`mailto:${brand.supportEmail}`}
                 className="flex items-center gap-2 px-10 py-5 border border-white/30 text-white font-medium uppercase tracking-wide hover:bg-white/10 transition-colors rounded-2xl"
               >
                 <Mail className="w-5 h-5" />
@@ -119,12 +120,12 @@ export const ContactSection = () => {
             {/* Brand Column */}
             <div className="w-full lg:w-auto lg:max-w-[280px] flex-shrink">
               <Link to="/" className="flex items-center gap-2 mb-3">
-                <img 
-                  src="/logos/artifio.png" 
-                  alt="Artifio" 
+                <img
+                  src={brand.logoPath}
+                  alt={brand.name}
                   className="h-7 w-auto"
                 />
-                <span className="text-lg font-bold text-white">artifio.ai</span>
+                <span className="text-lg font-bold text-white">{brand.name}</span>
               </Link>
               <p className="text-sm text-white/50 mb-4 leading-relaxed">
                 AI-powered content creation platform for creators and businesses.
@@ -271,7 +272,7 @@ export const ContactSection = () => {
           <div className="border-t border-white/10 pt-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-sm text-white/40">
-                © 2025 artifio.ai. All rights reserved.
+                © {new Date().getFullYear()} {brand.name}. All rights reserved.
               </p>
               <div className="flex items-center gap-6">
                 <Link 

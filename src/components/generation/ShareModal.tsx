@@ -6,6 +6,7 @@ import { trackEvent } from "@/lib/posthog";
 import { supabase } from "@/integrations/supabase/client";
 import { clientLogger } from "@/lib/logging/client-logger";
 import { logger } from "@/lib/logger";
+import { brand } from "@/config/brand";
 
 interface ShareModalProps {
   open: boolean;
@@ -93,7 +94,7 @@ export const ShareModal = ({
   };
   
   const handleTwitterShare = () => {
-    const text = `${caption || 'Check out my AI creation!'}\n\n${hashtags?.join(' ') || ''}\n\nCreated with artifio.ai`;
+    const text = `${caption || 'Check out my AI creation!'}\n\n${hashtags?.join(' ') || ''}\n\nCreated with ${brand.name}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`, '_blank');
     trackEvent('share_twitter', { has_caption: !!caption });
   };

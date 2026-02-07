@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useUtmCapture } from "@/hooks/useUtmCapture";
+import { brand } from "@/config/brand";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -57,11 +58,11 @@ const Auth = () => {
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img 
                 src={logo} 
-                alt="artifio.ai logo" 
+                alt={`${brand.name} logo`}
                 className="h-6 md:h-8 object-contain"
                 loading="eager"
               />
-              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+              <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
             </Link>
             <div className="flex items-center gap-2 md:gap-3">
               <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">

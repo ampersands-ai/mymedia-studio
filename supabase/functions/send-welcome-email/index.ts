@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom, brandUrl } from '../_shared/brand.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -34,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
     const displayName = fullName || email.split('@')[0];
 
     const emailResponse = await resend.emails.send({
-      from: "Artifio <welcome@artifio.ai>",
+      from: brandFrom("", `welcome@${edgeBrand.domain}`),
       to: [email],
       subject: "Welcome to Artifio - Your Creative Journey Starts Here! 🎨",
       html: `
@@ -97,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
                 </ol>
 
                 <div style="text-align: center;">
-                  <a href="https://artifio.ai" class="cta-button">Start Creating Now →</a>
+                  <a href="${edgeBrand.appUrl}" class="cta-button">Start Creating Now →</a>
                 </div>
 
                 <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
@@ -109,12 +110,12 @@ const handler = async (req: Request): Promise<Response> => {
                 <p>Happy Creating! 🚀</p>
                 <p style="margin-top: 10px;">The Artifio Team</p>
                 <p style="margin-top: 20px; font-size: 12px;">
-                  <a href="https://artifio.ai" style="color: #667eea; text-decoration: none;">Visit Artifio</a> | 
-                  <a href="https://artifio.ai/pricing" style="color: #667eea; text-decoration: none;">View Plans</a>
+                  <a href="${edgeBrand.appUrl}" style="color: #667eea; text-decoration: none;">Visit ${edgeBrand.name}</a> |
+                  <a href="${brandUrl('/pricing')}" style="color: #667eea; text-decoration: none;">View Plans</a>
                 </p>
                 <p style="margin-top: 15px; font-size: 11px; color: #9ca3af;">
                   This is an automated message. Please do not reply to this email.<br>
-                  For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+                  For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #667eea;">${edgeBrand.supportEmail}</a>
                 </p>
               </div>
             </div>

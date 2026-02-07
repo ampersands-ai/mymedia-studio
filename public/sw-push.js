@@ -8,7 +8,7 @@ self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push notification received');
 
   let data = {
-    title: 'Artifio',
+    title: 'Notification',
     body: 'You have a new notification',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',

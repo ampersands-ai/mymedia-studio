@@ -1,14 +1,16 @@
+import { brand } from '@/config/brand';
+
 /**
  * Provider Display Utility
- * 
+ *
  * Centralizes provider name mapping to hide internal providers
- * (Kie.ai, Runware) and display them as "ARTIFIO" instead.
+ * (Kie.ai, Runware) and display them under the brand name.
  * 
  * Usage:
  * ```typescript
  * import { getDisplayProvider } from '@/lib/utils/provider-display';
  * 
- * const displayName = getDisplayProvider('Kie AI'); // Returns 'ARTIFIO'
+ * const displayName = getDisplayProvider('Kie AI'); // Returns brand.name.toUpperCase()
  * const displayName = getDisplayProvider('OpenAI'); // Returns 'OpenAI'
  * ```
  */
@@ -29,7 +31,7 @@ export const HIDDEN_PROVIDERS = [
 /**
  * Display name to show instead of hidden providers
  */
-export const DEFAULT_DISPLAY_PROVIDER = 'ARTIFIO';
+export const DEFAULT_DISPLAY_PROVIDER = brand.name.toUpperCase();
 
 /**
  * Convert an internal provider name to a display-friendly name
@@ -176,15 +178,15 @@ export function getProviderLogo(provider: string): string {
     'grok': '/logos/grok.png',
   };
   
-  if (!provider) return '/logos/artifio.png';
-  
+  if (!provider) return brand.logoPath;
+
   const normalizedProvider = provider.toLowerCase().replace(/[.\s_-]/g, '');
-  
+
   for (const [key, path] of Object.entries(logoMap)) {
     if (normalizedProvider.includes(key)) {
       return path;
     }
   }
-  
-  return '/logos/artifio.png';
+
+  return brand.logoPath;
 }

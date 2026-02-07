@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import logo from "@/assets/logo.png";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NotificationBell } from "@/components/notifications";
+import { brand } from '@/config/brand';
 import { supabase } from "@/integrations/supabase/client";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
 import { GlobalMobileNav } from "@/components/navigation/mobile";
@@ -55,10 +56,10 @@ export const DashboardLayout = () => {
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
             <img 
               src={logo} 
-              alt="artifio.ai  logo" 
+              alt={`${brand.name} logo`}
               className="h-6 md:h-8 object-contain"
               />
-              <span className="font-black text-lg md:text-xl text-foreground">artifio.ai</span>
+              <span className="font-black text-lg md:text-xl text-foreground">{brand.name}</span>
             </Link>
 
             {/* Desktop Navigation - Dropdowns */}

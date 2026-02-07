@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { ModelPage } from "@/hooks/useModelPages";
+import { brand, brandUrl } from "@/config/brand";
 
 interface ModelSEOHeadProps {
   modelPage: ModelPage;
@@ -37,7 +38,7 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
     updateMetaTag("og:title", modelPage.meta_title, true);
     updateMetaTag("og:description", modelPage.meta_description, true);
     updateMetaTag("og:type", "website", true);
-    updateMetaTag("og:url", `https://artifio.ai/models/${modelPage.slug}`, true);
+    updateMetaTag("og:url", brandUrl(`/models/${modelPage.slug}`), true);
     if (modelPage.og_image_url) {
       updateMetaTag("og:image", modelPage.og_image_url, true);
     }
@@ -57,17 +58,17 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
-    canonical.href = `https://artifio.ai/models/${modelPage.slug}`;
+    canonical.href = brandUrl(`/models/${modelPage.slug}`);
 
     // Structured data - SoftwareApplication
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": `${modelPage.model_name} on ARTIFIO.ai`,
+      "name": `${modelPage.model_name} on ${brand.name}`,
       "applicationCategory": getCategoryAppType(modelPage.category),
       "operatingSystem": "Web",
       "description": modelPage.meta_description,
-      "url": `https://artifio.ai/models/${modelPage.slug}`,
+      "url": brandUrl(`/models/${modelPage.slug}`),
       "provider": {
         "@type": "Organization",
         "name": modelPage.provider
@@ -97,19 +98,19 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://artifio.ai"
+          "item": brand.appUrl
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Models",
-          "item": "https://artifio.ai/models"
+          "item": brandUrl('/models')
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": modelPage.model_name,
-          "item": `https://artifio.ai/models/${modelPage.slug}`
+          "item": brandUrl(`/models/${modelPage.slug}`)
         }
       ]
     };
@@ -162,8 +163,8 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
         ...(modelPage.og_image_url && { "thumbnailUrl": modelPage.og_image_url }),
         "publisher": {
           "@type": "Organization",
-          "name": "ARTIFIO.ai",
-          "url": "https://artifio.ai"
+          "name": brand.name,
+          "url": brand.appUrl
         }
       };
 
@@ -190,8 +191,8 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
         ...(modelPage.og_image_url && { "contentUrl": modelPage.og_image_url }),
         "creator": {
           "@type": "Organization",
-          "name": "ARTIFIO.ai",
-          "url": "https://artifio.ai"
+          "name": brand.name,
+          "url": brand.appUrl
         }
       };
 
@@ -211,7 +212,7 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
         "@context": "https://schema.org",
         "@type": "HowTo",
         "name": `How to Use ${modelPage.model_name} for AI Content Creation`,
-        "description": `Learn how to create stunning ${getCategoryDisplayName(modelPage.category)} with ${modelPage.model_name} on ARTIFIO.ai`,
+        "description": `Learn how to create stunning ${getCategoryDisplayName(modelPage.category)} with ${modelPage.model_name} on ${brand.name}`,
         "step": modelPage.use_cases.map((useCase, index) => ({
           "@type": "HowToStep",
           "position": index + 1,
@@ -236,7 +237,7 @@ export function ModelSEOHead({ modelPage }: ModelSEOHeadProps) {
 
     // Cleanup on unmount
     return () => {
-      document.title = "ARTIFIO.ai - AI Content Creation";
+      document.title = `${brand.name} - AI Content Creation`;
       // Remove dynamic schemas on unmount to prevent stale data
       const schemaScripts = document.querySelectorAll('script[data-schema]');
       schemaScripts.forEach(script => script.remove());

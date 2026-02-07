@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, X } from "lucide-react";
+import { brand } from "@/config/brand";
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ export const WelcomeModal = ({ isOpen, onClose }: WelcomeModalProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary-500" />
-              <DialogTitle className="text-2xl font-bold">Welcome to Artifio.ai!</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Welcome to {brand.name}!</DialogTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />

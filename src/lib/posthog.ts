@@ -1,9 +1,10 @@
 import posthog from 'posthog-js';
 import { logger } from '@/lib/logger';
+import { brand } from '@/config/brand';
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const POSTHOG_HOST = 'https://app.posthog.com';
-const DEVICE_ID_KEY = 'artifio_device_id';
+const DEVICE_ID_KEY = brand.storageKeys.deviceId;
 
 // Generate or retrieve unique device identifier
 const getDeviceId = (): string => {
@@ -39,7 +40,7 @@ export const initPostHog = () => {
           logger.debug('PostHog analytics initialized', {
             utility: 'posthog',
             deviceId,
-            platform: 'artifio.ai',
+            platform: brand.name,
             operation: 'initPostHog'
           });
         }
@@ -55,7 +56,7 @@ export const initPostHog = () => {
     // Set device ID as a super property for all events
     posthog.register({
       device_id: deviceId,
-      platform: 'artifio.ai',
+      platform: brand.name,
     });
   }
 };
@@ -101,7 +102,7 @@ export const resetPostHog = () => {
     posthog.identify(deviceId);
     posthog.register({
       device_id: deviceId,
-      platform: 'artifio.ai',
+      platform: brand.name,
     });
   }
 };

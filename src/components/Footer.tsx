@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import { useState } from "react";
+import { brand } from '@/config/brand';
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
@@ -34,10 +35,10 @@ export const Footer = () => {
             <Link to="/" className="flex items-center gap-3 justify-center md:justify-start">
           <img 
             src={logo} 
-            alt="artifio.ai logo" 
+            alt={`${brand.name} logo`}
             className="h-6 md:h-8 object-contain"
               />
-              <span className="font-black text-xl md:text-2xl text-foreground">artifio.ai</span>
+              <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
             </Link>
             <p className="text-sm text-foreground/70 font-medium">
               All-in-one AI content platform for creators
@@ -46,7 +47,7 @@ export const Footer = () => {
             {/* Social Media Links - 44x44px tap targets */}
             <div className="flex justify-center md:justify-start gap-2 pt-2">
               <a 
-                href="https://x.com/artifio_ai" 
+                href={brand.social.twitter}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
@@ -55,7 +56,7 @@ export const Footer = () => {
                 <Twitter size={28} />
               </a>
               <a 
-                href="https://linkedin.com/company/artifio" 
+                href={brand.social.linkedin}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
@@ -64,7 +65,7 @@ export const Footer = () => {
                 <Linkedin size={28} />
               </a>
               <a 
-                href="https://youtube.com/@artifio" 
+                href={brand.social.youtube}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
@@ -73,7 +74,7 @@ export const Footer = () => {
                 <Youtube size={28} />
               </a>
               <a 
-                href="https://www.instagram.com/artifio.ai" 
+                href={brand.social.instagram}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
@@ -82,7 +83,7 @@ export const Footer = () => {
                 <Instagram size={28} />
               </a>
               <a 
-                href="https://www.facebook.com/share/1F1J8UFCgr/" 
+                href={brand.social.facebook}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 text-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-muted"
@@ -187,7 +188,7 @@ export const Footer = () => {
                 </li>
               )}
               <li>
-                <a href="mailto:support@artifio.ai" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <a href={`mailto:${brand.supportEmail}`} className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Contact Support
                 </a>
               </li>
@@ -220,7 +221,7 @@ export const Footer = () => {
         {/* Copyright */}
         <div className="border-t-3 border-black mt-16 pt-12 text-center">
           <p className="text-sm text-foreground/70 font-medium">
-            © {new Date().getFullYear()} <span className="font-bold">artifio.ai</span>. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-bold">{brand.name}</span>. All rights reserved.
           </p>
         </div>
       </div>

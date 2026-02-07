@@ -10,17 +10,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { brand, pageTitle, supportMailto, privacyMailto } from '@/config/brand';
 
 const faqCategories = [
   {
     title: "General",
     faqs: [
       {
-        q: "What is Artifio?",
-        a: "Artifio is an all-in-one AI content generation platform that gives you access to 30+ AI models for creating videos, images, audio, and text. Instead of juggling multiple subscriptions, you get everything in one place with simple, transparent pricing."
+        q: `What is ${brand.name}?`,
+        a: `${brand.name} is an all-in-one AI content generation platform that gives you access to 30+ AI models for creating videos, images, audio, and text. Instead of juggling multiple subscriptions, you get everything in one place with simple, transparent pricing.`
       },
       {
-        q: "How is Artifio different from going directly to each AI provider?",
+        q: `How is ${brand.name} different from going directly to each AI provider?`,
         a: "Three ways: Price - you pay a fraction of what individual subscriptions cost. Convenience - one login, one credit balance, one interface for everything. Flexibility - switch between models instantly without managing multiple accounts."
       },
       {
@@ -37,7 +38,7 @@ const faqCategories = [
       },
       {
         q: "Is this suitable for beginners?",
-        a: "Absolutely. Artifio is designed to be intuitive. Choose a model, enter your prompt, and create. No technical skills required. Our interface guides you through every step."
+        a: `Absolutely. ${brand.name} is designed to be intuitive. Choose a model, enter your prompt, and create. No technical skills required. Our interface guides you through every step.`
       }
     ]
   },
@@ -70,7 +71,7 @@ const faqCategories = [
       },
       {
         q: "Do you offer discounts for students or nonprofits?",
-        a: "We're committed to making AI accessible to everyone. Contact us at support@artifio.ai with proof of student status or nonprofit registration, and we'll work out a special discount for you."
+        a: `We're committed to making AI accessible to everyone. Contact us at ${brand.supportEmail} with proof of student status or nonprofit registration, and we'll work out a special discount for you.`
       }
     ]
   },
@@ -145,12 +146,12 @@ const faqCategories = [
     title: "Content & Generations",
     faqs: [
       {
-        q: "What can I create with Artifio?",
+        q: `What can I create with ${brand.name}?`,
         a: "Videos, images, audio, voiceovers, and music - depending on which models you use."
       },
       {
         q: "What's the quality like compared to Midjourney/Runway?",
-        a: "Identical. We use the same underlying models. When you generate with Midjourney on Artifio, you're using the actual Midjourney model. Same for Runway, Sora, and every other model we offer."
+        a: `Identical. We use the same underlying models. When you generate with Midjourney on ${brand.name}, you're using the actual Midjourney model. Same for Runway, Sora, and every other model we offer.`
       },
       {
         q: "What formats do you support?",
@@ -225,7 +226,7 @@ const faqCategories = [
       },
       {
         q: "Is there a mobile app?",
-        a: "Not currently. Artifio works in mobile browsers."
+        a: `Not currently. ${brand.name} works in mobile browsers.`
       },
       {
         q: "Is there an API?",
@@ -233,7 +234,7 @@ const faqCategories = [
       },
       {
         q: "Can I use Artifio offline?",
-        a: "No. Artifio requires an internet connection."
+        a: `No. ${brand.name} requires an internet connection.`
       },
       {
         q: "Why is my generation taking a long time?",
@@ -279,7 +280,7 @@ const faqCategories = [
     faqs: [
       {
         q: "Can I use this for my agency/team?",
-        a: "Yes! Team plans coming soon (5 users, shared credits). For now, you can create separate accounts or contact us at support@artifio.ai for custom enterprise pricing."
+        a: `Yes! Team plans coming soon (5 users, shared credits). For now, you can create separate accounts or contact us at ${brand.supportEmail} for custom enterprise pricing.`
       }
     ]
   },
@@ -288,7 +289,7 @@ const faqCategories = [
     faqs: [
       {
         q: "How do I contact support?",
-        a: "Email us at support@artifio.ai. We respond within 24-48 hours."
+        a: `Email us at ${brand.supportEmail}. We respond within 24-48 hours.`
       },
       {
         q: "Do you have live chat?",
@@ -296,11 +297,11 @@ const faqCategories = [
       },
       {
         q: "Where can I report a bug?",
-        a: "Email support@artifio.ai with details about the issue, including what you were trying to do and any error messages."
+        a: `Email ${brand.supportEmail} with details about the issue, including what you were trying to do and any error messages.`
       },
       {
         q: "How do I report a copyright concern?",
-        a: "Send DMCA notices to privacy@artifio.ai with the required information outlined in our Terms of Service."
+        a: `Send DMCA notices to ${brand.privacyEmail} with the required information outlined in our Terms of Service.`
       }
     ]
   },
@@ -321,7 +322,7 @@ const faqCategories = [
       },
       {
         q: "Someone accessed my account without permission. What do I do?",
-        a: "Change your password immediately and contact support@artifio.ai. We'll investigate and secure your account."
+        a: `Change your password immediately and contact ${brand.supportEmail}. We'll investigate and secure your account.`
       }
     ]
   }
@@ -329,10 +330,10 @@ const faqCategories = [
 
 const FAQ = () => {
   useEffect(() => {
-    document.title = "FAQ - Artifio.ai";
+    document.title = pageTitle('FAQ');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Frequently asked questions about Artifio - pricing, credits, features, content policies, and getting started with 30+ AI models for content generation.');
+      metaDescription.setAttribute('content', `Frequently asked questions about ${brand.name} - pricing, credits, features, content policies, and getting started with 30+ AI models for content generation.`);
     }
   }, []);
 
@@ -349,7 +350,7 @@ const FAQ = () => {
               Frequently Asked Questions
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground">
-              Everything you need to know about Artifio
+              Everything you need to know about {brand.name}
             </p>
           </div>
         </section>
@@ -388,10 +389,10 @@ const FAQ = () => {
               <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
               <h2 className="text-3xl md:text-4xl font-black mb-4">More Questions?</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                Contact us at support@artifio.ai
+                Contact us at {brand.supportEmail}
               </p>
               <Button asChild size="lg" variant="neon">
-                <a href="mailto:support@artifio.ai">Contact Support</a>
+                <a href={supportMailto()}>Contact Support</a>
               </Button>
             </CardContent>
           </Card>

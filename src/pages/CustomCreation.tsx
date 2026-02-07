@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import type { JsonSchemaProperty, ModelJsonSchema } from "@/types/model-schema";
 import { initializeParameters } from "@/types/model-schema";
 import type { ModelConfiguration } from "@/types/schema";
+import { pageTitle } from '@/config/brand';
 
 const CustomCreation = () => {
   const { execute } = useErrorHandler();
@@ -453,7 +454,7 @@ const CustomCreation = () => {
 
   // SEO metadata
   useEffect(() => {
-    document.title = "Custom Creation Studio - artifio.ai";
+    document.title = pageTitle('Custom Creation Studio');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Create custom AI-generated content with advanced controls and fine-tuning options.');

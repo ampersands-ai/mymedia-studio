@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Download, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
+import { brand, pageTitle } from '@/config/brand';
 
 const AnimationEditorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,8 +27,8 @@ const AnimationEditorPage: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Animation Editor | Artifio</title>
-        <meta name="description" content="Create stunning animated explainer videos with the ARTIFIO Animation Editor" />
+        <title>{pageTitle('Animation Editor')}</title>
+        <meta name="description" content={`Create stunning animated explainer videos with the ${brand.name} Animation Editor`} />
       </Helmet>
       
       <div className="flex flex-col h-screen bg-background">

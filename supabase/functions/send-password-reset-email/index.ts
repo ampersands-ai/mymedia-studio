@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { normalizeGmailDots } from "../_shared/email-validation.ts";
 import { hashToken } from "../_shared/token-hashing.ts";
+import { edgeBrand, brandFrom } from '../_shared/brand.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -118,16 +119,16 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Build reset URL
-    const appUrl = Deno.env.get("APP_URL") || "https://artifio.ai";
+    const appUrl = Deno.env.get("APP_URL") || edgeBrand.appUrl;
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
     const fullName = user.user_metadata?.full_name || "";
 
     // Send branded password reset email
     const emailResponse = await resend.emails.send({
-      from: "Artifio <noreply@artifio.ai>",
+      from: brandFrom(""),
       to: [normalizedEmail],
-      subject: "Reset your password - Artifio",
+      subject: `Reset your password - ${edgeBrand.name}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -143,7 +144,7 @@ serve(async (req: Request): Promise<Response> => {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="text-align: center; padding-bottom: 30px;">
-                      <span style="font-size: 28px; font-weight: 800; color: #ffffff;">artifio.ai</span>
+                      <span style="font-size: 28px; font-weight: 800; color: #ffffff;">${edgeBrand.name}</span>
                     </td>
                   </tr>
                 </table>
@@ -198,11 +199,11 @@ serve(async (req: Request): Promise<Response> => {
                         If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
                       </p>
                       <p style="margin: 10px 0 0 0; font-size: 12px; color: #555555;">
-                        © ${new Date().getFullYear()} Artifio. All rights reserved.
+                        © ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.
                       </p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; color: #444444;">
                         This is an automated message. Please do not reply to this email.<br>
-                        For assistance, contact <a href="mailto:support@artifio.ai" style="color: #f97316;">support@artifio.ai</a>
+                        For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #f97316;">${edgeBrand.supportEmail}</a>
                       </p>
                     </td>
                   </tr>

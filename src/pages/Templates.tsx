@@ -17,6 +17,7 @@ import { TemplateSkeleton } from "@/components/ui/skeletons";
 import { LoadingTransition } from "@/components/ui/loading-transition";
 import { useImagePreloader } from "@/hooks/useImagePreloader";
 import { createSignedUrl } from "@/lib/storage-utils";
+import { pageTitle } from '@/config/brand';
 
 // Template type inferred from useAllTemplates hook
 type TemplateFromHook = NonNullable<ReturnType<typeof useAllTemplates>['data']>[number];
@@ -40,7 +41,7 @@ const Templates = () => {
   const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'image' | 'video'>('all');
 
   useEffect(() => {
-    document.title = "Templates - Artifio.ai";
+    document.title = pageTitle('Templates');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Ready-to-use AI templates for videos, images, audio, and text. Start creating in seconds with professional templates.');

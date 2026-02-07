@@ -1,3 +1,5 @@
+import { brand } from "@/config/brand";
+
 export const ComparisonTable = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -28,10 +30,10 @@ export const ComparisonTable = () => {
         </div>
       </div>
 
-      {/* artifio.ai */}
+      {/* Brand All-in-One */}
       <div className="brutalist-card p-8 bg-secondary-50 dark:bg-secondary-900/20 border-secondary-600 dark:border-secondary-400 shadow-lg shadow-secondary-600/20">
         <h3 className="text-2xl font-black mb-6 text-neutral-900 dark:text-neutral-100">
-          artifio.ai All-in-One
+          {brand.name} All-in-One
         </h3>
         <div className="space-y-4 mb-6 h-[200px] flex flex-col justify-center">
           <div className="text-center space-y-3">

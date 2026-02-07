@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/components/navigation";
 import { SignedInHamburgerMenuContent } from "@/components/navigation/mobile/SignedInHamburgerMenuContent";
+import { brand } from "@/config/brand";
 
 const navItems = [
   { id: "models", label: "Models", href: "/models" },
@@ -80,12 +81,12 @@ export const CinematicNav = () => {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img 
-            src="/logos/artifio.png" 
-            alt="Artifio" 
+          <img
+            src={brand.logoPath}
+            alt={brand.name}
             className="h-8 w-auto"
           />
-          <span className="text-xl font-bold text-white">artifio.ai</span>
+          <span className="text-xl font-bold text-white">{brand.name}</span>
         </Link>
 
         {/* Desktop Nav Links - Different for logged in vs logged out */}

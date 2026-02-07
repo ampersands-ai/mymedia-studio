@@ -3,13 +3,14 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { CinematicNav } from "@/components/cinematic/CinematicNav";
 import { ContactSection } from "@/components/cinematic/ContactSection";
+import { brand, pageTitle } from '@/config/brand';
 
 const Privacy = () => {
   useEffect(() => {
-    document.title = "Privacy Policy - Artifio.ai";
+    document.title = pageTitle('Privacy Policy');
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Privacy Policy for Artifio.ai - Learn how we collect, use, and protect your personal information.');
+      metaDescription.setAttribute('content', `Privacy Policy for ${brand.name} - Learn how we collect, use, and protect your personal information.`);
     }
   }, []);
 
@@ -38,10 +39,10 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">1. Introduction</h2>
               <p className="leading-relaxed mb-4">
-                Welcome to Artifio.ai ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI content creation platform.
+                Welcome to {brand.name} ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI content creation platform.
               </p>
               <p className="leading-relaxed">
-                By using Artifio.ai, you agree to the collection and use of information in accordance with this policy.
+                By using {brand.name}, you agree to the collection and use of information in accordance with this policy.
               </p>
             </section>
 
@@ -115,7 +116,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">4. Third-Party AI Model Providers</h2>
               <p className="leading-relaxed mb-4">
-                Artifio provides access to AI models operated by third-party providers. When you submit prompts or content for AI generation, that data is transmitted to the relevant third-party provider to process your request.
+                {brand.name} provides access to AI models operated by third-party providers. When you submit prompts or content for AI generation, that data is transmitted to the relevant third-party provider to process your request.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">4.1 Current AI Providers</h3>
@@ -278,7 +279,7 @@ const Privacy = () => {
                 </div>
               </div>
               <p className="leading-relaxed mb-6">
-                To exercise these rights, contact us at <strong className="text-white">privacy@artifio.ai</strong>. We will respond within 30 days.
+                To exercise these rights, contact us at <strong className="text-white">{brand.privacyEmail}</strong>. We will respond within 30 days.
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">9.1 Account Deletion</h3>
@@ -312,7 +313,7 @@ const Privacy = () => {
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">Data Controller:</h3>
               <p className="leading-relaxed mb-6">
-                Artifio.ai, located in Texas, USA
+                {brand.name}, located in Texas, USA
               </p>
 
               <h3 className="text-xl font-semibold mb-3 text-white/90">Your Additional Rights:</h3>
@@ -327,7 +328,7 @@ const Privacy = () => {
                 Your data is transferred to the United States. We ensure appropriate safeguards through standard contractual clauses and compliance with applicable data protection frameworks.
               </p>
               <p className="leading-relaxed">
-                Contact <strong className="text-white">privacy@artifio.ai</strong> for GDPR-related inquiries.
+                Contact <strong className="text-white">{brand.privacyEmail}</strong> for GDPR-related inquiries.
               </p>
             </section>
 
@@ -358,7 +359,7 @@ const Privacy = () => {
                 We do not sell your personal information. We do not use sensitive personal information for purposes other than providing the Service.
               </p>
               <p className="leading-relaxed">
-                To exercise your CCPA rights, contact <strong className="text-white">privacy@artifio.ai</strong> or use our account settings.
+                To exercise your CCPA rights, contact <strong className="text-white">{brand.privacyEmail}</strong> or use our account settings.
               </p>
             </section>
 
@@ -392,10 +393,10 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4 text-white">13. Children's Privacy</h2>
               <p className="leading-relaxed mb-4">
-                <strong className="text-white">Artifio.ai is not intended for anyone under 18 years of age.</strong> We do not knowingly collect personal information from individuals under 18.
+                <strong className="text-white">{brand.name} is not intended for anyone under 18 years of age.</strong> We do not knowingly collect personal information from individuals under 18.
               </p>
               <p className="leading-relaxed">
-                If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <strong className="text-white">privacy@artifio.ai</strong>. We will take steps to delete such information from our systems.
+                If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <strong className="text-white">{brand.privacyEmail}</strong>. We will take steps to delete such information from our systems.
               </p>
             </section>
 
@@ -469,8 +470,8 @@ const Privacy = () => {
                 If you have questions about this Privacy Policy, wish to exercise your data rights, have DMCA concerns, or have any other inquiries, please contact us:
               </p>
               <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p className="font-semibold text-white">Artifio.ai</p>
-                <p className="font-semibold mt-2 text-white">Email: privacy@artifio.ai</p>
+                <p className="font-semibold text-white">{brand.name}</p>
+                <p className="font-semibold mt-2 text-white">Email: {brand.privacyEmail}</p>
                 <p className="font-semibold mt-2 text-white">Address: 539 W Commerce St, Ste 5263<br />Dallas, Texas 75208<br />United States of America</p>
                 <p className="mt-3 text-white/70">Response Time: We aim to respond to all inquiries within 30 days.</p>
               </div>

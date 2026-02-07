@@ -233,7 +233,7 @@ const faqCategories = [
         a: "Not currently available for public use."
       },
       {
-        q: "Can I use Artifio offline?",
+        q: `Can I use ${brand.name} offline?`,
         a: `No. ${brand.name} requires an internet connection.`
       },
       {

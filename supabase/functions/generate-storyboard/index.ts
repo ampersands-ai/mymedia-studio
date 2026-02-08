@@ -5,6 +5,7 @@ import { validateJsonbSize, MAX_JSONB_SIZE } from "../_shared/jsonb-validation-s
 import { STORYBOARD_STATUS } from "../_shared/constants.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
+import { alertHighError } from "../_shared/admin-alerts.ts";
 
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
@@ -758,6 +759,17 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
     );
 
   } catch (error) {
+    // Send admin alert for high-severity errors (fire and forget)
+    alertHighError(
+      'generate-storyboard',
+      error instanceof Error ? error : new Error(String(error)),
+      undefined,
+      { 
+        errorType: 'storyboard_generation_failure',
+        requestId
+      }
+    );
+    
     return createSafeErrorResponse(error, 'generate-storyboard', responseHeaders);
   }
 });

@@ -87,7 +87,20 @@ Deno.serve(async (req) => {
       metadata: { severity: body.severity, emoji }
     });
 
-    // Generate email HTML
+    // Format metadata for display
+    const metadataDisplay = body.metadata ? Object.entries(body.metadata)
+      .filter(([key]) => !key.startsWith('_')) // Filter internal keys
+      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+      .join('\n') : 'No additional metadata';
+
+    // Calculate time taken if timestamps available
+    const timeTaken = body.metadata?.durationMs 
+      ? `${(body.metadata.durationMs / 1000).toFixed(2)} seconds`
+      : body.metadata?.duration_ms 
+        ? `${(body.metadata.duration_ms / 1000).toFixed(2)} seconds`
+        : 'Unknown';
+
+    // Generate email HTML with comprehensive details
     const emailHTML = generateEmailHTML({
       title: `[${body.severity.toUpperCase()}] Error on ${body.route_name}`,
       preheader: body.error_message,
@@ -96,29 +109,45 @@ Deno.serve(async (req) => {
       sections: [
         {
           type: 'summary',
-          title: 'Non-Technical Summary',
+          title: '📋 Error Summary',
           content: `
-            <p><strong>What happened?</strong><br/>${body.error_message}</p>
-            <p><strong>Where?</strong><br/>${body.route_name}</p>
-            ${body.user_email ? `<p><strong>Who was affected?</strong><br/>${body.user_email}</p>` : ''}
-            <p><strong>When?</strong><br/>Just now</p>
-            <p><strong>Impact:</strong> <span class="severity-${body.severity}">${body.severity.toUpperCase()}</span></p>
+            <p><strong>🚨 Error:</strong><br/>${body.error_message}</p>
+            <p><strong>📍 Where:</strong><br/>${body.route_name}</p>
+            <p><strong>👤 User Email:</strong><br/>${body.user_email || 'Unknown (anonymous)'}</p>
+            <p><strong>🎨 Feature/Component:</strong><br/>${body.component_name || body.route_name || 'Unknown'}</p>
+            <p><strong>⏱️ Time Taken:</strong><br/>${timeTaken}</p>
+            <p><strong>📅 When:</strong><br/>${new Date().toLocaleString()}</p>
+            <p><strong>⚠️ Severity:</strong> <span style="color: ${body.severity === 'critical' ? '#dc2626' : '#ea580c'}; font-weight: bold;">${body.severity.toUpperCase()}</span></p>
           `
         },
+        ...(body.prompt ? [{
+          type: 'details' as const,
+          title: '📝 User Prompt',
+          content: `${body.prompt.substring(0, 500)}${body.prompt.length > 500 ? '...' : ''}`
+        }] : []),
         {
           type: 'details',
-          title: 'Technical Details',
+          title: '🔧 Technical Details',
           content: `Error Type: ${body.error_type}
 Severity: ${body.severity}
 Route: ${body.route_name}
 Component: ${body.component_name || 'Unknown'}
 User Action: ${body.user_action || 'Unknown'}
+User ID: ${body.user_id || 'Unknown'}
+Generation ID: ${body.generation_id || body.metadata?.generationId || 'N/A'}
+Model: ${body.model_name || body.metadata?.modelId || 'N/A'}
+Provider: ${body.provider || body.metadata?.provider || 'N/A'}
 
 ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace available'}`
         },
+        {
+          type: 'details',
+          title: '📊 Additional Variables',
+          content: metadataDisplay
+        },
         ...(body.affected_scripts && body.affected_scripts.length > 0 ? [{
           type: 'list' as const,
-          title: 'Files Affected',
+          title: '📁 Files Affected',
           content: body.affected_scripts
         }] : []),
         {
@@ -126,13 +155,21 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
           title: 'Quick Actions',
           content: [
             {
-              label: 'View in Admin Dashboard',
+              label: 'View User Logs',
               url: `https://artifio.ai/admin/user-logs`
+            },
+            {
+              label: 'View Generation Ledger',
+              url: `https://artifio.ai/admin/generation-ledger`
+            },
+            {
+              label: 'View Security Dashboard',
+              url: `https://artifio.ai/admin/security`
             }
           ]
         }
       ],
-      footer: 'Sent by Artifio Monitoring System'
+      footer: 'Sent by Artifio Error Monitoring System'
     });
 
     logger.info('Sending email alert', { 

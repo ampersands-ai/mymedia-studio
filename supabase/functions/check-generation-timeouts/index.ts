@@ -25,14 +25,14 @@ Deno.serve(async (req) => {
 
     logger.info('Starting generation timeout check');
 
-    // Find generations that have been processing for more than 5 minutes
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    // Find generations that have been processing for more than 10 minutes
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
     const { data: stuckGenerations, error: queryError } = await supabase
       .from('generations')
-      .select('id, user_id, status, created_at, prompt, model_record_id')
+      .select('id, user_id, status, created_at, prompt, model_record_id, type, tokens_used, settings')
       .eq('status', GENERATION_STATUS.PROCESSING)
-      .lt('created_at', fiveMinutesAgo);
+      .lt('created_at', tenMinutesAgo);
 
     if (queryError) {
       logger.error('Failed to query stuck generations', queryError);
@@ -115,6 +115,10 @@ Deno.serve(async (req) => {
             provider: provider,
             user_email: emailMap.get(gen.user_id),
             prompt: gen.prompt,
+            content_type: gen.type,
+            tokens_used: gen.tokens_used,
+            settings: gen.settings,
+            created_at: gen.created_at,
           }
         });
       });

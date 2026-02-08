@@ -214,88 +214,111 @@ async function assembleVideoWithAIBackgrounds(
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/json2video-webhook`;
   const uniqueRenderJobId = `video-job-${videoJobId}-${Date.now()}`;
 
-  // Complete subtitle settings matching JSON2Video template requirements
-  const subtitleSettings = captionStyle ? {
-    // Transcription settings
-    subtitlesModel: 'default',
-    subtitleStyle: 'boxed-word',
-    keywords: [],
-    fontUrl: '',
-    
-    // Font settings
-    fontFamily: captionStyle.fontFamily || 'Oswald Bold',
-    fontSize: captionStyle.fontSize || 140,
-    allCaps: false,
-    
-    // Colors
-    boxColor: captionStyle.backgroundColor || '#000000',
-    lineColor: captionStyle.textColor || '#FFFFFF',
-    wordColor: captionStyle.textColor || '#FFFF00',
-    
-    // Outline and shadow
-    outlineColor: '#000000',
-    outlineWidth: 8,
-    shadowColor: '#000000',
-    shadowOffset: 0,
-    
-    // Position
-    position: captionStyle.position === 'bottom' ? 'mid-bottom-center' : 
-              captionStyle.position === 'top' ? 'mid-top-center' : 'mid-bottom-center',
-    x: 0,
-    y: 0,
-    maxWordsPerLine: 4,
-  } : {
-    // Default settings when no caption style provided
-    subtitlesModel: 'default',
-    subtitleStyle: 'boxed-word',
-    keywords: [],
-    fontUrl: '',
-    fontFamily: 'Oswald Bold',
-    fontSize: 140,
-    allCaps: false,
-    boxColor: '#000000',
-    lineColor: '#FFFFFF',
-    wordColor: '#FFFF00',
-    outlineColor: '#000000',
-    outlineWidth: 8,
-    shadowColor: '#000000',
-    shadowOffset: 0,
-    position: 'mid-bottom-center',
-    x: 0,
-    y: 0,
-    maxWordsPerLine: 4,
+  // Build inline movie structure (avoids template issues like 'font-color' property errors)
+  const verticalHeight = aspectRatio === '9:16' || aspectRatio === '4:5' ? 1920 : 1080;
+  
+  // Generate unique element IDs
+  const generateElementId = (): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return 'q' + Array.from({ length: 7 }, () => 
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
   };
 
-  logger?.info('Subtitle settings for JSON2Video', { 
+  // Prepare subtitle settings (kebab-case for JSON2Video API)
+  const subtitleStyle = captionStyle?.backgroundColor && parseFloat(String(captionStyle.backgroundOpacity ?? 1)) > 0 
+    ? 'boxed-word' 
+    : 'classic-one-word';
+
+  const subtitleSettings = {
+    "style": subtitleStyle,
+    "font-family": captionStyle?.fontFamily || 'Oswald Bold',
+    "font-size": captionStyle?.fontSize || 140,
+    "all-caps": false,
+    "box-color": captionStyle?.backgroundColor || '#000000',
+    "line-color": captionStyle?.textColor || '#FFFFFF',
+    "word-color": captionStyle?.textColor || '#FFFF00',
+    "outline-color": '#000000',
+    "outline-width": 8,
+    "shadow-color": '#000000',
+    "shadow-offset": 0,
+    "position": captionStyle?.position === 'bottom' ? 'mid-bottom-center' : 
+                captionStyle?.position === 'top' ? 'mid-top-center' : 'mid-bottom-center',
+    "max-words-per-line": 4,
+    "x": 0,
+    "y": 0
+  };
+
+  logger?.info('Subtitle settings for JSON2Video (inline)', { 
     metadata: { subtitleSettings, hasCaptionStyle: !!captionStyle } 
   });
 
+  // Build scene elements for inline movie structure
+  const sceneElements = scenes.map((scene, index) => ({
+    id: generateElementId(),
+    comment: `Scene ${index + 1}`,
+    elements: [
+      {
+        type: "image",
+        id: generateElementId(),
+        model: "freepik-classic",
+        prompt: scene.imagePrompt,
+        zoom: 2,
+        position: "center-center",
+        "aspect-ratio": "vertical",
+        height: verticalHeight,
+        duration: -1
+      },
+      {
+        type: "voice",
+        id: generateElementId(),
+        text: scene.voiceOverText,
+        voice: "en-US-AndrewMultilingualNeural",
+        model: "azure",
+        speed: 1
+      }
+    ]
+  }));
+
+  // Build inline movie payload (no template)
   const renderPayload = {
-    template: 'hae1en4rQdJHFgFS3545',
-    variables: {
-      voiceModel: 'azure',
-      voiceID: 'en-US-AndrewMultilingualNeural',
-      audioURL: assets.voiceoverUrl,
-      imageModel: 'freepik-classic',
-      introText: '',
-      scenes,
-      ...subtitleSettings,
-    },
+    comment: `AI Video - ${assets.topic}`,
+    id: generateElementId(),
+    resolution,
+    fps: 25,
+    quality: 'high',
+    cache: true,
+    draft: false,
+    
+    // Global elements: subtitles overlay
+    elements: [
+      {
+        type: "subtitles",
+        id: generateElementId(),
+        comment: "Subtitles",
+        language: "auto",
+        model: "default",
+        settings: subtitleSettings
+      }
+    ],
+    
+    // Scene array
+    scenes: sceneElements,
+    
+    // Project ID for tracking
     project: uniqueRenderJobId,
+    
+    // Webhook for completion notification
     exports: [{
       destinations: [{
         type: "webhook",
         endpoint: webhookUrl,
         "content-type": "json"
       }]
-    }],
-    resolution,
-    quality: 'high',
-    cache: true,
-    draft: false,
+    }]
   };
 
-  logger?.info('Calling JSON2Video API for AI backgrounds', { 
+  logger?.info('Calling JSON2Video API with inline structure', { 
     metadata: { sceneCount: scenes.length, resolution } 
   });
 
@@ -311,7 +334,7 @@ async function assembleVideoWithAIBackgrounds(
   if (!response.ok) {
     const errorText = await response.text();
     logger?.error('JSON2Video API error', new Error(errorText));
-    throw new Error(`JSON2Video API error: ${response.status}`);
+    throw new Error(`JSON2Video API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();

@@ -214,30 +214,36 @@ export function VoiceoverReviewStep({
           variant="outline"
           onClick={() => setPendingRegenTier('standard')}
           disabled={isDisabled || isRegenerating || !canAffordStandard}
-          className="min-h-[44px]"
+          className="min-h-[44px] px-2 sm:px-4"
         >
         {isRegenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <>
-              <RefreshCw className="mr-1.5 h-4 w-4" />
-              Standard (<Coins className="inline h-3 w-3 mx-0.5" />{standardCost})
-            </>
+            <span className="flex items-center justify-center gap-1 text-xs sm:text-sm">
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">Standard</span>
+              <span className="flex items-center shrink-0">
+                (<Coins className="h-3 w-3" />{standardCost})
+              </span>
+            </span>
           )}
         </Button>
         <Button
           variant="outline"
           onClick={() => setPendingRegenTier('pro')}
           disabled={isDisabled || isRegenerating || !canAffordPro}
-          className="min-h-[44px]"
+          className="min-h-[44px] px-2 sm:px-4"
         >
           {isRegenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <>
-              <RefreshCw className="mr-1.5 h-4 w-4" />
-              Pro (<Coins className="inline h-3 w-3 mx-0.5" />{proCost})
-            </>
+            <span className="flex items-center justify-center gap-1 text-xs sm:text-sm">
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">Pro</span>
+              <span className="flex items-center shrink-0">
+                (<Coins className="h-3 w-3" />{proCost})
+              </span>
+            </span>
           )}
         </Button>
       </div>

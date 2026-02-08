@@ -37,17 +37,19 @@ export const RenderStatusAlert = ({
 }: RenderStatusAlertProps) => {
   return (
     <Alert>
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex items-center justify-between">
-        <span>{renderStatusMessage}</span>
-        <div className="flex gap-2 ml-4">
+      <AlertCircle className="h-4 w-4 shrink-0" />
+      <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
+        <span className="flex-1 text-sm leading-relaxed">{renderStatusMessage}</span>
+        <div className="flex gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={onCheckStatus}
+            className="whitespace-nowrap"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Check Status
+            <RefreshCw className="w-4 h-4 mr-1.5 shrink-0" />
+            <span className="hidden xs:inline">Check Status</span>
+            <span className="xs:hidden">Status</span>
           </Button>
           
           {/* Cancel Render Button with Confirmation */}
@@ -59,9 +61,9 @@ export const RenderStatusAlert = ({
                 disabled={isCanceling}
                 className="whitespace-nowrap"
               >
-                <X className="w-4 h-4 mr-1 flex-shrink-0" />
-                <span className="hidden sm:inline">Cancel Render</span>
-                <span className="sm:hidden">Cancel</span>
+                <X className="w-4 h-4 mr-1 shrink-0" />
+                <span className="hidden sm:inline">Cancel</span>
+                <span className="sm:hidden">✕</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

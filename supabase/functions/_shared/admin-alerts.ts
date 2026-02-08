@@ -7,7 +7,12 @@ interface AdminAlertPayload {
   error_message: string;
   error_stack?: string;
   user_id?: string;
+  user_email?: string;
   route_name?: string;
+  prompt?: string;
+  generation_id?: string;
+  model_name?: string;
+  provider?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -44,6 +49,17 @@ export async function sendAdminErrorAlert(payload: AdminAlertPayload): Promise<v
       return;
     }
 
+    // Get user email if we have user_id but no email
+    let userEmail = payload.user_email;
+    if (!userEmail && payload.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', payload.user_id)
+        .single();
+      userEmail = profile?.email;
+    }
+
     // Log error to database first
     const { data: errorRecord } = await supabase
       .from('user_error_logs')
@@ -60,12 +76,16 @@ export async function sendAdminErrorAlert(payload: AdminAlertPayload): Promise<v
           ...payload.metadata,
           source: 'edge_function',
           function_name: payload.function_name,
+          prompt: payload.prompt,
+          generation_id: payload.generation_id,
+          model_name: payload.model_name,
+          provider: payload.provider,
         },
       })
       .select()
       .single();
 
-    // Trigger email alert
+    // Trigger email alert with comprehensive details
     await supabase.functions.invoke('send-error-alert', {
       body: {
         error_id: errorRecord?.id,
@@ -76,6 +96,12 @@ export async function sendAdminErrorAlert(payload: AdminAlertPayload): Promise<v
         error_stack: payload.error_stack,
         component_name: payload.function_name,
         user_action: 'Edge function execution',
+        user_id: payload.user_id,
+        user_email: userEmail,
+        prompt: payload.prompt,
+        generation_id: payload.generation_id,
+        model_name: payload.model_name,
+        provider: payload.provider,
         affected_scripts: [`supabase/functions/${payload.function_name}/index.ts`],
         metadata: payload.metadata,
       }
@@ -105,6 +131,12 @@ export function alertCriticalError(
     function_name: functionName,
     error_message: errorMessage,
     error_stack: errorStack,
+    user_id: metadata?.userId as string,
+    user_email: metadata?.userEmail as string,
+    prompt: metadata?.prompt as string,
+    generation_id: metadata?.generationId as string,
+    model_name: metadata?.modelName as string,
+    provider: metadata?.provider as string,
     metadata,
   });
 }
@@ -128,6 +160,11 @@ export function alertHighError(
     error_message: errorMessage,
     error_stack: errorStack,
     user_id: userId,
+    user_email: metadata?.userEmail as string,
+    prompt: metadata?.prompt as string,
+    generation_id: metadata?.generationId as string,
+    model_name: metadata?.modelName as string,
+    provider: metadata?.provider as string,
     metadata,
   });
 }

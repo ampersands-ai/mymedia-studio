@@ -26,48 +26,87 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { generation_id, elapsed_minutes, model_name, provider, user_email, prompt } = body;
+    const { 
+      generation_id, 
+      user_id,
+      elapsed_minutes, 
+      model_name, 
+      provider, 
+      user_email, 
+      prompt,
+      content_type,
+      tokens_used,
+      settings,
+      created_at
+    } = body;
 
     // Get admin email from settings
-    const { data: settings } = await supabase
+    const { data: adminSettings } = await supabase
       .from('app_settings')
       .select('setting_value')
       .eq('setting_key', 'admin_notifications')
       .single();
 
-    if (!settings?.setting_value?.error_alerts?.enabled) {
+    if (!adminSettings?.setting_value?.error_alerts?.enabled) {
       return new Response(
         JSON.stringify({ message: 'Alerts disabled' }),
         { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const adminEmail = settings.setting_value.admin_email;
+    const adminEmail = adminSettings.setting_value.admin_email;
 
-    // Generate email HTML
+    // Format settings for display
+    const settingsDisplay = settings ? Object.entries(settings)
+      .filter(([key]) => !key.startsWith('_')) // Filter internal keys
+      .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+      .join('\n') : 'No settings';
+
+    // Generate email HTML with comprehensive details
     const emailHTML = generateEmailHTML({
-      title: `Generation Timeout Warning`,
-      preheader: `Generation ${generation_id} has been running for ${elapsed_minutes} minutes`,
-      headerColor: '#ea580c',
-      headerEmoji: '⏱️',
+      title: `⏱️ Stuck Generation Alert - ${elapsed_minutes} minutes`,
+      preheader: `Generation ${generation_id} has been running for ${elapsed_minutes} minutes without completion`,
+      headerColor: elapsed_minutes >= 15 ? '#dc2626' : '#ea580c',
+      headerEmoji: elapsed_minutes >= 15 ? '🚨' : '⏱️',
       sections: [
         {
           type: 'summary',
-          title: 'Timeout Alert',
+          title: 'Generation Stuck Alert',
           content: `
-            <p><strong>What happened?</strong><br/>A generation has been running for over 5 minutes without completion.</p>
-            <p><strong>Generation ID:</strong><br/>${generation_id}</p>
-            <p><strong>Elapsed Time:</strong><br/>${elapsed_minutes} minutes</p>
-            <p><strong>Provider:</strong><br/>${provider || 'Unknown'}</p>
-            <p><strong>Model:</strong><br/>${model_name || 'Unknown'}</p>
-            ${user_email ? `<p><strong>User:</strong><br/>${user_email}</p>` : ''}
-            ${prompt ? `<p><strong>Prompt:</strong><br/>${prompt.substring(0, 200)}${prompt.length > 200 ? '...' : ''}</p>` : ''}
+            <p><strong>⏱️ Time Running:</strong><br/><span style="color: ${elapsed_minutes >= 15 ? '#dc2626' : '#ea580c'}; font-size: 18px; font-weight: bold;">${elapsed_minutes} minutes</span></p>
+            <p><strong>👤 User Email:</strong><br/>${user_email || 'Unknown (anonymous)'}</p>
+            <p><strong>🎨 Feature Used:</strong><br/>${content_type || 'Unknown'}</p>
+            <p><strong>🤖 Provider / Model:</strong><br/>${provider || 'Unknown'} / ${model_name || 'Unknown'}</p>
+            <p><strong>💎 Tokens Used:</strong><br/>${tokens_used || 0}</p>
+            <p><strong>📅 Started At:</strong><br/>${created_at ? new Date(created_at).toLocaleString() : 'Unknown'}</p>
           `
         },
         {
           type: 'details',
-          title: 'Possible Issues',
-          content: `• Provider API may be experiencing delays
+          title: '📝 Prompt',
+          content: prompt ? `${prompt.substring(0, 500)}${prompt.length > 500 ? '...' : ''}` : 'No prompt available'
+        },
+        {
+          type: 'details',
+          title: '⚙️ Generation Settings',
+          content: settingsDisplay
+        },
+        {
+          type: 'details',
+          title: '🔧 Technical Details',
+          content: `Generation ID: ${generation_id}
+User ID: ${user_id || 'Unknown'}
+Content Type: ${content_type || 'Unknown'}
+Provider: ${provider || 'Unknown'}
+Model: ${model_name || 'Unknown'}
+Status: Processing (Stuck)
+Created At: ${created_at || 'Unknown'}`
+        },
+        {
+          type: 'details',
+          title: '⚠️ Possible Issues & Actions',
+          content: `Possible Causes:
+• Provider API may be experiencing delays
 • Generation may be stuck in processing
 • Webhook callback may have failed
 • Model may be overloaded
@@ -75,20 +114,24 @@ serve(async (req) => {
 Recommended Actions:
 1. Check webhook logs for this generation
 2. Verify provider API status
-3. Consider canceling and retrying if >10 minutes
-4. Check similar timeouts in last hour`
+3. Consider canceling and refunding tokens
+4. Check for similar stuck generations`
         },
         {
           type: 'actions',
           title: 'Quick Actions',
           content: [
             {
-              label: 'View Generation Details',
+              label: 'View Webhook Monitor',
               url: `https://artifio.ai/admin/webhook-monitor`
             },
             {
-              label: 'View All Stuck Generations',
-              url: `https://artifio.ai/admin/webhook-monitor`
+              label: 'View Generation Ledger',
+              url: `https://artifio.ai/admin/generation-ledger`
+            },
+            {
+              label: 'View User Logs',
+              url: `https://artifio.ai/admin/user-logs`
             }
           ]
         }

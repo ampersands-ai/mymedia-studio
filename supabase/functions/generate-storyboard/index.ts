@@ -570,8 +570,20 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
 
     logger.debug('JSONB validation passed', { userId: user.id });
 
-    // Ensure intro image prompts are distinct
+    // Helper to ensure style guideline is prepended to intro image prompts
+    const ensureIntroStylePrefix = (prompt: string | null): string | null => {
+      if (!prompt) return null;
+      const stylePrefix = `${style} ${styleGuideline}`;
+      // Check if the prompt already starts with the style name
+      if (prompt.toLowerCase().startsWith(style.toLowerCase())) {
+        return `${stylePrefix}, ${prompt.substring(style.length).replace(/^[\s,]+/, '')}`;
+      }
+      return `${stylePrefix}, ${prompt}`;
+    };
+    
+    // Ensure intro image prompts have style prefix and are distinct
     // Intro voiceover typically has two lines separated by \n
+    const finalIntroImagePrompt = ensureIntroStylePrefix(introImagePrompt);
     let finalIntroImagePrompt2 = introImagePrompt2;
     if (!introImagePrompt2 || arePromptsTooSimilar(introImagePrompt, introImagePrompt2)) {
       // Try to create distinct prompt from second line of intro voiceover
@@ -583,8 +595,11 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
           metadata: { line2: introLines[1] }
         });
       } else {
-        finalIntroImagePrompt2 = `${introImagePrompt}, different angle close-up detail shot`;
+        finalIntroImagePrompt2 = `${finalIntroImagePrompt}, different angle close-up detail shot`;
       }
+    } else {
+      // Ensure style prefix is on the existing prompt2
+      finalIntroImagePrompt2 = ensureIntroStylePrefix(introImagePrompt2);
     }
 
     // Create storyboard record (no credit deduction - charged at render time)
@@ -598,7 +613,7 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
         tone,
         voice_id: voiceID,
         voice_name: voiceName,
-        intro_image_prompt: introImagePrompt,
+        intro_image_prompt: finalIntroImagePrompt,
         intro_image_prompt_2: finalIntroImagePrompt2,
         intro_voiceover_text: introVoiceoverText,
         tokens_cost: tokenCost,
@@ -692,17 +707,35 @@ Create a compelling STORY (not just facts) about this topic. Each scene should f
       return `${prompt1}, different angle close-up detail shot`;
     };
     
+    // Helper to ensure style guideline is prepended to image prompts
+    const ensureStylePrefix = (prompt: string | null): string | null => {
+      if (!prompt) return null;
+      const stylePrefix = `${style} ${styleGuideline}`;
+      // Check if the prompt already starts with the style name (AI sometimes includes it)
+      if (prompt.toLowerCase().startsWith(style.toLowerCase())) {
+        // Replace just the style name with full style + guideline
+        return `${stylePrefix}, ${prompt.substring(style.length).replace(/^[\s,]+/, '')}`;
+      }
+      // Prepend style + guideline
+      return `${stylePrefix}, ${prompt}`;
+    };
+    
     const scenesData = scenes.map((scene: SceneData, index: number) => {
       const voiceOverText = scene.voiceOverText || scene.voice_over_text || '';
-      const imagePrompt = mediaType === 'image' || mediaType === 'animated' 
+      const rawImagePrompt = mediaType === 'image' || mediaType === 'animated' 
         ? (scene.imagePrompt || scene.image_prompt || null) 
         : null;
       const rawImagePrompt2 = scene.imagePrompt2 || scene.image_prompt_2 || null;
       
-      // Ensure imagePrompt2 is distinct from imagePrompt
-      const imagePrompt2 = mediaType === 'image' || mediaType === 'animated'
-        ? ensureDistinctPrompt2(imagePrompt, rawImagePrompt2, voiceOverText, style)
+      // Ensure style guideline is prepended to all image prompts
+      const imagePrompt = ensureStylePrefix(rawImagePrompt);
+      
+      // Ensure imagePrompt2 is distinct from imagePrompt (and has style prefix)
+      let imagePrompt2 = mediaType === 'image' || mediaType === 'animated'
+        ? ensureDistinctPrompt2(rawImagePrompt, rawImagePrompt2, voiceOverText, style)
         : null;
+      // Apply style prefix to imagePrompt2 if it doesn't already have it
+      imagePrompt2 = ensureStylePrefix(imagePrompt2);
       
       return {
         storyboard_id: storyboard.id,

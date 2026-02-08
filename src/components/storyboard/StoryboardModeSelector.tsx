@@ -33,18 +33,18 @@ export const StoryboardModeSelector = ({
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent 
-        className="sm:max-w-2xl"
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl font-bold">Choose Your Path</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogTitle className="text-xl sm:text-2xl font-bold">Choose Your Path</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
             Your storyboard is ready with {sceneCount} scenes (~{estimatedDuration}s)
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
           {/* Quick Mode */}
           <Card 
             className={cn(
@@ -54,30 +54,30 @@ export const StoryboardModeSelector = ({
             onClick={() => onSelectMode('quick')}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Zap className="h-6 w-6 text-primary" />
+            <CardContent className="p-4 sm:p-6 relative">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg">Quick Mode</h3>
+                <h3 className="font-bold text-base sm:text-lg">Quick Mode</h3>
               </div>
               
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 Skip scene editing. AI generates all visuals during render based on your prompts.
               </p>
               
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span>Faster workflow</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span>AI-generated visuals</span>
                 </div>
               </div>
               
-              <Button className="w-full mt-6" variant="default">
+              <Button className="w-full mt-4 sm:mt-6 text-sm" variant="default">
                 Continue to Voice & Subtitles
               </Button>
             </CardContent>
@@ -92,30 +92,30 @@ export const StoryboardModeSelector = ({
             onClick={() => onSelectMode('customize')}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-secondary/50">
-                  <Palette className="h-6 w-6 text-secondary-foreground" />
+            <CardContent className="p-4 sm:p-6 relative">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-secondary/50">
+                  <Palette className="h-5 w-5 sm:h-6 sm:w-6 text-secondary-foreground" />
                 </div>
-                <h3 className="font-bold text-lg">Customize Mode</h3>
+                <h3 className="font-bold text-base sm:text-lg">Customize Mode</h3>
               </div>
               
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 Edit each scene's script and prompts. Generate image previews and animations.
               </p>
               
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Palette className="h-4 w-4" />
+                  <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span>Full creative control</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span>{sceneCount} scenes to customize</span>
                 </div>
               </div>
               
-              <Button className="w-full mt-6" variant="outline">
+              <Button className="w-full mt-4 sm:mt-6 text-sm" variant="outline">
                 Customize Scenes
               </Button>
             </CardContent>

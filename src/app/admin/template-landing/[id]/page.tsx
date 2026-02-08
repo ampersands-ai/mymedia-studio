@@ -1,6 +1,8 @@
 'use client';
 
-import TemplateLandingEditor from '@/pages/admin/TemplateLandingEditor';
+import dynamic from 'next/dynamic';
+
+const TemplateLandingEditor = dynamic(() => import('@/views/admin/TemplateLandingEditor'), { ssr: false });
 
 export default function TemplateLandingEditorPage() {
   return <TemplateLandingEditor />;

@@ -19,7 +19,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     const verifyToken = async () => {
-      const token = searchParams.get("token");
+      const token = searchParams?.get("token");
 
       if (!token) {
         setStatus("error");

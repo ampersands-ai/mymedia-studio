@@ -1,6 +1,8 @@
 'use client';
 
-import Features from '@/pages/Features';
+import dynamic from 'next/dynamic';
+
+const Features = dynamic(() => import('@/views/Features'), { ssr: false });
 
 export default function FeaturesPage() {
   return <Features />;

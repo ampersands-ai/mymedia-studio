@@ -1,6 +1,8 @@
 'use client';
 
-import BackgroundGenerator from '@/pages/BackgroundGenerator';
+import dynamic from 'next/dynamic';
+
+const BackgroundGenerator = dynamic(() => import('@/views/BackgroundGenerator'), { ssr: false });
 
 export default function GeneratorPage() {
   return <BackgroundGenerator />;

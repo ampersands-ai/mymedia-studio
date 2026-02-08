@@ -1,6 +1,8 @@
 'use client';
 
-import MigrateStoryboards from '@/pages/admin/MigrateStoryboards';
+import dynamic from 'next/dynamic';
+
+const MigrateStoryboards = dynamic(() => import('@/views/admin/MigrateStoryboards'), { ssr: false });
 
 export default function MigrateStoryboardsPage() {
   return <MigrateStoryboards />;

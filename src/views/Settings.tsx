@@ -20,8 +20,8 @@ const Settings = () => {
 
   // Check URL query param first, then default to 'profile'
   // Note: location.state is not available in Next.js App Router
-  const tabFromQuery = searchParams.get('tab');
-  const tabFromState = null as string | undefined;
+  const tabFromQuery = searchParams?.get('tab');
+  const tabFromState: string | undefined = undefined;
   const [activeTab, setActiveTab] = useState(tabFromQuery || tabFromState || 'profile');
   const [profileData, setProfileData] = useState({
     display_name: "",

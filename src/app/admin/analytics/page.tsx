@@ -1,6 +1,8 @@
 'use client';
 
-import Analytics from '@/pages/admin/Analytics';
+import dynamic from 'next/dynamic';
+
+const Analytics = dynamic(() => import('@/views/admin/Analytics'), { ssr: false });
 
 export default function AnalyticsPage() {
   return <Analytics />;

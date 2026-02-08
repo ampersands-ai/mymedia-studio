@@ -13,7 +13,7 @@ export function preloadRoute(chunkName: string) {
   link.as = 'script';
   link.crossOrigin = 'anonymous';
   // Vite will handle the actual chunk URL resolution
-  link.href = `/src/pages/${chunkName}.tsx`;
+  link.href = `/src/views/${chunkName}.tsx`;
   document.head.appendChild(link);
 }
 
@@ -66,10 +66,10 @@ export function prefetchOnIdle(importFn: () => Promise<any>, timeout = 2000) {
  */
 export async function preloadOnHover(routePath: string): Promise<void> {
   const routeMap: Record<string, () => Promise<any>> = {
-    '/templates': () => import('../pages/Templates'),
-    '/pricing': () => import('../pages/Pricing'),
-    '/playground': () => import('../pages/Playground'),
-    '/video-studio': () => import('../pages/VideoStudio'),
+    '/templates': () => import('../views/Templates'),
+    '/pricing': () => import('../views/Pricing'),
+    '/playground': () => import('../views/Playground'),
+    '/video-studio': () => import('../views/VideoStudio'),
   };
 
   const importFn = routeMap[routePath];

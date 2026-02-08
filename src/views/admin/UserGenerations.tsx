@@ -186,7 +186,7 @@ const PreviewContent = ({ gen }: { gen: Generation }) => {
 };
 
 export default function UserGenerations() {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId: string }>() ?? {};
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();

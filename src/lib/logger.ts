@@ -6,16 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
  * Provides comprehensive logging with proper severity levels and backend integration
  */
 
-interface PostHogCapture {
-  capture: (event: string, properties?: Record<string, unknown>) => void;
-}
-
-declare global {
-  interface Window {
-    posthog?: PostHogCapture;
-  }
-}
-
 let requestIdCounter = 0;
 
 /**

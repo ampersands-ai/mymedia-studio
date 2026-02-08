@@ -13,7 +13,7 @@ import DOMPurify from "dompurify";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function BlogPost() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams<{ slug: string }>() ?? {};
   const { execute } = useErrorHandler();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [isLoading, setIsLoading] = useState(true);

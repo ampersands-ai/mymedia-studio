@@ -1,6 +1,8 @@
 'use client';
 
-import IndexV2 from '@/pages/IndexV2';
+import dynamic from 'next/dynamic';
+
+const IndexV2 = dynamic(() => import('@/views/IndexV2'), { ssr: false });
 
 export default function OldHomePage() {
   return <IndexV2 />;

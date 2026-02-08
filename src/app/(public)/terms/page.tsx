@@ -1,6 +1,8 @@
 'use client';
 
-import Terms from '@/pages/Terms';
+import dynamic from 'next/dynamic';
+
+const Terms = dynamic(() => import('@/views/Terms'), { ssr: false });
 
 export default function TermsPage() {
   return <Terms />;

@@ -1,6 +1,8 @@
 'use client';
 
-import UsersManager from '@/pages/admin/UsersManager';
+import dynamic from 'next/dynamic';
+
+const UsersManager = dynamic(() => import('@/views/admin/UsersManager'), { ssr: false });
 
 export default function UsersManagerPage() {
   return <UsersManager />;

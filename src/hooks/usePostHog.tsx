@@ -17,7 +17,7 @@ export const usePostHog = () => {
 
   // Track page views
   useEffect(() => {
-    trackPageView(pathname);
+    if (pathname) trackPageView(pathname);
   }, [pathname]);
 
   // Identify user and set properties when user data changes

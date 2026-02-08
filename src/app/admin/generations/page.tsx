@@ -1,6 +1,8 @@
 'use client';
 
-import AllGenerations from '@/pages/admin/AllGenerations';
+import dynamic from 'next/dynamic';
+
+const AllGenerations = dynamic(() => import('@/views/admin/AllGenerations'), { ssr: false });
 
 export default function AllGenerationsPage() {
   return <AllGenerations />;

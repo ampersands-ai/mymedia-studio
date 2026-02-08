@@ -11,18 +11,18 @@ export function useRoutePreload() {
   useEffect(() => {
     // Prefetch critical routes after initial render
     // Dashboard routes (most likely navigation targets)
-    prefetchOnIdle(() => import('../pages/CustomCreation'), 1000);
-    prefetchOnIdle(() => import('../pages/StoryboardPage'), 1500);
-    prefetchOnIdle(() => import('../pages/VideoStudio'), 2000);
-    prefetchOnIdle(() => import('../pages/Settings'), 2500);
-    prefetchOnIdle(() => import('../pages/dashboard/History'), 3000);
-    prefetchOnIdle(() => import('../pages/BackgroundLibrary'), 3500);
+    prefetchOnIdle(() => import('../views/CustomCreation'), 1000);
+    prefetchOnIdle(() => import('../views/StoryboardPage'), 1500);
+    prefetchOnIdle(() => import('../views/VideoStudio'), 2000);
+    prefetchOnIdle(() => import('../views/Settings'), 2500);
+    prefetchOnIdle(() => import('../views/dashboard/History'), 3000);
+    prefetchOnIdle(() => import('../views/BackgroundLibrary'), 3500);
     
     // Public routes
-    prefetchOnIdle(() => import('../pages/IndexV2'), 4000);
-    prefetchOnIdle(() => import('../pages/Templates'), 4500);
-    prefetchOnIdle(() => import('../pages/Pricing'), 5000);
-    prefetchOnIdle(() => import('../pages/Auth'), 5500);
+    prefetchOnIdle(() => import('../views/IndexV2'), 4000);
+    prefetchOnIdle(() => import('../views/Templates'), 4500);
+    prefetchOnIdle(() => import('../views/Pricing'), 5000);
+    prefetchOnIdle(() => import('../views/Auth'), 5500);
   }, []);
 }
 
@@ -31,19 +31,19 @@ export function useRoutePreload() {
  */
 export function usePrefetchOnHover(routePath: string) {
   const routeMap: Record<string, () => Promise<any>> = {
-    '/': () => import('../pages/IndexV2'),
-    '/old-home': () => import('../pages/IndexV2'),
-    '/auth': () => import('../pages/Auth'),
-    '/templates': () => import('../pages/Templates'),
-    '/pricing': () => import('../pages/Pricing'),
-    '/playground': () => import('../pages/Playground'),
-    '/video-studio': () => import('../pages/VideoStudio'),
-    '/dashboard/custom-creation': () => import('../pages/CustomCreation'),
-    '/dashboard/storyboard': () => import('../pages/StoryboardPage'),
-    '/dashboard/faceless-video': () => import('../pages/VideoStudio'),
-    '/dashboard/history': () => import('../pages/dashboard/History'),
-    '/dashboard/backgrounds': () => import('../pages/BackgroundLibrary'),
-    '/settings': () => import('../pages/Settings'),
+    '/': () => import('../views/IndexV2'),
+    '/old-home': () => import('../views/IndexV2'),
+    '/auth': () => import('../views/Auth'),
+    '/templates': () => import('../views/Templates'),
+    '/pricing': () => import('../views/Pricing'),
+    '/playground': () => import('../views/Playground'),
+    '/video-studio': () => import('../views/VideoStudio'),
+    '/dashboard/custom-creation': () => import('../views/CustomCreation'),
+    '/dashboard/storyboard': () => import('../views/StoryboardPage'),
+    '/dashboard/faceless-video': () => import('../views/VideoStudio'),
+    '/dashboard/history': () => import('../views/dashboard/History'),
+    '/dashboard/backgrounds': () => import('../views/BackgroundLibrary'),
+    '/settings': () => import('../views/Settings'),
   };
 
   const handleMouseEnter = async () => {

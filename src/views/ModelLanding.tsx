@@ -26,7 +26,7 @@ import {
 } from "@/components/model-landing";
 
 export default function ModelLanding() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams<{ slug: string }>() ?? {};
   const router = useRouter();
   
   const { data: modelPage, isLoading, error } = useModelPage(slug || "");

@@ -168,7 +168,6 @@ export default function AIModelsManager() {
     setDialogOpen(true);
   };
 
-  // @ts-expect-error - Intentionally unused, may be used in future
   const _handleSaveChanges = (updatedModel: AIModel) => {
     if (updatedModel.record_id) {
       // Existing model - add to pending changes
@@ -232,7 +231,6 @@ export default function AIModelsManager() {
     toast.success(`Status change queued for ${model.model_name}. Download update script to apply.`);
   };
 
-  // @ts-expect-error - Intentionally unused, may be used in future
   const _handleDelete = (recordId: string) => {
     const model = models.find(m => m.record_id === recordId);
     if (!model) return;
@@ -399,7 +397,6 @@ export default function AIModelsManager() {
 
   const uniqueProviders = [...new Set(models.map(m => m.provider))];
   const uniqueContentTypes = [...new Set(models.map(m => m.content_type))];
-  // @ts-expect-error - Intentionally unused, may be used in future
   const _uniqueStructures = [...new Set(models.map(m => m.payload_structure || 'wrapper'))];
   const allGroups = [...new Set(models.flatMap(m => Array.isArray(m.groups) ? m.groups : []))];
 

@@ -8,7 +8,8 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { brand } from '@/config/brand';
 
 export default function SharedContent() {
-  const { token } = useParams();
+  const params = useParams();
+  const token = params?.token as string;
   const router = useRouter();
   const { execute } = useErrorHandler();
   const [loading, setLoading] = useState(true);

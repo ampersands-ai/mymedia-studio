@@ -40,7 +40,7 @@ const categories = [
 ];
 
 export default function ModelPageEditor() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>() ?? {};
   const router = useRouter();
   const isNew = id === "new";
 

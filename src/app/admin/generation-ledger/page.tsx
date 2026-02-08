@@ -1,6 +1,8 @@
 'use client';
 
-import GenerationLedger from '@/pages/admin/GenerationLedger';
+import dynamic from 'next/dynamic';
+
+const GenerationLedger = dynamic(() => import('@/views/admin/GenerationLedger'), { ssr: false });
 
 export default function GenerationLedgerPage() {
   return <GenerationLedger />;

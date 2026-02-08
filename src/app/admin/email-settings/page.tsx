@@ -1,6 +1,8 @@
 'use client';
 
-import EmailSettings from '@/pages/admin/EmailSettings';
+import dynamic from 'next/dynamic';
+
+const EmailSettings = dynamic(() => import('@/views/admin/EmailSettings'), { ssr: false });
 
 export default function EmailSettingsPage() {
   return <EmailSettings />;

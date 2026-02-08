@@ -19,7 +19,7 @@ import { AlertCircle } from "lucide-react";
 import DOMPurify from "dompurify";
 
 export default function TemplateLanding() {
-  const { category, slug } = useParams<{ category: string; slug: string }>();
+  const { category, slug } = useParams<{ category: string; slug: string }>() ?? {};
   const router = useRouter();
   const { user } = useAuth();
   const incrementUse = useIncrementTemplateUse();

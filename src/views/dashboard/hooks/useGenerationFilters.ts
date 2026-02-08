@@ -43,18 +43,18 @@ export const useGenerationFilters = () => {
 
   // Helper to update URL search params via router.replace
   const updateSearchParams = useCallback((updater: (params: URLSearchParams) => void) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
     updater(params);
     const queryString = params.toString();
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname);
+    router.replace(queryString ? `${pathname ?? '/'}?${queryString}` : (pathname ?? '/'));
   }, [searchParams, router, pathname]);
 
   // Initialize from URL params or defaults
-  const initialStatus = searchParams.get('status');
-  const initialDatePreset = searchParams.get('date');
-  const initialModel = searchParams.get('model');
-  const initialSearch = searchParams.get('search');
-  const initialCollection = searchParams.get('collection');
+  const initialStatus = searchParams?.get('status') ?? null;
+  const initialDatePreset = searchParams?.get('date') ?? null;
+  const initialModel = searchParams?.get('model') ?? null;
+  const initialSearch = searchParams?.get('search') ?? null;
+  const initialCollection = searchParams?.get('collection') ?? null;
 
   const [statusFilter, setStatusFilterState] = useState<StatusFilter>(
     isValidStatusFilter(initialStatus) ? initialStatus : 'completed'
@@ -73,23 +73,23 @@ export const useGenerationFilters = () => {
 
   // Sync URL param to state on mount and when URL changes
   useEffect(() => {
-    const urlStatus = searchParams.get('status');
+    const urlStatus = searchParams?.get('status') ?? null;
     if (isValidStatusFilter(urlStatus) && urlStatus !== statusFilter) {
       setStatusFilterState(urlStatus);
     }
-    const urlDate = searchParams.get('date');
+    const urlDate = searchParams?.get('date') ?? null;
     if (isValidDatePreset(urlDate) && urlDate !== datePreset) {
       setDatePresetState(urlDate);
     }
-    const urlModel = searchParams.get('model');
+    const urlModel = searchParams?.get('model') ?? null;
     if (urlModel && urlModel !== modelFilter) {
       setModelFilterState(urlModel);
     }
-    const urlSearch = searchParams.get('search');
+    const urlSearch = searchParams?.get('search') ?? null;
     if (urlSearch !== null && urlSearch !== searchQuery) {
       setSearchQueryState(urlSearch);
     }
-    const urlCollection = searchParams.get('collection');
+    const urlCollection = searchParams?.get('collection') ?? null;
     if (urlCollection && urlCollection !== collectionFilter) {
       setCollectionFilterState(urlCollection);
     }

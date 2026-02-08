@@ -1,6 +1,8 @@
 'use client';
 
-import Privacy from '@/pages/Privacy';
+import dynamic from 'next/dynamic';
+
+const Privacy = dynamic(() => import('@/views/Privacy'), { ssr: false });
 
 export default function PrivacyPage() {
   return <Privacy />;

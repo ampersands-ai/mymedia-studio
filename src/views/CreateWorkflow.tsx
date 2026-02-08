@@ -19,7 +19,7 @@ import { logger } from "@/lib/logger";
 const CreateWorkflow = () => {
   const { execute } = useErrorHandler();
   const searchParams = useSearchParams();
-  const workflowId = searchParams.get("workflow");
+  const workflowId = searchParams?.get("workflow");
   const router = useRouter();
   const isMobile = useIsMobile();
 

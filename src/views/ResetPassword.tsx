@@ -19,7 +19,7 @@ const resetPasswordLogger = logger.child({ component: 'ResetPassword' });
 const ResetPassword = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
+  const token = searchParams?.get("token");
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

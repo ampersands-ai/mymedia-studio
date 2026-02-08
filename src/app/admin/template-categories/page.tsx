@@ -1,6 +1,8 @@
 'use client';
 
-import TemplateCategoriesManager from '@/pages/admin/TemplateCategoriesManager';
+import dynamic from 'next/dynamic';
+
+const TemplateCategoriesManager = dynamic(() => import('@/views/admin/TemplateCategoriesManager'), { ssr: false });
 
 export default function TemplateCategoriesManagerPage() {
   return <TemplateCategoriesManager />;

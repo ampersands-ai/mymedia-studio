@@ -1,77 +1,77 @@
 /**
  * Service Worker Registration Helper
- * Uses Workbox via vite-plugin-pwa for automatic registration
- * Only registers in production to avoid dev issues
+ * Handles SW registration, update notifications, and cache management.
+ * In Next.js, service worker registration is done via the standard browser API
+ * (PWA support can be added later via next-pwa or similar).
  */
 
 import { logger } from '@/lib/logger';
-import { registerSW } from 'virtual:pwa-register';
 
 // Store update function for manual updates
-let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
+let updateSW: (() => void) | null = null;
 
 /**
- * Register the Workbox-powered service worker
- * This uses vite-plugin-pwa's auto-generated service worker
+ * Register the service worker (if available at /sw.js)
+ * In Next.js, this is a no-op unless a service worker file is explicitly provided.
  */
 export function registerServiceWorker() {
+  if (typeof window === 'undefined') return;
+
   // Check for bots FIRST before any other checks
   const userAgent = navigator.userAgent;
   const isBotUA = /googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkshare|w3c_validator|lighthouse|applebot|duckduckbot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|chrome-lighthouse|pagespeed|headlesschrome/i.test(userAgent);
   const isHeadless = navigator.webdriver === true;
   const isAutomated = /headless|phantom|puppeteer|selenium/i.test(userAgent);
-  
+
   // Silently skip for bots - they don't support service workers
   if (isBotUA || isHeadless || isAutomated) {
     return;
   }
-  
+
   // Skip service worker in iframe or dev mode
   const isInIframe = window.self !== window.top;
   const isDevEnvironment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   // Only register in production and not in preview iframe
-  if (process.env.NODE_ENV === 'production' && !isInIframe && !isDevEnvironment) {
-    updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        // New content available, show update notification
-        showUpdateNotification();
-      },
-      onOfflineReady() {
-        logger.info('App is ready to work offline', {
+  if (process.env.NODE_ENV === 'production' && !isInIframe && !isDevEnvironment && 'serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        logger.info('Service Worker registered successfully', {
           utility: 'serviceWorker',
-          operation: 'offlineReady'
+          scope: registration.scope,
+          operation: 'registerServiceWorker',
         });
-      },
-      onRegistered(registration) {
-        if (registration) {
-          logger.info('Service Worker registered successfully', {
-            utility: 'serviceWorker',
-            scope: registration.scope,
-            operation: 'registerServiceWorker'
-          });
-          
-          // Check for updates every hour
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
-        }
-      },
-      onRegisterError(error) {
-        // Don't log errors from bots - they can't use service workers anyway
+
+        // Check for updates every hour
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateNotification();
+              }
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        // Don't log errors from bots
         const ua = navigator.userAgent;
         const isBotError = /googlebot|bingbot|lighthouse|pagespeed|headlesschrome/i.test(ua);
         if (isBotError || navigator.webdriver === true) {
-          return; // Silently ignore bot errors
+          return;
         }
-        
-        logger.error('Service Worker registration failed', error, {
+        logger.error('Service Worker registration failed', error as Error, {
           utility: 'serviceWorker',
-          operation: 'registerServiceWorker'
+          operation: 'registerServiceWorker',
         });
-      }
-    });
+      });
   }
 }
 
@@ -79,6 +79,7 @@ export function registerServiceWorker() {
  * Auto-unregister service worker in dev mode
  */
 export async function unregisterServiceWorker() {
+  if (typeof window === 'undefined') return;
   if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
@@ -86,24 +87,24 @@ export async function unregisterServiceWorker() {
         logger.warn('Service Worker active in dev mode, auto-unregistering', {
           utility: 'serviceWorker',
           registrationCount: registrations.length,
-          operation: 'unregisterServiceWorker'
+          operation: 'unregisterServiceWorker',
         });
         registrations.forEach((reg) => reg.unregister());
       }
     } catch (err) {
       logger.error('Failed to unregister service workers', err as Error, {
         utility: 'serviceWorker',
-        operation: 'unregisterServiceWorker'
+        operation: 'unregisterServiceWorker',
       });
     }
   }
 }
 
 /**
- * Cleanup function - no-op now as Workbox handles cleanup
+ * Cleanup function - no-op
  */
 export function cleanupServiceWorker() {
-  // Workbox handles cleanup automatically
+  // No-op
 }
 
 /**
@@ -167,16 +168,16 @@ function showUpdateNotification() {
       </div>
     </div>
   `;
-  
+
   // Expose update function globally for the button
   (window as unknown as { __updateSW?: () => void }).__updateSW = () => {
     if (updateSW) {
-      updateSW(true);
+      updateSW();
     } else {
       window.location.reload();
     }
   };
-  
+
   document.body.appendChild(banner);
 }
 
@@ -184,6 +185,7 @@ function showUpdateNotification() {
  * Clear all caches and reload (admin use)
  */
 export async function clearAllCaches() {
+  if (typeof window === 'undefined') return;
   if ('serviceWorker' in navigator) {
     try {
       // Unregister service worker
@@ -202,13 +204,13 @@ export async function clearAllCaches() {
         utility: 'serviceWorker',
         cacheCount: cacheNames.length,
         registrationCount: registrations.length,
-        operation: 'clearAllCaches'
+        operation: 'clearAllCaches',
       });
       window.location.reload();
     } catch (err) {
       logger.error('Failed to clear caches', err as Error, {
         utility: 'serviceWorker',
-        operation: 'clearAllCaches'
+        operation: 'clearAllCaches',
       });
       throw err;
     }

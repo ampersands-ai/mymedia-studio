@@ -1,6 +1,8 @@
 'use client';
 
-import CustomCreation from '@/pages/CustomCreation';
+import dynamic from 'next/dynamic';
+
+const CustomCreation = dynamic(() => import('@/views/CustomCreation'), { ssr: false });
 
 export default function CustomCreationPage() {
   return <CustomCreation />;

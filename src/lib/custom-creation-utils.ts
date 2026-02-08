@@ -1,5 +1,7 @@
 import { toast } from "sonner";
-import type { AppRouterInstance } from "next/navigation";
+import type { useRouter } from "next/navigation";
+
+type AppRouterInstance = ReturnType<typeof useRouter>;
 import { logger } from "@/lib/logger";
 
 interface ModelSchema {

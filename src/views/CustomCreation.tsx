@@ -552,7 +552,7 @@ const CustomCreation = () => {
       return;
     }
     
-    const urlGroup = searchParams.get('group');
+    const urlGroup = searchParams?.get('group');
     if (urlGroup && urlGroup !== state.selectedGroup) {
       const validGroups = ['image_editing', 'prompt_to_image', 'prompt_to_video', 
                            'image_to_video', 'video_to_video', 'lip_sync', 'prompt_to_audio'];
@@ -564,8 +564,8 @@ const CustomCreation = () => {
 
   // Sync URL model and prompt params to state on mount (for deep linking from model pages)
   useEffect(() => {
-    const urlModel = searchParams.get('model');
-    const urlPrompt = searchParams.get('prompt');
+    const urlModel = searchParams?.get('model');
+    const urlPrompt = searchParams?.get('prompt');
     
     if (!allModels || allModels.length === 0) return;
     
@@ -596,7 +596,7 @@ const CustomCreation = () => {
         setStateSelectedModel(urlModel);
         
         // Clear the model param from URL to prevent re-triggering
-        const newParams = new URLSearchParams(searchParams);
+        const newParams = new URLSearchParams(searchParams?.toString() ?? '');
         newParams.delete('model');
         if (urlPrompt) newParams.delete('prompt');
         newParams.set('group', targetGroup || state.selectedGroup);
@@ -615,7 +615,7 @@ const CustomCreation = () => {
 
   // Sync state changes back to URL (when user clicks group buttons)
   useEffect(() => {
-    const currentUrlGroup = searchParams.get('group');
+    const currentUrlGroup = searchParams?.get('group');
     if (state.selectedGroup !== currentUrlGroup) {
       isInternalGroupChange.current = true; // Mark as internal change
       router.replace(`?group=${state.selectedGroup}`);

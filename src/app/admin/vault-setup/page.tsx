@@ -1,6 +1,8 @@
 'use client';
 
-import VaultSetup from '@/pages/admin/VaultSetup';
+import dynamic from 'next/dynamic';
+
+const VaultSetup = dynamic(() => import('@/views/admin/VaultSetup'), { ssr: false });
 
 export default function VaultSetupPage() {
   return <VaultSetup />;

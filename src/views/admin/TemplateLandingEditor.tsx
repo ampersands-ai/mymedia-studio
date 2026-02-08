@@ -25,7 +25,7 @@ import { ArrowLeft, Save, Eye } from "lucide-react";
 import type { TemplateLandingPageAdmin, TemplateCategory } from "@/hooks/useTemplateLanding";
 
 export default function TemplateLandingEditor() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>() ?? {};
   const router = useRouter();
   const isNew = id === "new";
   const { createTemplate, updateTemplate } = useAdminTemplates();

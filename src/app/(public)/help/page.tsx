@@ -1,6 +1,8 @@
 'use client';
 
-import Help from '@/pages/Help';
+import dynamic from 'next/dynamic';
+
+const Help = dynamic(() => import('@/views/Help'), { ssr: false });
 
 export default function HelpPage() {
   return <Help />;

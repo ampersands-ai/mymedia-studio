@@ -1,6 +1,8 @@
 'use client';
 
-import ModelDirectory from '@/pages/ModelDirectory';
+import dynamic from 'next/dynamic';
+
+const ModelDirectory = dynamic(() => import('@/views/ModelDirectory'), { ssr: false });
 
 export default function ModelDirectoryPage() {
   return <ModelDirectory />;

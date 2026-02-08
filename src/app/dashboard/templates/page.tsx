@@ -1,6 +1,8 @@
 'use client';
 
-import Templates from '@/pages/Templates';
+import dynamic from 'next/dynamic';
+
+const Templates = dynamic(() => import('@/views/Templates'), { ssr: false });
 
 export default function TemplatesPage() {
   return <Templates />;

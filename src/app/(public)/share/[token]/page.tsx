@@ -1,6 +1,8 @@
 'use client';
 
-import SharedContent from '@/pages/SharedContent';
+import dynamic from 'next/dynamic';
+
+const SharedContent = dynamic(() => import('@/views/SharedContent'), { ssr: false });
 
 export default function SharedContentPage() {
   return <SharedContent />;

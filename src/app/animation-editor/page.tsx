@@ -1,6 +1,8 @@
 'use client';
 
-import AnimationEditorPage from '@/pages/AnimationEditorPage';
+import dynamic from 'next/dynamic';
+
+const AnimationEditorPage = dynamic(() => import('@/views/AnimationEditorPage'), { ssr: false });
 
 export default function AnimationEditorRoute() {
   return <AnimationEditorPage />;

@@ -1,4 +1,6 @@
-import type { AppRouterInstance } from "next/navigation";
+import type { useRouter } from "next/navigation";
+
+type AppRouterInstance = ReturnType<typeof useRouter>;
 import { getModel } from "@/lib/models/registry";
 
 export interface ExecuteGenerationParams {

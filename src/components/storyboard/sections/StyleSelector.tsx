@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Palette } from 'lucide-react';
+import { Palette, ImageOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import hyperRealisticImg from '@/assets/styles/hyper-realistic.jpg';
 import cinematicImg from '@/assets/styles/cinematic.jpg';
 import animatedImg from '@/assets/styles/animated.jpg';
@@ -145,10 +146,20 @@ interface StyleSelectorProps {
 
 export function StyleSelector({ style, onStyleChange, disabled }: StyleSelectorProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [errorImages, setErrorImages] = useState<Record<string, boolean>>({});
 
   const handleStyleSelect = (value: string) => {
     onStyleChange(value);
     setDialogOpen(false);
+  };
+
+  const handleImageLoad = (styleValue: string) => {
+    setLoadedImages(prev => ({ ...prev, [styleValue]: true }));
+  };
+
+  const handleImageError = (styleValue: string) => {
+    setErrorImages(prev => ({ ...prev, [styleValue]: true }));
   };
 
   return (
@@ -157,8 +168,10 @@ export function StyleSelector({ style, onStyleChange, disabled }: StyleSelectorP
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="w-full justify-start" disabled={disabled}>
-            <Palette className="w-4 h-4 mr-2" />
-            {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
+            <Palette className="w-4 h-4 mr-2 shrink-0" />
+            <span className="truncate">
+              {STYLES.find(s => s.value === style)?.emoji} {STYLES.find(s => s.value === style)?.label}
+            </span>
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-6xl max-h-[90vh] flex flex-col p-4 sm:p-6">
@@ -180,8 +193,28 @@ export function StyleSelector({ style, onStyleChange, disabled }: StyleSelectorP
                       : "border-muted hover:border-primary/50"
                   )}
                 >
-                  <div className="w-full aspect-[4/3] rounded overflow-hidden">
-                    <img src={styleOption.image} alt={styleOption.label} className="w-full h-full object-cover" />
+                  <div className="w-full aspect-[4/3] rounded overflow-hidden bg-muted relative">
+                    {/* Loading skeleton */}
+                    {!loadedImages[styleOption.value] && !errorImages[styleOption.value] && (
+                      <Skeleton className="absolute inset-0 w-full h-full" />
+                    )}
+                    {/* Error fallback */}
+                    {errorImages[styleOption.value] && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                        <ImageOff className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <img 
+                      src={styleOption.image} 
+                      alt={styleOption.label} 
+                      className={cn(
+                        "w-full h-full object-cover transition-opacity",
+                        loadedImages[styleOption.value] ? "opacity-100" : "opacity-0"
+                      )}
+                      onLoad={() => handleImageLoad(styleOption.value)}
+                      onError={() => handleImageError(styleOption.value)}
+                      loading="lazy"
+                    />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold truncate">{styleOption.emoji} {styleOption.label}</p>
@@ -206,10 +239,25 @@ export function StyleSelector({ style, onStyleChange, disabled }: StyleSelectorP
                 onClick={() => handleStyleSelect(styleOption.value)}
               >
                 <div className="relative aspect-[16/10] sm:aspect-video md:aspect-[21/9] overflow-hidden bg-muted min-h-[180px] sm:min-h-0">
+                  {/* Loading skeleton */}
+                  {!loadedImages[styleOption.value] && !errorImages[styleOption.value] && (
+                    <Skeleton className="absolute inset-0 w-full h-full" />
+                  )}
+                  {/* Error fallback */}
+                  {errorImages[styleOption.value] && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <ImageOff className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                  )}
                   <img
                     src={styleOption.image}
                     alt={styleOption.label}
-                    className="w-full h-full object-cover"
+                    className={cn(
+                      "w-full h-full object-cover transition-opacity",
+                      loadedImages[styleOption.value] ? "opacity-100" : "opacity-0"
+                    )}
+                    onLoad={() => handleImageLoad(styleOption.value)}
+                    onError={() => handleImageError(styleOption.value)}
                     loading="lazy"
                   />
                   

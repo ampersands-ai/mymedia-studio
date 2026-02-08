@@ -3,6 +3,7 @@ import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { GENERATION_STATUS } from "../_shared/constants.ts";
 import { API_ENDPOINTS } from "../_shared/api-endpoints.ts";
+import { alertCriticalError } from "../_shared/admin-alerts.ts";
 
 interface CaptionStyle {
   position?: string;
@@ -186,6 +187,13 @@ Deno.serve(async (req) => {
         
         logger.info('Updated job with error details', { 
           metadata: { jobId: body.job_id, errorType: adminDetails.errorType || 'unknown' } 
+        });
+        
+        // Send admin alert for critical errors
+        await alertCriticalError('assemble-ai-video', errorMessage, {
+          jobId: body.job_id,
+          userId: body.user_id,
+          ...adminDetails
         });
       }
     } catch (updateError) {

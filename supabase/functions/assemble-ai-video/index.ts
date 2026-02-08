@@ -119,9 +119,49 @@ Deno.serve(async (req) => {
       { headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    logger.error("Error in assemble-ai-video", error instanceof Error ? error : new Error(String(error)));
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Error in assemble-ai-video", error instanceof Error ? error : new Error(errorMessage));
 
-    // Try to update job status
+    // Parse JSON2Video specific errors for better feedback
+    let userFriendlyMessage = 'Video assembly failed. Please try again.';
+    let adminDetails: Record<string, unknown> = {};
+    
+    if (errorMessage.includes('JSON2Video API error')) {
+      // Extract and parse the JSON2Video error response
+      const match = errorMessage.match(/JSON2Video API error: (\d+) - (.+)/);
+      if (match) {
+        const statusCode = match[1];
+        const errorBody = match[2];
+        
+        adminDetails = {
+          provider: 'json2video',
+          statusCode,
+          rawError: errorBody,
+        };
+        
+        // Try to parse JSON error body for specific messages
+        try {
+          const parsedError = JSON.parse(errorBody);
+          adminDetails.parsedError = parsedError;
+          
+          // Check for property validation errors
+          if (parsedError.message?.includes('not allowed')) {
+            userFriendlyMessage = 'Video configuration error. Our team has been notified and is fixing it.';
+            adminDetails.errorType = 'property_validation';
+          } else if (parsedError.message) {
+            adminDetails.providerMessage = parsedError.message;
+          }
+        } catch {
+          // Raw text error
+          if (errorBody.includes('not allowed')) {
+            userFriendlyMessage = 'Video configuration error. Our team has been notified and is fixing it.';
+            adminDetails.errorType = 'property_validation';
+          }
+        }
+      }
+    }
+
+    // Update job with detailed error for admin visibility
     try {
       const body = await req.clone().json();
       if (body.job_id) {
@@ -129,22 +169,35 @@ Deno.serve(async (req) => {
           Deno.env.get('SUPABASE_URL')!,
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
         );
+        
+        // Set status to failed with user-friendly message
         await supabase.from('video_jobs').update({
-          status: 'awaiting_voice_approval',
+          status: 'failed',
+          error_message: userFriendlyMessage,
           error_details: {
-            message: error instanceof Error ? error.message : 'AI video assembly failed',
+            userMessage: userFriendlyMessage,
+            technicalMessage: errorMessage,
             timestamp: new Date().toISOString(),
-            step: 'assemble_ai_video'
+            step: 'assemble_ai_video',
+            ...adminDetails
           },
           updated_at: new Date().toISOString()
         }).eq('id', body.job_id);
+        
+        logger.info('Updated job with error details', { 
+          metadata: { jobId: body.job_id, errorType: adminDetails.errorType || 'unknown' } 
+        });
       }
-    } catch {
-      // Silent failure
+    } catch (updateError) {
+      logger.error('Failed to update job status', updateError instanceof Error ? updateError : new Error('Update failed'));
     }
 
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: userFriendlyMessage,
+        // Include technical details only for debugging (not shown to users)
+        _debug: { message: errorMessage }
+      }),
       { status: 500, headers: { ...responseHeaders, 'Content-Type': 'application/json' } }
     );
   }

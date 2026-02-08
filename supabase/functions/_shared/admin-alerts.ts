@@ -40,7 +40,7 @@ export async function sendAdminErrorAlert(payload: AdminAlertPayload): Promise<v
     }
 
     const alertConfig = settings.setting_value.error_alerts;
-    const minSeverity = alertConfig.min_severity || 'high';
+    const minSeverity = alertConfig.min_severity || 'low';
     const severityRank: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 
     // Only send if severity meets threshold

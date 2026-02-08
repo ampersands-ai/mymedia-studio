@@ -22,6 +22,8 @@ import watercolorImg from '@/assets/styles/watercolor.jpg';
 import popArtImg from '@/assets/styles/pop-art.jpg';
 import minimalistImg from '@/assets/styles/minimalist.jpg';
 import surrealImg from '@/assets/styles/surreal.jpg';
+import politicalImg from '@/assets/styles/political.jpg';
+import poeticImg from '@/assets/styles/poetic.jpg';
 
 const STYLES = [
   { 
@@ -135,6 +137,20 @@ const STYLES = [
     emoji: '🌀',
     image: surrealImg,
     description: 'Dreamlike, abstract visuals'
+  },
+  { 
+    value: 'political', 
+    label: 'Political', 
+    emoji: '✊',
+    image: politicalImg,
+    description: 'Banksy-style street art, propaganda'
+  },
+  { 
+    value: 'poetic', 
+    label: 'Poetic', 
+    emoji: '🌙',
+    image: poeticImg,
+    description: 'Mid-century storybook, dreamy'
   },
 ];
 

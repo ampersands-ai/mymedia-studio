@@ -127,7 +127,9 @@ Deno.serve(async (req) => {
       'natural': 'Natural photography, authentic lighting, real-world setting, documentary style, genuine atmosphere, organic composition',
       'sketch': 'Pencil sketch drawing, hand-drawn lines, artistic shading, paper texture, monochrome or light color wash, sketch art style',
       'pop-art': 'Pop art illustration, bold contrasting colors, halftone dots, comic-book style, screen-print texture, high energy composition',
-      'minimalist': 'Single simple line icon, small centered symbol, flat design, monochrome or duo-tone, white or light solid background, one concept per icon, no detailed scenes'
+      'minimalist': 'Single simple line icon, small centered symbol, flat design, monochrome or duo-tone, white or light solid background, one concept per icon, no detailed scenes',
+      'political': 'Banksy-style stencil graffiti, political street art, anti-capitalist poster, grunge concrete wall, spray paint, propaganda design',
+      'poetic': 'Mid-century storybook illustration, cinematic lighting, retro color grading, VHS grain, dreamy atmosphere, gouache texture, soft brush, poetic scene'
     };
 
     // Validate style early (avoid DB constraint violations and confusing 500s)

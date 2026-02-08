@@ -13,6 +13,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { alertCriticalError } from "../_shared/admin-alerts.ts";
 
 const WEBHOOK_VERSION = "2.0-grace-period";
 
@@ -204,6 +205,12 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     logger.error('Webhook processing failed', error as Error);
+    
+    // Alert admin for payment webhook failures (critical for billing)
+    await alertCriticalError('stripe-payments-webhook', error instanceof Error ? error : new Error(String(error)), {
+      errorType: 'webhook_processing_failed',
+    });
+    
     return new Response(JSON.stringify({ error: 'Webhook processing failed' }), {
       status: 500,
       headers: { ...responseHeaders, 'Content-Type': 'application/json' },

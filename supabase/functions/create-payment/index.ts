@@ -11,6 +11,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
+import { alertCriticalError } from "../_shared/admin-alerts.ts";
 
 // Dodo Payments product IDs (monthly only)
 const DODO_PLAN_PRODUCTS = {
@@ -320,6 +321,12 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     logger.error('Error creating payment session', error as Error);
+    
+    // Alert admin for payment errors (critical for business)
+    await alertCriticalError('create-payment', error instanceof Error ? error : new Error(String(error)), {
+      errorType: 'payment_session_creation_failed',
+    });
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

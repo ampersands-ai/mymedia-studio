@@ -26,6 +26,7 @@ import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { applyRateLimit } from "../_shared/rate-limit-middleware.ts";
 import { withCircuitBreaker } from "../_shared/circuit-breaker-enhanced.ts";
 import { createSafeErrorResponse } from "../_shared/error-handler.ts";
+import { alertHighError } from "../_shared/admin-alerts.ts";
 
 // Import modular handlers and services
 import {
@@ -378,6 +379,11 @@ Deno.serve(async (req) => {
     try { return await requestPromise as Response; } finally { activeRequests.delete(requestId); }
 
   } catch (error) {
+    // Send admin alert for generation errors
+    alertHighError('generate-content', error instanceof Error ? error : new Error(String(error)), undefined, {
+      requestId,
+      durationMs: Date.now() - startTime,
+    });
     return createSafeErrorResponse(error, 'generate-content', responseHeaders);
   }
 });

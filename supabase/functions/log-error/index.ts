@@ -1,9 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
-
-
-
+import { alertHighError } from "../_shared/admin-alerts.ts";
 Deno.serve(async (req) => {
   const responseHeaders = getResponseHeaders(req);
 
@@ -147,6 +145,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     logger.critical('Error in log-error function', error instanceof Error ? error : new Error(String(error)));
+
+    // Also alert admin about log-error failures (meta-error)
+    alertHighError('log-error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),

@@ -6,7 +6,7 @@ import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import type { GenerationOutput, CaptionData } from "@/types/custom-creation";
 import { useActiveGenerations } from "@/hooks/useActiveGenerations";
 import { useConcurrentGenerationLimit } from "@/hooks/useConcurrentGenerationLimit";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
 interface OutputPanelProps {
@@ -92,7 +92,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
   ) => {
     const { data: activeGenerations = [] } = useActiveGenerations();
     const { data: maxConcurrent = 1 } = useConcurrentGenerationLimit();
-    const navigate = useNavigate();
+    const router = useRouter();
 
     const activeCount = new Set(
       activeGenerations
@@ -115,7 +115,7 @@ const OutputPanelComponent = forwardRef<HTMLDivElement, OutputPanelProps>(
     const showProgress = Boolean(showStatusBanner);
 
     const handleNavigateToHistory = () => {
-      navigate('/dashboard/history?status=pending');
+      router.push('/dashboard/history?status=pending');
     };
 
     return (

@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAdminRealtimeAlerts, type AdminAlert } from '@/hooks/admin/useAdminRealtimeAlerts';
 import { formatDistanceToNow } from 'date-fns';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 const getAlertIcon = (alertType: string) => {
@@ -69,7 +69,7 @@ const AlertItem = ({
             <div className="flex items-center gap-1">
               {alert.user_id && (
                 <Link 
-                  to={`/admin/users/${alert.user_id}/generations`}
+                  href={`/admin/users/${alert.user_id}/generations`}
                   className="text-xs text-primary hover:underline"
                 >
                   View User
@@ -164,7 +164,7 @@ export const AdminAlertBell = () => {
           )}
         </ScrollArea>
         <div className="p-2 border-t">
-          <Link to="/admin/moderation" onClick={() => setOpen(false)}>
+          <Link href="/admin/moderation" onClick={() => setOpen(false)}>
             <Button variant="ghost" size="sm" className="w-full text-xs">
               View Moderation Dashboard
             </Button>

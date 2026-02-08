@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { History, ChevronDown, MessageSquare, LayoutTemplate, Cpu, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -49,7 +49,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
         <div className="grid grid-cols-3 gap-3">
           {/* History */}
           <Link
-            to="/dashboard/history"
+            href="/dashboard/history"
             onClick={() => setOpenDropdown(null)}
             className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
           >
@@ -63,7 +63,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
 
           {/* Prompts */}
           <Link
-            to="/dashboard/prompts"
+            href="/dashboard/prompts"
             onClick={() => setOpenDropdown(null)}
             className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
           >
@@ -78,7 +78,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
           {/* Templates */}
           {(isFeatureEnabled('templates') || isAdmin) && (
             <Link
-              to="/dashboard/templates"
+              href="/dashboard/templates"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -93,7 +93,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
 
           {/* Models */}
           <Link
-            to="/models"
+            href="/models"
             onClick={() => setOpenDropdown(null)}
             className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
           >
@@ -108,7 +108,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
           {/* Features */}
           {isPageEnabled('features') && (
             <Link
-              to="/features"
+              href="/features"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -123,7 +123,7 @@ export const LibraryDropdown = ({ align = "center" }: LibraryDropdownProps) => {
 
           {/* Blog */}
           <Link
-            to="/blog"
+            href="/blog"
             onClick={() => setOpenDropdown(null)}
             className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-purple-500/20 border border-transparent hover:border-purple-500/40 transition-all duration-200 group h-[88px] w-[88px]"
           >

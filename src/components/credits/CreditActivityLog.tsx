@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { exportToCSV, exportToPDF } from "@/lib/utils/creditLogExport";
 
 export const CreditActivityLog = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
@@ -24,7 +24,7 @@ export const CreditActivityLog = () => {
   });
 
   const handleNavigateToGeneration = (generationId: string) => {
-    navigate(`/dashboard/history?gen=${generationId}`);
+    router.push(`/dashboard/history?gen=${generationId}`);
   };
 
   const handleCopyPrompt = (prompt: string) => {

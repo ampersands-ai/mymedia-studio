@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 
 interface ModelBreadcrumbsProps {
@@ -11,8 +11,8 @@ export function ModelBreadcrumbs({ modelName, category }: ModelBreadcrumbsProps)
     <nav className="container max-w-6xl mx-auto px-4 py-4" aria-label="Breadcrumb">
       <ol className="flex items-center gap-2 text-sm text-muted-foreground">
         <li>
-          <Link 
-            to="/" 
+          <Link
+            href="/"
             className="flex items-center gap-1 hover:text-foreground transition-colors"
           >
             <Home className="h-4 w-4" />
@@ -23,8 +23,8 @@ export function ModelBreadcrumbs({ modelName, category }: ModelBreadcrumbsProps)
           <ChevronRight className="h-4 w-4" />
         </li>
         <li>
-          <Link 
-            to="/models" 
+          <Link
+            href="/models"
             className="hover:text-foreground transition-colors"
           >
             Models
@@ -36,8 +36,8 @@ export function ModelBreadcrumbs({ modelName, category }: ModelBreadcrumbsProps)
               <ChevronRight className="h-4 w-4" />
             </li>
             <li>
-              <Link 
-                to={`/models?category=${category}`} 
+              <Link
+                href={`/models?category=${category}`}
                 className="hover:text-foreground transition-colors capitalize"
               >
                 {category}

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export const FeatureShowcase = ({
         </ul>
         <Button asChild variant="default" size="lg">
           {isInternal ? (
-            <Link to={ctaLink}>{ctaText}</Link>
+            <Link href={ctaLink}>{ctaText}</Link>
           ) : (
             <a href={ctaLink}>{ctaText}</a>
           )}

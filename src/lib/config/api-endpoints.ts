@@ -15,14 +15,14 @@
  * Get environment variable or use default
  */
 function getEnvOrDefault(key: string, defaultValue: string): string {
-  return import.meta.env[key] || defaultValue;
+  return process.env[key] || defaultValue;
 }
 
 /**
  * Primary Provider API endpoints
  */
 export const KIE_AI_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_KIE_AI_BASE_URL', 'https://api.kie.ai'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_KIE_AI_BASE_URL', 'https://api.kie.ai'),
   QUERY_TASK: '/api/v1/jobs/queryTask',
   CREATE_TASK: '/api/v1/jobs/createTask',
   MP4_GENERATE: '/api/v1/mp4/generate',
@@ -49,7 +49,7 @@ export const KIE_AI_ENDPOINTS = {
  * Runware API endpoints
  */
 export const RUNWARE_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_RUNWARE_BASE_URL', 'https://api.runware.ai'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_RUNWARE_BASE_URL', 'https://api.runware.ai'),
   VERSION: '/v1',
 
   get fullUrl(): string {
@@ -61,7 +61,7 @@ export const RUNWARE_ENDPOINTS = {
  * Shotstack API endpoints
  */
 export const SHOTSTACK_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_SHOTSTACK_BASE_URL', 'https://api.shotstack.io'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_SHOTSTACK_BASE_URL', 'https://api.shotstack.io'),
   VERSION: '/v1',
   RENDER: '/render',
 
@@ -78,7 +78,7 @@ export const SHOTSTACK_ENDPOINTS = {
  * Json2Video API endpoints
  */
 export const JSON2VIDEO_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_JSON2VIDEO_BASE_URL', 'https://api.json2video.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_JSON2VIDEO_BASE_URL', 'https://api.json2video.com'),
   VERSION: '/v2',
   MOVIES: '/movies',
 
@@ -95,7 +95,7 @@ export const JSON2VIDEO_ENDPOINTS = {
  * ElevenLabs API endpoints
  */
 export const ELEVENLABS_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io'),
   VERSION: '/v1',
 
   get fullUrl(): string {
@@ -107,7 +107,7 @@ export const ELEVENLABS_ENDPOINTS = {
  * OpenAI API endpoints
  */
 export const OPENAI_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_OPENAI_BASE_URL', 'https://api.openai.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_OPENAI_BASE_URL', 'https://api.openai.com'),
   VERSION: '/v1',
 
   get fullUrl(): string {
@@ -119,7 +119,7 @@ export const OPENAI_ENDPOINTS = {
  * Anthropic API endpoints
  */
 export const ANTHROPIC_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_ANTHROPIC_BASE_URL', 'https://api.anthropic.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_ANTHROPIC_BASE_URL', 'https://api.anthropic.com'),
   VERSION: '/v1',
 
   get fullUrl(): string {
@@ -131,7 +131,7 @@ export const ANTHROPIC_ENDPOINTS = {
  * Google AI endpoints
  */
 export const GOOGLE_AI_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_GOOGLE_AI_BASE_URL', 'https://generativelanguage.googleapis.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_GOOGLE_AI_BASE_URL', 'https://generativelanguage.googleapis.com'),
   VERSION: '/v1beta',
 
   get fullUrl(): string {
@@ -143,7 +143,7 @@ export const GOOGLE_AI_ENDPOINTS = {
  * Pixabay API endpoints
  */
 export const PIXABAY_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_PIXABAY_BASE_URL', 'https://pixabay.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_PIXABAY_BASE_URL', 'https://pixabay.com'),
   API: '/api',
 
   get apiUrl(): string {
@@ -155,7 +155,7 @@ export const PIXABAY_ENDPOINTS = {
  * Pexels API endpoints
  */
 export const PEXELS_ENDPOINTS = {
-  BASE: getEnvOrDefault('VITE_PEXELS_BASE_URL', 'https://api.pexels.com'),
+  BASE: getEnvOrDefault('NEXT_PUBLIC_PEXELS_BASE_URL', 'https://api.pexels.com'),
   VERSION: '/v1',
 
   get fullUrl(): string {
@@ -182,9 +182,9 @@ export const API_ENDPOINTS = {
 /**
  * Environment-based configuration
  */
-export const IS_PRODUCTION = import.meta.env.MODE === 'production';
-export const IS_STAGING = import.meta.env.MODE === 'staging';
-export const IS_DEVELOPMENT = import.meta.env.MODE === 'development';
+export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+export const IS_STAGING = process.env.NODE_ENV === 'staging';
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 /**
  * Logging helper for API calls

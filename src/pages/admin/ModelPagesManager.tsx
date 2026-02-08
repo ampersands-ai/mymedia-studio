@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Trash2, Globe, GlobeLock, Wand2, ExternalLink, Check, X, Users, FolderPlus, Ban, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ const baseProviderOptions = [
 ];
 
 export default function ModelPagesManager() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("published"); // Default to published
@@ -322,7 +322,7 @@ export default function ModelPagesManager() {
               </Button>
             }
           />
-          <Button onClick={() => navigate("/admin/model-pages/new")}>
+          <Button onClick={() => router.push("/admin/model-pages/new")}>
             <Plus className="mr-2 h-4 w-4" />
             Create Page
           </Button>
@@ -655,7 +655,7 @@ export default function ModelPagesManager() {
                           )}
                           <DropdownMenuItem
                             onClick={() =>
-                              navigate(`/admin/model-pages/${page.id}`)
+                              router.push(`/admin/model-pages/${page.id}`)
                             }
                           >
                             <Pencil className="mr-2 h-4 w-4" />

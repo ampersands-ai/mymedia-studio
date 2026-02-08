@@ -2,7 +2,7 @@ import posthog from 'posthog-js';
 import { logger } from '@/lib/logger';
 import { brand } from '@/config/brand';
 
-const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = 'https://app.posthog.com';
 const DEVICE_ID_KEY = brand.storageKeys.deviceId;
 
@@ -36,7 +36,7 @@ export const initPostHog = () => {
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
       loaded: () => {
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV === 'development') {
           logger.debug('PostHog analytics initialized', {
             utility: 'posthog',
             deviceId,

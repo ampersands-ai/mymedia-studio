@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { brand } from "@/config/brand";
 type VerificationStatus = "loading" | "success" | "error" | "expired";
 
 export default function VerifyEmail() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [email, setEmail] = useState("");
@@ -64,9 +65,9 @@ export default function VerifyEmail() {
       {/* Header */}
       <header className="border-b border-border bg-card relative z-10">
         <nav className="container mx-auto px-4 py-3 md:py-4">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img 
-              src={logo} 
+              src={logo.src} 
               alt={`${brand.name} logo`}
               className="h-6 md:h-8 object-contain"
               loading="eager"
@@ -123,12 +124,12 @@ export default function VerifyEmail() {
             {status === "success" && (
               <>
                 <Button asChild className="w-full">
-                  <Link to="/dashboard/custom-creation">
+                  <Link href="/dashboard/custom-creation">
                     Start Creating
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/dashboard/settings">
+                  <Link href="/dashboard/settings">
                     Go to Settings
                   </Link>
                 </Button>
@@ -138,13 +139,13 @@ export default function VerifyEmail() {
             {status === "expired" && (
               <>
                 <Button asChild className="w-full gap-2">
-                  <Link to="/dashboard/settings?tab=profile">
+                  <Link href="/dashboard/settings?tab=profile">
                     <Mail className="h-4 w-4" />
                     Request New Verification Email
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/">
+                  <Link href="/">
                     Go to Home
                   </Link>
                 </Button>
@@ -154,12 +155,12 @@ export default function VerifyEmail() {
             {status === "error" && (
               <>
                 <Button asChild className="w-full">
-                  <Link to="/auth">
+                  <Link href="/auth">
                     Go to Login
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/">
+                  <Link href="/">
                     Go to Home
                   </Link>
                 </Button>

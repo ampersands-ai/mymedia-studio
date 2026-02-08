@@ -119,7 +119,7 @@ export function getOptimizedImageUrl(
   params.set('resize', resize);
 
   // Supabase Storage public URL pattern
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   // Determine if original path was a signed URL and preserve token
   let modeSegment = '';
@@ -144,7 +144,7 @@ export function getPublicImageUrl(
   bucketPath: string,
   bucket: string = 'generated-content'
 ): string {
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const inferred = inferBucket(bucketPath, bucket);
   const cleanPath = cleanImagePath(bucketPath, inferred);
   const encodedPath = encodeURI(cleanPath);

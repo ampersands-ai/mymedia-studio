@@ -4,14 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bug, X, User, Route as RouteIcon, Database, Zap, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocation } from 'react-router-dom';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export const DebugPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-  const location = useLocation();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  if (!import.meta.env.DEV) return null;
+  if (!(process.env.NODE_ENV === 'development')) return null;
 
   return (
     <>
@@ -78,9 +79,9 @@ export const DebugPanel = () => {
                   <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto">
                     {JSON.stringify(
                       {
-                        pathname: location.pathname,
-                        search: location.search,
-                        hash: location.hash,
+                        pathname: pathname,
+                        search: searchParams?.toString() ? `?${searchParams.toString()}` : '',
+                        hash: typeof window !== 'undefined' ? window.location.hash : '',
                       },
                       null,
                       2

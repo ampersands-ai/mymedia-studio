@@ -11,23 +11,23 @@ describe('Logger', () => {
       warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
       error: vi.spyOn(console, 'error').mockImplementation(() => {}),
     };
-    originalEnv = import.meta.env.MODE;
+    originalEnv = process.env.NODE_ENV;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    (import.meta.env as any).MODE = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   describe('debug', () => {
     it('should log in development mode', () => {
-      (import.meta.env as any).MODE = 'development';
+      (process.env as any).NODE_ENV = 'development';
       logger.debug('test debug message');
       expect(consoleSpy.log).toHaveBeenCalled();
     });
 
     it('should not log in production mode', () => {
-      (import.meta.env as any).MODE = 'production';
+      (process.env as any).NODE_ENV = 'production';
       logger.debug('test debug message');
       expect(consoleSpy.log).not.toHaveBeenCalled();
     });
@@ -35,13 +35,13 @@ describe('Logger', () => {
 
   describe('info', () => {
     it('should log in development mode', () => {
-      (import.meta.env as any).MODE = 'development';
+      (process.env as any).NODE_ENV = 'development';
       logger.info('test info message');
       expect(consoleSpy.log).toHaveBeenCalled();
     });
 
     it('should not log in production mode', () => {
-      (import.meta.env as any).MODE = 'production';
+      (process.env as any).NODE_ENV = 'production';
       logger.info('test info message');
       expect(consoleSpy.log).not.toHaveBeenCalled();
     });

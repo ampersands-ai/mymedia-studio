@@ -40,7 +40,7 @@ export function getOptimizedVideoUrl(
   storagePath: string,
   bucket: string = 'generated-content'
 ): string {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const cleanPath = cleanStoragePath(storagePath, bucket);
   
   // Return direct public URL - Supabase Storage CDN handles caching
@@ -74,7 +74,7 @@ export function getProxiedVideoUrl(
   bucket: string = 'generated-content'
 ): string {
   const cleanPath = cleanStoragePath(storagePath, bucket);
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   
   // Use stream-content edge function for proxied access with aggressive caching
   return `${supabaseUrl}/functions/v1/stream-content?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(cleanPath)}`;

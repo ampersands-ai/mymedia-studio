@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Sparkles, ChevronDown, Video, Scissors, BookOpen, ImagePlus, Film, Music, Palette, CircleUser, Repeat, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -51,7 +51,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Image</p>
             <Link
-              to="/dashboard/custom-creation?group=image_editing"
+              href="/dashboard/custom-creation?group=image_editing"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -63,7 +63,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
             <Link
-              to="/dashboard/custom-creation?group=prompt_to_image"
+              href="/dashboard/custom-creation?group=prompt_to_image"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -80,7 +80,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Video</p>
             <Link
-              to="/dashboard/custom-creation?group=prompt_to_video"
+              href="/dashboard/custom-creation?group=prompt_to_video"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -92,7 +92,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
             <Link
-              to="/dashboard/custom-creation?group=image_to_video"
+              href="/dashboard/custom-creation?group=image_to_video"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -109,7 +109,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-transparent uppercase tracking-wider px-1">&nbsp;</p>
             <Link
-              to="/dashboard/custom-creation?group=video_to_video"
+              href="/dashboard/custom-creation?group=video_to_video"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -121,7 +121,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
             <Link
-              to="/dashboard/custom-creation?group=lip_sync"
+              href="/dashboard/custom-creation?group=lip_sync"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -139,7 +139,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Audio</p>
             <Link
-              to="/dashboard/custom-creation?group=prompt_to_audio"
+              href="/dashboard/custom-creation?group=prompt_to_audio"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -151,7 +151,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
               </div>
             </Link>
             <Link
-              to="/dashboard/music-studio"
+              href="/dashboard/music-studio"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -168,7 +168,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
           <div className="space-y-2 pr-3 border-r border-primary-orange/20">
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Editing</p>
             <Link
-              to="/dashboard/video-editor"
+              href="/dashboard/video-editor"
               onClick={() => setOpenDropdown(null)}
               className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
             >
@@ -186,7 +186,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             <p className="text-[10px] font-bold text-primary-orange uppercase tracking-wider px-1">Storytelling</p>
             {(isFeatureEnabled('faceless_videos') || isAdmin) && (
               <Link
-                to="/dashboard/video-studio"
+                href="/dashboard/video-studio"
                 onClick={() => setOpenDropdown(null)}
                 className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
               >
@@ -200,7 +200,7 @@ export const StudioDropdown = ({ align = "center" }: StudioDropdownProps) => {
             )}
             {(isFeatureEnabled('storyboard') || isAdmin) && (
               <Link
-                to="/dashboard/storyboard"
+                href="/dashboard/storyboard"
                 onClick={() => setOpenDropdown(null)}
                 className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-background/60 hover:bg-primary-orange/20 border border-transparent hover:border-primary-orange/40 transition-all duration-200 group h-[88px] w-[88px]"
               >

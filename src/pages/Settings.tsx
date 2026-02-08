@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,12 +16,12 @@ import { pageTitle } from '@/config/brand';
 const Settings = () => {
   const { user } = useAuth();
   const { execute } = useErrorHandler();
-  const location = useLocation();
-  
-  // Check URL query param first, then location state, then default to 'profile'
-  const searchParams = new URLSearchParams(location.search);
+  const searchParams = useSearchParams();
+
+  // Check URL query param first, then default to 'profile'
+  // Note: location.state is not available in Next.js App Router
   const tabFromQuery = searchParams.get('tab');
-  const tabFromState = (location.state as {defaultTab?: string})?.defaultTab;
+  const tabFromState = null as string | undefined;
   const [activeTab, setActiveTab] = useState(tabFromQuery || tabFromState || 'profile');
   const [profileData, setProfileData] = useState({
     display_name: "",

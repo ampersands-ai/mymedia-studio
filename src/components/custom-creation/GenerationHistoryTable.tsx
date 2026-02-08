@@ -190,7 +190,7 @@ export const GenerationHistoryTable = memo(function GenerationHistoryTable() {
     // Prioritize output_url (already contains correct full URL from database)
     const url = outputUrl 
       || (storagePath 
-          ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/generated-content/${storagePath}`
+          ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-content/${storagePath}`
           : null);
     
     if (url) {

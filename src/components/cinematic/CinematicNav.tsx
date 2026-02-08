@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { Menu, Home, Coins, Shield, Cpu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,8 +30,8 @@ export const CinematicNav = () => {
   const { isAdmin } = useAdminRole();
   const { isFeatureEnabled, isFeatureComingSoon, isPageEnabled } = useFeatureFlags();
   const { availableCredits, isLoading: creditsLoading } = useUserCredits();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const creditBalance = creditsLoading ? null : availableCredits;
 
@@ -53,21 +54,21 @@ export const CinematicNav = () => {
 
   const handleNavigation = (path: string) => {
     setIsOpen(false);
-    navigate(path);
+    router.push(path);
   };
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
       setIsOpen(false);
-      navigate("/");
+      router.push("/");
       toast.success("Signed out successfully");
     } catch {
       toast.error("Error signing out");
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <nav
@@ -80,7 +81,7 @@ export const CinematicNav = () => {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <img
             src={brand.logoPath}
             alt={brand.name}
@@ -100,7 +101,7 @@ export const CinematicNav = () => {
             visibleNavItems.map((item) => (
               <Link
                 key={item.id}
-                to={item.href}
+                href={item.href}
                 className="text-sm font-medium uppercase tracking-wide transition-colors py-2 text-white/70 hover:text-white"
               >
                 {item.label}
@@ -115,7 +116,7 @@ export const CinematicNav = () => {
           
           {!user && (
             <Link
-              to="/auth"
+              href="/auth"
               className="px-5 py-2 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
             >
               Sign In
@@ -124,7 +125,7 @@ export const CinematicNav = () => {
 
           {user && creditBalance !== null && (
             <button
-              onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'credits' } })}
+              onClick={() => router.push("/dashboard/settings?tab=credits")}
               className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
             >
               <Coins className="h-5 w-5 text-primary-orange" />
@@ -136,7 +137,7 @@ export const CinematicNav = () => {
 
           {isAdmin && (
             <button
-              onClick={() => navigate("/admin/dashboard")}
+              onClick={() => router.push("/admin/dashboard")}
               className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
             >
               <Shield className="h-5 w-5" />
@@ -149,14 +150,14 @@ export const CinematicNav = () => {
         <div className="md:hidden flex items-center gap-2">
           {user ? (
             <Link
-              to="/dashboard/custom-creation"
+              href="/dashboard/custom-creation"
               className="h-7 flex items-center px-3 text-xs font-bold uppercase tracking-wide leading-none text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
             >
               Dashboard
             </Link>
           ) : (
             <Link
-              to="/auth"
+              href="/auth"
               className="h-7 flex items-center px-3 text-xs font-bold uppercase tracking-wide leading-none text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange rounded-xl"
             >
               Login
@@ -254,14 +255,14 @@ export const CinematicNav = () => {
                 {!user && (
                   <div className="p-6 border-t border-white/10">
                     <Link
-                      to="/auth"
+                      href="/auth"
                       onClick={() => setIsOpen(false)}
                       className="block w-full text-center px-5 py-4 text-sm font-bold uppercase tracking-wide text-foreground bg-gradient-to-r from-primary-yellow to-primary-orange hover:shadow-lg hover:shadow-primary-orange/30 transition-all rounded-2xl"
                     >
                       Sign In
                     </Link>
                     <Link
-                      to="/auth?mode=signup"
+                      href="/auth?mode=signup"
                       onClick={() => setIsOpen(false)}
                       className="block w-full text-center px-5 py-4 mt-3 text-sm font-medium uppercase tracking-wide text-white border border-white/30 hover:bg-white/10 transition-all rounded-2xl"
                     >

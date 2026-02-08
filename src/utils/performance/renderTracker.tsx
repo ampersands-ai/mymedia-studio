@@ -6,7 +6,7 @@ export const useRenderCount = (componentName: string, logThreshold: number = 10)
   const startTime = useRef(Date.now());
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!(process.env.NODE_ENV === 'development')) return;
 
     renderCount.current += 1;
     const count = renderCount.current;

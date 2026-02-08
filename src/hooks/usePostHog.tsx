@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTokens } from './useUserTokens';
 import { trackPageView, identifyUser, setUserProperties, posthog } from '@/lib/posthog';
@@ -11,14 +11,14 @@ import { useGenerationTracking } from './useGenerationTracking';
  * Returns the posthog instance for direct event capture.
  */
 export const usePostHog = () => {
-  const location = useLocation();
+  const pathname = usePathname();
   const { user } = useAuth();
   const { data: tokenData } = useUserTokens();
 
   // Track page views
   useEffect(() => {
-    trackPageView(location.pathname);
-  }, [location.pathname]);
+    trackPageView(pathname);
+  }, [pathname]);
 
   // Identify user and set properties when user data changes
   useEffect(() => {

@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+// Next.js navigation is mocked in test environment
 import React from 'react';
 import { useGeneration } from '../useGeneration';
 
@@ -86,7 +86,7 @@ const createWrapper = () => {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{children}</BrowserRouter>
+        {children}
       </QueryClientProvider>
     );
   };

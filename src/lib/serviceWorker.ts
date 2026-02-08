@@ -31,7 +31,7 @@ export function registerServiceWorker() {
   const isDevEnvironment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   // Only register in production and not in preview iframe
-  if (import.meta.env.PROD && !isInIframe && !isDevEnvironment) {
+  if (process.env.NODE_ENV === 'production' && !isInIframe && !isDevEnvironment) {
     updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {
@@ -79,7 +79,7 @@ export function registerServiceWorker() {
  * Auto-unregister service worker in dev mode
  */
 export async function unregisterServiceWorker() {
-  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  if (process.env.NODE_ENV === 'development' && 'serviceWorker' in navigator) {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
       if (registrations.length > 0) {

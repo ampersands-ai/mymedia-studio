@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Shield, ShieldAlert, ShieldCheck, ShieldX, Users, TrendingUp, Search, ExternalLink } from 'lucide-react';
 import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
-import { Link } from 'react-router-dom';
+import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 
 interface ModerationLog {
@@ -333,7 +333,7 @@ export default function ModerationDashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="destructive">{offender.block_count} blocks</Badge>
-                    <Link to={`/admin/users/${offender.user_id}/generations`}>
+                    <Link href={`/admin/users/${offender.user_id}/generations`}>
                       <Button variant="outline" size="sm">
                         <ExternalLink className="h-3 w-3 mr-1" />
                         View
@@ -453,7 +453,7 @@ export default function ModerationDashboard() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Link to={`/admin/users/${log.user_id}/generations`}>
+                        <Link href={`/admin/users/${log.user_id}/generations`}>
                           <Button variant="ghost" size="sm">
                             <ExternalLink className="h-3 w-3" />
                           </Button>

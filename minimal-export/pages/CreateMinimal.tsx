@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { MinimalSidebar } from "@/components/MinimalSidebar";
 import { GlassCard } from "@/components/glass/GlassCard";
 import { GlassButton } from "@/components/glass/GlassButton";
@@ -18,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { logger } from "@/lib/logger";
 
 export default function CreateMinimal() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { data: templates } = useTemplates();
   const { data: models } = useModels();
   const { generate, isGenerating } = useGeneration();
@@ -107,7 +107,7 @@ export default function CreateMinimal() {
       const err = error instanceof Error ? error : new Error(String(error));
       if (error.message === "SESSION_EXPIRED") {
         toast.error("Session expired. Please log in again.");
-        setTimeout(() => navigate("/auth"), 2000);
+        setTimeout(() => router.push("/auth"), 2000);
       }
     }
   };
@@ -245,7 +245,7 @@ export default function CreateMinimal() {
                 variant="ghost"
                 size="sm"
                 className="flex-1"
-                onClick={() => navigate("/dashboard/history")}
+                onClick={() => router.push("/dashboard/history")}
               >
                 <History className="w-4 h-4 mr-2" />
                 History

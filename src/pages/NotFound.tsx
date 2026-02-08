@@ -1,4 +1,5 @@
-import { useLocation, Link } from "react-router-dom";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
@@ -50,16 +51,16 @@ const GlitchText = ({ children }: { children: React.ReactNode }) => (
 );
 
 const NotFound = () => {
-  const location = useLocation();
+  const pathname = usePathname();
   const [currentExcuse, setCurrentExcuse] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
 
   useEffect(() => {
     logger.warn("404 Error: User attempted to access non-existent route", {
       component: 'NotFound',
-      pathname: location.pathname
+      pathname: pathname
     });
-  }, [location.pathname]);
+  }, [pathname]);
 
   const generateNewExcuse = () => {
     setIsSpinning(true);
@@ -146,19 +147,19 @@ const NotFound = () => {
           className="flex flex-wrap justify-center gap-4 mb-8"
         >
           <Button asChild variant="default" size="lg" className="gap-2">
-            <Link to="/">
+            <Link href="/">
               <Home className="w-4 h-4" />
               Go Home
             </Link>
           </Button>
           <Button asChild variant="secondary" size="lg" className="gap-2">
-            <Link to="/dashboard/custom-creation">
+            <Link href="/dashboard/custom-creation">
               <Sparkles className="w-4 h-4" />
               Start Creating
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="gap-2">
-            <Link to="/models">
+            <Link href="/models">
               <Search className="w-4 h-4" />
               Browse Models
             </Link>
@@ -189,7 +190,7 @@ const NotFound = () => {
           transition={{ delay: 0.6, duration: 0.5 }}
           className="mt-8 text-xs text-muted-foreground/50 font-mono"
         >
-          Attempted: {location.pathname}
+          Attempted: {pathname}
         </motion.p>
       </div>
     </div>

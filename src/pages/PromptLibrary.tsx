@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Search, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,7 @@ import { pageTitle } from '@/config/brand';
 
 const PromptLibrary = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [category, setCategory] = useState<PromptCategory>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -28,7 +28,7 @@ const PromptLibrary = () => {
 
   const handleUsePrompt = (prompt: string) => {
     // Navigate to create page with prompt in URL state
-    navigate("/create", { state: { prompt } });
+    router.push(`/create?prompt=${encodeURIComponent(prompt)}`);
   };
 
   useEffect(() => {

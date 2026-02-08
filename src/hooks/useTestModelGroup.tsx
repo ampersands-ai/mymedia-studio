@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useGeneration } from '@/hooks/useGeneration';
 import { useGenerationPolling } from '@/hooks/useGenerationPolling';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import type { GenerationOutput } from '@/types/custom-creation';
 import { executeGeneration } from '@/lib/generation/executeGeneration';
 import { getMaxPromptLength } from '@/lib/custom-creation-utils';
@@ -30,7 +30,7 @@ export const useTestModelGroup = () => {
   const [summary, setSummary] = useState<TestSummary | null>(null);
   const { toast } = useToast();
   const { generate } = useGeneration();
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // Ref to hold the current promise resolver
   const resolverRef = useRef<((value: { outputs: GenerationOutput[], error?: string }) => void) | null>(null);
@@ -121,7 +121,7 @@ export const useTestModelGroup = () => {
             uploadImagesToStorage: noOpUploadImages,
             generate,
             startPolling,
-            navigate,
+            router,
             maxPromptLength,
           });
 

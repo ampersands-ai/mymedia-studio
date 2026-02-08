@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { useUtmCapture } from "@/hooks/useUtmCapture";
 import { brand } from "@/config/brand";
 
 const Auth = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { execute } = useErrorHandler();
   
@@ -21,9 +22,9 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/dashboard/custom-creation");
+      router.push("/dashboard/custom-creation");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, router]);
 
   const handleGoogleAuth = async () => {
     await execute(
@@ -55,9 +56,9 @@ const Auth = () => {
       <header className="border-b-4 border-black bg-card relative z-10">
         <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img 
-                src={logo} 
+                src={logo.src} 
                 alt={`${brand.name} logo`}
                 className="h-6 md:h-8 object-contain"
                 loading="eager"
@@ -65,7 +66,7 @@ const Auth = () => {
               <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
             </Link>
             <div className="flex items-center gap-2 md:gap-3">
-              <Button variant="ghost" onClick={() => navigate("/pricing")} className="text-sm md:text-base px-2 md:px-4">
+              <Button variant="ghost" onClick={() => router.push("/pricing")} className="text-sm md:text-base px-2 md:px-4">
                 Pricing
               </Button>
             </div>
@@ -114,11 +115,11 @@ const Auth = () => {
             <div className="mt-6 text-center text-xs text-muted-foreground">
               <p>
                 By continuing, you agree to our{" "}
-                <Link to="/terms" className="text-primary hover:underline">
+                <Link href="/terms" className="text-primary hover:underline">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link to="/privacy" className="text-primary hover:underline">
+                <Link href="/privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </Link>
               </p>

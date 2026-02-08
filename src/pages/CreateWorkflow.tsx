@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkflowTemplate } from "@/hooks/useWorkflowTemplates";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
@@ -18,9 +18,9 @@ import { logger } from "@/lib/logger";
 
 const CreateWorkflow = () => {
   const { execute } = useErrorHandler();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const workflowId = searchParams.get("workflow");
-  const navigate = useNavigate();
+  const router = useRouter();
   const isMobile = useIsMobile();
 
   const { data: workflow, isLoading } = useWorkflowTemplate(workflowId || "");
@@ -38,9 +38,9 @@ const CreateWorkflow = () => {
 
   useEffect(() => {
     if (!workflowId) {
-      navigate("/dashboard/custom-creation");
+      router.push("/dashboard/custom-creation");
     }
-  }, [workflowId, navigate]);
+  }, [workflowId, router]);
 
   useEffect(() => {
     const loadTemplateImages = async () => {
@@ -265,7 +265,7 @@ const CreateWorkflow = () => {
                   <WorkflowInputPanel
                     workflow={workflow}
                     onExecute={handleExecute}
-                    onBack={() => navigate("/dashboard/templates")}
+                    onBack={() => router.push("/dashboard/templates")}
                     isExecuting={isExecuting}
                     onReset={async () => {
                       // Cancel execution if running and clear result/progress

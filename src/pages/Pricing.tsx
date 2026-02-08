@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer";
@@ -109,18 +110,18 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const [isCreatingPayment, setIsCreatingPayment] = useState<string | null>(null);
 
   const handleSubscribe = async (planName: string) => {
     if (!user) {
-      navigate("/auth");
+      router.push("/auth");
       return;
     }
 
     if (planName === "Freemium") {
-      navigate("/dashboard/custom-creation");
+      router.push("/dashboard/custom-creation");
       return;
     }
 
@@ -308,9 +309,9 @@ const Pricing = () => {
         <header className="border-b-4 border-black bg-card">
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img 
-                  src={logo} 
+                  src={logo.src} 
                   alt={`${brand.name} logo`}
                   className="h-6 md:h-8 object-contain"
                 />
@@ -319,13 +320,13 @@ const Pricing = () => {
               <div className="flex items-center gap-2 md:gap-3">
                 {!user ? (
                   <>
-                    <Button variant="outline" onClick={() => navigate("/auth")} className="hidden sm:inline-flex text-sm md:text-base">
+                    <Button variant="outline" onClick={() => router.push("/auth")} className="hidden sm:inline-flex text-sm md:text-base">
                       Sign In
                     </Button>
                     <Button
                       variant="neon"
                       size="sm"
-                      onClick={() => navigate("/auth")}
+                      onClick={() => router.push("/auth")}
                       className="md:text-base"
                     >
                       Get Started
@@ -335,7 +336,7 @@ const Pricing = () => {
                   <Button
                     variant="neon"
                     size="sm"
-                    onClick={() => navigate("/dashboard/custom-creation")}
+                    onClick={() => router.push("/dashboard/custom-creation")}
                     className="md:text-base"
                   >
                     Go to Dashboard
@@ -606,10 +607,10 @@ const Pricing = () => {
               Join thousands of creators making stunning AI content.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate("/auth")} className="font-bold text-lg">
+              <Button size="lg" onClick={() => router.push("/auth")} className="font-bold text-lg">
                 START FREE
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/")} className="font-bold text-lg">
+              <Button size="lg" variant="outline" onClick={() => router.push("/")} className="font-bold text-lg">
                 LEARN MORE
               </Button>
             </div>

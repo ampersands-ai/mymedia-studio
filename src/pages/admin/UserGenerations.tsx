@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
@@ -187,7 +187,7 @@ const PreviewContent = ({ gen }: { gen: Generation }) => {
 
 export default function UserGenerations() {
   const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
@@ -411,7 +411,7 @@ export default function UserGenerations() {
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
+        <Button variant="ghost" size="sm" onClick={() => router.push('/admin/users')}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
         </Button>

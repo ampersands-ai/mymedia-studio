@@ -246,16 +246,14 @@ export function suppressConsole() {
  * Mock environment mode for testing
  */
 export function mockEnvMode(mode: 'development' | 'production' | 'test') {
-  const originalMode = import.meta.env.MODE;
-  
+  const originalNodeEnv = process.env.NODE_ENV;
+
   beforeEach(() => {
-    (import.meta.env as { MODE: string }).MODE = mode;
-    (import.meta.env as { DEV: boolean }).DEV = mode === 'development';
-    (import.meta.env as { PROD: boolean }).PROD = mode === 'production';
+    process.env.NODE_ENV = mode;
   });
-  
+
   afterEach(() => {
-    (import.meta.env as { MODE: string }).MODE = originalMode;
+    process.env.NODE_ENV = originalNodeEnv;
   });
 }
 

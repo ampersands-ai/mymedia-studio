@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useGeneration } from "@/hooks/useGeneration";
@@ -70,7 +70,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
   } = options;
 
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { generate, isGenerating } = useGeneration();
   const { checkPrompt, isChecking: isModerating } = usePromptModeration();
@@ -190,7 +190,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         duration: 10000,
         action: {
           label: "View Plans",
-          onClick: () => navigate("/pricing")
+          onClick: () => router.push("/pricing")
         }
       });
       return;
@@ -261,7 +261,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
         getAudioDuration,
         generate,
         startPolling,
-        navigate,
+        router,
         maxPromptLength,
       });
 
@@ -330,7 +330,7 @@ export const useCustomGeneration = (options: UseCustomGenerationOptions) => {
     uploadImagesToStorage,
     uploadVideosToStorage,
     updateState,
-    navigate,
+    router,
     user,
     onboardingProgress,
     updateProgress,

@@ -10,10 +10,10 @@
  *
  * 2. CUSTOM DOMAIN MODE (mybrand.com)
  *    - Standalone deployment: brand config from environment variables
- *    - Set VITE_BRAND_* variables in .env
+ *    - Set NEXT_PUBLIC_BRAND_* variables in .env
  *
  * The mode is auto-detected:
- *   - If hostname matches *.VITE_PLATFORM_DOMAIN → platform mode
+ *   - If hostname matches *.NEXT_PUBLIC_PLATFORM_DOMAIN → platform mode
  *   - Otherwise → env mode (custom domain)
  *
  * Components should use:
@@ -92,10 +92,10 @@ export interface BrandConfig {
 // ─── Environment helpers ───────────────────────────────────────────────
 
 const env = (key: string, fallback: string): string =>
-  import.meta.env[key] || fallback;
+  process.env[key] || fallback;
 
 /** The platform base domain for subdomain-based tenants */
-export const PLATFORM_DOMAIN = env('VITE_PLATFORM_DOMAIN', 'mymedia.studio');
+export const PLATFORM_DOMAIN = env('NEXT_PUBLIC_PLATFORM_DOMAIN', 'mymedia.studio');
 
 // ─── Storage key helper ────────────────────────────────────────────────
 
@@ -111,41 +111,41 @@ function storageKeysFor(domain: string) {
 
 // ─── Default brand (from environment variables) ────────────────────────
 
-const defaultName = env('VITE_BRAND_NAME', 'artifio.ai');
-const defaultDomain = env('VITE_BRAND_DOMAIN', 'artifio.ai');
+const defaultName = env('NEXT_PUBLIC_BRAND_NAME', 'artifio.ai');
+const defaultDomain = env('NEXT_PUBLIC_BRAND_DOMAIN', 'artifio.ai');
 
 export const defaultBrand: BrandConfig = {
   name: defaultName,
-  slug: env('VITE_BRAND_SLUG', 'default'),
+  slug: env('NEXT_PUBLIC_BRAND_SLUG', 'default'),
   domain: defaultDomain,
-  tagline: env('VITE_BRAND_TAGLINE', 'All-in-one AI content platform for creators'),
+  tagline: env('NEXT_PUBLIC_BRAND_TAGLINE', 'All-in-one AI content platform for creators'),
   description: env(
-    'VITE_BRAND_DESCRIPTION',
+    'NEXT_PUBLIC_BRAND_DESCRIPTION',
     'Professional AI-powered platform for creating videos, images, music, and more. Generate portrait headshots, cinematic videos, product photography, and social media content instantly. Start free with 5 credits.'
   ),
-  appUrl: env('VITE_BRAND_APP_URL', 'https://artifio.ai'),
+  appUrl: env('NEXT_PUBLIC_BRAND_APP_URL', 'https://artifio.ai'),
 
-  logoPath: env('VITE_BRAND_LOGO_PATH', '/logos/artifio.png'),
-  faviconPath: env('VITE_BRAND_FAVICON_PATH', '/favicon.png'),
-  ogImage: env('VITE_BRAND_OG_IMAGE', ''),
+  logoPath: env('NEXT_PUBLIC_BRAND_LOGO_PATH', '/logos/artifio.png'),
+  faviconPath: env('NEXT_PUBLIC_BRAND_FAVICON_PATH', '/favicon.png'),
+  ogImage: env('NEXT_PUBLIC_BRAND_OG_IMAGE', ''),
 
-  supportEmail: env('VITE_BRAND_SUPPORT_EMAIL', 'support@artifio.ai'),
-  privacyEmail: env('VITE_BRAND_PRIVACY_EMAIL', 'privacy@artifio.ai'),
-  alertsEmail: env('VITE_BRAND_ALERTS_EMAIL', 'alerts@artifio.ai'),
-  noreplyEmail: env('VITE_BRAND_NOREPLY_EMAIL', 'noreply@artifio.ai'),
+  supportEmail: env('NEXT_PUBLIC_BRAND_SUPPORT_EMAIL', 'support@artifio.ai'),
+  privacyEmail: env('NEXT_PUBLIC_BRAND_PRIVACY_EMAIL', 'privacy@artifio.ai'),
+  alertsEmail: env('NEXT_PUBLIC_BRAND_ALERTS_EMAIL', 'alerts@artifio.ai'),
+  noreplyEmail: env('NEXT_PUBLIC_BRAND_NOREPLY_EMAIL', 'noreply@artifio.ai'),
 
   social: {
-    twitter: env('VITE_BRAND_TWITTER', 'https://x.com/artifio_ai'),
-    twitterHandle: env('VITE_BRAND_TWITTER_HANDLE', '@artifio_ai'),
-    linkedin: env('VITE_BRAND_LINKEDIN', 'https://linkedin.com/company/artifio'),
-    youtube: env('VITE_BRAND_YOUTUBE', 'https://youtube.com/@artifio'),
-    instagram: env('VITE_BRAND_INSTAGRAM', 'https://www.instagram.com/artifio.ai'),
-    facebook: env('VITE_BRAND_FACEBOOK', 'https://www.facebook.com/share/1F1J8UFCgr/'),
+    twitter: env('NEXT_PUBLIC_BRAND_TWITTER', 'https://x.com/artifio_ai'),
+    twitterHandle: env('NEXT_PUBLIC_BRAND_TWITTER_HANDLE', '@artifio_ai'),
+    linkedin: env('NEXT_PUBLIC_BRAND_LINKEDIN', 'https://linkedin.com/company/artifio'),
+    youtube: env('NEXT_PUBLIC_BRAND_YOUTUBE', 'https://youtube.com/@artifio'),
+    instagram: env('NEXT_PUBLIC_BRAND_INSTAGRAM', 'https://www.instagram.com/artifio.ai'),
+    facebook: env('NEXT_PUBLIC_BRAND_FACEBOOK', 'https://www.facebook.com/share/1F1J8UFCgr/'),
   },
 
   mobile: {
-    appId: env('VITE_BRAND_APP_ID', 'com.artifio.create'),
-    appName: env('VITE_BRAND_APP_NAME', 'Artifio Create'),
+    appId: env('NEXT_PUBLIC_BRAND_APP_ID', 'com.artifio.create'),
+    appName: env('NEXT_PUBLIC_BRAND_APP_NAME', 'Artifio Create'),
   },
 
   seo: {

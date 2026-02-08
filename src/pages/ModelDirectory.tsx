@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Helmet } from "react-helmet-async";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { useModelDirectory } from "@/hooks/useModelPages";
@@ -9,8 +8,6 @@ import { getDisplayProvider } from "@/lib/utils/provider-display";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { brand, brandUrl } from "@/config/brand";
-
 export default function ModelDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([]);
@@ -102,29 +99,7 @@ export default function ModelDirectory() {
   );
 
   return (
-    <>
-      <Helmet>
-        <title>{`AI Models Directory | ${brand.name}`}</title>
-        <meta
-          name="description"
-          content="Explore our collection of AI models for image generation, video creation, audio synthesis, and more. Find the perfect AI model for your creative projects."
-        />
-        <meta name="keywords" content="AI models, image generation, video AI, audio AI, FLUX, Stable Diffusion, Kling, Minimax" />
-        <link rel="canonical" href={brandUrl('/models')} />
-
-        {/* Open Graph */}
-        <meta property="og:title" content={`AI Models Directory | ${brand.name}`} />
-        <meta property="og:description" content="Explore our collection of AI models for image generation, video creation, audio synthesis, and more." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={brandUrl('/models')} />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`AI Models Directory | ${brand.name}`} />
-        <meta name="twitter:description" content="Explore our collection of AI models for image generation, video creation, audio synthesis, and more." />
-      </Helmet>
-
-      <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
         <GlobalHeader />
         
         <main className="flex-1 pt-16">
@@ -193,6 +168,5 @@ export default function ModelDirectory() {
         
         <Footer />
       </div>
-    </>
   );
 }

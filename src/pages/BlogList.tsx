@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +7,9 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Input } from "@/components/ui/input";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
 import { BlogPost } from "@/types/blog";
 import { Clock, Eye, Calendar } from "lucide-react";
-import { brand, pageTitle } from '@/config/brand';
+import { brand } from '@/config/brand';
 
 export default function BlogList() {
   const { execute } = useErrorHandler();
@@ -64,11 +63,6 @@ export default function BlogList() {
 
   return (
     <>
-      <Helmet>
-        <title>{pageTitle('Blog')}</title>
-        <meta name="description" content={`Read the latest insights, tutorials, and updates about AI technology from ${brand.name}.`} />
-      </Helmet>
-
       <GlobalHeader />
 
       <div className="min-h-screen pt-20 pb-16">
@@ -105,7 +99,7 @@ export default function BlogList() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {filteredPosts.map((post) => (
-                <Link key={post.id} to={`/blog/${post.slug}`}>
+                <Link key={post.id} href={`/blog/${post.slug}`}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                     {post.featured_image_url && (
                       <div className="aspect-video overflow-hidden">

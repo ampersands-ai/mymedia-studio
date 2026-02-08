@@ -222,7 +222,7 @@ export const TokenDisputes = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -294,7 +294,7 @@ export const TokenDisputes = () => {
         for (const dispute of disputes) {
           const credits = (dispute.generation as any)?.tokens_used || 0;
           if (credits > 0) {
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
+            await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/manage-user-tokens`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

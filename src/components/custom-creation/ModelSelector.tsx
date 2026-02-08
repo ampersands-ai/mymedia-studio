@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -157,7 +157,7 @@ const ModelSelectorComponent: React.FC<ModelSelectorProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  to={`/models/${modelSlug}`}
+                  href={`/models/${modelSlug}`}
                   onClick={(e) => e.stopPropagation()}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >

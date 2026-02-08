@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeneration } from "./useGeneration";
@@ -29,7 +29,7 @@ interface UseGenerationActionsOptions {
  * @returns Action handlers
  */
 export const useGenerationActions = (options: UseGenerationActionsOptions) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { generate, isGenerating } = useGeneration();
 
   /**
@@ -123,7 +123,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
           duration: 5000
         });
         setTimeout(() => {
-          navigate("/auth");
+          router.push("/auth");
         }, 2000);
         return;
       }
@@ -131,7 +131,7 @@ export const useGenerationActions = (options: UseGenerationActionsOptions) => {
       // Reset start time on error
       updateGenerationState({ startTime: null });
     }
-  }, [options, navigate, generate]);
+  }, [options, router, generate]);
 
   /**
    * Retry/regenerate with same prompt

@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Coins, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -14,7 +15,7 @@ import { StudioDropdown, LibraryDropdown, NavDropdownProvider } from "@/componen
 import { brand } from '@/config/brand';
 
 export const GlobalHeader = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { availableCredits, isLoading } = useUserCredits();
@@ -41,9 +42,9 @@ export const GlobalHeader = () => {
         <div className="flex items-center justify-between">
 
           {/* Left Side - Logo */}
-          <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <OptimizedImage 
-              src={logoImage} 
+              src={logoImage.src} 
               alt={`${brand.name} logo`}
               width={32}
               height={32}
@@ -65,7 +66,7 @@ export const GlobalHeader = () => {
               </NavDropdownProvider>
             ) : (
               <Link 
-                to="/models"
+                href="/models"
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
               >
                 Models
@@ -79,7 +80,7 @@ export const GlobalHeader = () => {
 
             {!user && (
               <button
-                onClick={() => navigate("/auth")}
+                onClick={() => router.push("/auth")}
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 text-foreground hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
               >
                 Login
@@ -89,7 +90,7 @@ export const GlobalHeader = () => {
 
             {user && creditBalance !== null && (
               <button
-                onClick={() => navigate("/dashboard/settings", { state: { defaultTab: 'credits' } })}
+                onClick={() => router.push("/dashboard/settings?tab=credits")}
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md"
               >
                 <Coins className="h-5 w-5 text-primary-orange" />
@@ -101,7 +102,7 @@ export const GlobalHeader = () => {
 
             {isAdmin && (
               <button
-                onClick={() => navigate("/admin/dashboard")}
+                onClick={() => router.push("/admin/dashboard")}
                 className="px-4 py-2 rounded-full backdrop-blur-lg bg-card/80 border border-border/30 flex items-center gap-2 hover:bg-card/95 transition-all duration-300 hover:scale-105 shadow-md font-semibold"
               >
                 <Shield className="h-5 w-5" />

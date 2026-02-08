@@ -111,7 +111,7 @@ export const ImageGenerationPanel = ({
         uploadImagesToStorage: async () => [],
         generate: async () => ({}),
         startPolling: () => {},
-        navigate: () => {},
+        router: { push: () => {}, replace: () => {}, refresh: () => {}, back: () => {}, forward: () => {}, prefetch: () => Promise.resolve() } as never,
       });
 
       // Poll for completion

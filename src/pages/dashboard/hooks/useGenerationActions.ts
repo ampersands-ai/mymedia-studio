@@ -153,7 +153,7 @@ export const useGenerationActions = (userId: string | undefined) => {
         if (!session) throw new Error('No session');
 
         // Use dedicated refund endpoint for failed generations (no admin role required)
-        const refundResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/refund-failed-generation`, {
+        const refundResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/refund-failed-generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { GenerationErrorBoundary } from "@/components/error/GenerationErrorBoundary";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SessionWarning } from "@/components/SessionWarning";
 import type { CreationGroup } from "@/constants/creation-groups";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -41,8 +41,8 @@ import { pageTitle } from '@/config/brand';
 const CustomCreation = () => {
   const { execute } = useErrorHandler();
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const outputSectionRef = useRef<HTMLDivElement>(null);
   const isInternalGroupChange = useRef(false); // Track internal vs URL changes
 
@@ -600,7 +600,7 @@ const CustomCreation = () => {
         newParams.delete('model');
         if (urlPrompt) newParams.delete('prompt');
         newParams.set('group', targetGroup || state.selectedGroup);
-        setSearchParams(newParams, { replace: true });
+        router.replace(`?${newParams.toString()}`);
       }
     }
     
@@ -618,9 +618,9 @@ const CustomCreation = () => {
     const currentUrlGroup = searchParams.get('group');
     if (state.selectedGroup !== currentUrlGroup) {
       isInternalGroupChange.current = true; // Mark as internal change
-      setSearchParams({ group: state.selectedGroup }, { replace: true });
+      router.replace(`?group=${state.selectedGroup}`);
     }
-  }, [state.selectedGroup, searchParams, setSearchParams]);
+  }, [state.selectedGroup, searchParams, router]);
 
   // Track onboarding: navigatedToTextToImage when user selects prompt_to_image group
   useEffect(() => {
@@ -874,7 +874,7 @@ const CustomCreation = () => {
               onOpenLightbox={(index) => updateState({ selectedOutputIndex: index, showLightbox: true })}
               onCloseLightbox={() => updateState({ showLightbox: false })}
               onDownloadAll={handleDownloadAll}
-              onViewHistory={() => navigate('/dashboard/history')}
+              onViewHistory={() => router.push('/dashboard/history')}
               captionData={captionData}
               isGeneratingCaption={isGeneratingCaption}
               onRegenerateCaption={regenerateCaption}

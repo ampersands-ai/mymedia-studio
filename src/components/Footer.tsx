@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,9 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12">
           {/* Brand - full width on mobile */}
           <div className="col-span-2 md:col-span-1 space-y-4 text-center md:text-left">
-            <Link to="/" className="flex items-center gap-3 justify-center md:justify-start">
+            <Link href="/" className="flex items-center gap-3 justify-center md:justify-start">
           <img 
-            src={logo} 
+            src={logo.src} 
             alt={`${brand.name} logo`}
             className="h-6 md:h-8 object-contain"
               />
@@ -100,18 +100,18 @@ export const Footer = () => {
             <ul className="space-y-4">
               {showFeaturesPage && (
                 <li>
-                  <Link to="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/features" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Features
                   </Link>
                 </li>
               )}
               <li>
-                <Link to="/pricing" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/pricing" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/auth" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Sign Up
                 </Link>
               </li>
@@ -124,17 +124,17 @@ export const Footer = () => {
               <h3 className="font-black text-sm mb-4">POPULAR TEMPLATES</h3>
               <ul className="space-y-4">
                 <li>
-                  <Link to="/templates/photo-editing/professional-headshot" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/templates/photo-editing/professional-headshot" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Professional Headshots
                   </Link>
                 </li>
                 <li>
-                  <Link to="/templates/ai-image/product-photography" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/templates/ai-image/product-photography" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Product Photography
                   </Link>
                 </li>
                 <li>
-                  <Link to="/templates/text-to-image/social-media-content" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/templates/text-to-image/social-media-content" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Social Media Content
                   </Link>
                 </li>
@@ -147,24 +147,24 @@ export const Footer = () => {
             <h3 className="font-black text-sm mb-4">COMPANY</h3>
             <ul className="space-y-4">
               <li>
-                <Link to="/about" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/about" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   About
                 </Link>
               </li>
               {showBlogPage && (
                 <li>
-                  <Link to="/blog" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/blog" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Blog
                   </Link>
                 </li>
               )}
               <li>
-                <Link to="/privacy" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/privacy" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/terms" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   Terms of Service
                 </Link>
               </li>
@@ -176,13 +176,13 @@ export const Footer = () => {
             <h3 className="font-black text-sm mb-4">SUPPORT</h3>
             <ul className="space-y-4">
               <li>
-                <Link to="/faq" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                <Link href="/faq" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                   FAQ
                 </Link>
               </li>
               {showCommunityPage && (
                 <li>
-                  <Link to="/community" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
+                  <Link href="/community" className="text-sm text-foreground/70 hover:text-primary hover:underline font-medium transition-all">
                     Community
                   </Link>
                 </li>

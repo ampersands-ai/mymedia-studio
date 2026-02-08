@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Home, Sparkles, Music, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,27 +21,28 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export function GlobalMobileNav() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: profile } = useUserProfile();
 
   const isActive = (item: NavItem) => {
-    const currentPath = location.pathname;
+    const currentPath = pathname;
     const itemPath = item.route.split("?")[0];
-    
+
     // Special case for home/create which share base route
     if (item.id === "create" && currentPath === "/dashboard/custom-creation") {
-      return location.search.includes("group=");
+      return searchParams?.has("group") ?? false;
     }
     if (item.id === "home" && currentPath === "/dashboard/custom-creation") {
-      return !location.search.includes("group=");
+      return !(searchParams?.has("group") ?? false);
     }
-    
-    return currentPath === itemPath || currentPath.startsWith(itemPath + "/");
+
+    return currentPath === itemPath || (currentPath?.startsWith(itemPath + "/") ?? false);
   };
 
   const handleNavigate = (route: string) => {
-    navigate(route);
+    router.push(route);
   };
 
   const initials = getInitials(profile?.display_name, profile?.email);

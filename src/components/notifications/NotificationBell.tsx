@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Bell, Check, CheckCheck, X, Sparkles, AlertTriangle, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -129,7 +129,7 @@ const NotificationItem = ({
 
 export const NotificationBell = () => {
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     notifications,
     unreadCount,
@@ -141,7 +141,7 @@ export const NotificationBell = () => {
 
   const handleNavigate = (url: string) => {
     setOpen(false);
-    navigate(url);
+    router.push(url);
   };
 
   return (

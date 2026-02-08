@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useTemplateLanding, useRelatedTemplates, useIncrementTemplateUse } from "@/hooks/useTemplateLanding";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,7 @@ import DOMPurify from "dompurify";
 
 export default function TemplateLanding() {
   const { category, slug } = useParams<{ category: string; slug: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const incrementUse = useIncrementTemplateUse();
 
@@ -44,15 +44,17 @@ export default function TemplateLanding() {
 
     // Check authentication
     if (!user) {
-      navigate("/auth", { state: { from: window.location.pathname } });
+      // TODO: Next.js App Router does not support navigation state.
+      // Consider passing the return path via searchParams instead.
+      router.push(`/auth?from=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
     // Navigate to creation workflow
     if (template.workflow_id) {
-      navigate(`/dashboard/create-workflow?workflow=${template.workflow_id}`);
+      router.push(`/dashboard/create-workflow?workflow=${template.workflow_id}`);
     } else {
-      navigate("/dashboard/create-workflow");
+      router.push("/dashboard/create-workflow");
     }
   };
 

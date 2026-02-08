@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { subDays, startOfDay, endOfDay } from "date-fns";
 
 export type StatusFilter = 'all' | 'completed' | 'failed' | 'pending';
@@ -37,15 +37,25 @@ export const getDateRangeFromPreset = (preset: DateRangePreset): DateRange => {
 };
 
 export const useGenerationFilters = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Helper to update URL search params via router.replace
+  const updateSearchParams = useCallback((updater: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString());
+    updater(params);
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname);
+  }, [searchParams, router, pathname]);
+
   // Initialize from URL params or defaults
   const initialStatus = searchParams.get('status');
   const initialDatePreset = searchParams.get('date');
   const initialModel = searchParams.get('model');
   const initialSearch = searchParams.get('search');
   const initialCollection = searchParams.get('collection');
-  
+
   const [statusFilter, setStatusFilterState] = useState<StatusFilter>(
     isValidStatusFilter(initialStatus) ? initialStatus : 'completed'
   );
@@ -88,57 +98,62 @@ export const useGenerationFilters = () => {
   // Update URL when status filter changes
   const setStatusFilter = (filter: StatusFilter) => {
     setStatusFilterState(filter);
-    if (filter === 'completed') {
-      searchParams.delete('status');
-    } else {
-      searchParams.set('status', filter);
-    }
-    setSearchParams(searchParams, { replace: true });
+    updateSearchParams((params) => {
+      if (filter === 'completed') {
+        params.delete('status');
+      } else {
+        params.set('status', filter);
+      }
+    });
   };
 
   // Update URL when date preset changes
   const setDatePreset = (preset: DateRangePreset) => {
     setDatePresetState(preset);
-    if (preset === 'all') {
-      searchParams.delete('date');
-    } else {
-      searchParams.set('date', preset);
-    }
-    setSearchParams(searchParams, { replace: true });
+    updateSearchParams((params) => {
+      if (preset === 'all') {
+        params.delete('date');
+      } else {
+        params.set('date', preset);
+      }
+    });
   };
 
   // Update URL when model filter changes
   const setModelFilter = (model: string) => {
     setModelFilterState(model);
-    if (model === 'all') {
-      searchParams.delete('model');
-    } else {
-      searchParams.set('model', model);
-    }
-    setSearchParams(searchParams, { replace: true });
+    updateSearchParams((params) => {
+      if (model === 'all') {
+        params.delete('model');
+      } else {
+        params.set('model', model);
+      }
+    });
   };
 
   // Update URL when search query changes
   const setSearchQuery = useCallback((query: string) => {
     setSearchQueryState(query);
-    if (!query) {
-      searchParams.delete('search');
-    } else {
-      searchParams.set('search', query);
-    }
-    setSearchParams(searchParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+    updateSearchParams((params) => {
+      if (!query) {
+        params.delete('search');
+      } else {
+        params.set('search', query);
+      }
+    });
+  }, [updateSearchParams]);
 
   // Update URL when collection filter changes
   const setCollectionFilter = useCallback((collection: string) => {
     setCollectionFilterState(collection);
-    if (collection === 'all') {
-      searchParams.delete('collection');
-    } else {
-      searchParams.set('collection', collection);
-    }
-    setSearchParams(searchParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+    updateSearchParams((params) => {
+      if (collection === 'all') {
+        params.delete('collection');
+      } else {
+        params.set('collection', collection);
+      }
+    });
+  }, [updateSearchParams]);
 
   // Reset to page 1 when any filter changes
   useEffect(() => {

@@ -27,7 +27,7 @@ function sendToAnalytics(metric: WebVitalMetric) {
   }
   
   // Console log in development
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === 'development') {
     logger.debug('Web Vital measurement', {
       utility: 'webVitals',
       metric: metric.name,

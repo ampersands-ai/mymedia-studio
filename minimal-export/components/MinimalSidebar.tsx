@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { 
   Menu, 
   User, 
@@ -18,7 +19,7 @@ interface MinimalSidebarProps {
 }
 
 export const MinimalSidebar = ({ className }: MinimalSidebarProps) => {
-  const location = useLocation();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
 
   const navItems = [
@@ -63,13 +64,13 @@ export const MinimalSidebar = ({ className }: MinimalSidebarProps) => {
         {/* Navigation Icons */}
         <nav className="flex flex-col items-center space-y-6 mt-8">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = pathname === item.href;
             const Icon = item.icon;
             
             return (
               <Link
                 key={item.label}
-                to={item.href}
+                href={item.href}
                 className={cn(
                   "p-3 rounded-xl transition-all",
                   "hover:bg-white/10 relative group",
@@ -96,7 +97,7 @@ export const MinimalSidebar = ({ className }: MinimalSidebarProps) => {
       <div className="flex flex-col items-center space-y-6">
         {/* Shopping Cart */}
         <Link
-          to="/pricing"
+          href="/pricing"
           className="p-3 rounded-xl hover:bg-white/10 transition-all group relative"
           title="Pricing"
         >

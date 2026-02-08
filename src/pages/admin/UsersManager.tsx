@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function UsersManager() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { execute } = useErrorHandler();
   const {
     users,
@@ -450,7 +450,7 @@ export default function UsersManager() {
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        onClick={() => navigate(`/admin/users/${user.id}/generations`)}
+                        onClick={() => router.push(`/admin/users/${user.id}/generations`)}
                       >
                         <History className="h-3 w-3 mr-1" />
                         Generations
@@ -590,7 +590,7 @@ export default function UsersManager() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/admin/users/${user.id}/generations`)}
+                            onClick={() => router.push(`/admin/users/${user.id}/generations`)}
                             title="View Generations"
                           >
                             <History className="h-4 w-4" />

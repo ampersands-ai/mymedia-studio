@@ -1,4 +1,4 @@
-import type { NavigateFunction } from "react-router-dom";
+import type { AppRouterInstance } from "next/navigation";
 import { getModel } from "@/lib/models/registry";
 
 export interface ExecuteGenerationParams {
@@ -21,7 +21,7 @@ export interface ExecuteGenerationParams {
   getAudioDuration?: (file: File) => Promise<number>;
   generate: (params: Record<string, unknown>) => Promise<unknown>;
   startPolling: (id: string) => void;
-  navigate: NavigateFunction;
+  router: AppRouterInstance;
   maxPromptLength?: number;
 }
 
@@ -49,7 +49,7 @@ export async function executeGeneration({
   uploadVideosToStorage,
   getAudioDuration,
   startPolling,
-  navigate,
+  router,
 }: ExecuteGenerationParams): Promise<string> {
   
   // Get model from registry
@@ -112,7 +112,7 @@ export async function executeGeneration({
     getAudioDuration,
     generate: async () => ({}),
     startPolling,
-    navigate,
+    router,
   });
 
   // Model's execute() already calls startPolling internally

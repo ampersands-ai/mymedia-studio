@@ -66,7 +66,7 @@ export class ApplicationError extends Error {
       message: this.message,
       recoverable: this.recoverable,
       context: this.context,
-      stack: import.meta.env.DEV ? this.stack : undefined,
+      stack: process.env.NODE_ENV === 'development' ? this.stack : undefined,
     };
   }
 }

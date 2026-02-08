@@ -34,7 +34,7 @@ export function useGenerateSunoVideo() {
         } as VideoError;
       }
 
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-suno-mp4`;
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-suno-mp4`;
       
       videoLogger.info('Starting video generation', { 
         requestId, 
@@ -47,7 +47,7 @@ export function useGenerateSunoVideo() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
         },
         body: JSON.stringify({
           generation_id: generationId,

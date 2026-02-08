@@ -146,7 +146,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 We encountered an error on this page. Don't worry, the rest of the app should still work.
               </p>
-              {import.meta.env.DEV && this.state.error && (
+              {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="mt-4 text-left">
                   <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                     Error details (dev mode)

@@ -6,7 +6,7 @@
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+// Next.js navigation mocks are set up in test setup files
 import { vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from '@/components/ui/sonner';
@@ -69,10 +69,8 @@ export function renderWithProviders(
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          {children}
-          <Toaster />
-        </BrowserRouter>
+        {children}
+        <Toaster />
       </QueryClientProvider>
     );
   }

@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
@@ -13,7 +14,7 @@ import { logger } from '@/lib/logger';
 
 export const HeroSection = () => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // AI Model badges with their details
   const aiModels = [
@@ -45,7 +46,7 @@ export const HeroSection = () => {
 
   const handleModelClick = (group: CreationGroup) => {
     localStorage.setItem('customCreation_selectedGroup', group);
-    navigate('/custom-creation');
+    router.push('/custom-creation');
   };
 
   // Define video sources
@@ -202,7 +203,7 @@ export const HeroSection = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Link to="/dashboard/custom-creation" className="w-full sm:w-auto">
+            <Link href="/dashboard/custom-creation" className="w-full sm:w-auto">
               <GradientButton size="lg" className="group w-full">
                 Start Creating Free
                 <ArrowRight className="inline ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

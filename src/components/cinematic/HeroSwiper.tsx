@@ -73,7 +73,7 @@ const HeroSwiper = ({ heroVideos, isMuted, videoRefs }: HeroSwiperProps) => {
       {heroVideos.map((src, index) => (
         <SwiperSlide key={src} className="w-full h-full">
           <video
-            ref={(el) => (videoRefs.current[index] = el)}
+            ref={(el) => { videoRefs.current[index] = el; }}
             src={src}
             muted={isMuted}
             loop

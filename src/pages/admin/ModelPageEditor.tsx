@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save, Eye, Plus, Trash2, GripVertical, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +41,7 @@ const categories = [
 
 export default function ModelPageEditor() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const isNew = id === "new";
 
   const { data: existingPage, isLoading } = useAdminModelPage(id || "");
@@ -142,7 +142,7 @@ export default function ModelPageEditor() {
 
     if (isNew) {
       await createMutation.mutateAsync(dataToSave);
-      navigate("/admin/model-pages");
+      router.push("/admin/model-pages");
     } else if (id) {
       await updateMutation.mutateAsync({ id, ...dataToSave });
     }
@@ -259,7 +259,7 @@ export default function ModelPageEditor() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/model-pages")}>
+          <Button variant="ghost" size="icon" onClick={() => router.push("/admin/model-pages")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>

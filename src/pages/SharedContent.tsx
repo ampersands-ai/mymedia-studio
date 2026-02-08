@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,8 +8,8 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { brand } from '@/config/brand';
 
 export default function SharedContent() {
-  const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
+  const { token } = useParams();
+  const router = useRouter();
   const { execute } = useErrorHandler();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export default function SharedContent() {
           <AlertCircle className="h-16 w-16 mx-auto text-destructive" />
           <h2 className="text-2xl font-black">Share Link Error</h2>
           <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => navigate('/')} variant="default">
+          <Button onClick={() => router.push('/')} variant="default">
             Go to Homepage
           </Button>
         </Card>
@@ -147,7 +147,7 @@ export default function SharedContent() {
             </p>
             <Button 
               variant="outline" 
-              onClick={() => navigate('/')} 
+              onClick={() => router.push('/')} 
               className="mt-4"
             >
               Create Your Own

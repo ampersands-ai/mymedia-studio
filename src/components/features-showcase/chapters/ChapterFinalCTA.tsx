@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export const ChapterFinalCTA = () => {
             size="lg"
             className="group relative overflow-hidden bg-gradient-to-r from-primary-orange to-primary hover:from-primary hover:to-primary-orange text-black font-bold px-8 py-6 text-lg rounded-full transition-all duration-300"
           >
-            <Link to="/auth" className="flex items-center gap-2">
+            <Link href="/auth" className="flex items-center gap-2">
               Start Creating Free
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               {/* Pulsing glow effect */}

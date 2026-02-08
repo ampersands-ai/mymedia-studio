@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import {
   Video,
   Image,
@@ -20,7 +20,7 @@ import {
 import { brand, pageTitle, supportMailto, privacyMailto } from '@/config/brand';
 
 const About = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     document.title = `${pageTitle('About Us')} | Create Anything. Instantly.`;
@@ -237,7 +237,7 @@ const About = () => {
                 variant="neon" 
                 size="lg" 
                 className="font-black text-lg"
-                onClick={() => navigate("/pricing")}
+                onClick={() => router.push("/pricing")}
               >
                 Get Started Today
               </Button>

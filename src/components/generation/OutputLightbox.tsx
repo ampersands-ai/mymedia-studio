@@ -78,7 +78,7 @@ export const OutputLightbox = ({
   // Initialize history with original image when modal opens
   useEffect(() => {
     if (open && currentOutput && history.length === 0) {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
 
       // Fetch and add original to history
@@ -156,7 +156,7 @@ export const OutputLightbox = ({
         });
       } else {
         // Fallback: Download original from Supabase
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const originalUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
 
         const response = await fetch(originalUrl);
@@ -248,7 +248,7 @@ export const OutputLightbox = ({
 
   const handleShare = async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
       
       if (canShare) {
@@ -424,7 +424,7 @@ export const OutputLightbox = ({
   const getCurrentImageUrl = () => {
     const entry = getCurrentEntry();
     if (entry) return entry.url;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     return `${supabaseUrl}/storage/v1/object/public/generated-content/${currentOutput.storage_path}`;
   };
 

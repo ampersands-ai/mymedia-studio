@@ -24,7 +24,7 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
     setError(null);
 
     // Only log in development mode to avoid exposing sensitive model metadata
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.debug(`Loading schema for model: ${model.model_name}`);
     }
 
@@ -43,7 +43,7 @@ export const useModelSchema = (model: ModelConfiguration | null) => {
         }
 
         // Only log detailed info in development
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV === 'development') {
           logger.debug(`Loaded schema for ${model.model_name} (${Object.keys(modelModule.SCHEMA.properties || {}).length} fields)`);
         }
 

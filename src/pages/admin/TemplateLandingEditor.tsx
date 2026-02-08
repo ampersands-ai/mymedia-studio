@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,7 @@ import type { TemplateLandingPageAdmin, TemplateCategory } from "@/hooks/useTemp
 
 export default function TemplateLandingEditor() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const isNew = id === "new";
   const { createTemplate, updateTemplate } = useAdminTemplates();
   const { data: categories } = useTemplateCategories();
@@ -74,7 +74,7 @@ export default function TemplateLandingEditor() {
   const onSubmit = async (data: Partial<TemplateLandingPageAdmin>) => {
     if (isNew) {
       const result = await createTemplate.mutateAsync(data);
-      navigate(`/admin/template-landing/${result.id}`);
+      router.push(`/admin/template-landing/${result.id}`);
     } else {
       await updateTemplate.mutateAsync({ id: id!, updates: data });
     }
@@ -100,7 +100,7 @@ export default function TemplateLandingEditor() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/template-landing")}>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/admin/template-landing")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>

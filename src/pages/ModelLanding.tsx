@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { SmartLoader } from "@/components/ui/smart-loader";
@@ -27,7 +27,7 @@ import {
 
 export default function ModelLanding() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   
   const { data: modelPage, isLoading, error } = useModelPage(slug || "");
   const { data: samples } = useModelSamples(modelPage?.id);
@@ -37,22 +37,22 @@ export default function ModelLanding() {
   const handleTryModel = () => {
     if (modelPage?.slug) {
       // Use slug for SEO-friendly, human-readable URLs
-      navigate(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}`);
+      router.push(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}`);
     } else {
-      navigate("/dashboard/custom-creation");
+      router.push("/dashboard/custom-creation");
     }
   };
 
   // Navigate to custom creation with specific variant record ID
   const handleTryVariant = (recordId: string) => {
-    navigate(`/dashboard/custom-creation?model=${encodeURIComponent(recordId)}`);
+    router.push(`/dashboard/custom-creation?model=${encodeURIComponent(recordId)}`);
   };
 
   const handleTryPrompt = (prompt: string) => {
     if (modelPage?.slug) {
       const encodedPrompt = encodeURIComponent(prompt);
       // Use slug for SEO-friendly URLs
-      navigate(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}&prompt=${encodedPrompt}`);
+      router.push(`/dashboard/custom-creation?model=${encodeURIComponent(modelPage.slug)}&prompt=${encodedPrompt}`);
     }
   };
 
@@ -78,7 +78,7 @@ export default function ModelLanding() {
             <p className="text-muted-foreground">
               The model you're looking for doesn't exist or has been removed.
             </p>
-            <Button onClick={() => navigate("/models")} variant="outline">
+            <Button onClick={() => router.push("/models")} variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Models
             </Button>

@@ -1,4 +1,5 @@
-import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { Coins, Settings, LogOut, Info, HelpCircle } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
 import { Footer } from "@/components/Footer";
@@ -26,19 +27,19 @@ const dashboardLogger = logger.child({ component: 'DashboardLayout' });
  * DashboardLayout - Layout component for authenticated dashboard pages.
  * Auth protection is handled by ProtectedRoute wrapper in App.tsx.
  */
-export const DashboardLayout = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+export const DashboardLayout = ({ children }: { children?: React.ReactNode }) => {
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: tokenData } = useUserTokens();
 
   // Hide global mobile nav on Music Studio (it has its own nav)
-  const isMusicStudio = location.pathname.includes('/music-studio');
+  const isMusicStudio = pathname?.includes('/music-studio') ?? false;
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
       toast.success("Signed out successfully");
-      navigate("/");
+      router.push("/");
     } catch (error) {
       dashboardLogger.error('Sign out failed', error as Error, {
         operation: 'handleLogout'
@@ -53,9 +54,9 @@ export const DashboardLayout = () => {
       <header className="border-b-4 border-black bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-2">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
             <img 
-              src={logo} 
+              src={logo.src} 
               alt={`${brand.name} logo`}
               className="h-6 md:h-8 object-contain"
               />
@@ -92,25 +93,25 @@ export const DashboardLayout = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard/settings?tab=billing" className="flex items-center cursor-pointer">
+                    <Link href="/dashboard/settings?tab=billing" className="flex items-center cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/pricing" className="flex items-center cursor-pointer">
+                    <Link href="/pricing" className="flex items-center cursor-pointer">
                       <Coins className="mr-2 h-4 w-4" />
                       <span>Pricing</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/about" className="flex items-center cursor-pointer">
+                    <Link href="/about" className="flex items-center cursor-pointer">
                       <Info className="mr-2 h-4 w-4" />
                       <span>About</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/faq" className="flex items-center cursor-pointer">
+                    <Link href="/faq" className="flex items-center cursor-pointer">
                       <HelpCircle className="mr-2 h-4 w-4" />
                       <span>FAQ</span>
                     </Link>
@@ -132,7 +133,7 @@ export const DashboardLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 pb-16 md:pb-0">
-        <Outlet />
+        {children}
       </main>
 
       {/* Global Mobile Navigation - Hidden on Music Studio (has its own nav) */}

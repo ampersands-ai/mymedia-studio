@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 
 interface RelatedModel {
@@ -19,7 +19,7 @@ interface ModelRelatedModelsProps {
 }
 
 export function ModelRelatedModels({ relatedModels }: ModelRelatedModelsProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   if (!relatedModels || relatedModels.length === 0) return null;
 
@@ -46,7 +46,7 @@ export function ModelRelatedModels({ relatedModels }: ModelRelatedModelsProps) {
           <Badge 
             variant="outline" 
             className="cursor-pointer hover:bg-muted"
-            onClick={() => navigate("/models")}
+            onClick={() => router.push("/models")}
           >
             View All
             <ArrowRight className="w-3 h-3 ml-1" />
@@ -58,7 +58,7 @@ export function ModelRelatedModels({ relatedModels }: ModelRelatedModelsProps) {
             <Card
               key={model.id}
               className="group overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              onClick={() => navigate(`/models/${model.slug}`)}
+              onClick={() => router.push(`/models/${model.slug}`)}
             >
               {/* Image */}
               <div className="aspect-video relative overflow-hidden bg-muted">

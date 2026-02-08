@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
 import { getDisplayProvider, getProviderLogo } from "@/lib/utils/provider-display";
@@ -12,7 +12,7 @@ interface ModelDirectoryGridProps {
 }
 
 export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -46,7 +46,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
         <p className="text-muted-foreground text-lg mb-4">
           No models found matching your criteria.
         </p>
-        <Button variant="outline" onClick={() => navigate("/models")}>
+        <Button variant="outline" onClick={() => router.push("/models")}>
           Clear Filters
         </Button>
       </div>
@@ -63,7 +63,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
           <Card
             key={model.id}
             className="group overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border hover:border-primary/30"
-            onClick={() => navigate(`/models/${model.slug}`)}
+            onClick={() => router.push(`/models/${model.slug}`)}
           >
             {/* Logo as main image */}
             <div className="aspect-[4/3] relative overflow-hidden bg-white border-b shadow-sm">

@@ -60,7 +60,7 @@ async function flushLogs(): Promise<void> {
   logBatch.logs = [];
   
   // Send to backend in production
-  if (!import.meta.env.DEV && logsToSend.some(log => ['error', 'critical'].includes(log.level))) {
+  if (process.env.NODE_ENV !== 'development' && logsToSend.some(log => ['error', 'critical'].includes(log.level))) {
     try {
       const errorLogs = logsToSend.filter(log => ['error', 'critical'].includes(log.level));
       for (const log of errorLogs) {
@@ -163,7 +163,7 @@ class Logger {
    * Debug logging - only in development
    */
   debug(message: string, context?: Record<string, unknown>): void {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       console.debug(this.formatMessage('debug', message, context));
     }
   }
@@ -172,7 +172,7 @@ class Logger {
    * Info logging - only in development
    */
   info(message: string, context?: Record<string, unknown>): void {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       console.log(this.formatMessage('info', message, context));
     }
   }
@@ -183,7 +183,7 @@ class Logger {
   warn(message: string, context?: Record<string, unknown>): void {
     console.warn(this.formatMessage('warn', message, context));
     
-    if (!import.meta.env.DEV && typeof window !== 'undefined' && window.posthog) {
+    if (process.env.NODE_ENV !== 'development' && typeof window !== 'undefined' && window.posthog) {
       window.posthog.capture('warning', {
         message,
         ...this.context,

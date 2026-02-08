@@ -27,112 +27,112 @@ const STYLES = [
     value: 'hyper-realistic', 
     label: 'Hyper Realistic', 
     emoji: '📷',
-    image: hyperRealisticImg,
+    image: hyperRealisticImg.src,
     description: 'Ultra-realistic, photo-quality visuals'
   },
   { 
     value: 'cinematic', 
     label: 'Cinematic', 
     emoji: '🎬',
-    image: cinematicImg,
+    image: cinematicImg.src,
     description: 'Movie-like dramatic lighting & composition'
   },
   { 
     value: 'animated', 
     label: 'Animated', 
     emoji: '✨',
-    image: animatedImg,
+    image: animatedImg.src,
     description: '3D rendered, Pixar-style animation'
   },
   { 
     value: 'cartoon', 
     label: 'Cartoon', 
     emoji: '🎨',
-    image: cartoonImg,
+    image: cartoonImg.src,
     description: '2D illustrated, playful cartoon style'
   },
   { 
     value: 'natural', 
     label: 'Natural', 
     emoji: '🍃',
-    image: naturalImg,
+    image: naturalImg.src,
     description: 'Natural photography, authentic look'
   },
   { 
     value: 'sketch', 
     label: 'Sketch', 
     emoji: '✏️',
-    image: sketchImg,
+    image: sketchImg.src,
     description: 'Hand-drawn, artistic pencil sketch'
   },
   { 
     value: 'horror', 
     label: 'Horror', 
     emoji: '👻',
-    image: horrorImg,
+    image: horrorImg.src,
     description: 'Dark, eerie, atmospheric visuals'
   },
   { 
     value: 'vintage', 
     label: 'Vintage', 
     emoji: '📽️',
-    image: vintageImg,
+    image: vintageImg.src,
     description: 'Classic retro film aesthetic'
   },
   { 
     value: 'cyberpunk', 
     label: 'Cyberpunk', 
     emoji: '🌃',
-    image: cyberpunkImg,
+    image: cyberpunkImg.src,
     description: 'Neon-lit futuristic cityscape'
   },
   { 
     value: 'fantasy', 
     label: 'Fantasy', 
     emoji: '🧙',
-    image: fantasyImg,
+    image: fantasyImg.src,
     description: 'Magical, ethereal world visuals'
   },
   { 
     value: 'noir', 
     label: 'Noir', 
     emoji: '🎩',
-    image: noirImg,
+    image: noirImg.src,
     description: 'Black & white, dramatic shadows'
   },
   { 
     value: 'anime', 
     label: 'Anime', 
     emoji: '🎌',
-    image: animeImg,
+    image: animeImg.src,
     description: 'Japanese animation style'
   },
   { 
     value: 'watercolor', 
     label: 'Watercolor', 
     emoji: '🖌️',
-    image: watercolorImg,
+    image: watercolorImg.src,
     description: 'Soft, painted artistic look'
   },
   { 
     value: 'pop-art', 
     label: 'Pop Art', 
     emoji: '💥',
-    image: popArtImg,
+    image: popArtImg.src,
     description: 'Bold colors, comic-book inspired'
   },
   { 
     value: 'minimalist', 
     label: 'Minimalist', 
     emoji: '⬜',
-    image: minimalistImg,
+    image: minimalistImg.src,
     description: 'Clean, simple, modern aesthetic'
   },
   { 
     value: 'surreal', 
     label: 'Surreal', 
     emoji: '🌀',
-    image: surrealImg,
+    image: surrealImg.src,
     description: 'Dreamlike, abstract visuals'
   },
 ];

@@ -5,7 +5,7 @@ export const useWhyDidYouUpdate = (name: string, props: Record<string, unknown>)
   const previousProps = useRef<Record<string, unknown>>();
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!(process.env.NODE_ENV === 'development')) return;
 
     if (previousProps.current) {
       const allKeys = Object.keys({ ...previousProps.current, ...props });

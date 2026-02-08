@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
 import type { BlogPost as BlogPostType } from "@/types/blog";
 import { Share2, Clock, Eye, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -115,7 +115,7 @@ export default function BlogPost() {
         <GlobalHeader />
         <div className="min-h-screen pt-20 flex flex-col items-center justify-center">
           <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
-          <Link to="/blog">
+          <Link href="/blog">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Blog
@@ -129,39 +129,12 @@ export default function BlogPost() {
 
   return (
     <>
-      <Helmet>
-        <title>{post.meta_title || post.title}</title>
-        <meta name="description" content={post.meta_description || post.excerpt || ''} />
-        {post.meta_keywords && <meta name="keywords" content={post.meta_keywords.join(', ')} />}
-        {post.canonical_url && <link rel="canonical" href={post.canonical_url} />}
-        
-        {/* Open Graph */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={post.og_title || post.title} />
-        <meta property="og:description" content={post.og_description || post.excerpt || ''} />
-        {post.og_image_url && <meta property="og:image" content={post.og_image_url} />}
-        <meta property="og:url" content={window.location.href} />
-        
-        {/* Twitter Card */}
-        <meta name="twitter:card" content={post.twitter_card_type || 'summary_large_image'} />
-        <meta name="twitter:title" content={post.twitter_title || post.title} />
-        <meta name="twitter:description" content={post.twitter_description || post.excerpt || ''} />
-        {post.twitter_image_url && <meta name="twitter:image" content={post.twitter_image_url} />}
-        
-        {/* Schema.org */}
-        {post.schema_data && (
-          <script type="application/ld+json">
-            {JSON.stringify(post.schema_data)}
-          </script>
-        )}
-      </Helmet>
-
       <GlobalHeader />
 
       <article className="min-h-screen pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Back Button */}
-          <Link to="/blog" className="inline-block mb-8">
+          <Link href="/blog" className="inline-block mb-8">
             <Button variant="ghost">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Blog

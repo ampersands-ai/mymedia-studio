@@ -74,7 +74,7 @@ export const ScenePreviewGenerator = ({
 
   // DEBUG: Log raw models data on mount
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.debug('Models data loaded (dev)', {
         component: 'ScenePreviewGenerator',
         totalModels: models?.length,
@@ -286,7 +286,7 @@ export const ScenePreviewGenerator = ({
 
   // DEBUG: Confirm what ends up in the dropdown
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.debug('Model dropdown populated (dev)', {
         component: 'ScenePreviewGenerator',
         generationMode,
@@ -453,7 +453,7 @@ export const ScenePreviewGenerator = ({
           🎨 Scene {sceneNumber} Preview
         </h4>
         <div className="flex items-center gap-2">
-          {import.meta.env.DEV && (
+          {process.env.NODE_ENV === 'development' && (
           <Button
               size="sm"
               variant="outline"

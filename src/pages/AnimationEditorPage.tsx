@@ -2,13 +2,11 @@ import React from 'react';
 import { AnimationEditor } from '@/features/animations/editor';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Download, FolderOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Helmet } from 'react-helmet-async';
-import { brand, pageTitle } from '@/config/brand';
 
 const AnimationEditorPage: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSave = (project: unknown) => {
     // TODO: Save to database
@@ -25,20 +23,14 @@ const AnimationEditorPage: React.FC = () => {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>{pageTitle('Animation Editor')}</title>
-        <meta name="description" content={`Create stunning animated explainer videos with the ${brand.name} Animation Editor`} />
-      </Helmet>
-      
-      <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
         {/* Header */}
         <header className="flex items-center justify-between px-4 py-2 border-b bg-card">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -69,7 +61,6 @@ const AnimationEditorPage: React.FC = () => {
           <AnimationEditor onSave={handleSave} />
         </div>
       </div>
-    </>
   );
 };
 

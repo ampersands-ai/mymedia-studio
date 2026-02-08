@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Coins } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 interface RelatedTemplate {
   id: string;
@@ -18,7 +18,7 @@ interface TemplateRelatedCardsProps {
 }
 
 export function TemplateRelatedCards({ templates }: TemplateRelatedCardsProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   if (!templates || templates.length === 0) return null;
 
@@ -37,7 +37,7 @@ export function TemplateRelatedCards({ templates }: TemplateRelatedCardsProps) {
             <Card
               key={template.id}
               className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/templates/${template.category_slug}/${template.slug}`)}
+              onClick={() => router.push(`/templates/${template.category_slug}/${template.slug}`)}
             >
               {template.thumbnail_url && (
                 <div className="aspect-video relative overflow-hidden bg-muted">

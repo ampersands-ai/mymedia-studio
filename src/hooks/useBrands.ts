@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// 'brands' table exists in DB but not yet in auto-generated Supabase types.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const brandsTable = () => (supabase as any).from('brands');
+
 // ─── Types ─────────────────────────────────────────────────────────────
 
 export interface Brand {
@@ -37,8 +41,7 @@ export function useBrands() {
   return useQuery({
     queryKey: ['brands'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('brands')
+      const { data, error } = await brandsTable()
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -54,8 +57,7 @@ export function useBrand(brandId: string | undefined) {
     queryKey: ['brands', brandId],
     queryFn: async () => {
       if (!brandId) return null;
-      const { data, error } = await supabase
-        .from('brands')
+      const { data, error } = await brandsTable()
         .select('*')
         .eq('id', brandId)
         .single();
@@ -73,8 +75,7 @@ export function useBrandBySlug(slug: string | null) {
     queryKey: ['brands', 'slug', slug],
     queryFn: async () => {
       if (!slug) return null;
-      const { data, error } = await supabase
-        .from('brands')
+      const { data, error } = await brandsTable()
         .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
@@ -93,8 +94,7 @@ export function useCreateBrand() {
 
   return useMutation({
     mutationFn: async (brand: BrandInsert) => {
-      const { data, error } = await supabase
-        .from('brands')
+      const { data, error } = await brandsTable()
         .insert(brand)
         .select()
         .single();
@@ -118,8 +118,7 @@ export function useUpdateBrand() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: BrandUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from('brands')
+      const { data, error } = await brandsTable()
         .update(updates)
         .eq('id', id)
         .select()
@@ -145,8 +144,7 @@ export function useDeleteBrand() {
 
   return useMutation({
     mutationFn: async (brandId: string) => {
-      const { error } = await supabase
-        .from('brands')
+      const { error } = await brandsTable()
         .delete()
         .eq('id', brandId);
 

@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 We encountered an unexpected error. Please try refreshing the page.
               </p>
-              {import.meta.env.DEV && this.state.error && (
+              {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="mt-4 text-left">
                   <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                     Error details

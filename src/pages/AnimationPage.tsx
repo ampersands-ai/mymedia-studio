@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { AnimatedBackgroundSelector, useAnimationJobs } from "@/features/animations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Sparkles, Video, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pageTitle } from '@/config/brand';
 
 export default function AnimationPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [script, setScript] = useState("");
   const [duration, setDuration] = useState(60);
   const [showGenerator, setShowGenerator] = useState(false);
@@ -28,23 +26,14 @@ export default function AnimationPage() {
   const canGenerate = script.length >= 10 && duration >= 5 && duration <= 300;
 
   return (
-    <>
-      <Helmet>
-        <title>{pageTitle('Animated Backgrounds')}</title>
-        <meta
-          name="description"
-          content="Create custom animated explainer backgrounds for your videos with AI-powered scene analysis."
-        />
-      </Helmet>
-
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/dashboard/storyboard")}
+              onClick={() => router.push("/dashboard/storyboard")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -201,6 +190,5 @@ export default function AnimationPage() {
           </div>
         </main>
       </div>
-    </>
   );
 }

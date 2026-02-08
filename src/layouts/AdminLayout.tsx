@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname, redirect } from "next/navigation";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { Sparkles, Database, FileText, Users, BarChart3, Loader2, Image, Flag, TrendingUp, AlertTriangle, Video, FolderTree, Activity, LayoutDashboard, TestTube2, Mail, PenSquare, Layers, DollarSign, ToggleLeft, Shield, ShieldAlert, Menu, Globe } from "lucide-react";
 import { AdminAlertBell } from "@/components/admin/AdminAlertBell";
@@ -45,8 +46,8 @@ const navItems = [
  * Auth protection is handled by ProtectedRoute wrapper in App.tsx.
  * This component only checks for admin role access.
  */
-export const AdminLayout = () => {
-  const location = useLocation();
+export const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
+  const pathname = usePathname();
   const { isAdmin, loading: roleLoading } = useAdminRole();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -61,18 +62,18 @@ export const AdminLayout = () => {
 
   // Redirect non-admins to dashboard
   if (!isAdmin) {
-    return <Navigate to="/dashboard/custom-creation" replace />;
+    redirect("/dashboard/custom-creation");
   }
 
   const NavLinks = ({ onItemClick }: { onItemClick?: () => void }) => (
     <nav className="p-4 space-y-1">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = location.pathname === item.path;
+        const isActive = pathname === item.path;
         return (
           <Link
             key={item.path}
-            to={item.path}
+            href={item.path}
             onClick={onItemClick}
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors text-sm",
@@ -130,7 +131,7 @@ export const AdminLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-8 min-w-0">
-          <Outlet />
+          {children}
         </main>
       </div>
       

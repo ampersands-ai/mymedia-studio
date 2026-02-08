@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Volume2, VolumeX } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFade, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -118,7 +118,7 @@ export const CinematicHero = () => {
         {heroVideos.map((src, index) => (
           <SwiperSlide key={src} className="w-full h-full">
             <video
-              ref={(el) => (videoRefs.current[index] = el)}
+              ref={(el) => { videoRefs.current[index] = el; }}
               src={src}
               muted={isMuted}
               loop
@@ -180,7 +180,7 @@ export const CinematicHero = () => {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <Link
-            to="/auth"
+            href="/auth"
             className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all hover:scale-105 text-center text-sm sm:text-base rounded-2xl"
           >
             Start Creating Free

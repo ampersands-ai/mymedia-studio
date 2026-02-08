@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -118,7 +118,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
             )}
 
             <div className="flex flex-col sm:flex-row gap-2">
-              <Link to="/pricing" className="flex-1">
+              <Link href="/pricing" className="flex-1">
                 <Button className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold" aria-label="View all pricing plans">
                   {isPaidPlan ? 'Change Plan' : 'Upgrade Plan'}
                 </Button>
@@ -266,7 +266,7 @@ export function SubscriptionSection({ subscription }: SubscriptionSectionProps) 
               )}
             </div>
 
-            <Link to="/dashboard/history">
+            <Link href="/dashboard/history">
               <Button
                 className="w-full bg-secondary hover:bg-secondary/90 text-black font-bold"
                 size="lg"

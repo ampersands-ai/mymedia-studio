@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,8 @@ import { brand } from "@/config/brand";
 const resetPasswordLogger = logger.child({ component: 'ResetPassword' });
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token");
   
   const [password, setPassword] = useState("");
@@ -76,7 +77,7 @@ const ResetPassword = () => {
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate("/auth");
+        router.push("/auth");
       }, 3000);
     } catch (error) {
       resetPasswordLogger.error("Password reset failed", error instanceof Error ? error : new Error(String(error)), {
@@ -100,7 +101,7 @@ const ResetPassword = () => {
           <p className="text-muted-foreground">
             Your password has been updated. Redirecting to login...
           </p>
-          <Link to="/auth">
+          <Link href="/auth">
             <Button className="w-full">Go to Login</Button>
           </Link>
         </div>
@@ -116,10 +117,10 @@ const ResetPassword = () => {
           <h2 className="text-xl font-semibold">Reset Failed</h2>
           <p className="text-muted-foreground">{errorMessage}</p>
           <div className="space-y-2">
-            <Link to="/forgot-password">
+            <Link href="/forgot-password">
               <Button className="w-full">Request New Reset Link</Button>
             </Link>
-            <Link to="/auth">
+            <Link href="/auth">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Login
@@ -195,7 +196,7 @@ const ResetPassword = () => {
           )}
         </Button>
         
-        <Link to="/auth">
+        <Link href="/auth">
           <Button variant="ghost" className="w-full">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Login
@@ -212,8 +213,8 @@ const ResetPassword = () => {
       {/* Header */}
       <header className="relative z-10 border-b border-border/40 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Artifio" className="h-8 w-8" />
+          <Link href="/" className="flex items-center gap-2">
+            <img src={logo.src} alt="Artifio" className="h-8 w-8" />
             <span className="font-bold text-xl">{brand.name}</span>
           </Link>
         </div>

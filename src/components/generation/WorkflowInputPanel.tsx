@@ -289,7 +289,7 @@ export const WorkflowInputPanel = ({ workflow, onExecute, onBack, isExecuting, o
               </Button>
             </div>
             <input
-              ref={(el) => (fileInputRefs.current[field.name] = el)}
+              ref={(el) => { fileInputRefs.current[field.name] = el; }}
               type="file"
               accept="image/*"
               multiple={isMultiple}

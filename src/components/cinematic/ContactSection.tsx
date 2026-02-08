@@ -1,5 +1,5 @@
 import { AnimatedSection } from "./AnimatedSection";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Mail, Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
@@ -95,7 +95,7 @@ export const ContactSection = () => {
           <AnimatedSection delay={200}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link
-                to="/auth"
+                href="/auth"
                 className="px-10 py-5 bg-gradient-to-r from-primary-yellow to-primary-orange text-foreground font-bold uppercase tracking-wide hover:shadow-lg hover:shadow-primary-orange/30 transition-all text-lg rounded-2xl"
               >
                 Start Creating Free
@@ -119,7 +119,7 @@ export const ContactSection = () => {
           <div className="flex flex-col lg:flex-row lg:flex-wrap lg:justify-center gap-8 lg:gap-16 mb-8 md:mb-12">
             {/* Brand Column */}
             <div className="w-full lg:w-auto lg:max-w-[280px] flex-shrink">
-              <Link to="/" className="flex items-center gap-2 mb-3">
+              <Link href="/" className="flex items-center gap-2 mb-3">
                 <img
                   src={brand.logoPath}
                   alt={brand.name}
@@ -157,7 +157,7 @@ export const ContactSection = () => {
                   {productLinks.map((link) => (
                     <li key={link.label}>
                       <Link 
-                        to={link.href}
+                        href={link.href}
                         className="text-sm text-white/70 hover:text-white transition-colors"
                       >
                         {link.label}
@@ -176,7 +176,7 @@ export const ContactSection = () => {
                     {footerLinks.templates.map((link) => (
                       <li key={link.label}>
                         <Link 
-                          to={link.href}
+                          href={link.href}
                           className="text-sm text-white/70 hover:text-white transition-colors"
                         >
                           {link.label}
@@ -196,7 +196,7 @@ export const ContactSection = () => {
                   {companyLinks.map((link) => (
                     <li key={link.label}>
                       <Link 
-                        to={link.href}
+                        href={link.href}
                         className="text-sm text-white/70 hover:text-white transition-colors"
                       >
                         {link.label}
@@ -223,7 +223,7 @@ export const ContactSection = () => {
                         </a>
                       ) : (
                         <Link 
-                          to={link.href}
+                          href={link.href}
                           className="text-sm text-white/70 hover:text-white transition-colors"
                         >
                           {link.label}
@@ -276,13 +276,13 @@ export const ContactSection = () => {
               </p>
               <div className="flex items-center gap-6">
                 <Link 
-                  to="/privacy"
+                  href="/privacy"
                   className="text-sm text-white/40 hover:text-white transition-colors"
                 >
                   Privacy Policy
                 </Link>
                 <Link 
-                  to="/terms"
+                  href="/terms"
                   className="text-sm text-white/40 hover:text-white transition-colors"
                 >
                   Terms of Service

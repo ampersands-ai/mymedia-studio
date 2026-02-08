@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -24,8 +24,8 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
   const { user } = useAuth();
   const { isAdmin } = useAdminRole();
   const { isFeatureEnabled, isFeatureComingSoon, isPageEnabled } = useFeatureFlags();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   
   const showFeaturesPage = isPageEnabled('features');
@@ -36,7 +36,7 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
     try {
       await supabase.auth.signOut();
       setOpen(false);
-      navigate("/");
+      router.push("/");
       toast.success("Signed out successfully");
     } catch (error) {
       logger.error('Sign out failed', error as Error, {
@@ -49,11 +49,11 @@ export const MobileMenu = ({ creditBalance: _creditBalance }: { creditBalance?: 
 
   const handleNavigation = (path: string) => {
     setOpen(false);
-    navigate(path);
+    router.push(path);
   };
 
-  const isActive = (path: string) => location.pathname === path;
-  const isDashboard = location.pathname.startsWith("/dashboard");
+  const isActive = (path: string) => pathname === path;
+  const isDashboard = pathname?.startsWith("/dashboard") ?? false;
   
   // Show dashboard-style menu when logged in (regardless of current page)
   const showDashboardMenu = isDashboard || !!user;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { ShaderParams, DEFAULT_SHADER_PARAMS, RecordingState, BackgroundPreset } from '@/types/procedural-background';
 import { ProceduralCanvas } from '@/components/procedural/ProceduralCanvas';
 import { ControlsPanel } from '@/components/procedural/ControlsPanel';
@@ -7,20 +7,19 @@ import { PromptInput } from '@/components/procedural/PromptInput';
 import { RecordingControls } from '@/components/procedural/RecordingControls';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Maximize2, Minimize2, Settings2 } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { convertToMp4, downloadBlob, generateFilename } from '@/utils/videoConverter';
 import { cn } from '@/lib/utils';
 
 export default function BackgroundGenerator() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  
-  // Initialize params from preset if passed via navigation
-  const initialPreset = (location.state as { preset?: BackgroundPreset })?.preset;
+
+  // TODO: location.state is not available in Next.js App Router.
+  // Consider passing preset via searchParams or a state management solution.
+  const initialPreset = undefined as BackgroundPreset | undefined;
   const [params, setParams] = useState<ShaderParams>(
     initialPreset?.params || DEFAULT_SHADER_PARAMS
   );
@@ -131,13 +130,7 @@ export default function BackgroundGenerator() {
   }, []);
 
   return (
-    <>
-      <Helmet>
-        <title>Background Generator | Create Procedural Animations</title>
-        <meta name="description" content="Create mesmerizing 3D procedural animations with thousands of metallic shapes. Customize colors, arrangements, and export as video." />
-      </Helmet>
-
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
         <div className="container mx-auto px-3 py-4 sm:px-4 sm:py-6">
           {/* Header - Mobile optimized */}
           <div className="mb-4 flex items-center justify-between sm:mb-6">
@@ -145,7 +138,7 @@ export default function BackgroundGenerator() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/dashboard/backgrounds')}
+                onClick={() => router.push('/dashboard/backgrounds')}
                 className="h-9 w-9 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -238,6 +231,5 @@ export default function BackgroundGenerator() {
           </div>
         </div>
       </div>
-    </>
   );
 }

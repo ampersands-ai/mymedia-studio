@@ -11,7 +11,7 @@ interface RecentGeneration {
   created_at: string;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const KNOWN_BUCKETS = ['generated-content', 'storyboard-videos', 'faceless-videos', 'voice-previews'];
 

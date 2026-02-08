@@ -138,7 +138,7 @@ export default function VaultSetup() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+                const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
                 const projectId = supabaseUrl.split('.')[0].split('//')[1] || '';
                 window.open(`https://lovable.dev/projects/${projectId}/backend`, '_blank');
               }}
@@ -213,7 +213,7 @@ export default function VaultSetup() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+                const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
                 const projectId = supabaseUrl.split('.')[0].split('//')[1] || '';
                 window.open(`https://lovable.dev/projects/${projectId}/backend/functions`, '_blank');
               }}

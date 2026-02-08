@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { brand, pageTitle, brandUrl } from "@/config/brand";
 
 const Playground = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, session, loading } = useAuth();
   const { execute } = useErrorHandler();
   const [tokensRemaining, setTokensRemaining] = useState(0);
@@ -34,13 +35,13 @@ const Playground = () => {
 
   useEffect(() => {
     if (!loading && !session) {
-      navigate("/auth");
+      router.push("/auth");
       return;
     }
     if (user) {
       fetchTokenBalance(user.id);
     }
-  }, [user, session, loading, navigate]);
+  }, [user, session, loading, router]);
 
   // Add structured data for Playground
   useEffect(() => {
@@ -126,7 +127,7 @@ const Playground = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
-    navigate("/");
+    router.push("/");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +257,7 @@ const Playground = () => {
         {/* Header */}
         <header className="border-b-4 border-black bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="h-10 w-10 rounded-xl bg-gradient-primary border-3 border-black brutal-shadow flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +29,7 @@ const Templates = () => {
   const { user } = useAuth();
   const { execute } = useErrorHandler();
   const { data: allTemplates, isLoading } = useAllTemplates();
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // State for signed URLs for before/after images and thumbnails
   const [signedUrls, setSignedUrls] = useState<Record<string, { before: string | null, after: string | null, thumbnail: string | null }>>({});
@@ -281,7 +282,7 @@ const Templates = () => {
 
   const handleUseTemplate = async (template: TemplatePublic) => {
     if (!user) {
-      navigate('/auth');
+      router.push('/auth');
       return;
     }
 
@@ -310,9 +311,9 @@ const Templates = () => {
 
     // Navigate based on template type
     if (template.template_type === 'workflow') {
-      navigate(`/dashboard/create-workflow?workflow=${template.id}`);
+      router.push(`/dashboard/create-workflow?workflow=${template.id}`);
     } else {
-      navigate(`/dashboard/custom-creation?template=${template.id}`);
+      router.push(`/dashboard/custom-creation?template=${template.id}`);
     }
   };
 
@@ -561,10 +562,10 @@ const Templates = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                 <Button asChild size="lg" variant="neon">
-                  <Link to="/dashboard/custom-creation">Start Creating</Link>
+                  <Link href="/dashboard/custom-creation">Start Creating</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <Link to="/features">View All Features</Link>
+                  <Link href="/features">View All Features</Link>
                 </Button>
               </div>
           </CardContent>

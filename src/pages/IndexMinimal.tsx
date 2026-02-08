@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { MinimalSidebar } from "@/components/MinimalSidebar";
@@ -41,7 +41,7 @@ const IndexMinimal = () => {
 
       {/* Quick Switch Button */}
       <div className="fixed top-6 right-6 z-50">
-        <Link to="/">
+        <Link href="/">
           <Button 
             variant="outline" 
             size="sm" 
@@ -82,7 +82,7 @@ const IndexMinimal = () => {
               </p>
 
               <div className="pt-4 flex gap-4">
-                <Link to="/dashboard/custom-creation">
+                <Link href="/dashboard/custom-creation">
                   <Button 
                     size="lg" 
                     className="rounded-full px-8 py-6 text-lg font-normal backdrop-blur-xl bg-white text-black hover:bg-white/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -91,7 +91,7 @@ const IndexMinimal = () => {
                   </Button>
                 </Link>
                 
-                <Link to="/features">
+                <Link href="/features">
                   <Button 
                     size="lg" 
                     variant="outline"
@@ -185,7 +185,7 @@ const IndexMinimal = () => {
             Ready to Create Without Chaos?
           </h2>
           
-          <Link to="/dashboard/custom-creation">
+          <Link href="/dashboard/custom-creation">
             <Button 
               size="lg" 
               className="rounded-full px-12 py-7 text-xl font-normal backdrop-blur-xl bg-white text-black hover:bg-white/90 shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all"
@@ -211,13 +211,13 @@ const IndexMinimal = () => {
             </p>
             
             <div className="flex gap-6 text-sm text-white/60">
-              <Link to="/features" className="hover:text-white transition-colors">
+              <Link href="/features" className="hover:text-white transition-colors">
                 Features
               </Link>
-              <Link to="/pricing" className="hover:text-white transition-colors">
+              <Link href="/pricing" className="hover:text-white transition-colors">
                 Pricing
               </Link>
-              <Link to="/blog" className="hover:text-white transition-colors">
+              <Link href="/blog" className="hover:text-white transition-colors">
                 Blog
               </Link>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,12 +74,12 @@ const ForgotPassword = () => {
       {/* Header */}
       <header className="relative z-10 border-b border-border/40 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Artifio" className="h-8 w-8" />
+          <Link href="/" className="flex items-center gap-2">
+            <img src={logo.src} alt="Artifio" className="h-8 w-8" />
             <span className="font-bold text-xl">{brand.name}</span>
           </Link>
-          <Link 
-            to="/auth" 
+          <Link
+            href="/auth"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -122,11 +122,11 @@ const ForgotPassword = () => {
                 </p>
                 <p className="text-xs text-muted-foreground text-center">
                   If you don't have an account yet,{" "}
-                  <Link to="/auth?mode=signup" className="text-primary hover:underline">
+                  <Link href="/auth?mode=signup" className="text-primary hover:underline">
                     sign up here
                   </Link>
                 </p>
-                <Link to="/auth">
+                <Link href="/auth">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Login
@@ -165,7 +165,7 @@ const ForgotPassword = () => {
                   )}
                 </Button>
                 
-                <Link to="/auth">
+                <Link href="/auth">
                   <Button variant="ghost" className="w-full">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Login

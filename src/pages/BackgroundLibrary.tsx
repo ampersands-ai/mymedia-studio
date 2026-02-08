@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { BACKGROUND_PRESETS, CATEGORY_FILTERS, CategoryFilter } from '@/data/backgroundPresets';
 import { BackgroundPreset } from '@/types/procedural-background';
@@ -8,7 +8,6 @@ import { PresetPreviewModal } from '@/components/procedural/PresetPreviewModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Calculate columns based on container width
@@ -21,7 +20,7 @@ function useResponsiveColumns(containerWidth: number): number {
 }
 
 export default function BackgroundLibrary() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [selectedPreset, setSelectedPreset] = useState<BackgroundPreset | null>(null);
   const [previewPreset, setPreviewPreset] = useState<BackgroundPreset | null>(null);
@@ -71,8 +70,10 @@ export default function BackgroundLibrary() {
 
   const handleSelectPreset = useCallback((preset: BackgroundPreset) => {
     setSelectedPreset(preset);
-    navigate('/dashboard/generator', { state: { preset } });
-  }, [navigate]);
+    // TODO: Next.js App Router does not support navigation state.
+    // Consider passing preset ID via searchParams instead.
+    router.push('/dashboard/generator');
+  }, [router]);
 
   const handlePreviewPreset = useCallback((preset: BackgroundPreset) => {
     setPreviewPreset(preset);
@@ -102,11 +103,6 @@ export default function BackgroundLibrary() {
 
   return (
     <>
-      <Helmet>
-        <title>Background Library | Procedural Video Backgrounds</title>
-        <meta name="description" content="Browse and select from procedural 3D animated backgrounds for your videos. Choose from Abstract, Tech, Energetic, and Minimal styles." />
-      </Helmet>
-
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 md:py-12">
           {/* Header */}
@@ -120,7 +116,7 @@ export default function BackgroundLibrary() {
               </p>
             </div>
             <Button
-              onClick={() => navigate('/dashboard/generator')}
+              onClick={() => router.push('/dashboard/generator')}
               className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="h-4 w-4" />
@@ -185,7 +181,7 @@ export default function BackgroundLibrary() {
                           return (
                             <button
                               key="create-custom"
-                              onClick={() => navigate('/dashboard/generator')}
+                              onClick={() => router.push('/dashboard/generator')}
                               className={cn(
                                 'group relative flex aspect-[9/16] flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border-2 border-dashed transition-all',
                                 'border-muted-foreground/30 bg-card hover:border-primary hover:bg-primary/5'

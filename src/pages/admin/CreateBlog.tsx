@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,7 +38,7 @@ interface SuggestedImageWithUrl extends SuggestedImage {
 }
 
 export default function CreateBlog() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { execute } = useErrorHandler();
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
   const [isGeneratingPost, setIsGeneratingPost] = useState(false);
@@ -335,7 +335,7 @@ export default function CreateBlog() {
           <h1 className="text-4xl font-bold">Create Blog Post</h1>
           <p className="text-muted-foreground mt-2">Generate SEO-optimized content with AI</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/admin')}>
+        <Button variant="outline" onClick={() => router.push('/admin')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Admin
         </Button>

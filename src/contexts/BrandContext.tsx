@@ -10,6 +10,10 @@ import {
 } from '@/config/brand';
 import { logger } from '@/lib/logger';
 
+// 'brands' table exists in DB but not yet in auto-generated Supabase types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const brandsTable = () => (supabase as any).from('brands');
+
 // ─── Context ──────────────────────────────────────────────────────────
 
 interface BrandContextValue {
@@ -66,8 +70,7 @@ export function BrandProvider({ children }: BrandProviderProps) {
 
     const resolveBrand = async () => {
       try {
-        const { data, error } = await supabase
-          .from('brands')
+        const { data, error } = await brandsTable()
           .select('*')
           .eq('slug', slug)
           .eq('is_active', true)
@@ -136,8 +139,7 @@ export function BrandProvider({ children }: BrandProviderProps) {
 
     const resolveCustomDomain = async () => {
       try {
-        const { data, error } = await supabase
-          .from('brands')
+        const { data, error } = await brandsTable()
           .select('*')
           .eq('custom_domain', hostname)
           .eq('is_active', true)

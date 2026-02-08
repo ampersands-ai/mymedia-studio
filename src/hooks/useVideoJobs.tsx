@@ -474,7 +474,7 @@ export function useVideoJobs() {
       if (!session) throw new Error('No session');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recover-stuck-jobs?job_id=${jobId}`,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/recover-stuck-jobs?job_id=${jobId}`,
         {
           method: 'POST',
           headers: {

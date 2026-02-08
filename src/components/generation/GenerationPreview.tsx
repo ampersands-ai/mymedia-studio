@@ -123,8 +123,8 @@ export const GenerationPreview = ({ storagePath, contentType, className }: Gener
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
         
         const response = await fetch(`${supabaseUrl}/storage/v1/object/generated-content/${thumbPath}`, {
           method: 'POST',

@@ -79,7 +79,7 @@ export default function APIHealthMonitor() {
       if (!session) throw new Error('Not authenticated');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-health-checker`,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/api-health-checker`,
         {
           method: 'POST',
           headers: {

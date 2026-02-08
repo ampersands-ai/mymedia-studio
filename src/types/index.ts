@@ -176,12 +176,10 @@ export type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 // ============= Environment Variable Types =============
 
 export interface EnvConfig {
-  VITE_SUPABASE_URL: string;
-  VITE_SUPABASE_PUBLISHABLE_KEY: string;
-  VITE_SUPABASE_PROJECT_ID: string;
-  MODE: 'development' | 'production' | 'test';
-  DEV: boolean;
-  PROD: boolean;
+  NEXT_PUBLIC_SUPABASE_URL: string;
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
+  NEXT_PUBLIC_SUPABASE_PROJECT_ID: string;
+  NODE_ENV: 'development' | 'production' | 'test';
 }
 
 // ============= Logging Types =============

@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import type { NavigateFunction } from "react-router-dom";
+import type { AppRouterInstance } from "next/navigation";
 import { logger } from "@/lib/logger";
 
 interface ModelSchema {
@@ -158,13 +158,13 @@ export const validateGenerationInputs = (
 /**
  * Handle generation error with navigation
  */
-export const handleGenerationError = (error: Error, navigate: NavigateFunction): boolean => {
+export const handleGenerationError = (error: Error, router: AppRouterInstance): boolean => {
   if (error.message === "SESSION_EXPIRED") {
     toast.error("Session expired", {
       description: "Please log in again. Your work has been saved.",
       duration: 5000
     });
-    setTimeout(() => navigate("/auth"), 2000);
+    setTimeout(() => router.push("/auth"), 2000);
     return true;
   }
 
@@ -189,7 +189,7 @@ export const handleGenerationError = (error: Error, navigate: NavigateFunction):
       duration: 10000,
       action: {
         label: "View Plans",
-        onClick: () => navigate("/pricing")
+        onClick: () => router.push("/pricing")
       }
     });
     return true;

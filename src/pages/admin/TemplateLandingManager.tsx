@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useAdminTemplates } from "@/hooks/useAdminTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { SmartLoader } from "@/components/ui/smart-loader";
 import { Plus, MoreVertical, Eye, Edit, Trash2, ExternalLink } from "lucide-react";
 
 export default function TemplateLandingManager() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { templates, isLoading, deleteTemplate, togglePublish } = useAdminTemplates();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function TemplateLandingManager() {
             Manage SEO-optimized template landing pages
           </p>
         </div>
-        <Button onClick={() => navigate("/admin/template-landing/new")}>
+        <Button onClick={() => router.push("/admin/template-landing/new")}>
           <Plus className="w-4 h-4 mr-2" />
           Create Template Page
         </Button>
@@ -147,7 +147,7 @@ export default function TemplateLandingManager() {
                           Preview
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => navigate(`/admin/template-landing/${template.id}`)}
+                          onClick={() => router.push(`/admin/template-landing/${template.id}`)}
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit

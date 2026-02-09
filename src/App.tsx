@@ -99,6 +99,7 @@ const VideoEditorPage = lazy(() => import("./pages/VideoEditorPage"));
 const AnimationEditorPage = lazy(() => import("./pages/AnimationEditorPage"));
 const BackgroundLibrary = lazy(() => import("./pages/BackgroundLibrary"));
 const BackgroundGenerator = lazy(() => import("./pages/BackgroundGenerator"));
+const ShotstackTest = lazy(() => import("./pages/ShotstackTest"));
 const DebugPanel = lazy(() => import("./components/dev/DebugPanel").then(m => ({ default: m.DebugPanel })));
 const RouteErrorBoundary = lazy(() => import("./components/error/RouteErrorBoundary").then(m => ({ default: m.RouteErrorBoundary })));
 const AppContent = () => {
@@ -250,6 +251,7 @@ const AppContent = () => {
             <Route path="/animation-editor" element={<ProtectedRoute><RouteErrorBoundary routeName="Animation Editor"><AnimationEditorPage /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/backgrounds" element={<Navigate to="/dashboard/backgrounds" replace />} />
             <Route path="/generator" element={<Navigate to="/dashboard/generator" replace />} />
+            <Route path="/shotstack-test" element={<ProtectedRoute><RouteErrorBoundary routeName="Shotstack Test"><ShotstackTest /></RouteErrorBoundary></ProtectedRoute>} />
             <Route path="/cinematic-test" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<RouteErrorBoundary routeName="404 Not Found"><NotFound /></RouteErrorBoundary>} />

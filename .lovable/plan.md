@@ -1,174 +1,246 @@
 
-
-# SEO-Optimized Grok Imagine Blog Post
+# Shotstack Test Page - Full Workflow Implementation
 
 ## Overview
 
-Create an accurate, SEO-optimized blog post about Grok Imagine that:
-1. Fixes the technical inaccuracies identified in the original article
-2. Keeps audio/sound, camera movement, and resolution claims as requested
-3. Reflects the actual artifio.ai pricing structure
-4. Optimizes for target keywords and search intent
+Transform the current Shotstack test page from a basic video URL input form into a complete faceless video-style workflow that:
+1. Takes a **topic** from the user
+2. AI generates a **story/script** with multiple scenes
+3. AI generates **image prompts** for each scene
+4. Sends images + text overlays to **Shotstack.io** for video rendering
 
 ---
 
-## Content Accuracy Corrections
+## Current State Analysis
 
-### Workflows (Corrected)
-| Original Claim | Accurate Information |
-|----------------|---------------------|
-| 5 workflows | 3 workflows: Text-to-Image, Text-to-Video, Image-to-Video |
-| Image Editing | Not available |
-| Video-to-Video | Not available |
+The existing Shotstack test page (`/shotstack-test`) currently:
+- Accepts a direct video URL
+- Adds optional text overlay
+- Configures duration, aspect ratio, background color
+- Submits to Shotstack API for rendering
 
-### Creative Modes (Corrected)
-| Original Claim | Accurate Information |
-|----------------|---------------------|
-| 4 modes including Custom | 3 modes: Normal, Fun, Spicy |
-| Custom Mode | Does not exist |
-| Spicy on all workflows | Spicy only on Text-to-Video; Image-to-Video supports Normal/Fun only |
-
-### Aspect Ratios (Corrected)
-| Original Claim | Accurate Information |
-|----------------|---------------------|
-| Images: 1:1, 2:3, 3:2, 9:16, 16:9 | Images: 1:1, 2:3, 3:2 only |
-| Videos: 1:1, 2:3, 3:2 | Videos: 1:1, 2:3, 3:2 (correct) |
-
-### Image Output Count (Corrected)
-| Original Claim | Accurate Information |
-|----------------|---------------------|
-| 4 variations per generation | 6 variations per image generation |
-
-### Pricing (Corrected)
-| Original Claim | Accurate Artifio Pricing |
-|----------------|-------------------------|
-| Pro: $23.90/mo, 2,400 credits | Explorer: $7.99/mo, 375 credits |
-| Studio: $47.90/mo, 6,000 credits | Professional: $19.99/mo, 1,000 credits |
-| | Ultimate: $44.99/mo, 2,500 credits |
-| | Studio: $74.99/mo, 5,000 credits |
-
-### Credit Costs (Accurate)
-- Images: 2 credits each
-- Videos: 10 credits each
+This is fundamentally different from the faceless video workflow which:
+- Generates a full script with multiple scenes from a topic
+- Creates image prompts that produce AI-generated images
+- Assembles everything into a video
 
 ---
 
-## SEO Strategy
+## Implementation Plan
 
-### Primary Keywords
-- Grok Imagine
-- AI video generator
-- AI image generator
-- text-to-video AI
-- xAI image creation
+### Step 1: Create Topic Input Component
+**File**: `src/components/shotstack-test/steps/ShotstackTopicStep.tsx`
 
-### Secondary Keywords
-- AI content creation
-- social media video maker
-- AI animation tool
-- Aurora Engine
+- Topic input textarea with "Surprise Me" AI generation button
+- Duration selector (15-120 seconds)
+- Style selector (hyper-realistic, cinematic, animated, etc.)
+- Aspect ratio selector
+- "Generate Storyboard" button
 
-### Target Search Intent
-- Informational: "What is Grok Imagine?"
-- Commercial: "Grok Imagine pricing"
-- Transactional: "Try Grok Imagine AI"
+### Step 2: Create New Edge Function for Shotstack Storyboard Generation
+**File**: `supabase/functions/generate-shotstack-storyboard/index.ts`
 
----
+- Accept: topic, duration, style, aspect_ratio
+- Use Lovable AI (gemini-2.5-flash) to generate:
+  - Intro voiceover + image prompt
+  - Scene voiceovers + image prompts (1 scene per 5 seconds)
+- Return: Array of scenes with `{ voiceoverText, imagePrompt }` for each
 
-## Blog Post Structure
+### Step 3: Create Scene Preview Step Component
+**File**: `src/components/shotstack-test/steps/ShotstackScenesStep.tsx`
 
-### SEO Metadata
-```text
-Title: Grok Imagine Guide: Create AI Videos and Images in Seconds | Artifio
-Meta Description: Master Grok Imagine's 3 powerful workflows: text-to-image, text-to-video, and image-to-video. Generate 6 image variations or videos with audio instantly.
-Keywords: Grok Imagine, AI video generator, AI image creation, xAI, text-to-video, Aurora Engine
+- Display generated scenes in card format
+- For each scene:
+  - Show voiceover text (editable)
+  - Show image prompt (editable)
+  - "Generate Image" button using existing image generation models
+  - Image preview area
+- "Generate All Images" bulk action button
+- "Continue to Render" button (enabled when all images are generated)
+
+### Step 4: Create Shotstack Render Edge Function
+**File**: `supabase/functions/shotstack-render-video/index.ts`
+
+Build Shotstack timeline payload with:
+- Multiple tracks:
+  - **Image track**: Each scene's AI-generated image with duration timing
+  - **Text track**: Scene voiceover text as title overlay
+  - **Audio track** (optional): If we add TTS support later
+- Proper transitions between scenes
+- Correct aspect ratio and resolution
+
+Example Shotstack payload structure:
+```json
+{
+  "timeline": {
+    "background": "#000000",
+    "tracks": [
+      {
+        "clips": [
+          {
+            "asset": { "type": "title", "text": "Scene 1 text...", "style": "subtitle" },
+            "start": 0, "length": 5
+          },
+          {
+            "asset": { "type": "title", "text": "Scene 2 text..." },
+            "start": 5, "length": 5
+          }
+        ]
+      },
+      {
+        "clips": [
+          {
+            "asset": { "type": "image", "src": "https://..." },
+            "start": 0, "length": 5, "effect": "zoomIn"
+          },
+          {
+            "asset": { "type": "image", "src": "https://..." },
+            "start": 5, "length": 5, "effect": "zoomIn"
+          }
+        ]
+      }
+    ]
+  },
+  "output": { "format": "mp4", "resolution": "hd" }
+}
 ```
 
-### Article Outline
+### Step 5: Update ShotstackCreator Component
+**File**: `src/components/shotstack-test/ShotstackCreator.tsx`
 
-1. **Hero/Introduction**
-   - Hook about unified AI creation tools
-   - Brief overview of Grok Imagine capabilities
-   - Value proposition: one tool for images and videos
+Refactor to use a 4-step wizard:
+1. **Topic & Settings**: Enter topic, choose duration/style/aspect ratio
+2. **Review Script**: View/edit AI-generated scenes and image prompts
+3. **Generate Images**: AI generates images for each scene
+4. **Render**: Sends to Shotstack, polls for completion, shows final video
 
-2. **What is Grok Imagine?**
-   - Powered by Aurora Engine from xAI
-   - Three core workflows explained
-   - Emphasis on speed and simplicity
+### Step 6: State Management
+Update `ShotstackState` interface:
+```typescript
+interface ShotstackScene {
+  id: string;
+  voiceoverText: string;
+  imagePrompt: string;
+  imageUrl: string | null;
+  isGenerating: boolean;
+}
 
-3. **Three Powerful Workflows**
-   - **Text-to-Image**: Describe, generate 6 variations, choose
-   - **Text-to-Video**: From prompt to video with audio
-   - **Image-to-Video**: Animate static images with motion
-
-4. **Creative Modes**
-   - Normal: Professional, clean output
-   - Fun: Playful, social-media optimized
-   - Spicy: Bold, expressive (Text-to-Video only)
-   - Note: Image-to-Video supports Normal and Fun
-
-5. **Technical Specifications**
-   - Aspect ratios: 1:1, 2:3, 3:2
-   - 6 image variations per generation
-   - Video with synchronized audio (kept claim)
-   - Camera movements: zoom, pan, tilt (kept claim)
-   - Up to 720p resolution (kept claim)
-
-6. **Practical Use Cases**
-   - Social media managers
-   - Content creators
-   - Brand designers
-   - E-commerce sellers
-
-7. **Pricing on Artifio**
-   - Free: 5 credits to try
-   - Explorer: $7.99/mo for 375 credits
-   - Professional: $19.99/mo for 1,000 credits
-   - Ultimate: $44.99/mo for 2,500 credits
-   - Studio: $74.99/mo for 5,000 credits
-   - Credit breakdown: 2 credits per image, 10 per video
-
-8. **Getting Started**
-   - Tips for effective prompts
-   - How to choose the right mode
-   - CTA to try Grok Imagine on Artifio
-
-9. **Conclusion**
-   - Recap of key benefits
-   - Final CTA with internal links
-
-### Internal Links to Include
-- `/dashboard/custom-creation` - Start creating
-- `/pricing` - View full pricing
-- `/templates` - Browse templates
-- `/playground` - Experiment with tools
+interface ShotstackState {
+  step: 'topic' | 'scenes' | 'images' | 'rendering' | 'complete';
+  topic: string;
+  duration: number;
+  style: string;
+  aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
+  scenes: ShotstackScene[];
+  renderId: string | null;
+  outputUrl: string;
+  renderProgress: number;
+}
+```
 
 ---
 
-## Technical Implementation
+## Technical Details
 
-### Database Entry
-The blog post will be saved to the `blog_posts` table with:
-- Full SEO metadata (meta_title, meta_description, og_* fields)
-- Schema.org BlogPosting structured data
-- Internal backlinks to key pages
-- Reading time calculation
-- Featured image URL
+### Image Generation
+- Reuse existing image generation infrastructure (e.g., `generate-content` edge function)
+- Each scene's `imagePrompt` will be sent to an image model (Runware, Flux, etc.)
+- Generated images are uploaded to Supabase storage
+- Public URLs are passed to Shotstack
 
-### Deliverable Format
-I will provide the complete blog post content in HTML format ready for the admin interface, including:
-- All headings with proper H2/H3 hierarchy
-- Semantic HTML formatting
-- Image placement suggestions with alt text
-- Internal link anchors already embedded
+### Shotstack Timeline Construction
+- Each scene = 5 seconds (matching faceless video logic)
+- Images use `effect: "zoomIn"` or `"zoomOut"` for Ken Burns effect
+- Text overlays positioned at bottom with subtitle styling
+- Smooth transitions between scenes using `transition: { in: "fade", out: "fade" }`
+
+### Cost Estimation
+- No credits charged for storyboard generation (AI call)
+- Image generation costs based on selected model
+- No additional render cost (Shotstack uses API credits, not user credits)
 
 ---
 
-## Key Differentiators from Original
+## Files to Create/Modify
 
-1. **Accuracy**: All technical claims verified against codebase
-2. **Honest Pricing**: Reflects actual Artifio tier structure
-3. **Preserved Claims**: Audio, camera movements, and resolution kept as requested
-4. **Better SEO**: Focused keyword strategy with proper density
-5. **Actionable CTAs**: Direct links to product pages
+| File | Action |
+|------|--------|
+| `src/components/shotstack-test/steps/ShotstackTopicStep.tsx` | Create |
+| `src/components/shotstack-test/steps/ShotstackScenesStep.tsx` | Create |
+| `src/components/shotstack-test/steps/ShotstackImagesStep.tsx` | Create |
+| `src/components/shotstack-test/ShotstackCreator.tsx` | Major Refactor |
+| `supabase/functions/generate-shotstack-storyboard/index.ts` | Create |
+| `supabase/functions/shotstack-render-video/index.ts` | Create |
+| `src/pages/ShotstackTest.tsx` | Minor Update |
+| `supabase/config.toml` | Add new function entries |
+| `src/components/shotstack-test/steps/ShotstackConfigStep.tsx` | Delete (replaced by new steps) |
 
+---
+
+## Workflow Diagram
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     SHOTSTACK TEST WORKFLOW                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  STEP 1: TOPIC INPUT                                            │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Topic: [____________________________] [Surprise Me]    │    │
+│  │  Duration: [30s] [45s] [60s] [90s]                      │    │
+│  │  Style: [Cinematic ▼]                                   │    │
+│  │  Aspect: [16:9 ▼]                                       │    │
+│  │                                                         │    │
+│  │              [Generate Storyboard]                      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           ↓                                     │
+│  STEP 2: REVIEW SCENES                                          │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Scene 1: "Did you know that..."                        │    │
+│  │  Prompt: "Cinematic shot of ancient temple..."          │    │
+│  │  ──────────────────────────────────────────             │    │
+│  │  Scene 2: "Scientists discovered..."                    │    │
+│  │  Prompt: "Laboratory with microscope..."                │    │
+│  │                                                         │    │
+│  │              [Generate All Images]                      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           ↓                                     │
+│  STEP 3: IMAGE GENERATION                                       │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Scene 1: [✓ Generated] [Image Preview]                 │    │
+│  │  Scene 2: [⏳ Generating...] [Loading...]               │    │
+│  │  Scene 3: [○ Pending]                                   │    │
+│  │                                                         │    │
+│  │              [Render Video]                             │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           ↓                                     │
+│  STEP 4: RENDERING                                              │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Progress: [████████░░░░░░░░] 45%                       │    │
+│  │  Elapsed: 0:23                                          │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           ↓                                     │
+│  STEP 5: COMPLETE                                               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  [Video Player with final rendered video]               │    │
+│  │                                                         │    │
+│  │  [Copy URL] [Download] [Open in New Tab]                │    │
+│  │                                                         │    │
+│  │              [Create Another Video]                     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Summary
+
+This implementation transforms the Shotstack test page into a full faceless video creation workflow:
+
+1. **User enters topic** → AI generates script with scenes
+2. **User reviews/edits scenes** → AI generates images for each
+3. **User triggers render** → Shotstack assembles video from images + text
+4. **User downloads video** → Complete workflow
+
+The key difference from JSON2Video faceless flow is that Shotstack will handle the video assembly directly from images and text overlays, without requiring TTS audio (though that can be added later).

@@ -22,7 +22,11 @@ Deno.serve(async (req) => {
       throw new Error('render_id is required');
     }
 
-    const response = await fetch(`${API_ENDPOINTS.SHOTSTACK.BASE}${API_ENDPOINTS.SHOTSTACK.VERSION}/render/${render_id}`, {
+    // Use same endpoint structure as render - BASE/edit/VERSION/render/ID
+    const statusUrl = `${API_ENDPOINTS.SHOTSTACK.BASE}/edit${API_ENDPOINTS.SHOTSTACK.VERSION}/render/${render_id}`;
+    logger.info('Checking Shotstack status', { url: statusUrl, render_id });
+    
+    const response = await fetch(statusUrl, {
       headers: { 'x-api-key': Deno.env.get('SHOTSTACK_API_KEY') ?? '' }
     });
 

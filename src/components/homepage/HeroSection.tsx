@@ -11,6 +11,7 @@ import { PartnerLogosCarousel } from './PartnerLogosCarousel';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CreationGroup } from '@/constants/creation-groups';
 import { logger } from '@/lib/logger';
+import { brand } from '@/config/brand';
 
 export const HeroSection = () => {
   const isMobile = useIsMobile();
@@ -152,7 +153,7 @@ export const HeroSection = () => {
         
         {/* Video credit label */}
         <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm">
-          <span className="text-xs sm:text-sm text-white/80 font-medium">made on artifio.ai</span>
+          <span className="text-xs sm:text-sm text-white/80 font-medium">made on {brand.domain}</span>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { MinimalSidebar } from "@/components/MinimalSidebar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { brand } from "@/config/brand";
 
 const IndexMinimal = () => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -207,7 +208,7 @@ const IndexMinimal = () => {
         <div className="relative z-10 max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-white/50 font-light">
-              © 2025 ARTIFIO.AI
+              © {new Date().getFullYear()} {brand.name.toUpperCase()}
             </p>
             
             <div className="flex gap-6 text-sm text-white/60">

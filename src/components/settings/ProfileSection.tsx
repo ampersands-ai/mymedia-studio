@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { toast } from "sonner";
 import { z } from "zod";
+import { brand } from "@/config/brand";
 
 // Profile name validation schema
 const profileNameSchema = z
@@ -241,7 +242,7 @@ export function ProfileSection({ profileData, setProfileData }: ProfileSectionPr
                     <p className="font-medium text-foreground">How to verify:</p>
                     <ol className="list-decimal list-inside space-y-1 text-sm">
                       <li>Check your inbox for <span className="font-medium text-foreground">{user?.email}</span></li>
-                      <li>Look for an email from <span className="font-medium text-foreground">Artifio</span> with subject "Confirm your email"</li>
+                      <li>Look for an email from <span className="font-medium text-foreground">{brand.name}</span> with subject "Confirm your email"</li>
                       <li>Click the verification link in the email</li>
                       <li>Check your spam/junk folder if you don't see it</li>
                     </ol>

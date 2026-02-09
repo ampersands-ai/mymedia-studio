@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: brandFrom("", `welcome@${edgeBrand.domain}`),
       to: [email],
-      subject: "Welcome to Artifio - Your Creative Journey Starts Here! 🎨",
+      subject: `Welcome to ${edgeBrand.name} - Your Creative Journey Starts Here! 🎨`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -59,14 +59,14 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <h1 style="margin: 0; font-size: 32px;">Welcome to Artifio! 🎨</h1>
+                <h1 style="margin: 0; font-size: 32px;">Welcome to ${edgeBrand.name}! 🎨</h1>
                 <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Your AI-powered creative studio</p>
               </div>
               
               <div class="content">
                 <p style="font-size: 18px;">Hi ${displayName},</p>
                 
-                <p>Welcome to <strong>Artifio</strong> – where your creative ideas come to life! We're thrilled to have you join our community of creators.</p>
+                <p>Welcome to <strong>${edgeBrand.name}</strong> – where your creative ideas come to life! We're thrilled to have you join our community of creators.</p>
                 
                 <div class="credits-box">
                   <strong>🎁 Your Starting Credits:</strong><br>
@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
 
               <div class="footer">
                 <p>Happy Creating! 🚀</p>
-                <p style="margin-top: 10px;">The Artifio Team</p>
+                <p style="margin-top: 10px;">The ${edgeBrand.name} Team</p>
                 <p style="margin-top: 20px; font-size: 12px;">
                   <a href="${edgeBrand.appUrl}" style="color: #667eea; text-decoration: none;">Visit ${edgeBrand.name}</a> |
                   <a href="${brandUrl('/pricing')}" style="color: #667eea; text-decoration: none;">View Plans</a>

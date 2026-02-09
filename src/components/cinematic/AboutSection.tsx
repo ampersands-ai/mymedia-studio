@@ -1,4 +1,5 @@
 import { AnimatedSection } from "./AnimatedSection";
+import { brand } from "@/config/brand";
 
 const stats = [
   { value: "10,000+", label: "Creators" },
@@ -24,7 +25,7 @@ export const AboutSection = () => {
                 When You Can Pay Less?
               </h2>
               <p className="text-lg text-white/60 mb-6 leading-relaxed">
-                Artifio brings together the world's most powerful AI models in one seamless platform. 
+                {brand.name} brings together the world's most powerful AI models in one seamless platform.
                 Generate stunning videos, images, and audio content without switching between tools.
               </p>
               <p className="text-lg text-white/60 leading-relaxed">

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, TrendingDown, ArrowRight } from "lucide-react";
+import { brand } from "@/config/brand";
 
 interface ModelComparisonBannerProps {
   modelName: string;
@@ -20,7 +21,7 @@ export function ModelComparisonBanner({ modelName, pricingNote, onTryModel }: Mo
             <div className="text-center md:text-left space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
                 <TrendingDown className="w-4 h-4" />
-                Save Money with ARTIFIO
+                Save Money with {brand.name.toUpperCase()}
               </div>
               
               <h3 className="text-2xl md:text-3xl font-bold">

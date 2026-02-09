@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import type { FAQItem } from "@/hooks/useModelPages";
+import { brand } from "@/config/brand";
 
 interface ModelFAQProps {
   faqs: FAQItem[];
@@ -20,7 +21,7 @@ export function ModelFAQ({ faqs, modelName }: ModelFAQProps) {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
           <p className="text-muted-foreground">
-            Common questions about using {modelName} on ARTIFIO
+            Common questions about using {modelName} on {brand.name.toUpperCase()}
           </p>
         </div>
 

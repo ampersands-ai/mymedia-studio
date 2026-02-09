@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { TemplateLandingPage } from "@/hooks/useTemplateLanding";
+import { brand, pageTitle } from "@/config/brand";
 
 interface TemplateSEOHeadProps {
   template: TemplateLandingPage;
@@ -148,7 +149,7 @@ export function TemplateSEOHead({ template }: TemplateSEOHeadProps) {
 
     // Cleanup function
     return () => {
-      document.title = "artifio.ai - AI Content Platform";
+      document.title = pageTitle("AI Content Platform");
     };
   }, [template]);
 

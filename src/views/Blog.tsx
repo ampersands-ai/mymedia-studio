@@ -42,7 +42,7 @@ const Blog = () => {
       excerpt: "Expert tips to level up your AI-generated content"
     },
     {
-      title: "What's New in Artifio",
+      title: `What's New in ${brand.name}`,
       category: "Product Updates",
       date: "Coming Soon",
       excerpt: "Latest features and improvements to the platform"
@@ -59,7 +59,7 @@ const Blog = () => {
           <div className="max-w-4xl mx-auto text-center">
             <BookOpen className="h-16 w-16 mx-auto mb-6 text-primary" />
             <h1 className="text-4xl md:text-6xl font-black mb-6">
-              Artifio Blog
+              {brand.name} Blog
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground">
               Stay updated with AI tips, tutorials, and product updates

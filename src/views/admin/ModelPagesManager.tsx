@@ -58,6 +58,7 @@ import {
 import { getAllModels } from "@/lib/models/registry";
 import { formatContentType } from "@/lib/utils/provider-display";
 import type { ContentTypeGroup } from "@/hooks/useModelPages";
+import { brand } from "@/config/brand";
 
 const creationGroups = [
   { value: "all", label: "All Groups" },
@@ -71,7 +72,7 @@ const creationGroups = [
 // Base provider options - will be merged with dynamic ones from database
 const baseProviderOptions = [
   { value: "__auto__", label: "Auto (from provider)" },
-  { value: "ARTIFIO", label: "ARTIFIO" },
+  { value: brand.name.toUpperCase(), label: brand.name.toUpperCase() },
   { value: "OpenAI", label: "OpenAI" },
   { value: "Google", label: "Google" },
   { value: "Stability AI", label: "Stability AI" },

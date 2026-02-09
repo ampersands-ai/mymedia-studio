@@ -30,6 +30,7 @@ import {
   type ModelPageInput,
 } from "@/hooks/useAdminModelPages";
 import type { HighlightItem, UseCaseItem, FAQItem } from "@/hooks/useModelPages";
+import { brand } from "@/config/brand";
 
 const categories = [
   { value: "image", label: "Image" },
@@ -835,7 +836,7 @@ export default function ModelPageEditor() {
                   id="meta_title"
                   value={formData.meta_title}
                   onChange={(e) => setFormData(prev => ({ ...prev, meta_title: e.target.value }))}
-                  placeholder="e.g., FLUX.1 Pro - AI Image Generator | ARTIFIO.ai"
+                  placeholder={`e.g., FLUX.1 Pro - AI Image Generator | ${brand.name}`}
                 />
                 <p className="text-xs text-muted-foreground">
                   {formData.meta_title.length}/60 characters

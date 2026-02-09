@@ -108,6 +108,6 @@ export const resetPostHog = () => {
 };
 
 // Export device ID getter for use in other parts of the app
-export const getArtifioDeviceId = getDeviceId;
+export const getBrandDeviceId = getDeviceId;
 
 export { posthog };

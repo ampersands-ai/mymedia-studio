@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { EdgeLogger } from '../_shared/edge-logger.ts'
+import { edgeBrand } from '../_shared/brand.ts'
 
 /**
  * API Health Checker Edge Function
@@ -63,7 +64,7 @@ serve(async () => {
         const response = await fetch(config.health_check_url, {
           method: config.health_check_method || 'GET',
           headers: {
-            'User-Agent': 'Artifio-Health-Checker/1.0',
+            'User-Agent': `${edgeBrand.name}-Health-Checker/1.0`,
             ...(config.name === 'elevenlabs' && { 'xi-api-key': Deno.env.get('ELEVENLABS_API_KEY') }),
             ...(config.name === 'azure-tts' && { 'Ocp-Apim-Subscription-Key': Deno.env.get('AZURE_TTS_KEY') }),
           },

@@ -7,6 +7,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { API_ENDPOINTS } from "@/lib/config/api-endpoints";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
+import { brand } from "@/config/brand";
 
 export const MODEL_CONFIG = {
   modelId: "runware:110@1",
@@ -25,7 +26,7 @@ export const MODEL_CONFIG = {
 
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: brand.logoPath,
   modelFamily: "Artifio",
   variantName: "Remove Background",
   displayOrderInFamily: 2,

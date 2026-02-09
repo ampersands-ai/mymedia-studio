@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatContentType, getProviderLogo } from "@/lib/utils/provider-display";
 import { X, Film, Image, Music, Video, Wand2, RefreshCw, Mic, Clapperboard } from "lucide-react";
+import { brand } from "@/config/brand";
 
 interface ModelDirectoryFiltersProps {
   selectedContentTypes: string[];
@@ -182,7 +183,7 @@ export function ModelDirectoryFilters({
                             alt=""
                             className="w-full h-full object-contain"
                             onError={(e) => {
-                              e.currentTarget.src = '/logos/artifio.png';
+                              e.currentTarget.src = brand.logoPath;
                             }}
                           />
                         </div>

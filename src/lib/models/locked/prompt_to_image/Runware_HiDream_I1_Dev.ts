@@ -25,6 +25,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
 import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
+import { brand } from "@/config/brand";
 
 // ============================================================================
 // MODEL CONFIGURATION
@@ -54,7 +55,7 @@ export const MODEL_CONFIG = {
   scheduler: "Default",
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: brand.logoPath,
   modelFamily: "HiDream",
   variantName: "HiDream Dev",
   displayOrderInFamily: 3,

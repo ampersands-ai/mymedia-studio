@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Star } from "lucide-react";
 import type { ModelPage } from "@/hooks/useModelPages";
 import { getDisplayProvider, getProviderLogo } from "@/lib/utils/provider-display";
+import { brand } from "@/config/brand";
 
 interface ModelDirectoryGridProps {
   models: ModelPage[];
@@ -74,7 +75,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-md"
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.src = '/logos/artifio.png';
+                    e.currentTarget.src = brand.logoPath;
                   }}
                 />
               </div>
@@ -114,7 +115,7 @@ export function ModelDirectoryGrid({ models, isLoading }: ModelDirectoryGridProp
                     alt=""
                     className="w-full h-full object-contain"
                     onError={(e) => {
-                      e.currentTarget.src = '/logos/artifio.png';
+                      e.currentTarget.src = brand.logoPath;
                     }}
                   />
                 </div>

@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
 
     const email = profile?.email || user.email || '';
     const profileName = profile?.profile_name || '';
-    const baseUrl = appOrigin || req.headers.get('origin') || 'https://artifio-create-flow.lovable.app';
+    const baseUrl = appOrigin || req.headers.get('origin') || Deno.env.get('BRAND_APP_URL') || 'https://localhost:3000';
     const successUrl = `${baseUrl}/dashboard/custom-creation?payment=success`;
     const cancelUrl = `${baseUrl}/pricing?payment=cancelled`;
 

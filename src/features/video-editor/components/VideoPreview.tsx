@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { useVideoEditorStore } from '../store';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { downloadFilename } from '@/config/brand';
 
 export const VideoPreview = () => {
   const { finalVideoUrl, renderStatus } = useVideoEditorStore();
@@ -69,8 +70,7 @@ export const VideoPreview = () => {
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const timestamp = Date.now();
-      const filename = `artifio-video-${timestamp}.mp4`;
+      const filename = downloadFilename('video', 'mp4');
 
       const a = document.createElement('a');
       a.href = url;

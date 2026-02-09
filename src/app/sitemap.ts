@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const baseUrl = process.env.NEXT_PUBLIC_BRAND_APP_URL || 'https://artifio.ai';
+const baseUrl = process.env.NEXT_PUBLIC_BRAND_APP_URL || 'https://localhost:3000';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [

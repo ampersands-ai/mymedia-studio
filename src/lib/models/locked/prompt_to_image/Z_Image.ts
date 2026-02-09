@@ -6,6 +6,7 @@ import { reserveCredits } from "@/lib/models/creditDeduction";
 import { GENERATION_STATUS } from "@/constants/generation-status";
 import { sanitizeForStorage } from "@/lib/database/sanitization";
 import { extractEdgeFunctionError } from "@/lib/utils/edge-function-error";
+import { brand } from "@/config/brand";
 
 export const MODEL_CONFIG = {
   modelId: "z-image",
@@ -23,7 +24,7 @@ export const MODEL_CONFIG = {
   defaultOutputs: 1,
   // UI metadata
   isActive: true,
-  logoUrl: "/logos/artifio.png",
+  logoUrl: brand.logoPath,
   modelFamily: "Z-Image",
   variantName: "Z-Image",
   displayOrderInFamily: 1,

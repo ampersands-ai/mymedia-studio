@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { brand } from '@/config/brand';
 
 const STATUSES = ['all', 'pending', 'processing', 'completed', 'failed', 'cancelled'];
 const CONTENT_TYPES = ['all', 'image', 'video', 'audio'];
@@ -126,7 +127,7 @@ export default function GenerationLedger() {
     },
     {
       key: 'artifio_id',
-      header: 'Artifio ID',
+      header: `${brand.name} ID`,
       width: 120,
       minWidth: 100,
       render: (value): React.ReactNode => {
@@ -236,7 +237,7 @@ export default function GenerationLedger() {
     const headers = [
       'Date',
       'User Email',
-      'Artifio ID',
+      `${brand.name} ID`,
       'Provider ID',
       'Model',
       'Type',
@@ -466,10 +467,10 @@ export default function GenerationLedger() {
               <div className="space-y-4 p-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Artifio ID</label>
+                    <label className="text-sm font-medium text-muted-foreground">{brand.name} ID</label>
                     <div className="flex items-center gap-2">
                       <code className="text-sm bg-muted px-2 py-1 rounded">{selectedEntry.artifio_id}</code>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(selectedEntry.artifio_id, 'Artifio ID')}>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(selectedEntry.artifio_id, `${brand.name} ID`)}>
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>

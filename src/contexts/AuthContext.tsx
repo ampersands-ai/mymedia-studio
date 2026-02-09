@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { trackEvent, identifyUser, resetPostHog, getArtifioDeviceId } from "@/lib/posthog";
+import { trackEvent, identifyUser, resetPostHog, getBrandDeviceId } from "@/lib/posthog";
 import { logger } from "@/lib/logger";
 import { getStoredUtmParams, clearStoredUtmParams } from "@/hooks/useUtmCapture";
 import { toast } from "sonner";
@@ -113,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             
             // Migrate anonymous consent records to this user (non-blocking to prevent auth flow stalling)
-            const deviceId = getArtifioDeviceId();
+            const deviceId = getBrandDeviceId();
             supabase.functions.invoke('manage-consent', {
               body: {
                 action: 'migrate',

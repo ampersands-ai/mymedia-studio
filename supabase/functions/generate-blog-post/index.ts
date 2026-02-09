@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
+import { edgeBrand } from '../_shared/brand.ts';
 
 interface BlogRequest {
   topic: string;
@@ -110,7 +111,7 @@ Format your response as JSON:
     "datePublished": "YYYY-MM-DD",
     "author": {
       "@type": "Person",
-      "name": "Artifio AI"
+      "name": "${edgeBrand.name}"
     }
   },
   "suggested_images": [

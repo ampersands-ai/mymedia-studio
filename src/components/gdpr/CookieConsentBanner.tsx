@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Shield, Cookie, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { getArtifioDeviceId } from '@/lib/posthog';
+import { getBrandDeviceId } from '@/lib/posthog';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { brand } from '@/config/brand';
@@ -80,7 +80,7 @@ export function CookieConsentBanner() {
   };
 
   const saveConsentToDatabase = async (consent: Omit<ConsentPreferences, 'timestamp'>) => {
-    const deviceId = getArtifioDeviceId();
+    const deviceId = getBrandDeviceId();
     const consentTypes = ['analytics', 'marketing', 'functional'] as const;
     
     try {

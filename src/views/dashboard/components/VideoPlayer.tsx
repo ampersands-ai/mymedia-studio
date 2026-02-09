@@ -5,6 +5,7 @@ import { useVideoUrl } from "@/hooks/media";
 import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import type { Generation } from "../hooks/useGenerationHistory";
+import { downloadFilename } from '@/config/brand';
 
 interface VideoPlayerProps {
   generation: Generation;
@@ -68,7 +69,7 @@ export const VideoPlayer = ({
               const blobUrl = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = blobUrl;
-              a.download = `artifio-video-${Date.now()}.mp4`;
+              a.download = downloadFilename('video', 'mp4');
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(blobUrl);

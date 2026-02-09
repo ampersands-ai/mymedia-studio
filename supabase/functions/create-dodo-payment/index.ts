@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       .single();
 
     // Get the app origin from request, fallback to header, then default
-    const baseUrl = appOrigin || req.headers.get('origin') || 'https://artifio-create-flow.lovable.app';
+    const baseUrl = appOrigin || req.headers.get('origin') || Deno.env.get('BRAND_APP_URL') || 'https://localhost:3000';
     const successUrl = `${baseUrl}/dashboard/create?payment=success`;
     const cancelUrl = `${baseUrl}/pricing?payment=cancelled`;
 

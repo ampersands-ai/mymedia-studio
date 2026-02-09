@@ -1,4 +1,4 @@
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { z } from "https://esm.sh/zod@3.22.4";
 import { EdgeLogger } from './edge-logger.ts';
 
 // ========================================

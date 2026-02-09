@@ -155,3 +155,9 @@ verify_jwt = true
 
 [functions.elevenlabs-stem-separation]
 verify_jwt = true
+
+[functions.generate-shotstack-storyboard]
+verify_jwt = true
+
+[functions.shotstack-render-video]
+verify_jwt = true

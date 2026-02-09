@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -20,33 +20,35 @@ import { AlertCircle, Download, RefreshCw, CheckCircle2, Video, ExternalLink, Co
 
 // Step Components
 import { StepCollapsible } from '@/components/video/steps/StepCollapsible';
-import { ShotstackConfigStep } from './steps/ShotstackConfigStep';
+import { ShotstackTopicStep, AspectRatio, VideoStyle } from './steps/ShotstackTopicStep';
+import { ShotstackScenesStep, ShotstackScene } from './steps/ShotstackScenesStep';
 import { ShotstackRenderingStep } from './steps/ShotstackRenderingStep';
 
-type ShotstackStep = 'config' | 'rendering' | 'complete';
+type ShotstackStep = 'topic' | 'scenes' | 'rendering' | 'complete';
 
 interface ShotstackState {
   step: ShotstackStep;
-  renderId: string | null;
-  // Config
-  videoUrl: string;
-  textOverlay: string;
-  backgroundColor: string;
+  // Topic step
+  topic: string;
   duration: number;
-  aspectRatio: '16:9' | '9:16' | '4:5' | '1:1';
-  // Result
+  style: VideoStyle;
+  aspectRatio: AspectRatio;
+  // Scenes step
+  scenes: ShotstackScene[];
+  // Render step
+  renderId: string | null;
   outputUrl: string;
   renderProgress: number;
 }
 
 const initialState: ShotstackState = {
-  step: 'config',
-  renderId: null,
-  videoUrl: 'https://shotstack-assets.s3.ap-southeast-2.amazonaws.com/footage/beach-overhead.mp4',
-  textOverlay: 'Hello Shotstack!',
-  backgroundColor: '#000000',
-  duration: 5,
+  step: 'topic',
+  topic: '',
+  duration: 30,
+  style: 'cinematic',
   aspectRatio: '16:9',
+  scenes: [],
+  renderId: null,
   outputUrl: '',
   renderProgress: 0,
 };
@@ -55,6 +57,8 @@ const componentLogger = logger.child({ component: 'ShotstackCreator' });
 
 export function ShotstackCreator() {
   const [state, setState] = useState<ShotstackState>(initialState);
+  const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
+  const [isGeneratingAllImages, setIsGeneratingAllImages] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -99,10 +103,9 @@ export function ShotstackCreator() {
           toast.success('Video rendered successfully!');
         } else if (data.status === 'failed') {
           setError('Render failed. Please try again.');
-          setState(prev => ({ ...prev, step: 'config' }));
+          setState(prev => ({ ...prev, step: 'scenes' }));
           setIsPolling(false);
         } else {
-          // Update progress
           setState(prev => ({
             ...prev,
             renderProgress: data.progress || prev.renderProgress
@@ -110,14 +113,10 @@ export function ShotstackCreator() {
         }
       } catch (err) {
         componentLogger.error('Status check failed', err instanceof Error ? err : new Error(String(err)));
-        // Don't stop polling on transient errors
       }
     };
 
-    // Initial check after 3 seconds
     const initialTimeout = setTimeout(checkStatus, 3000);
-    
-    // Then check every 5 seconds
     const pollInterval = setInterval(checkStatus, 5000);
 
     return () => {
@@ -126,69 +125,163 @@ export function ShotstackCreator() {
     };
   }, [state.renderId, isPolling]);
 
-  // Handle Submit Render
-  const handleSubmitRender = async () => {
+  // Generate storyboard from topic
+  const handleGenerateStoryboard = async () => {
     setError(null);
-    
-    if (!state.videoUrl.trim()) {
-      toast.error('Please enter a video URL');
-      return;
+    setIsGeneratingStoryboard(true);
+
+    try {
+      const { data, error: funcError } = await supabase.functions.invoke('generate-shotstack-storyboard', {
+        body: {
+          topic: state.topic,
+          duration: state.duration,
+          style: state.style,
+          aspectRatio: state.aspectRatio,
+        }
+      });
+
+      if (funcError) throw funcError;
+      if (data.error) throw new Error(data.error);
+
+      if (!data.scenes || data.scenes.length === 0) {
+        throw new Error('No scenes generated');
+      }
+
+      // Transform scenes to our format with IDs
+      const scenes: ShotstackScene[] = data.scenes.map((scene: any, index: number) => ({
+        id: crypto.randomUUID(),
+        sceneNumber: scene.sceneNumber || index + 1,
+        voiceoverText: scene.voiceoverText,
+        imagePrompt: scene.imagePrompt,
+        imageUrl: null,
+        isGeneratingImage: false,
+      }));
+
+      setState(prev => ({
+        ...prev,
+        step: 'scenes',
+        scenes,
+      }));
+
+      toast.success(`Generated ${scenes.length} scenes!`);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to generate storyboard';
+      componentLogger.error('Storyboard generation failed', err instanceof Error ? err : new Error(String(err)));
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsGeneratingStoryboard(false);
+    }
+  };
+
+  // Update a scene field
+  const handleSceneUpdate = (sceneId: string, field: 'voiceoverText' | 'imagePrompt', value: string) => {
+    setState(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(scene =>
+        scene.id === sceneId ? { ...scene, [field]: value } : scene
+      ),
+    }));
+  };
+
+  // Generate image for a single scene
+  const handleGenerateImage = useCallback(async (sceneId: string) => {
+    const scene = state.scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+
+    // Mark as generating
+    setState(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(s =>
+        s.id === sceneId ? { ...s, isGeneratingImage: true } : s
+      ),
+    }));
+
+    try {
+      // Use Nano banana (gemini-2.5-flash-image) for image generation
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          model_id: 'nano-banana', // Lovable AI image generation
+          prompt: scene.imagePrompt,
+          parameters: {
+            aspectRatio: state.aspectRatio,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Image generation failed');
+      }
+
+      const data = await response.json();
+      
+      if (!data.output_url) {
+        throw new Error('No image URL returned');
+      }
+
+      // Update scene with image URL
+      setState(prev => ({
+        ...prev,
+        scenes: prev.scenes.map(s =>
+          s.id === sceneId ? { ...s, imageUrl: data.output_url, isGeneratingImage: false } : s
+        ),
+      }));
+
+      toast.success(`Scene ${scene.sceneNumber} image generated!`);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to generate image';
+      componentLogger.error('Image generation failed', err instanceof Error ? err : new Error(String(err)));
+      toast.error(errorMsg);
+
+      // Reset generating state
+      setState(prev => ({
+        ...prev,
+        scenes: prev.scenes.map(s =>
+          s.id === sceneId ? { ...s, isGeneratingImage: false } : s
+        ),
+      }));
+    }
+  }, [state.scenes, state.aspectRatio]);
+
+  // Generate all images
+  const handleGenerateAllImages = async () => {
+    setIsGeneratingAllImages(true);
+    const scenesToGenerate = state.scenes.filter(s => !s.imageUrl);
+
+    for (const scene of scenesToGenerate) {
+      await handleGenerateImage(scene.id);
+      // Small delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    setIsGeneratingAllImages(false);
+  };
+
+  // Render video with Shotstack
+  const handleRenderVideo = async () => {
+    setError(null);
     setState(prev => ({ ...prev, step: 'rendering', renderProgress: 0 }));
 
     try {
-      // Build Shotstack timeline payload
-      const aspectDimensions = {
-        '16:9': { width: 1920, height: 1080 },
-        '9:16': { width: 1080, height: 1920 },
-        '4:5': { width: 1080, height: 1350 },
-        '1:1': { width: 1080, height: 1080 },
-      };
-
-      const { width, height } = aspectDimensions[state.aspectRatio];
-
-      const payload = {
-        timeline: {
-          background: state.backgroundColor,
-          tracks: [
-            // Text overlay track (on top)
-            ...(state.textOverlay.trim() ? [{
-              clips: [{
-                asset: {
-                  type: 'title',
-                  text: state.textOverlay,
-                  style: 'subtitle',
-                  color: '#ffffff',
-                  size: 'medium',
-                  position: 'bottom'
-                },
-                start: 0,
-                length: state.duration
-              }]
-            }] : []),
-            // Video track
-            {
-              clips: [{
-                asset: {
-                  type: 'video',
-                  src: state.videoUrl
-                },
-                start: 0,
-                length: state.duration
-              }]
-            }
-          ]
-        },
-        output: {
-          format: 'mp4',
-          resolution: 'hd',
-          size: { width, height }
+      const { data, error: funcError } = await supabase.functions.invoke('shotstack-render-video', {
+        body: {
+          scenes: state.scenes.map(s => ({
+            id: s.id,
+            sceneNumber: s.sceneNumber,
+            voiceoverText: s.voiceoverText,
+            imageUrl: s.imageUrl,
+          })),
+          aspectRatio: state.aspectRatio,
         }
-      };
-
-      const { data, error: funcError } = await supabase.functions.invoke('shotstack-test-render', {
-        body: { payload }
       });
 
       if (funcError) throw funcError;
@@ -197,7 +290,7 @@ export function ShotstackCreator() {
       if (data.renderId) {
         setState(prev => ({ ...prev, renderId: data.renderId }));
         setIsPolling(true);
-        toast.success('Render submitted to Shotstack');
+        toast.success('Render submitted to Shotstack!');
       } else {
         throw new Error('No render ID returned');
       }
@@ -205,7 +298,7 @@ export function ShotstackCreator() {
       const errorMsg = err instanceof Error ? err.message : 'Failed to submit render';
       componentLogger.error('Render submission failed', err instanceof Error ? err : new Error(String(err)));
       setError(errorMsg);
-      setState(prev => ({ ...prev, step: 'config' }));
+      setState(prev => ({ ...prev, step: 'scenes' }));
     }
   };
 
@@ -215,7 +308,9 @@ export function ShotstackCreator() {
     setError(null);
     setIsPolling(false);
     setElapsedSeconds(0);
-    toast.success('Ready for a new test!');
+    setIsGeneratingStoryboard(false);
+    setIsGeneratingAllImages(false);
+    toast.success('Ready for a new video!');
   };
 
   // Copy URL to clipboard
@@ -234,13 +329,13 @@ export function ShotstackCreator() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isProcessing = state.step === 'rendering';
+  const isProcessing = state.step === 'rendering' || isGeneratingStoryboard;
 
   return (
     <Card className="border-2 w-full overflow-hidden">
       <CardContent className="space-y-3 min-w-0 py-6">
         {/* Reset Button */}
-        {state.step !== 'config' && (
+        {state.step !== 'topic' && (
           <div className="flex justify-end -mt-2 mb-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -251,9 +346,9 @@ export function ShotstackCreator() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Reset Test?</AlertDialogTitle>
+                  <AlertDialogTitle>Start Over?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will clear your current configuration and any in-progress render.
+                    This will clear your current storyboard and any in-progress work.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -262,7 +357,7 @@ export function ShotstackCreator() {
                     onClick={handleReset}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Yes, Reset
+                    Yes, Start Over
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -278,37 +373,55 @@ export function ShotstackCreator() {
           </Alert>
         )}
 
-        {/* Step 1: Configuration */}
+        {/* Step 1: Topic & Settings */}
         <StepCollapsible
           stepNumber={1}
-          title="Configure Render"
-          isActive={state.step === 'config'}
-          isComplete={state.step !== 'config'}
+          title="Topic & Settings"
+          isActive={state.step === 'topic'}
+          isComplete={state.step !== 'topic'}
           isDisabled={isProcessing}
         >
-          <ShotstackConfigStep
-            videoUrl={state.videoUrl}
-            textOverlay={state.textOverlay}
-            backgroundColor={state.backgroundColor}
+          <ShotstackTopicStep
+            topic={state.topic}
             duration={state.duration}
+            style={state.style}
             aspectRatio={state.aspectRatio}
-            onVideoUrlChange={(url) => setState(prev => ({ ...prev, videoUrl: url }))}
-            onTextOverlayChange={(text) => setState(prev => ({ ...prev, textOverlay: text }))}
-            onBackgroundColorChange={(color) => setState(prev => ({ ...prev, backgroundColor: color }))}
-            onDurationChange={(dur) => setState(prev => ({ ...prev, duration: dur }))}
-            onAspectRatioChange={(ratio) => setState(prev => ({ ...prev, aspectRatio: ratio }))}
-            onSubmit={handleSubmitRender}
+            onTopicChange={(topic) => setState(prev => ({ ...prev, topic }))}
+            onDurationChange={(duration) => setState(prev => ({ ...prev, duration }))}
+            onStyleChange={(style) => setState(prev => ({ ...prev, style }))}
+            onAspectRatioChange={(aspectRatio) => setState(prev => ({ ...prev, aspectRatio }))}
+            onGenerateStoryboard={handleGenerateStoryboard}
+            isGenerating={isGeneratingStoryboard}
             isDisabled={isProcessing}
           />
         </StepCollapsible>
 
-        {/* Step 2: Rendering */}
+        {/* Step 2: Scenes & Images */}
         <StepCollapsible
           stepNumber={2}
+          title="Scenes & Images"
+          isActive={state.step === 'scenes'}
+          isComplete={state.step === 'rendering' || state.step === 'complete'}
+          isDisabled={state.step === 'topic'}
+        >
+          <ShotstackScenesStep
+            scenes={state.scenes}
+            onSceneUpdate={handleSceneUpdate}
+            onGenerateImage={handleGenerateImage}
+            onGenerateAllImages={handleGenerateAllImages}
+            onRenderVideo={handleRenderVideo}
+            isGeneratingAll={isGeneratingAllImages}
+            isDisabled={isProcessing}
+          />
+        </StepCollapsible>
+
+        {/* Step 3: Rendering */}
+        <StepCollapsible
+          stepNumber={3}
           title="Rendering"
           isActive={state.step === 'rendering'}
           isComplete={state.step === 'complete'}
-          isDisabled={state.step === 'config'}
+          isDisabled={state.step === 'topic' || state.step === 'scenes'}
         >
           <ShotstackRenderingStep
             progress={state.renderProgress}
@@ -317,9 +430,9 @@ export function ShotstackCreator() {
           />
         </StepCollapsible>
 
-        {/* Step 3: Complete */}
+        {/* Step 4: Complete */}
         <StepCollapsible
-          stepNumber={3}
+          stepNumber={4}
           title="Complete"
           isActive={state.step === 'complete'}
           isComplete={false}
@@ -345,11 +458,7 @@ export function ShotstackCreator() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyUrl}
-                >
+                <Button variant="outline" size="sm" onClick={handleCopyUrl}>
                   {copiedUrl ? (
                     <>
                       <Check className="mr-2 h-4 w-4" />
@@ -362,22 +471,14 @@ export function ShotstackCreator() {
                     </>
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                >
+                <Button variant="outline" size="sm" asChild>
                   <a href={state.outputUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open in New Tab
                   </a>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                >
-                  <a href={state.outputUrl} download="shotstack-test.mp4">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={state.outputUrl} download="shotstack-video.mp4">
                     <Download className="mr-2 h-4 w-4" />
                     Download
                   </a>
@@ -386,15 +487,16 @@ export function ShotstackCreator() {
 
               {/* Render Info */}
               <div className="text-xs text-muted-foreground space-y-1">
+                <p><strong>Topic:</strong> {state.topic}</p>
+                <p><strong>Scenes:</strong> {state.scenes.length}</p>
+                <p><strong>Duration:</strong> {state.scenes.length * 5}s</p>
                 <p><strong>Render ID:</strong> {state.renderId}</p>
-                <p><strong>Duration:</strong> {state.duration}s</p>
-                <p><strong>Aspect Ratio:</strong> {state.aspectRatio}</p>
               </div>
 
-              {/* New Test Button */}
+              {/* New Video Button */}
               <Button onClick={handleReset} className="w-full">
                 <Video className="mr-2 h-4 w-4" />
-                Run Another Test
+                Create Another Video
               </Button>
             </div>
           )}

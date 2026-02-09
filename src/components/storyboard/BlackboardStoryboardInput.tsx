@@ -61,7 +61,7 @@ export function BlackboardStoryboardInput() {
     imageCreditCost,
     videoCreditCost,
     isLoading,
-    isSaving,
+    
     storyboardId,
     loadStoryboard,
     createNewStoryboard,
@@ -133,12 +133,6 @@ export function BlackboardStoryboardInput() {
               onCreateNew={handleCreateNew}
               onDeleteStoryboard={handleDeleteStoryboard}
             />
-            {isSaving && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Saving...
-              </span>
-            )}
             <Button
               variant="ghost"
               size="sm"

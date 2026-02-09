@@ -17,6 +17,10 @@ dist-ssr
 out/
 next-env.d.ts
 
+# PWA generated service worker files
+public/sw.js
+public/workbox-*.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

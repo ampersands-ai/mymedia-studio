@@ -30,7 +30,7 @@ export const options = {
   },
 };
 
-const BASE_URL = __ENV.BASE_URL || 'https://artifio.ai';
+const BASE_URL = __ENV.BASE_URL || 'https://example.com';
 
 export default function () {
   // Test homepage

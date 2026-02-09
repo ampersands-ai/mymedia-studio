@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,14 +60,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Generate unsubscribe token (base64 encoded email for simplicity)
     const unsubscribeToken = btoa(normalizedEmail);
-    const unsubscribeUrl = `https://artifio.ai/unsubscribe?token=${unsubscribeToken}`;
+    const unsubscribeUrl = `${edgeBrand.appUrl}/unsubscribe?token=${unsubscribeToken}`;
 
     // Send confirmation email
     try {
       await resend.emails.send({
-        from: "Artifio <newsletter@artifio.ai>",
+        from: brandFrom('Newsletter', edgeBrand.noreplyEmail),
         to: [normalizedEmail],
-        subject: "Welcome to the Artifio Newsletter! 🎨",
+        subject: `Welcome to the ${edgeBrand.name} Newsletter! 🎨`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -88,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
               <div class="container">
                 <div class="header">
                   <h1 style="margin: 0; font-size: 28px;">You're In! 🎉</h1>
-                  <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Welcome to the Artifio Newsletter</p>
+                  <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Welcome to the ${edgeBrand.name} Newsletter</p>
                 </div>
                 
                 <div class="content">
@@ -99,14 +100,14 @@ const handler = async (req: Request): Promise<Response> => {
                   <div class="highlight">
                     <ul style="margin: 0; padding-left: 20px;">
                       <li><strong>New Feature Announcements</strong> – Be the first to know about our latest AI tools</li>
-                      <li><strong>Tips & Tutorials</strong> – Get the most out of Artifio</li>
+                      <li><strong>Tips & Tutorials</strong> – Get the most out of ${edgeBrand.name}</li>
                       <li><strong>Exclusive Offers</strong> – Special deals just for subscribers</li>
                       <li><strong>Creative Inspiration</strong> – See what others are creating</li>
                     </ul>
                   </div>
 
                   <div style="text-align: center;">
-                    <a href="https://artifio.ai" class="cta-button">Explore Artifio →</a>
+                    <a href="${edgeBrand.appUrl}" class="cta-button">Explore ${edgeBrand.name} &rarr;</a>
                   </div>
 
                   <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
@@ -116,14 +117,14 @@ const handler = async (req: Request): Promise<Response> => {
 
                 <div class="footer">
                   <p>Happy Creating! 🚀</p>
-                  <p style="margin-top: 10px;">The Artifio Team</p>
+                  <p style="margin-top: 10px;">The ${edgeBrand.name} Team</p>
                   <p class="unsubscribe">
                     <a href="${unsubscribeUrl}" style="color: #9ca3af;">Unsubscribe</a> | 
-                    <a href="https://artifio.ai/privacy" style="color: #9ca3af;">Privacy Policy</a>
+                    <a href="${edgeBrand.appUrl}/privacy" style="color: #9ca3af;">Privacy Policy</a>
                   </p>
                   <p style="margin-top: 10px; font-size: 11px; color: #9ca3af;">
                     This is an automated message. Please do not reply to this email.<br>
-                    For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+                    For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #667eea;">${edgeBrand.supportEmail}</a>
                   </p>
                 </div>
               </div>

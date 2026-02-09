@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +76,7 @@ const ForgotPassword = () => {
       <header className="relative z-10 border-b border-border/40 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src={logo.src} alt="Artifio" className="h-8 w-8" />
+            <Image src={logo} alt={`${brand.name} logo`} width={32} height={32} className="h-8 w-8" />
             <span className="font-bold text-xl">{brand.name}</span>
           </Link>
           <Link

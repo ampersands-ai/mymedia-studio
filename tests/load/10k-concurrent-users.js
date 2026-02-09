@@ -1,7 +1,7 @@
 /**
  * K6 Load Test: 10,000 Concurrent Users
  *
- * Test Scenario: Simulate 10K users accessing Artifio.ai and performing typical actions
+ * Test Scenario: Simulate 10K users accessing the platform and performing typical actions
  * - Login
  * - Browse templates
  * - Generate images
@@ -62,7 +62,7 @@ export const options = {
 };
 
 // Environment configuration
-const BASE_URL = __ENV.BASE_URL || 'https://artifio.ai';
+const BASE_URL = __ENV.BASE_URL || 'https://example.com';
 const API_BASE = `${BASE_URL}/functions/v1`;
 
 // 🔒 SECURITY: Load test credentials from environment variables
@@ -86,9 +86,9 @@ for (let i = 1; i <= 10; i++) {
 if (TEST_USERS.length === 0) {
   console.warn('⚠️  No K6_TEST_USER_EMAIL_* environment variables found. Using default test users for local testing only.');
   TEST_USERS.push(
-    { email: 'loadtest1@artifio.ai', password: 'LoadTest123!' },
-    { email: 'loadtest2@artifio.ai', password: 'LoadTest123!' },
-    { email: 'loadtest3@artifio.ai', password: 'LoadTest123!' }
+    { email: `loadtest1@${__ENV.TEST_DOMAIN || 'example.com'}`, password: 'LoadTest123!' },
+    { email: `loadtest2@${__ENV.TEST_DOMAIN || 'example.com'}`, password: 'LoadTest123!' },
+    { email: `loadtest3@${__ENV.TEST_DOMAIN || 'example.com'}`, password: 'LoadTest123!' }
   );
 }
 
@@ -256,7 +256,7 @@ export default function () {
 export function setup() {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║  Artifio.ai - 10K Concurrent Users Load Test              ║
+║  Platform - 10K Concurrent Users Load Test                 ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Base URL: ${BASE_URL}                                      ║
 ║  Target: 10,000 concurrent users                          ║

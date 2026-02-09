@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -111,7 +112,7 @@ Deno.serve(async (req) => {
 
           // Send warning email
           const { error: emailError } = await resend.emails.send({
-            from: 'Artifio <noreply@artifio.ai>',
+            from: brandFrom('Notifications'),
             to: [profile.email],
             subject: '⚠️ Your generated content will be deleted in 24 hours',
             html: `
@@ -150,7 +151,7 @@ Deno.serve(async (req) => {
                     <p>If you want to keep this content, please download it before the deletion date.</p>
                     
                     <div style="text-align: center;">
-                      <a href="https://artifio.ai/dashboard/history" class="button">
+                      <a href="${edgeBrand.appUrl}/dashboard/history" class="button">
                         Download Your Content
                       </a>
                     </div>
@@ -160,10 +161,10 @@ Deno.serve(async (req) => {
                     </p>
                   </div>
                   <div class="footer">
-                    <p>© ${new Date().getFullYear()} Artifio. All rights reserved.</p>
+                    <p>&copy; ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.</p>
                     <p style="margin-top: 10px; font-size: 11px; color: #9ca3af;">
                       This is an automated message. Please do not reply to this email.<br>
-                      For assistance, contact <a href="mailto:support@artifio.ai" style="color: #f59e0b;">support@artifio.ai</a>
+                      For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #f59e0b;">${edgeBrand.supportEmail}</a>
                     </p>
                   </div>
                 </div>

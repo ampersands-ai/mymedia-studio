@@ -5,6 +5,7 @@ import { generateEmailHTML } from "../_shared/email-templates.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { toError, getErrorMessage } from "../_shared/error-utils.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -118,7 +119,7 @@ serve(async (req) => {
           type: 'summary',
           title: 'Executive Summary',
           content: `
-            <p>Yesterday on Artifio.ai:</p>
+            <p>Yesterday on ${edgeBrand.name}:</p>
             <p>✅ <strong>System Health:</strong> ${healthScore}/100</p>
             <p>👥 <strong>New Users:</strong> ${newUserCount} registrations</p>
             <p>⚠️ <strong>Issues Detected:</strong> ${totalErrors} errors (${resolvedErrors} resolved, ${totalErrors - resolvedErrors} pending)</p>
@@ -146,17 +147,17 @@ serve(async (req) => {
           content: [
             {
               label: 'View Full Admin Dashboard',
-              url: 'https://artifio.ai/admin/user-logs'
+              url: `${edgeBrand.appUrl}/admin/user-logs`
             }
           ]
         }
       ],
-      footer: 'Sent by Artifio Monitoring System'
+      footer: `Sent by ${edgeBrand.name} Monitoring System`
     });
 
     // Send email
     const { error: emailError } = await resend.emails.send({
-      from: 'Artifio Alerts <alerts@artifio.ai>',
+      from: brandFrom('Alerts', edgeBrand.alertsEmail),
       to: [adminEmail],
       subject: `📊 Daily Summary - ${yesterday.toLocaleDateString()} | ${totalErrors} Errors, ${newUserCount} New Users`,
       html: emailHTML,

@@ -1,3 +1,5 @@
+import { edgeBrand } from './brand.ts';
+
 interface ActionButton {
   label: string;
   url: string;
@@ -53,7 +55,7 @@ export function generateEmailHTML(config: EmailConfig): string {
           </div>
           ${sectionsHTML}
           <div class="footer">
-            ${config.footer || 'Sent by Artifio Monitoring System'}
+            ${config.footer || `Sent by ${edgeBrand.name} Monitoring System`}
           </div>
         </div>
       </body>

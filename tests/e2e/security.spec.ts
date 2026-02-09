@@ -18,7 +18,7 @@ test.describe('Authentication Security', () => {
 
     // Attempt multiple failed logins
     for (let i = 0; i < 5; i++) {
-      await page.fill('input[type="email"]', 'test@artifio.ai');
+      await page.fill('input[type="email"]', 'test@example.com');
       await page.fill('input[type="password"]', 'WrongPassword123!');
       await page.click('button[type="submit"]');
       await page.waitForTimeout(500);

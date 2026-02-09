@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand } from "../_shared/brand.ts";
 
 // Dodo Payments product IDs for one-time credit boosts
 const DODO_BOOST_PRODUCTS: Record<string, string> = {
@@ -288,7 +289,7 @@ Deno.serve(async (req) => {
 
     // Parse request body for optional settings
     const body = await req.json().catch(() => ({}));
-    const appOrigin = body.appOrigin || req.headers.get('origin') || 'https://artifio.ai';
+    const appOrigin = body.appOrigin || req.headers.get('origin') || edgeBrand.appUrl;
     const successUrl = `${appOrigin}/dashboard/settings?tab=billing&boost=success`;
     const cancelUrl = `${appOrigin}/dashboard/settings?tab=billing&boost=cancelled`;
 

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -310,10 +311,12 @@ const Pricing = () => {
           <nav className="container mx-auto px-4 py-3 md:py-4" aria-label="Main navigation">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <img 
-                  src={logo.src} 
+                <Image
+                  src={logo}
                   alt={`${brand.name} logo`}
-                  className="h-6 md:h-8 object-contain"
+                  width={32}
+                  height={32}
+                  className="h-6 md:h-8 w-auto object-contain"
                 />
                 <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
               </Link>

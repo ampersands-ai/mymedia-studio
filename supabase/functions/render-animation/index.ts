@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { ResponseBuilder } from "../_shared/response-builder.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,7 @@ async function sendEmail(to: string, subject: string, html: string) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Artifio <noreply@artifio.ai>",
+        from: brandFrom('Notifications'),
         to,
         subject,
         html,

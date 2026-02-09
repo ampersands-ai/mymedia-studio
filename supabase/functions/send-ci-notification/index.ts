@@ -1,6 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -51,8 +52,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: "CI/CD Bot <noreply@artifio.ai>",
-      to: ["dev@artifio.ai"], // Update this to your team email
+      from: brandFrom('CI/CD Bot'),
+      to: [edgeBrand.devEmail],
       subject: subject,
       html: `
         <!DOCTYPE html>

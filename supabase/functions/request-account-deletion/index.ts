@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { edgeBrand } from "../_shared/brand.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -111,12 +112,12 @@ Deno.serve(async (req) => {
       await supabase.functions.invoke('send-test-email', {
         body: {
           to: user.email,
-          subject: 'Account Deletion Scheduled - Artifio',
+          subject: `Account Deletion Scheduled - ${edgeBrand.name}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2>Account Deletion Scheduled</h2>
               <p>Hi ${profile?.profile_name || 'there'},</p>
-              <p>We've received your request to delete your Artifio account.</p>
+              <p>We've received your request to delete your ${edgeBrand.name} account.</p>
               <p><strong>Your account is scheduled to be permanently deleted on ${scheduledDeletionAt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.</strong></p>
               <p>What will be deleted:</p>
               <ul>
@@ -126,8 +127,8 @@ Deno.serve(async (req) => {
                 <li>Subscription and billing history</li>
               </ul>
               <p>If you change your mind, you can cancel this request anytime before the deletion date by visiting your account settings.</p>
-              <p>If you didn't request this deletion, please contact us immediately at support@artifio.ai</p>
-              <p>Thank you for using Artifio.</p>
+              <p>If you didn't request this deletion, please contact us immediately at ${edgeBrand.supportEmail}</p>
+              <p>Thank you for using ${edgeBrand.name}.</p>
             </div>
           `,
         },

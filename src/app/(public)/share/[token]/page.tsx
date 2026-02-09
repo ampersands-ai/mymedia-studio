@@ -1,9 +1,15 @@
-'use client';
+import type { Metadata } from 'next';
+import SharedContentClient from './_client';
 
-import dynamic from 'next/dynamic';
-
-const SharedContent = dynamic(() => import('@/views/SharedContent'), { ssr: false });
+export const metadata: Metadata = {
+  title: 'Shared Creation',
+  description: 'View this AI-generated content shared from our platform.',
+  openGraph: {
+    title: 'Shared Creation',
+    description: 'View this AI-generated content shared from our platform.',
+  },
+};
 
 export default function SharedContentPage() {
-  return <SharedContent />;
+  return <SharedContentClient />;
 }

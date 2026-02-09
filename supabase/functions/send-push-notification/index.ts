@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand } from "../_shared/brand.ts";
 
 /**
  * Send Web Push Notification
@@ -199,7 +200,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       },
     });
 
-    const subject = 'mailto:noreply@artifio.ai';
+    const subject = `mailto:${edgeBrand.noreplyEmail}`;
     let successCount = 0;
     let failCount = 0;
     const expiredSubscriptions: string[] = [];

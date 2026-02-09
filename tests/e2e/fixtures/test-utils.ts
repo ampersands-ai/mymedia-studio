@@ -8,11 +8,11 @@ import { Page, expect, BrowserContext } from '@playwright/test';
 // Test credentials - use environment variables in CI
 export const TEST_CREDENTIALS = {
   regular: {
-    email: process.env.TEST_USER_EMAIL || 'test@artifio.ai',
+    email: process.env.TEST_USER_EMAIL || 'test@example.com',
     password: process.env.TEST_USER_PASSWORD || 'TestPassword123!',
   },
   admin: {
-    email: process.env.TEST_ADMIN_EMAIL || 'admin@artifio.ai',
+    email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
     password: process.env.TEST_ADMIN_PASSWORD || 'AdminPassword123!',
   },
 };
@@ -197,7 +197,7 @@ export async function mockSlowNetwork(
  * Generate unique test email
  */
 export function generateTestEmail(): string {
-  return `test-${Date.now()}-${Math.random().toString(36).slice(2)}@artifio.ai`;
+  return `test-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
 }
 
 /**

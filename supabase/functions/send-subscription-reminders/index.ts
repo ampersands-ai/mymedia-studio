@@ -4,6 +4,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { generateEmailHTML } from "../_shared/email-templates.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -120,16 +121,16 @@ serve(async (req) => {
                 type: 'actions',
                 title: 'Manage Subscription',
                 content: [
-                  { label: 'View My Plan', url: 'https://artifio.ai/pricing' },
-                  { label: 'Manage Subscription', url: 'https://artifio.ai/dashboard/subscription' }
+                  { label: 'View My Plan', url: `${edgeBrand.appUrl}/pricing` },
+                  { label: 'Manage Subscription', url: `${edgeBrand.appUrl}/dashboard/subscription` }
                 ]
               }
             ],
-            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
+            footer: `This is an automated message. Please do not reply. For assistance, contact ${edgeBrand.supportEmail}`
           });
 
           const { error: emailError } = await resend.emails.send({
-            from: 'Artifio <noreply@artifio.ai>',
+            from: brandFrom('Notifications'),
             to: [email],
             subject: `🔄 Your ${planName} plan renews in 3 days`,
             html: emailHTML,
@@ -240,15 +241,15 @@ serve(async (req) => {
               {
                 type: 'actions',
                 content: [
-                  { label: 'Resubscribe Now', url: 'https://artifio.ai/pricing' }
+                  { label: 'Resubscribe Now', url: `${edgeBrand.appUrl}/pricing` }
                 ]
               }
             ],
-            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
+            footer: `This is an automated message. Please do not reply. For assistance, contact ${edgeBrand.supportEmail}`
           });
 
           const { error: emailError } = await resend.emails.send({
-            from: 'Artifio <noreply@artifio.ai>',
+            from: brandFrom('Notifications'),
             to: [email],
             subject: `⚠️ Your ${creditsAtRisk} credits expire in 7 days`,
             html: emailHTML,
@@ -351,15 +352,15 @@ serve(async (req) => {
               {
                 type: 'actions',
                 content: [
-                  { label: '🔥 Save My Credits Now', url: 'https://artifio.ai/pricing' }
+                  { label: '🔥 Save My Credits Now', url: `${edgeBrand.appUrl}/pricing` }
                 ]
               }
             ],
-            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
+            footer: `This is an automated message. Please do not reply. For assistance, contact ${edgeBrand.supportEmail}`
           });
 
           const { error: emailError } = await resend.emails.send({
-            from: 'Artifio <noreply@artifio.ai>',
+            from: brandFrom('Notifications'),
             to: [email],
             subject: `🚨 FINAL WARNING: ${creditsAtRisk} credits expire in 48 hours`,
             html: emailHTML,
@@ -465,16 +466,16 @@ serve(async (req) => {
                 {
                   type: 'actions',
                   content: [
-                    { label: 'Upgrade Plan', url: 'https://artifio.ai/pricing' },
-                    { label: 'View Usage', url: 'https://artifio.ai/dashboard/subscription' }
+                    { label: 'Upgrade Plan', url: `${edgeBrand.appUrl}/pricing` },
+                    { label: 'View Usage', url: `${edgeBrand.appUrl}/dashboard/subscription` }
                   ]
               }
             ],
-            footer: 'This is an automated message. Please do not reply. For assistance, contact support@artifio.ai'
+            footer: `This is an automated message. Please do not reply. For assistance, contact ${edgeBrand.supportEmail}`
             });
 
             const { error: emailError } = await resend.emails.send({
-              from: 'Artifio <noreply@artifio.ai>',
+              from: brandFrom('Notifications'),
               to: [email],
               subject: `💫 Running low: ${user.tokens_remaining} credits remaining`,
               html: emailHTML,

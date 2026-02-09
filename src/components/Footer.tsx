@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Twitter, Linkedin, Youtube, Instagram, Facebook, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,12 @@ export const Footer = () => {
           {/* Brand - full width on mobile */}
           <div className="col-span-2 md:col-span-1 space-y-4 text-center md:text-left">
             <Link href="/" className="flex items-center gap-3 justify-center md:justify-start">
-          <img 
-            src={logo.src} 
+          <Image
+            src={logo}
             alt={`${brand.name} logo`}
-            className="h-6 md:h-8 object-contain"
+            width={32}
+            height={32}
+            className="h-6 md:h-8 w-auto object-contain"
               />
               <span className="font-black text-xl md:text-2xl text-foreground">{brand.name}</span>
             </Link>

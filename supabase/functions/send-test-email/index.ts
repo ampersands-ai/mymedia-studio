@@ -2,6 +2,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -82,7 +83,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     logger.info("Sending test email to admin", { metadata: { adminEmail } });
 
     const emailResponse = await resend.emails.send({
-      from: "Artifio System <noreply@artifio.ai>",
+      from: brandFrom('System'),
       to: [adminEmail],
       subject: "✅ Test Email - Email System Working!",
       html: `

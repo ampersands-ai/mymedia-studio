@@ -2,9 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 import '@/index.css';
 
-// Force dynamic rendering for all routes (SPA with auth - no static generation)
-export const dynamic = 'force-dynamic';
-
 // ─── Default Metadata (overridden per-page via generateMetadata) ─────
 const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'artifio.ai';
 const brandDescription =

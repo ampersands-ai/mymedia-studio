@@ -1,9 +1,20 @@
-'use client';
+import type { Metadata } from 'next';
+import ModelLandingClient from './_client';
 
-import dynamic from 'next/dynamic';
+type Props = { params: Promise<{ slug: string }> };
 
-const ModelLanding = dynamic(() => import('@/views/ModelLanding'), { ssr: false });
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return {
+    title: `${title} | AI Model`,
+    description: `Create stunning content with our ${title} AI model. Explore capabilities, pricing, and example outputs.`,
+    openGraph: {
+      title: `${title} | AI Model`,
+    },
+  };
+}
 
 export default function ModelLandingPage() {
-  return <ModelLanding />;
+  return <ModelLandingClient />;
 }

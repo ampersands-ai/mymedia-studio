@@ -13,6 +13,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,7 +142,7 @@ function generateAutoRenewalNotice(nextBillingDate: string | undefined): string 
     <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-size: 13px;">
       <p style="margin: 0; color: #92400e;">
         <strong>Auto-Renewal Notice:</strong> Your subscription will automatically renew on ${nextDate} unless you cancel. 
-        You can manage or cancel your subscription anytime from your <a href="https://artifio.ai/dashboard/settings" style="color: #f97316; text-decoration: underline;">account settings</a>.
+        You can manage or cancel your subscription anytime from your <a href="${edgeBrand.appUrl}/dashboard/settings" style="color: #f97316; text-decoration: underline;">account settings</a>.
       </p>
     </div>
   `;
@@ -222,11 +223,11 @@ function getEmailContent(params: EmailContentParams) {
                     </ul>
                   </div>
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Creating</a>
+                    <a href="${edgeBrand.appUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Creating</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Thank you for choosing Artifio!</p>
+                  <p style="margin: 0;">Thank you for choosing ${edgeBrand.name}!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -259,11 +260,11 @@ function getEmailContent(params: EmailContentParams) {
                   ${autoRenewalNotice}
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Explore New Features</a>
+                    <a href="${edgeBrand.appUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Explore New Features</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Thank you for your continued trust in Artifio!</p>
+                  <p style="margin: 0;">Thank you for your continued trust in ${edgeBrand.name}!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -295,11 +296,11 @@ function getEmailContent(params: EmailContentParams) {
                     <p style="margin: 0; color: #4338ca;">Need more power? You can upgrade anytime from your settings.</p>
                   </div>
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/pricing" style="display: inline-block; padding: 14px 28px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">View Plans</a>
+                    <a href="${edgeBrand.appUrl}/pricing" style="display: inline-block; padding: 14px 28px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">View Plans</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Questions? Contact us at <a href="mailto:support@artifio.ai" style="color: #f97316;">support@artifio.ai</a></p>
+                  <p style="margin: 0;">Questions? Contact us at <a href="mailto:${edgeBrand.supportEmail}" style="color: #f97316;">${edgeBrand.supportEmail}</a></p>
                   <p style="margin: 10px 0 0 0; font-size: 11px; color: #9ca3af;">
                     This is an automated message. Please do not reply to this email.
                   </p>
@@ -334,11 +335,11 @@ function getEmailContent(params: EmailContentParams) {
                     <p style="margin: 0; color: #b45309;"><strong>Changed your mind?</strong> You can resubscribe within 30 days to restore your frozen credits and continue where you left off.</p>
                   </div>
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/pricing" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Resubscribe</a>
+                    <a href="${edgeBrand.appUrl}/pricing" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Resubscribe</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Thank you for trying Artifio!</p>
+                  <p style="margin: 0;">Thank you for trying ${edgeBrand.name}!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -372,16 +373,16 @@ function getEmailContent(params: EmailContentParams) {
                   <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; font-size: 13px;">
                     <p style="margin: 0; color: #065f46;">
                       <strong>This was an automatic renewal.</strong> Your subscription will continue to renew${nextBillingDate ? ` on ${formatDate(nextBillingDate)}` : ' each billing cycle'} unless you cancel. 
-                      <a href="https://artifio.ai/dashboard/settings" style="color: #f97316; text-decoration: underline;">Manage subscription</a>
+                      <a href="${edgeBrand.appUrl}/dashboard/settings" style="color: #f97316; text-decoration: underline;">Manage subscription</a>
                     </p>
                   </div>
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Continue Creating</a>
+                    <a href="${edgeBrand.appUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: #f97316; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Continue Creating</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Thank you for being a valued Artifio subscriber!</p>
+                  <p style="margin: 0;">Thank you for being a valued ${edgeBrand.name} subscriber!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -413,7 +414,7 @@ function getEmailContent(params: EmailContentParams) {
                   ${receiptSection}
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Use Your Credits</a>
+                    <a href="${edgeBrand.appUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Use Your Credits</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
@@ -454,11 +455,11 @@ function getEmailContent(params: EmailContentParams) {
                   ${autoRenewalNotice}
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://artifio.ai/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Creating Again</a>
+                    <a href="${edgeBrand.appUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Creating Again</a>
                   </div>
                 </div>
                 <div style="padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0;">Thank you for coming back to Artifio!</p>
+                  <p style="margin: 0;">Thank you for coming back to ${edgeBrand.name}!</p>
                 </div>
                 ${unsubscribeFooter}
               </div>
@@ -544,7 +545,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "Artifio <notifications@artifio.ai>",
+      from: brandFrom('Notifications', edgeBrand.noreplyEmail),
       to: [email],
       subject,
       html,

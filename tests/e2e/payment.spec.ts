@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 async function login(page: { goto: (url: string) => Promise<unknown>; fill: (selector: string, value: string) => Promise<unknown>; click: (selector: string) => Promise<unknown> }) {
   await page.goto('/auth');
-  await page.fill('input[type="email"]', 'test@artifio.ai');
+  await page.fill('input[type="email"]', 'test@example.com');
   await page.fill('input[type="password"]', 'TestPassword123!');
   await page.click('button[type="submit"]');
   await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });

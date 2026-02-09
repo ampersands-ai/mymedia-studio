@@ -17,7 +17,7 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveURL(/.*auth/);
 
     // Generate unique test email
-    const testEmail = `test-${Date.now()}@artifio.ai`;
+    const testEmail = `test-${Date.now()}@example.com`;
     const testPassword = 'TestPassword123!';
 
     // Fill registration form
@@ -35,7 +35,7 @@ test.describe('Authentication Flow', () => {
 
   test('TC-AUTH-002: User login flow', async ({ page }) => {
     // Use existing test account
-    const testEmail = 'test@artifio.ai';
+    const testEmail = 'test@example.com';
     const testPassword = 'TestPassword123!';
 
     // Navigate to login page
@@ -60,7 +60,7 @@ test.describe('Authentication Flow', () => {
 
     // Attempt login with wrong password 3 times
     for (let i = 0; i < 3; i++) {
-      await page.fill('input[type="email"]', 'test@artifio.ai');
+      await page.fill('input[type="email"]', 'test@example.com');
       await page.fill('input[type="password"]', 'WrongPassword');
       await page.click('button[type="submit"]');
 
@@ -70,7 +70,7 @@ test.describe('Authentication Flow', () => {
 
     // Verify rate limiting message after 3 attempts
     // (This depends on your implementation - adjust as needed)
-    await page.fill('input[type="email"]', 'test@artifio.ai');
+    await page.fill('input[type="email"]', 'test@example.com');
     await page.fill('input[type="password"]', 'WrongPassword');
     await page.click('button[type="submit"]');
 
@@ -83,7 +83,7 @@ test.describe('Authentication Flow', () => {
   test('TC-AUTH-004: Session refresh', async ({ page, context }) => {
     // Login first
     await page.goto('/auth');
-    await page.fill('input[type="email"]', 'test@artifio.ai');
+    await page.fill('input[type="email"]', 'test@example.com');
     await page.fill('input[type="password"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
@@ -112,7 +112,7 @@ test.describe('Authorization (RBAC)', () => {
   test('TC-AUTH-005: Admin access control', async ({ page }) => {
     // Login as regular user
     await page.goto('/auth');
-    await page.fill('input[type="email"]', 'regular-user@artifio.ai');
+    await page.fill('input[type="email"]', 'regular-user@example.com');
     await page.fill('input[type="password"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
@@ -126,7 +126,7 @@ test.describe('Authorization (RBAC)', () => {
 
     // Now login as admin
     await page.goto('/auth');
-    await page.fill('input[type="email"]', 'admin@artifio.ai');
+    await page.fill('input[type="email"]', 'admin@example.com');
     await page.fill('input[type="password"]', 'AdminPassword123!');
     await page.click('button[type="submit"]');
 

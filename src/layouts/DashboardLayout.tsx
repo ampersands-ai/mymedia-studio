@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { Coins, Settings, LogOut, Info, HelpCircle } from "lucide-react";
 import { useUserTokens } from "@/hooks/useUserTokens";
@@ -55,10 +56,12 @@ export const DashboardLayout = ({ children }: { children?: React.ReactNode }) =>
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-2">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-            <img 
-              src={logo.src} 
+            <Image
+              src={logo}
               alt={`${brand.name} logo`}
-              className="h-6 md:h-8 object-contain"
+              width={32}
+              height={32}
+              className="h-6 md:h-8 w-auto object-contain"
               />
               <span className="font-black text-lg md:text-xl text-foreground">{brand.name}</span>
             </Link>

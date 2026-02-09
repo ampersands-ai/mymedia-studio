@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const adminEmail = Deno.env.get("ADMIN_EMAIL") || "dev@artifio.ai";
+    const adminEmail = Deno.env.get("ADMIN_EMAIL") || edgeBrand.devEmail;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
@@ -171,7 +172,7 @@ Deno.serve(async (req) => {
 
     // Send email
     const { error: emailError } = await resend.emails.send({
-      from: "Artifio Tests <tests@artifio.ai>",
+      from: brandFrom('Tests', edgeBrand.devEmail),
       to: [adminEmail],
       subject,
       html: emailHtml,
@@ -456,7 +457,7 @@ function generateEmailHtml(params: EmailGeneratorParams): string {
 
           <!-- Footer -->
           <div style="padding: 24px; background: #f9fafb; text-align: center; color: #6b7280; font-size: 12px;">
-            <p style="margin: 0;">Sent by Artifio CI/CD Pipeline</p>
+            <p style="margin: 0;">Sent by ${edgeBrand.name} CI/CD Pipeline</p>
             <p style="margin: 4px 0 0 0;">Run ID: ${payload.runId}</p>
           </div>
         </div>

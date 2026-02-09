@@ -5,6 +5,7 @@ import { generateEmailHTML } from "../_shared/email-templates.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { getErrorMessage } from "../_shared/error-utils.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -84,21 +85,21 @@ Recommended Actions:
           content: [
             {
               label: 'View Generation Details',
-              url: `https://artifio.ai/admin/webhook-monitor`
+              url: `${edgeBrand.appUrl}/admin/webhook-monitor`
             },
             {
               label: 'View All Stuck Generations',
-              url: `https://artifio.ai/admin/webhook-monitor`
+              url: `${edgeBrand.appUrl}/admin/webhook-monitor`
             }
           ]
         }
       ],
-      footer: 'Sent by Artifio Generation Monitor'
+      footer: `Sent by ${edgeBrand.name} Generation Monitor`
     });
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: 'Artifio Alerts <alerts@artifio.ai>',
+      from: brandFrom('Alerts', edgeBrand.alertsEmail),
       to: [adminEmail],
       subject: `⏱️ Generation Timeout: ${elapsed_minutes} minutes - ${generation_id.substring(0, 8)}`,
       html: emailHTML,

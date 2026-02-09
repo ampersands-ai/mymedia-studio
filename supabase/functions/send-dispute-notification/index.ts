@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 interface DisputeNotificationPayload {
   generation_id: string;
@@ -162,11 +163,11 @@ Deno.serve(async (req) => {
             ` : ''}
             
             ${!auto_resolved ? `
-            <a href="https://artifio.ai/admin/token-disputes" class="button">Review in Admin Panel</a>
+            <a href="${edgeBrand.appUrl}/admin/token-disputes" class="button">Review in Admin Panel</a>
             ` : ''}
             
             <p style="margin-top: 24px; font-size: 12px; color: #6b7280;">
-              This is an automated notification from Artifio.
+              This is an automated notification from ${edgeBrand.name}.
             </p>
           </div>
         </div>
@@ -176,7 +177,7 @@ Deno.serve(async (req) => {
 
     // Send to all admins
     const emailResponse = await resend.emails.send({
-      from: 'Artifio <noreply@artifio.ai>',
+      from: brandFrom('Notifications'),
       to: adminEmails,
       subject: subject,
       html: emailHtml,

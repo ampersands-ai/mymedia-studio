@@ -6,6 +6,7 @@
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { edgeBrand } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ function generateHtmlResponse(success: boolean, message: string): string {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Preferences - Artifio</title>
+        <title>Email Preferences - ${edgeBrand.name}</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -100,12 +101,12 @@ function generateHtmlResponse(success: boolean, message: string): string {
           </div>
           <div class="content">
             <p>${message}</p>
-            <a href="https://artifio.ai/dashboard/settings?tab=notifications" class="button">
+            <a href="${edgeBrand.appUrl}/dashboard/settings?tab=notifications" class="button">
               Manage Email Preferences
             </a>
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} Artifio. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.</p>
           </div>
         </div>
       </body>

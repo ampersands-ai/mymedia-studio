@@ -1,9 +1,15 @@
-'use client';
+import type { Metadata } from 'next';
+import ResetPasswordClient from './_client';
 
-import dynamic from 'next/dynamic';
-
-const ResetPassword = dynamic(() => import('@/views/ResetPassword'), { ssr: false });
+export const metadata: Metadata = {
+  title: 'Reset Password',
+  description: 'Set a new password for your account.',
+  openGraph: {
+    title: 'Reset Password',
+    description: 'Set a new password for your account.',
+  },
+};
 
 export default function ResetPasswordPage() {
-  return <ResetPassword />;
+  return <ResetPasswordClient />;
 }

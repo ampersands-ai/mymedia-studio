@@ -4,6 +4,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { edgeBrand } from "../_shared/brand.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
 
     // Build the full URL to render
     // Use the production domain
-    const baseUrl = 'https://artifio.ai';
+    const baseUrl = edgeBrand.appUrl;
     const fullUrl = `${baseUrl}${normalizedPath}`;
 
     // Call Browserless.io to render the page

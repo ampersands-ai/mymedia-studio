@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getErrorMessage } from "../_shared/error-utils.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 
 
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>✨ New Blog Post from Artifio</h1>
+          <h1>&#10024; New Blog Post from ${edgeBrand.name}</h1>
         </div>
         <div class="content">
           ${post.featured_image_url ? `<img src="${post.featured_image_url}" alt="${post.title}" class="featured-image" />` : ''}
@@ -109,11 +110,11 @@ Deno.serve(async (req) => {
           <a href="${blogUrl}" class="cta-button">Read Full Article →</a>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Artifio AI. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.</p>
           <p style="margin-top: 10px; font-size: 12px;">You're receiving this because you're a valued member of our community.</p>
           <p style="margin-top: 10px; font-size: 11px; color: #9ca3af;">
             This is an automated message. Please do not reply to this email.<br>
-            For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+            For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #667eea;">${edgeBrand.supportEmail}</a>
           </p>
         </div>
       </div>
@@ -135,7 +136,7 @@ Deno.serve(async (req) => {
       try {
         const { data, error } = await resend.batch.send(
           batch.map(email => ({
-            from: 'Artifio Blog <blog@artifio.ai>',
+            from: brandFrom('Blog', edgeBrand.noreplyEmail),
             to: [email],
             subject: post.title,
             html: emailHtml,

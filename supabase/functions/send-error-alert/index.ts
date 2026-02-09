@@ -4,6 +4,7 @@ import { generateEmailHTML } from "../_shared/email-templates.ts";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
 import { toError, getErrorMessage } from "../_shared/error-utils.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -127,12 +128,12 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
           content: [
             {
               label: 'View in Admin Dashboard',
-              url: `https://artifio.ai/admin/user-logs`
+              url: `${edgeBrand.appUrl}/admin/user-logs`
             }
           ]
         }
       ],
-      footer: 'Sent by Artifio Monitoring System'
+      footer: `Sent by ${edgeBrand.name} Monitoring System`
     });
 
     logger.info('Sending email alert', { 
@@ -141,7 +142,7 @@ ${body.error_stack ? `Stack Trace:\n${body.error_stack}` : 'No stack trace avail
 
     // Send email
     const { error: emailError } = await resend.emails.send({
-      from: 'Artifio Alerts <alerts@artifio.ai>',
+      from: brandFrom('Alerts', edgeBrand.alertsEmail),
       to: [adminEmail],
       subject: `${emoji} [${body.severity.toUpperCase()}] Error on ${body.route_name}`,
       html: emailHTML,

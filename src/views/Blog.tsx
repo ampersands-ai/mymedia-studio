@@ -6,16 +6,17 @@ import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { BookOpen, Calendar } from "lucide-react";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
+import { brand, pageTitle } from "@/config/brand";
 
 const Blog = () => {
   const [email, setEmail] = useState("");
   const { subscribe, isLoading } = useNewsletterSubscribe();
 
   useEffect(() => {
-    document.title = "Blog - Artifio.ai";
+    document.title = pageTitle("Blog");
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Stay updated with AI tips, tutorials, and product updates from Artifio.');
+      metaDescription.setAttribute('content', `Stay updated with AI tips, tutorials, and product updates from ${brand.name}.`);
     }
   }, []);
 

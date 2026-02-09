@@ -1,9 +1,15 @@
-'use client';
+import type { Metadata } from 'next';
+import VerifyEmailClient from './_client';
 
-import dynamic from 'next/dynamic';
-
-const VerifyEmail = dynamic(() => import('@/views/VerifyEmail'), { ssr: false });
+export const metadata: Metadata = {
+  title: 'Verify Email',
+  description: 'Verify your email address to activate your account.',
+  openGraph: {
+    title: 'Verify Email',
+    description: 'Verify your email address to activate your account.',
+  },
+};
 
 export default function VerifyEmailPage() {
-  return <VerifyEmail />;
+  return <VerifyEmailClient />;
 }

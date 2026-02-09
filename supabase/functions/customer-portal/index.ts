@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { edgeBrand } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,7 +59,7 @@ serve(async (req) => {
       logStep("User has Dodo subscription, Stripe portal not available");
       return new Response(
         JSON.stringify({ 
-          error: "Your subscription is managed through Dodo Payments. To manage your subscription, please contact support@artifio.ai or visit the Dodo Payments customer portal.",
+          error: `Your subscription is managed through Dodo Payments. To manage your subscription, please contact ${edgeBrand.supportEmail} or visit the Dodo Payments customer portal.`,
           provider: 'dodo'
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -76,7 +77,7 @@ serve(async (req) => {
     logStep("Found Stripe customer", { customerId });
 
     // Get the origin for return URL
-    const origin = req.headers.get("origin") || "https://artifio.ai";
+    const origin = req.headers.get("origin") || edgeBrand.appUrl;
     
     // Create portal session
     const portalSession = await stripe.billingPortal.sessions.create({

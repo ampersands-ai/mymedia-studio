@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { EdgeLogger } from "../_shared/edge-logger.ts";
 import { getModelConfig } from "../_shared/registry/index.ts";
 import { getResponseHeaders, handleCorsPreflight } from "../_shared/cors.ts";
+import { edgeBrand, brandFrom } from "../_shared/brand.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -89,14 +90,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Build email content based on type
     let emailSubject = '';
     let emailContent = '';
-    let viewUrl = 'https://artifio.ai/dashboard/history';
+    let viewUrl = `${edgeBrand.appUrl}/dashboard/history`;
     let contentTitle = '';
     let contentDetails = '';
 
     if (type === 'video_job') {
       emailSubject = `🎬 Your faceless video is ready!`;
       contentTitle = video_topic || 'Your Video';
-      viewUrl = 'https://artifio.ai/dashboard/faceless-videos';
+      viewUrl = `${edgeBrand.appUrl}/dashboard/faceless-videos`;
       contentDetails = `
         <p class="meta"><strong>Topic:</strong> ${video_topic || 'Faceless Video'}</p>
         <p class="meta"><strong>Type:</strong> Faceless Video</p>
@@ -105,7 +106,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     } else if (type === 'storyboard') {
       emailSubject = `📽️ Your storyboard video is complete!`;
       contentTitle = storyboard_title || 'Your Storyboard';
-      viewUrl = 'https://artifio.ai/dashboard/storyboard';
+      viewUrl = `${edgeBrand.appUrl}/dashboard/storyboard`;
       contentDetails = `
         <p class="meta"><strong>Title:</strong> ${storyboard_title || 'Storyboard Video'}</p>
         <p class="meta"><strong>Type:</strong> Storyboard Video</p>
@@ -153,7 +154,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Send email notification if enabled
     if (emailEnabled && recipientEmail) {
       const emailResponse = await resend.emails.send({
-        from: "Artifio <noreply@artifio.ai>",
+        from: brandFrom('Notifications'),
         to: [recipientEmail],
         subject: emailSubject,
         html: `
@@ -199,10 +200,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 </p>
               </div>
               <div class="footer">
-                <p>© ${new Date().getFullYear()} Artifio. All rights reserved.</p>
+                <p>&copy; ${new Date().getFullYear()} ${edgeBrand.name}. All rights reserved.</p>
                 <p style="margin-top: 10px; font-size: 11px; color: #9ca3af;">
                   This is an automated message. Please do not reply to this email.<br>
-                  For assistance, contact <a href="mailto:support@artifio.ai" style="color: #667eea;">support@artifio.ai</a>
+                  For assistance, contact <a href="mailto:${edgeBrand.supportEmail}" style="color: #667eea;">${edgeBrand.supportEmail}</a>
                 </p>
               </div>
             </div>
@@ -274,7 +275,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 generation_id,
                 type,
               },
-              url: viewUrl.replace('https://artifio.ai', ''),
+              url: viewUrl.replace(edgeBrand.appUrl, ''),
             }),
           }
         );

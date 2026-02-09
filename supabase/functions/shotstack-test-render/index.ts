@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use production endpoint from API_ENDPOINTS
+    // Use production endpoint - BASE already includes /edit for render operations
     const shotstackUrl = `${API_ENDPOINTS.SHOTSTACK.BASE}/edit${API_ENDPOINTS.SHOTSTACK.VERSION}${API_ENDPOINTS.SHOTSTACK.RENDER}`;
     
     console.log(`[shotstack-test-render] Submitting to Shotstack:`, shotstackUrl);

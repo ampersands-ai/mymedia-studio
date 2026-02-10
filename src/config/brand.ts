@@ -207,6 +207,7 @@ export function downloadFilename(type: string, ext: string): string {
 
 /** Detect deployment mode from hostname */
 export function detectBrandMode(): 'platform' | 'custom' {
+  if (typeof window === 'undefined') return 'custom';
   const hostname = window.location.hostname;
   if (hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
     return 'platform';
@@ -216,6 +217,7 @@ export function detectBrandMode(): 'platform' | 'custom' {
 
 /** Extract slug from platform subdomain (e.g. "mybrand.mymedia.studio" -> "mybrand") */
 export function extractSlugFromHostname(): string | null {
+  if (typeof window === 'undefined') return null;
   const hostname = window.location.hostname;
   if (hostname.endsWith(`.${PLATFORM_DOMAIN}`)) {
     const slug = hostname.replace(`.${PLATFORM_DOMAIN}`, '');
